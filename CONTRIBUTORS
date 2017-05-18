@@ -26,36 +26,7 @@
 
 # Please keep the list sorted.
 
-Alexander Shopov <ash@kambanaria.org> <ash%kambanaria.org@gtempaccount.com>
-Andreas Krebbel <krebbel@linux.vnet.ibm.com>
-Andrew Wilkins <axwalk@gmail.com>
-Chris Manghane <cmang@golang.org>
-Christopher Wedgwood <cw@f00f.org>
-Dave Cheney <dave@cheney.net>
-David Daney <david.daney@cavium.com>
-Diego Novillo <dnovillo@google.com>
-Dominik Vogt <vogt@linux.vnet.ibm.com>
-Ettl Martin <ettl.martin78@googlemail.com>
-Evan Shaw <edsrzf@gmail.com>
+Cherry Zhang <cherryyz@google.com>
 Ian Lance Taylor <iant@golang.org>
-James Clarke <jrtc27@jrtc27.com>
-James Cowgill <james.cowgill@imgtec.com>
-Janne Snabb <snabb@epipe.com>
-Joel Sherrill <joel.sherrill@gmail.com>
-Lynn A. Boger <laboger@linux.vnet.ibm.com>
-Marek Polacek <mpolacek@redhat.com>
-Matthias Klose <doko@ubuntu.com>
-Matthieu Sarter <matthieu.sarter.external@atos.net>
-Michael Hudson-Doyle <michael.hudson@linaro.org>
-Peter Collingbourne <pcc@google.com>
-Rainer Orth <ro@cebitec.uni-bielefeld.de>
-Rémy Oudompheng <oudomphe@phare.normalesup.org> <remyoudompheng@gmail.com>
-Richard Henderson <rth@redhat.com>
-Roberto Lublinerman Reitzes <rluble@google.com> <rluble@gmail.com>
-Sanjoy Das <sanjoy@playingwithpointers.com> <thedigitalangel@gmail.com>
-Shenghou Ma <minux@golang.org> <minux.ma@gmail.com>
-Tim Shen <timshen@google.com>
 Than McIntosh <thanm@google.com>
-Uros Bizjak <ubizjak@gmail.com>
-Vinu Rajashekhar <vinutheraj@gmail.com>
-Xia Bin <snyh@snyh.org>
+
