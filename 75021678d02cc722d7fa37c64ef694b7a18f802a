@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "74b1751c_846cabee",
+        "filename": "README.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-05-18T19:26:28Z",
+      "side": 1,
+      "message": "Do we merge this file with the README file?",
+      "revId": "75021678d02cc722d7fa37c64ef694b7a18f802a",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
