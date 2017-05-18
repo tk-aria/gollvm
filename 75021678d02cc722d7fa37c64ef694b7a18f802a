@@ -16,6 +16,24 @@
       "revId": "75021678d02cc722d7fa37c64ef694b7a18f802a",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "794273a7_8ac37641",
+        "filename": "README.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-05-18T19:32:39Z",
+      "side": 1,
+      "message": "Yes, that would be a good idea. I will work on this as a separate CL, since there is additional legal / contributor  stuff that needs to be put in as well.",
+      "parentUuid": "74b1751c_846cabee",
+      "revId": "75021678d02cc722d7fa37c64ef694b7a18f802a",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
