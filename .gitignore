@@ -1,0 +1,39 @@
+# This directory is where cmake will drop downloaded tar files
+# for the gofrontend deps (GMP, MPCR, etc)
+external/
+
+# This is a separate git repo and is tracked independently
+llvm-gofrontend/gofrontend/
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Emacs autosave files
+*~
