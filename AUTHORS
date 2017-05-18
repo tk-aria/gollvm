@@ -1,4 +1,4 @@
-# This is the official list of Go frontend authors for copyright
+# This is the official list of gollvm authors for copyright
 # purposes.  This file is distinct from the CONTRIBUTORS files.
 # See the latter for an explanation.
 
@@ -8,27 +8,4 @@
 
 # Please keep the list sorted.
 
-Alexander Shopov <ash@kambanaria.org>
-Andrew Wilkins <axwalk@gmail.com>
-Atos Infogerance
-Cavium
-Christopher Wedgwood <cw@f00f.org>
-Dave Cheney <dave@cheney.net>
-Ettl Martin <ettl.martin78@googlemail.com>
-Evan Shaw <edsrzf@gmail.com>
 Google Inc.
-IBM Inc.
-James Clarke <jrtc27@jrtc27.com>
-James Cowgill <james.cowgill@imgtec.com>
-Janne Snabb <snabb@epipe.com>
-Joel Sherrill <joel.sherrill@gmail.com>
-Linaro
-Matthias Klose <doko@ubuntu.com>
-Rainer Orth <ro@cebitec.uni-bielefeld.de>
-Rémy Oudompheng <oudomphe@phare.normalesup.org>
-Red Hat, Inc.
-Sanjoy Das <sanjoy@playingwithpointers.com>
-Shenghou Ma <minux@golang.org> <minux.ma@gmail.com>
-Uros Bizjak <ubizjak@gmail.com>
-Vinu Rajashekhar <vinutheraj@gmail.com>
-Xia Bin <snyh@snyh.org>
