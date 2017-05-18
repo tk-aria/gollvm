@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c56ed44b_b018a049",
+        "filename": "AUTHORS",
+        "patchSetId": 1
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-05-18T17:55:44Z",
+      "side": 0,
+      "message": "I guess we want to keep Google Inc.?",
+      "revId": "4849c1254b3c1037a2eab42a025d6f89b0e3a1db",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
