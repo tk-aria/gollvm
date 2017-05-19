@@ -432,6 +432,7 @@ Bvariable *BnodeBuilder::mkTempVar(Btype *varType,
     inst->setName(name);
   Bvariable *tvar = new Bvariable(varType, loc, name, LocalVar, true, inst);
   tempvars_[inst] = tvar;
+  tvar->markAsTemporary();
   return tvar;
 }
 
