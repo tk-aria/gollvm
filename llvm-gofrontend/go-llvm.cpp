@@ -882,7 +882,6 @@ Bexpression *Llvm_backend::resolveCompositeInit(Bexpression *expr,
     std::string tname(namegen("tmp"));
     tvar = nbuilder_.mkTempVar(expr->btype(), expr->location(), tname);
     assert(tvar != errorVariable_.get());
-    tvar->markAsTemporary();
     storage = tvar->value();
     setPending = true;
   }
@@ -1030,8 +1029,53 @@ Bexpression *Llvm_backend::float_constant_expression(Btype *btype, mpfr_t val) {
 
 Bexpression *Llvm_backend::complex_constant_expression(Btype *btype,
                                                        mpc_t val) {
-  assert(false && "Llvm_backend::complex_constant_expression not yet impl");
-  return nullptr;
+  if (btype == errorType())
+    return errorExpression();
+
+  BComplexType *bct = btype->castToBComplexType();
+  assert(bct);
+  llvm::Type *llt = btype->type();
+  assert(llt->isStructTy());
+  llvm::StructType *llst = llvm::cast<llvm::StructType>(llt);
+  assert(llst->getNumElements() == 2);
+  llvm::Type *llet = llst->getElementType(0);
+  assert(llet == llst->getElementType(1));
+
+  std::vector<Bexpression *> exps;
+
+  if (llet == llvmFloatType()) {
+    float frval = mpfr_get_flt(mpc_realref(val), GMP_RNDN);
+    float fival = mpfr_get_flt(mpc_imagref(val), GMP_RNDN);
+    llvm::APFloat apr(frval);
+    llvm::APFloat api(fival);
+    llvm::Constant *rcon = llvm::ConstantFP::get(context_, apr);
+    llvm::Constant *icon = llvm::ConstantFP::get(context_, api);
+
+    Btype *bet = floatType(32);
+    Bexpression *brcon = nbuilder_.mkConst(bet, rcon);
+    Bexpression *bicon = nbuilder_.mkConst(bet, icon);
+    exps.push_back(brcon);
+    exps.push_back(bicon);
+  } else if (llet == llvmDoubleType()) {
+    double drval = mpfr_get_d(mpc_realref(val), GMP_RNDN);
+    double dival = mpfr_get_d(mpc_imagref(val), GMP_RNDN);
+    llvm::APFloat apr(drval);
+    llvm::APFloat api(dival);
+    llvm::Constant *rcon = llvm::ConstantFP::get(context_, apr);
+    llvm::Constant *icon = llvm::ConstantFP::get(context_, api);
+
+    Btype *bet = floatType(64);
+    Bexpression *brcon = nbuilder_.mkConst(bet, rcon);
+    Bexpression *bicon = nbuilder_.mkConst(bet, icon);
+    exps.push_back(brcon);
+    exps.push_back(bicon);
+  } else {
+    assert(false && "unknown complex type");
+    return nullptr;
+  }
+
+  std::vector<unsigned long> indexes = {0, 1};
+  return makeConstCompositeExpr(btype, llst, 2, indexes, exps, Location());
 }
 
 // Make a constant string expression.
@@ -1090,16 +1134,72 @@ Bexpression *Llvm_backend::boolean_constant_expression(bool val) {
 
 Bexpression *Llvm_backend::real_part_expression(Bexpression *bcomplex,
                                                 Location location) {
-  assert(false && "Llvm_backend::real_part_expression not yet impl");
-  return nullptr;
+  if (bcomplex == errorExpression())
+    return errorExpression();
+
+  if (bcomplex->compositeInitPending())
+    bcomplex = resolveCompositeInit(bcomplex, nullptr);
+
+  // Construct an appropriate GEP
+  llvm::Type *llt = bcomplex->btype()->type();
+  assert(llt->isStructTy());
+  llvm::StructType *llst = llvm::cast<llvm::StructType>(llt);
+  llvm::Value *cval = bcomplex->value();
+  llvm::Value *fval;
+  if (llvm::isa<llvm::Constant>(cval) && cval->getType()->isStructTy())
+    fval = llvm::cast<llvm::Constant>(cval)->getAggregateElement((unsigned int)0);
+  else
+    fval = makeFieldGEP(llst, 0, cval);
+  BComplexType *bct = bcomplex->btype()->castToBComplexType();
+  assert(bct);
+  Btype *bft = floatType(bct->bits()/2);
+
+  // Wrap result in a Bexpression
+  Bexpression *rval = nbuilder_.mkStructField(bft, fval, bcomplex,
+                                              0, location);
+
+  std::string tag(bcomplex->tag());
+  tag += ".real";
+  rval->setTag(tag);
+
+  // We're done
+  return rval;
 }
 
 // Return the imaginary part of a complex expression.
 
 Bexpression *Llvm_backend::imag_part_expression(Bexpression *bcomplex,
                                                 Location location) {
-  assert(false && "Llvm_backend::imag_part_expression not yet impl");
-  return nullptr;
+  if (bcomplex == errorExpression())
+    return errorExpression();
+
+  if (bcomplex->compositeInitPending())
+    bcomplex = resolveCompositeInit(bcomplex, nullptr);
+
+  // Construct an appropriate GEP
+  llvm::Type *llt = bcomplex->btype()->type();
+  assert(llt->isStructTy());
+  llvm::StructType *llst = llvm::cast<llvm::StructType>(llt);
+  llvm::Value *cval = bcomplex->value();
+  llvm::Value *fval;
+  if (llvm::isa<llvm::Constant>(cval) && cval->getType()->isStructTy())
+    fval = llvm::cast<llvm::Constant>(cval)->getAggregateElement((unsigned int)1);
+  else
+    fval = makeFieldGEP(llst, 1, cval);
+  BComplexType *bct = bcomplex->btype()->castToBComplexType();
+  assert(bct);
+  Btype *bft = floatType(bct->bits()/2);
+
+  // Wrap result in a Bexpression
+  Bexpression *rval = nbuilder_.mkStructField(bft, fval, bcomplex,
+                                              1, location);
+
+  std::string tag(bcomplex->tag());
+  tag += ".imag";
+  rval->setTag(tag);
+
+  // We're done
+  return rval;
 }
 
 // Make a complex expression given its real and imaginary parts.
@@ -1107,8 +1207,26 @@ Bexpression *Llvm_backend::imag_part_expression(Bexpression *bcomplex,
 Bexpression *Llvm_backend::complex_expression(Bexpression *breal,
                                               Bexpression *bimag,
                                               Location location) {
-  assert(false && "Llvm_backend::complex_expression not yet impl");
-  return nullptr;
+  if (breal == errorExpression() || bimag == errorExpression())
+    return errorExpression();
+
+  assert(breal->btype() == bimag->btype());
+  BFloatType *bet = breal->btype()->castToBFloatType();
+  assert(bet);
+  Btype *bct = complexType(bet->bits()*2);
+  llvm::Type *llt = bct->type();
+  assert(llt->isStructTy());
+  llvm::StructType *llst = llvm::cast<llvm::StructType>(llt);
+
+  std::vector<Bexpression *> vals = {breal, bimag};
+  std::vector<unsigned long> indexes = {0, 1};
+
+  // Constant values?
+  bool isConstant = valuesAreConstant(vals);
+  if (isConstant)
+    return makeConstCompositeExpr(bct, llst, 2, indexes, vals, location);
+  else
+    return makeDelayedCompositeExpr(bct, llst, 2, indexes, vals, location);
 }
 
 // An expression that converts an expression to a different type.
@@ -1127,6 +1245,10 @@ Bexpression *Llvm_backend::convert_expression(Btype *type, Bexpression *expr,
     type = pointer_type(type);
     toType = type->type();
   }
+
+  // Complex -> complex conversion
+  if (type->castToBComplexType())
+    return makeComplexConvertExpr(type, expr, location);
 
   // For composite-init-pending values, materialize a variable now.
   if (expr->compositeInitPending()) {
@@ -1264,6 +1386,48 @@ Bexpression *Llvm_backend::convert_expression(Btype *type, Bexpression *expr,
   return expr;
 }
 
+Bexpression *Llvm_backend::makeComplexConvertExpr(Btype *type,
+                                                  Bexpression *expr,
+                                                  Location location) {
+  if (expr->btype()->type() == type->type())
+    return expr;
+
+  BComplexType *bct = type->castToBComplexType();
+  assert(bct);
+  assert(expr->btype()->castToBComplexType());
+  Btype *bft = floatType(bct->bits()/2);
+
+  // We need to avoid sharing between real part and imag part of the operand.
+  // Create temp variables and assign operand to the temp variable first.
+  // TODO: maybe not make temp var if the operand is already a var or constant?
+  std::string tname1(namegen("tmp"));
+  Bvariable *var = nbuilder_.mkTempVar(expr->btype(), location, tname1);
+  Bfunction *dummyFcn = errorFunction_.get();
+  Bstatement *einit = makeInitStatement(dummyFcn, var, expr);
+
+  Bexpression *vex = nbuilder_.mkVar(var, location);
+  vex->setVarExprPending(false, 0);
+  Bexpression *vexr = real_part_expression(vex, location);
+  Bexpression *vexi = imag_part_expression(vex, location);
+
+  // Make the conversion
+  Bexpression *valr = convert_expression(bft, vexr, location);
+  Bexpression *vali = convert_expression(bft, vexi, location);
+  Bexpression *val = complex_expression(valr, vali, location);
+
+  // Wrap result and the init statements in a compound expression.
+  // Currently we can't resolve composite storage for compound
+  // expression, so we resolve the innter complex expression
+  // here with another temp variable.
+  std::string tname2(namegen("tmp"));
+  Bvariable *rvar = nbuilder_.mkTempVar(val->btype(), location, tname2);
+  Bstatement *rinit = makeInitStatement(dummyFcn, rvar, val);
+  Bexpression *rvex = nbuilder_.mkVar(rvar, location);
+  Bstatement *init = statement_list(std::vector<Bstatement*>{einit, rinit});
+  return compound_expression(init, rvex, location);
+}
+
+
 // Get the address of a function.
 
 Bexpression *Llvm_backend::function_code_expression(Bfunction *bfunc,
@@ -1309,6 +1473,7 @@ llvm::Value *Llvm_backend::makeFieldGEP(llvm::StructType *llst,
                                         unsigned fieldIndex,
                                         llvm::Value *sptr)
 {
+  assert(sptr->getType()->isPointerTy());
   LIRBuilder builder(context_, llvm::ConstantFolder());
   assert(fieldIndex < llst->getNumElements());
   std::string tag(namegen("field"));
@@ -1591,12 +1756,18 @@ Bexpression *Llvm_backend::binary_expression(Operator op, Bexpression *left,
   if (left == errorExpression() || right == errorExpression())
     return errorExpression();
 
+  Btype *bltype = left->btype();
+  Btype *brtype = right->btype();
+  BComplexType *blctype = bltype->castToBComplexType();
+  BComplexType *brctype = brtype->castToBComplexType();
+  assert((blctype == nullptr) == (brctype == nullptr));
+  if (blctype)
+    return makeComplexBinaryExpr(op, left, right, location);
+
   left = resolveVarContext(left);
   right = resolveVarContext(right);
   assert(left->value() && right->value());
 
-  Btype *bltype = left->btype();
-  Btype *brtype = right->btype();
   std::pair<llvm::Value *, llvm::Value *> converted =
       convertForBinary(left, right);
   llvm::Value *leftVal = converted.first;
@@ -1731,6 +1902,76 @@ Bexpression *Llvm_backend::binary_expression(Operator op, Bexpression *left,
   }
 
   return nbuilder_.mkBinaryOp(op, bltype, val, left, right, location);
+}
+
+Bexpression *Llvm_backend::makeComplexBinaryExpr(Operator op, Bexpression *left,
+                                                 Bexpression *right,
+                                                 Location location) {
+  // We need to avoid sharing between real part and imag part of the operand.
+  // Create temp variables and assign operands to the temp vars first.
+  // TODO: maybe not make temp var if the operand is already a var or constant?
+  std::string tname1(namegen("tmp")), tname2(namegen("tmp"));
+  Bvariable *lvar = nbuilder_.mkTempVar(left->btype(), location, tname1);
+  Bvariable *rvar = nbuilder_.mkTempVar(right->btype(), location, tname2);
+  Bfunction *dummyFcn = errorFunction_.get();
+  Bstatement *linit = makeInitStatement(dummyFcn, lvar, left);
+  Bstatement *rinit = makeInitStatement(dummyFcn, rvar, right);
+
+  Bexpression *lvex = nbuilder_.mkVar(lvar, location);
+  lvex->setVarExprPending(false, 0);
+  Bexpression *rvex = nbuilder_.mkVar(rvar, location);
+  rvex->setVarExprPending(false, 0);
+  Bexpression *lr = real_part_expression(lvex, location);
+  Bexpression *li = imag_part_expression(lvex, location);
+  Bexpression *rr = real_part_expression(rvex, location);
+  Bexpression *ri = imag_part_expression(rvex, location);
+  Bexpression *val;
+
+  switch (op) {
+  case OPERATOR_PLUS:
+  case OPERATOR_MINUS: {
+    Bexpression *valr = binary_expression(op, lr, rr, location);
+    Bexpression *vali = binary_expression(op, li, ri, location);
+    val = complex_expression(valr, vali, location);
+    break;
+  }
+  case OPERATOR_MULT: {
+    // (a+bi)*(c+di) = (ac-bd) + (ad+bc)i
+    Bexpression *ac = binary_expression(OPERATOR_MULT, lr, rr, location);
+    Bexpression *bd = binary_expression(OPERATOR_MULT, li, ri, location);
+    Bexpression *ad = binary_expression(OPERATOR_MULT, lr, ri, location);
+    Bexpression *bc = binary_expression(OPERATOR_MULT, li, rr, location);
+    Bexpression *valr = binary_expression(OPERATOR_MINUS, ac, bd, location);
+    Bexpression *vali = binary_expression(OPERATOR_PLUS, ad, bc, location);
+    val = complex_expression(valr, vali, location);
+    break;
+  }
+  case OPERATOR_EQEQ:
+  case OPERATOR_NOTEQ: {
+    Bexpression *cmpr = binary_expression(op, lr, rr, location);
+    Bexpression *cmpi = binary_expression(op, li, ri, location);
+    if (op == OPERATOR_EQEQ)
+      val = binary_expression(OPERATOR_ANDAND, cmpr, cmpi, location);
+    else
+      val = binary_expression(OPERATOR_OROR, cmpr, cmpi, location);
+    Bstatement *init = statement_list(std::vector<Bstatement*>{linit, rinit});
+    return compound_expression(init, val, location);
+  }
+  default:
+    std::cerr << "Op " << op << " unhandled\n";
+    assert(false);
+  }
+
+  // Wrap result and the init statements in a compound expression.
+  // Currently we can't resolve composite storage for compound
+  // expression, so we resolve the innter complex expression
+  // here with another temp variable.
+  std::string tname3(namegen("tmp"));
+  Bvariable *vvar = nbuilder_.mkTempVar(val->btype(), location, tname3);
+  Bstatement *vinit = makeInitStatement(dummyFcn, vvar, val);
+  Bexpression *vvex = nbuilder_.mkVar(vvar, location);
+  Bstatement *init = statement_list(std::vector<Bstatement*>{linit, rinit, vinit});
+  return compound_expression(init, vvex, location);
 }
 
 bool
@@ -2291,6 +2532,14 @@ Bstatement *Llvm_backend::init_statement(Bfunction *bfunction,
   if (var == errorVariable_.get() || init == errorExpression() ||
       bfunction == errorFunction_.get())
     return errorStatement();
+
+  return makeInitStatement(bfunction, var, init);
+}
+
+Bstatement *Llvm_backend::makeInitStatement(Bfunction *bfunction,
+                                          Bvariable *var,
+                                          Bexpression *init)
+{
   if (init) {
     if (init->compositeInitPending()) {
       init = resolveCompositeInit(init, var->value());

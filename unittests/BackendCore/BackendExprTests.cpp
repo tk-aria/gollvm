@@ -119,6 +119,44 @@ TEST(BackendExprTests, MakeFloatConstExpr) {
   }
 }
 
+TEST(BackendExprTests, MakeComplexConstExpr) {
+  llvm::LLVMContext C;
+
+  std::unique_ptr<Backend> be(go_get_backend(C));
+
+  // Complex constants
+  Btype *bc64t = be->complex_type(64);
+  Btype *bc128t = be->complex_type(128);
+  Btype *bf32t = be->float_type(32);
+  Btype *bf64t = be->float_type(64);
+  static const double f64vals[] = {1.7976931348623158e+308, 0.0, 1.1,
+                                   2.2250738585072014e-308};
+  for (auto valr : f64vals)
+    for (auto vali : f64vals) {
+      mpc_t mpc_val;
+      mpc_init2(mpc_val, 256);
+      mpc_set_d_d(mpc_val, valr, vali, GMP_RNDN);
+
+      Bexpression *bc64val = be->complex_constant_expression(bc64t, mpc_val);
+      ASSERT_TRUE(bc64val != nullptr);
+      llvm::StructType *llc64st = llvm::cast<llvm::StructType>(bc64t->type());
+      llvm::SmallVector<llvm::Constant *, 2> llf32vals(2);
+      llf32vals[0] = llvm::ConstantFP::get(bf32t->type(), valr);
+      llf32vals[1] = llvm::ConstantFP::get(bf32t->type(), vali);
+      EXPECT_EQ(bc64val->value(), llvm::ConstantStruct::get(llc64st, llf32vals));
+
+      Bexpression *bc128val = be->complex_constant_expression(bc128t, mpc_val);
+      ASSERT_TRUE(bc128val != nullptr);
+      llvm::StructType *llc128st = llvm::cast<llvm::StructType>(bc128t->type());
+      llvm::SmallVector<llvm::Constant *, 2> llf64vals(2);
+      llf64vals[0] = llvm::ConstantFP::get(bf64t->type(), valr);
+      llf64vals[1] = llvm::ConstantFP::get(bf64t->type(), vali);
+      EXPECT_EQ(bc128val->value(), llvm::ConstantStruct::get(llc128st, llf64vals));
+
+      mpc_clear(mpc_val);
+    }
+}
+
 TEST(BackendExprTests, MakeZeroValueExpr) {
   llvm::LLVMContext C;
 
@@ -139,6 +177,10 @@ TEST(BackendExprTests, MakeZeroValueExpr) {
   Btype *s2t = mkBackendStruct(be, pbt, "f1", bi32t, "f2", nullptr);
   Bexpression *bszero = be->zero_expression(s2t);
   ASSERT_TRUE(bszero != nullptr);
+  Btype *bct = be->complex_type(128);
+  Bexpression *bczero = be->zero_expression(bct);
+  ASSERT_TRUE(bczero != nullptr);
+  EXPECT_EQ(repr(bczero->value()), "{ double, double } zeroinitializer");
 
   // Error handling
   EXPECT_EQ(be->zero_expression(be->error_type()), be->error_expression());
@@ -358,6 +400,120 @@ TEST(BackendExprTests, TestFloatConversionExpressions) {
 
   bool broken = h.finish(StripDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
+}
+
+TEST(BackendExprTests, TestComplexConversionExpression) {
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
+  BFunctionType *befty = mkFuncTyp(be, L_END);
+  Bfunction *func = h.mkFunction("foo", befty);
+  Location loc;
+
+  Btype *bc64t = be->complex_type(64);
+  Btype *bc128t = be->complex_type(128);
+
+  // var a, b complex64
+  // var x, y complex128
+  Bvariable *a = h.mkLocal("a", bc64t);
+  Bvariable *b = h.mkLocal("b", bc64t);
+  Bvariable *x = h.mkLocal("x", bc128t);
+  Bvariable *y = h.mkLocal("y", bc128t);
+
+  // a = complex64(x)
+  Bexpression *avex1 = be->var_expression(a, VE_lvalue, loc);
+  Bexpression *xvex1 = be->var_expression(x, VE_rvalue, loc);
+  Bexpression *convex1 = be->convert_expression(bc64t, xvex1, loc);
+  h.mkAssign(avex1, convex1);
+
+  // y = complex128(b)
+  Bexpression *yvex2 = be->var_expression(y, VE_lvalue, loc);
+  Bexpression *bvex2 = be->var_expression(b, VE_rvalue, loc);
+  Bexpression *convex2 = be->convert_expression(bc128t, bvex2, loc);
+  h.mkAssign(yvex2, convex2);
+
+  // No-op conversions
+  // a = complex64(b)
+  Bexpression *avex3 = be->var_expression(a, VE_lvalue, loc);
+  Bexpression *bvex3 = be->var_expression(b, VE_rvalue, loc);
+  Bexpression *convex3 = be->convert_expression(bc64t, bvex3, loc);
+  h.mkAssign(avex3, convex3);
+
+  // x = complex128(y)
+  Bexpression *xvex4 = be->var_expression(x, VE_lvalue, loc);
+  Bexpression *yvex4 = be->var_expression(y, VE_rvalue, loc);
+  Bexpression *convex4 = be->convert_expression(bc128t, yvex4, loc);
+  h.mkAssign(xvex4, convex4);
+
+  const char *exp = R"RAW_RESULT(
+  define void @foo.1(i8* nest %nest.1) #0 {
+  entry:
+    %tmp.3 = alloca { double, double }
+    %tmp.2 = alloca { float, float }
+    %tmp.1 = alloca { float, float }
+    %tmp.0 = alloca { double, double }
+    %a = alloca { float, float }
+    %b = alloca { float, float }
+    %x = alloca { double, double }
+    %y = alloca { double, double }
+    %cast.0 = bitcast { float, float }* %a to i8*
+    %cast.1 = bitcast { float, float }* @const.0 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.0, i8* %cast.1, i64 8, i32 8, i1 false)
+    %cast.2 = bitcast { float, float }* %b to i8*
+    %cast.3 = bitcast { float, float }* @const.1 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.2, i8* %cast.3, i64 8, i32 8, i1 false)
+    %cast.4 = bitcast { double, double }* %x to i8*
+    %cast.5 = bitcast { double, double }* @const.2 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.4, i8* %cast.5, i64 16, i32 8, i1 false)
+    %cast.6 = bitcast { double, double }* %y to i8*
+    %cast.7 = bitcast { double, double }* @const.3 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.6, i8* %cast.7, i64 16, i32 8, i1 false)
+    %cast.8 = bitcast { double, double }* %tmp.0 to i8*
+    %cast.9 = bitcast { double, double }* %x to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.8, i8* %cast.9, i64 16, i32 8, i1 false)
+    %field.0 = getelementptr inbounds { double, double }, { double, double }* %tmp.0, i32 0, i32 0
+    %.real.ld.0 = load double, double* %field.0
+    %fptrunc.0 = fptrunc double %.real.ld.0 to float
+    %field.1 = getelementptr inbounds { double, double }, { double, double }* %tmp.0, i32 0, i32 1
+    %.imag.ld.0 = load double, double* %field.1
+    %fptrunc.1 = fptrunc double %.imag.ld.0 to float
+    %field.2 = getelementptr inbounds { float, float }, { float, float }* %tmp.1, i32 0, i32 0
+    store float %fptrunc.0, float* %field.2
+    %field.3 = getelementptr inbounds { float, float }, { float, float }* %tmp.1, i32 0, i32 1
+    store float %fptrunc.1, float* %field.3
+    %cast.10 = bitcast { float, float }* %a to i8*
+    %cast.11 = bitcast { float, float }* %tmp.1 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.10, i8* %cast.11, i64 8, i32 8, i1 false)
+    %cast.12 = bitcast { float, float }* %tmp.2 to i8*
+    %cast.13 = bitcast { float, float }* %b to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.12, i8* %cast.13, i64 8, i32 8, i1 false)
+    %field.4 = getelementptr inbounds { float, float }, { float, float }* %tmp.2, i32 0, i32 0
+    %.real.ld.1 = load float, float* %field.4
+    %fpext.0 = fpext float %.real.ld.1 to double
+    %field.5 = getelementptr inbounds { float, float }, { float, float }* %tmp.2, i32 0, i32 1
+    %.imag.ld.1 = load float, float* %field.5
+    %fpext.1 = fpext float %.imag.ld.1 to double
+    %field.6 = getelementptr inbounds { double, double }, { double, double }* %tmp.3, i32 0, i32 0
+    store double %fpext.0, double* %field.6
+    %field.7 = getelementptr inbounds { double, double }, { double, double }* %tmp.3, i32 0, i32 1
+    store double %fpext.1, double* %field.7
+    %cast.14 = bitcast { double, double }* %y to i8*
+    %cast.15 = bitcast { double, double }* %tmp.3 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.14, i8* %cast.15, i64 16, i32 8, i1 false)
+    %cast.16 = bitcast { float, float }* %a to i8*
+    %cast.17 = bitcast { float, float }* %b to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.16, i8* %cast.17, i64 8, i32 8, i1 false)
+    %cast.18 = bitcast { double, double }* %x to i8*
+    %cast.19 = bitcast { double, double }* %y to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.18, i8* %cast.19, i64 16, i32 8, i1 false)
+    ret void
+  }
+  )RAW_RESULT";
+
+  bool broken = h.finish(StripDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+
+  bool isOK = h.expectValue(func->function(), exp);
+  EXPECT_TRUE(isOK && "Function does not have expected contents");
 }
 
 TEST(BackendExprTests, MakeVarExpressions) {
@@ -797,6 +953,255 @@ TEST(BackendExprTests, TestShift) {
       %s.ld.3 = load i64, i64* %s
       %shr.1 = lshr i64 %y.ld.1, %s.ld.3
     )RAW_RESULT";
+
+  bool isOK = h.expectBlock(exp);
+  EXPECT_TRUE(isOK && "Block does not have expected contents");
+
+  bool broken = h.finish(StripDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+}
+
+TEST(BackendExprTests, TestComplexOps) {
+  FcnTestHarness h;
+  Llvm_backend *be = h.be();
+  BFunctionType *befty = mkFuncTyp(be, L_END);
+  Bfunction *func = h.mkFunction("foo", befty);
+  Location loc;
+
+  Operator optotest[] = {OPERATOR_PLUS, OPERATOR_MINUS, OPERATOR_MULT,
+                         OPERATOR_EQEQ, OPERATOR_NOTEQ};
+
+  // var x, y, z complex128
+  // var b bool
+  Btype *bc128t = be->complex_type(128);
+  Btype *bt = be->bool_type();
+  Bvariable *x = h.mkLocal("x", bc128t);
+  Bvariable *y = h.mkLocal("y", bc128t);
+  Bvariable *z = h.mkLocal("z", bc128t);
+  Bvariable *b = h.mkLocal("b", bt);
+
+  for (auto op : optotest) {
+    Bexpression *bleft = be->var_expression(x, VE_rvalue, loc);
+    Bexpression *bright = be->var_expression(y, VE_rvalue, loc);
+    Bexpression *bop = be->binary_expression(op, bleft, bright, Location());
+    Bexpression *bvex = be->var_expression(op == OPERATOR_EQEQ || op == OPERATOR_NOTEQ ? b : z,
+                                           VE_lvalue, loc);
+    h.mkAssign(bvex, bop);
+  }
+
+  const char *exp = R"RAW_RESULT(
+  define void @foo(i8* nest %nest.0) #0 {
+  entry:
+    %tmp.12 = alloca { double, double }
+    %tmp.11 = alloca { double, double }
+    %tmp.10 = alloca { double, double }
+    %tmp.9 = alloca { double, double }
+    %tmp.8 = alloca { double, double }
+    %tmp.7 = alloca { double, double }
+    %tmp.6 = alloca { double, double }
+    %tmp.4 = alloca { double, double }
+    %tmp.3 = alloca { double, double }
+    %tmp.2 = alloca { double, double }
+    %tmp.5 = alloca { double, double }
+    %tmp.1 = alloca { double, double }
+    %tmp.0 = alloca { double, double }
+    %x = alloca { double, double }
+    %y = alloca { double, double }
+    %z = alloca { double, double }
+    %b = alloca i8
+    %cast.0 = bitcast { double, double }* %x to i8*
+    %cast.1 = bitcast { double, double }* @const.0 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.0, i8* %cast.1, i64 16, i32 8, i1 false)
+    %cast.2 = bitcast { double, double }* %y to i8*
+    %cast.3 = bitcast { double, double }* @const.1 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.2, i8* %cast.3, i64 16, i32 8, i1 false)
+    %cast.4 = bitcast { double, double }* %z to i8*
+    %cast.5 = bitcast { double, double }* @const.2 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.4, i8* %cast.5, i64 16, i32 8, i1 false)
+    store i8 0, i8* %b
+    %cast.6 = bitcast { double, double }* %tmp.0 to i8*
+    %cast.7 = bitcast { double, double }* %x to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.6, i8* %cast.7, i64 16, i32 8, i1 false)
+    %cast.8 = bitcast { double, double }* %tmp.1 to i8*
+    %cast.9 = bitcast { double, double }* %y to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.8, i8* %cast.9, i64 16, i32 8, i1 false)
+    %field.0 = getelementptr inbounds { double, double }, { double, double }* %tmp.0, i32 0, i32 0
+    %.real.ld.0 = load double, double* %field.0
+    %field.2 = getelementptr inbounds { double, double }, { double, double }* %tmp.1, i32 0, i32 0
+    %.real.ld.1 = load double, double* %field.2
+    %fadd.0 = fadd double %.real.ld.0, %.real.ld.1
+    %field.1 = getelementptr inbounds { double, double }, { double, double }* %tmp.0, i32 0, i32 1
+    %.imag.ld.0 = load double, double* %field.1
+    %field.3 = getelementptr inbounds { double, double }, { double, double }* %tmp.1, i32 0, i32 1
+    %.imag.ld.1 = load double, double* %field.3
+    %fadd.1 = fadd double %.imag.ld.0, %.imag.ld.1
+    %field.4 = getelementptr inbounds { double, double }, { double, double }* %tmp.2, i32 0, i32 0
+    store double %fadd.0, double* %field.4
+    %field.5 = getelementptr inbounds { double, double }, { double, double }* %tmp.2, i32 0, i32 1
+    store double %fadd.1, double* %field.5
+    %cast.10 = bitcast { double, double }* %z to i8*
+    %cast.11 = bitcast { double, double }* %tmp.2 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.10, i8* %cast.11, i64 16, i32 8, i1 false)
+    %cast.12 = bitcast { double, double }* %tmp.3 to i8*
+    %cast.13 = bitcast { double, double }* %x to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.12, i8* %cast.13, i64 16, i32 8, i1 false)
+    %cast.14 = bitcast { double, double }* %tmp.4 to i8*
+    %cast.15 = bitcast { double, double }* %y to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.14, i8* %cast.15, i64 16, i32 8, i1 false)
+    %field.6 = getelementptr inbounds { double, double }, { double, double }* %tmp.3, i32 0, i32 0
+    %.real.ld.2 = load double, double* %field.6
+    %field.8 = getelementptr inbounds { double, double }, { double, double }* %tmp.4, i32 0, i32 0
+    %.real.ld.3 = load double, double* %field.8
+    %fsub.0 = fsub double %.real.ld.2, %.real.ld.3
+    %field.7 = getelementptr inbounds { double, double }, { double, double }* %tmp.3, i32 0, i32 1
+    %.imag.ld.2 = load double, double* %field.7
+    %field.9 = getelementptr inbounds { double, double }, { double, double }* %tmp.4, i32 0, i32 1
+    %.imag.ld.3 = load double, double* %field.9
+    %fsub.1 = fsub double %.imag.ld.2, %.imag.ld.3
+    %field.10 = getelementptr inbounds { double, double }, { double, double }* %tmp.5, i32 0, i32 0
+    store double %fsub.0, double* %field.10
+    %field.11 = getelementptr inbounds { double, double }, { double, double }* %tmp.5, i32 0, i32 1
+    store double %fsub.1, double* %field.11
+    %cast.16 = bitcast { double, double }* %z to i8*
+    %cast.17 = bitcast { double, double }* %tmp.5 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.16, i8* %cast.17, i64 16, i32 8, i1 false)
+    %cast.18 = bitcast { double, double }* %tmp.6 to i8*
+    %cast.19 = bitcast { double, double }* %x to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.18, i8* %cast.19, i64 16, i32 8, i1 false)
+    %cast.20 = bitcast { double, double }* %tmp.7 to i8*
+    %cast.21 = bitcast { double, double }* %y to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.20, i8* %cast.21, i64 16, i32 8, i1 false)
+    %field.12 = getelementptr inbounds { double, double }, { double, double }* %tmp.6, i32 0, i32 0
+    %.real.ld.4 = load double, double* %field.12
+    %field.14 = getelementptr inbounds { double, double }, { double, double }* %tmp.7, i32 0, i32 0
+    %.real.ld.5 = load double, double* %field.14
+    %fmul.0 = fmul double %.real.ld.4, %.real.ld.5
+    %field.13 = getelementptr inbounds { double, double }, { double, double }* %tmp.6, i32 0, i32 1
+    %.imag.ld.4 = load double, double* %field.13
+    %field.15 = getelementptr inbounds { double, double }, { double, double }* %tmp.7, i32 0, i32 1
+    %.imag.ld.5 = load double, double* %field.15
+    %fmul.1 = fmul double %.imag.ld.4, %.imag.ld.5
+    %fsub.2 = fsub double %fmul.0, %fmul.1
+    %field.121 = getelementptr inbounds { double, double }, { double, double }* %tmp.6, i32 0, i32 0
+    %.real.ld.6 = load double, double* %field.12
+    %field.152 = getelementptr inbounds { double, double }, { double, double }* %tmp.7, i32 0, i32 1
+    %.imag.ld.6 = load double, double* %field.15
+    %fmul.2 = fmul double %.real.ld.6, %.imag.ld.6
+    %field.133 = getelementptr inbounds { double, double }, { double, double }* %tmp.6, i32 0, i32 1
+    %.imag.ld.7 = load double, double* %field.13
+    %field.144 = getelementptr inbounds { double, double }, { double, double }* %tmp.7, i32 0, i32 0
+    %.real.ld.7 = load double, double* %field.14
+    %fmul.3 = fmul double %.imag.ld.7, %.real.ld.7
+    %fadd.2 = fadd double %fmul.2, %fmul.3
+    %field.16 = getelementptr inbounds { double, double }, { double, double }* %tmp.8, i32 0, i32 0
+    store double %fsub.2, double* %field.16
+    %field.17 = getelementptr inbounds { double, double }, { double, double }* %tmp.8, i32 0, i32 1
+    store double %fadd.2, double* %field.17
+    %cast.22 = bitcast { double, double }* %z to i8*
+    %cast.23 = bitcast { double, double }* %tmp.8 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.22, i8* %cast.23, i64 16, i32 8, i1 false)
+    %cast.24 = bitcast { double, double }* %tmp.9 to i8*
+    %cast.25 = bitcast { double, double }* %x to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.24, i8* %cast.25, i64 16, i32 8, i1 false)
+    %cast.26 = bitcast { double, double }* %tmp.10 to i8*
+    %cast.27 = bitcast { double, double }* %y to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.26, i8* %cast.27, i64 16, i32 8, i1 false)
+    %field.18 = getelementptr inbounds { double, double }, { double, double }* %tmp.9, i32 0, i32 0
+    %.real.ld.8 = load double, double* %field.18
+    %field.20 = getelementptr inbounds { double, double }, { double, double }* %tmp.10, i32 0, i32 0
+    %.real.ld.9 = load double, double* %field.20
+    %fcmp.0 = fcmp oeq double %.real.ld.8, %.real.ld.9
+    %zext.0 = zext i1 %fcmp.0 to i8
+    %field.19 = getelementptr inbounds { double, double }, { double, double }* %tmp.9, i32 0, i32 1
+    %.imag.ld.8 = load double, double* %field.19
+    %field.21 = getelementptr inbounds { double, double }, { double, double }* %tmp.10, i32 0, i32 1
+    %.imag.ld.9 = load double, double* %field.21
+    %fcmp.1 = fcmp oeq double %.imag.ld.8, %.imag.ld.9
+    %zext.1 = zext i1 %fcmp.1 to i8
+    %iand.0 = and i8 %zext.0, %zext.1
+    store i8 %iand.0, i8* %b
+    %cast.28 = bitcast { double, double }* %tmp.11 to i8*
+    %cast.29 = bitcast { double, double }* %x to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.28, i8* %cast.29, i64 16, i32 8, i1 false)
+    %cast.30 = bitcast { double, double }* %tmp.12 to i8*
+    %cast.31 = bitcast { double, double }* %y to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.30, i8* %cast.31, i64 16, i32 8, i1 false)
+    %field.22 = getelementptr inbounds { double, double }, { double, double }* %tmp.11, i32 0, i32 0
+    %.real.ld.10 = load double, double* %field.22
+    %field.24 = getelementptr inbounds { double, double }, { double, double }* %tmp.12, i32 0, i32 0
+    %.real.ld.11 = load double, double* %field.24
+    %fcmp.2 = fcmp one double %.real.ld.10, %.real.ld.11
+    %zext.2 = zext i1 %fcmp.2 to i8
+    %field.23 = getelementptr inbounds { double, double }, { double, double }* %tmp.11, i32 0, i32 1
+    %.imag.ld.10 = load double, double* %field.23
+    %field.25 = getelementptr inbounds { double, double }, { double, double }* %tmp.12, i32 0, i32 1
+    %.imag.ld.11 = load double, double* %field.25
+    %fcmp.3 = fcmp one double %.imag.ld.10, %.imag.ld.11
+    %zext.3 = zext i1 %fcmp.3 to i8
+    %ior.0 = or i8 %zext.2, %zext.3
+    store i8 %ior.0, i8* %b
+    ret void
+  }
+  )RAW_RESULT";
+
+  bool broken = h.finish(StripDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+
+  bool isOK = h.expectValue(func->function(), exp);
+  EXPECT_TRUE(isOK && "Block does not have expected contents");
+}
+
+TEST(BackendExprTests, TestComplexExpressions) {
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
+  Location loc;
+
+  // var a, b float64
+  // var x complex128
+  Btype *bf64t = be->float_type(64);
+  Btype *bc128t = be->complex_type(128);
+  Bvariable *a = h.mkLocal("a", bf64t);
+  Bvariable *b = h.mkLocal("b", bf64t);
+  Bvariable *x = h.mkLocal("x", bc128t);
+
+  // a = real(x)
+  Bexpression *avex1 = be->var_expression(a, VE_lvalue, loc);
+  Bexpression *xvex1 = be->var_expression(x, VE_rvalue, loc);
+  Bexpression *realex = be->real_part_expression(xvex1, loc);
+  h.mkAssign(avex1, realex);
+
+  // b = imag(x)
+  Bexpression *bvex2 = be->var_expression(b, VE_lvalue, loc);
+  Bexpression *xvex2 = be->var_expression(x, VE_rvalue, loc);
+  Bexpression *imagex = be->imag_part_expression(xvex2, loc);
+  h.mkAssign(bvex2, imagex);
+
+  // x = complex(b, a)
+  Bexpression *xvex3 = be->var_expression(x, VE_lvalue, loc);
+  Bexpression *bvex3 = be->var_expression(b, VE_rvalue, loc);
+  Bexpression *avex3 = be->var_expression(a, VE_rvalue, loc);
+  Bexpression *compex = be->complex_expression(bvex3, avex3, loc);
+  h.mkAssign(xvex3, compex);
+
+  const char *exp = R"RAW_RESULT(
+    store double 0.000000e+00, double* %a
+    store double 0.000000e+00, double* %b
+    %cast.0 = bitcast { double, double }* %x to i8*
+    %cast.1 = bitcast { double, double }* @const.0 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.0, i8* %cast.1, i64 16, i32 8, i1 false)
+    %field.0 = getelementptr inbounds { double, double }, { double, double }* %x, i32 0, i32 0
+    %x.real.ld.0 = load double, double* %field.0
+    store double %x.real.ld.0, double* %a
+    %field.1 = getelementptr inbounds { double, double }, { double, double }* %x, i32 0, i32 1
+    %x.imag.ld.0 = load double, double* %field.1
+    store double %x.imag.ld.0, double* %b
+    %b.ld.0 = load double, double* %b
+    %a.ld.0 = load double, double* %a
+    %field.2 = getelementptr inbounds { double, double }, { double, double }* %x, i32 0, i32 0
+    store double %b.ld.0, double* %field.2
+    %field.3 = getelementptr inbounds { double, double }, { double, double }* %x, i32 0, i32 1
+    store double %a.ld.0, double* %field.3
+  )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");

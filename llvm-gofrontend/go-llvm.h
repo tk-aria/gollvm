@@ -448,6 +448,16 @@ public:
                                         const std::vector<Bexpression *> &vals,
                                         Location location);
 
+  // Helper for creating a complex binary expression.
+  Bexpression *makeComplexBinaryExpr(Operator op,
+                                     Bexpression *left,
+                                     Bexpression *right,
+                                     Location location);
+
+  // Helper for creating a complex conversion expression.
+  Bexpression *makeComplexConvertExpr(Btype *type, Bexpression *expr,
+                                      Location location);
+
   // Field GEP helper
   llvm::Value *makeFieldGEP(llvm::StructType *llst,
                             unsigned fieldIndex,
@@ -466,6 +476,10 @@ public:
   // Assignment helper
   Bstatement *makeAssignment(Bfunction *function, llvm::Value *lvalue,
                              Bexpression *lhs, Bexpression *rhs, Location);
+
+  // Helper to make init statement
+  Bstatement *makeInitStatement(Bfunction *bfunction, Bvariable *var,
+                              Bexpression *init);
 
   // Helper to set up entry block for function
   llvm::BasicBlock *genEntryBlock(Bfunction *bfunction);

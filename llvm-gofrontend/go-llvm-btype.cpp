@@ -68,7 +68,7 @@ bool Btype::equalImpl(const Btype &other, CompareCtl ctl) const
   if (isPlaceholder() != other.isPlaceholder())
     return false;
   bool compareLlvmType = true;
-  if ((ctl & IgnoreNames) != 0 && type()->isStructTy())
+  if ((ctl & IgnoreNames) != 0 && type()->isStructTy() && flavor_ != ComplexT)
     compareLlvmType = false;
   if (compareLlvmType && type() != other.type())
     return false;
