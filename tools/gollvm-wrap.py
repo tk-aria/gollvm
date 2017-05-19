@@ -82,6 +82,11 @@ def perform():
 
   u.verbose(1, "argv: %s" % " ".join(sys.argv))
 
+  # llvm-goparse should be available somewhere in PATH, error if not
+  lines = u.docmdlines("which llvm-goparse", True)
+  if not lines:
+    u.error("no 'llvm-goparse' in PATH -- can't proceed")
+
   # Perform a walk of the command line arguments looking for Go files.
   reg = re.compile(r"^\S+\.go$")
   foundgo = False
