@@ -48,7 +48,7 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrity1) {
   TreeIntegCtl control(NoDumpPointers, CheckVarExprs, DontRepairSharing);
   std::pair<bool, std::string> result =
       be->checkTreeIntegrity(h.block(), control);
-  EXPECT_EQ(false, result.first);
+  EXPECT_FALSE(result.first);
   EXPECT_TRUE(containstokens(result.second,
                              "instruction has multiple parents"));
 
@@ -80,7 +80,7 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrity2) {
   TreeIntegCtl control(NoDumpPointers, CheckVarExprs, DontRepairSharing);
   std::pair<bool, std::string> result =
       be->checkTreeIntegrity(block, control);
-  EXPECT_EQ(false, result.first);
+  EXPECT_FALSE(result.first);
   EXPECT_TRUE(containstokens(result.second, "expr has multiple parents"));
 
   Bexpression *ve3= be->var_expression(loc1, VE_lvalue, loc);
@@ -110,7 +110,7 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrity3) {
   TreeIntegCtl control(NoDumpPointers, CheckVarExprs, DontRepairSharing);
   std::pair<bool, std::string> result =
       be->checkTreeIntegrity(block, control);
-  EXPECT_EQ(false, result.first);
+  EXPECT_FALSE(result.first);
   EXPECT_TRUE(containstokens(result.second, "stmt has multiple parents"));
 
   Bexpression *b3 = mkInt64Const(be.get(), 3);
