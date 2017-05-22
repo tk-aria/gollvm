@@ -1524,7 +1524,10 @@ Bexpression *Llvm_backend::binary_expression(Operator op, Bexpression *left,
   assert((blitype == nullptr) == (britype == nullptr));
   bool isUnsigned = false;
   if (blitype) {
-    assert(blitype->isUnsigned() == britype->isUnsigned());
+    if (op == OPERATOR_LSHIFT || op == OPERATOR_RSHIFT)
+      assert(britype->isUnsigned());
+    else
+      assert(blitype->isUnsigned() == britype->isUnsigned());
     isUnsigned = blitype->isUnsigned();
   }
   LIRBuilder builder(context_, llvm::ConstantFolder());
@@ -1587,13 +1590,21 @@ Bexpression *Llvm_backend::binary_expression(Operator op, Bexpression *left,
       val = builder.CreateSDiv(leftVal, rightVal, namegen("div"));
     break;
   }
-  case OPERATOR_OROR: {
+  case OPERATOR_OROR:
     // Note that the FE will have already expanded out || in a control
     // flow context (short circuiting)
+
+    // fall through...
+
+  case OPERATOR_OR: {
     assert(!ltype->isFloatingPointTy());
     val = builder.CreateOr(leftVal, rightVal, namegen("ior"));
     break;
   }
+  case OPERATOR_BITCLEAR:
+    // Note that the FE already inserted a complement op to RHS. So
+    // this is effectively an AND expression.
+    // fall through...
   case OPERATOR_ANDAND:
     // Note that the FE will have already expanded out && in a control
     // flow context (short circuiting).
@@ -1606,14 +1617,31 @@ Bexpression *Llvm_backend::binary_expression(Operator op, Bexpression *left,
     break;
   }
   case OPERATOR_XOR: {
-    // Note that the FE will have already expanded out && in a control
-    // flow context (short circuiting)
     assert(!ltype->isFloatingPointTy() && !rtype->isFloatingPointTy());
     val = builder.CreateXor(leftVal, rightVal, namegen("xor"));
     break;
   }
+  case OPERATOR_LSHIFT: {
+    // Note that the FE already inserted conditionals for checking
+    // large shift amounts. So this can simply lower to a shift
+    // instruction.
+    assert(!ltype->isFloatingPointTy() && !rtype->isFloatingPointTy());
+    val = builder.CreateShl(leftVal, rightVal, namegen("shl"));
+    break;
+  }
+  case OPERATOR_RSHIFT: {
+    // Note that the FE already inserted conditionals for checking
+    // large shift amounts. So this can simply lower to a shift
+    // instruction.
+    assert(!ltype->isFloatingPointTy() && !rtype->isFloatingPointTy());
+    if (isUnsigned)
+      val = builder.CreateLShr(leftVal, rightVal, namegen("shr"));
+    else
+      val = builder.CreateAShr(leftVal, rightVal, namegen("shr"));
+    break;
+  }
   default:
-    std::cerr << "Op " << op << "unhandled\n";
+    std::cerr << "Op " << op << " unhandled\n";
     assert(false);
   }
 

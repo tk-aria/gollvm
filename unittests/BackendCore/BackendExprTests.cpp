@@ -451,7 +451,8 @@ TEST(BackendExprTests, TestLogicalOps) {
   Llvm_backend *be = h.be();
   Bfunction *func = h.func();
 
-  Operator optotest[] = {OPERATOR_ANDAND, OPERATOR_OROR};
+  Operator optotest[] = {OPERATOR_ANDAND, OPERATOR_OROR, OPERATOR_AND,
+                         OPERATOR_OR, OPERATOR_XOR, OPERATOR_BITCLEAR};
 
   Btype *bi64t = be->integer_type(false, 64);
   Btype *bui64t = be->integer_type(true, 64);
@@ -493,18 +494,54 @@ TEST(BackendExprTests, TestLogicalOps) {
       %x.ld.1 = load i64, i64* %x
       %x2.ld.1 = load i64, i64* %x2
       %ior.0 = or i64 %x.ld.1, %x2.ld.1
+      %x.ld.2 = load i64, i64* %x
+      %x2.ld.2 = load i64, i64* %x2
+      %iand.1 = and i64 %x.ld.2, %x2.ld.2
+      %x.ld.3 = load i64, i64* %x
+      %x2.ld.3 = load i64, i64* %x2
+      %ior.1 = or i64 %x.ld.3, %x2.ld.3
+      %x.ld.4 = load i64, i64* %x
+      %x2.ld.4 = load i64, i64* %x2
+      %xor.0 = xor i64 %x.ld.4, %x2.ld.4
+      %x.ld.5 = load i64, i64* %x
+      %x2.ld.5 = load i64, i64* %x2
+      %iand.2 = and i64 %x.ld.5, %x2.ld.5
       %y.ld.0 = load i64, i64* %y
       %y2.ld.0 = load i64, i64* %y2
-      %iand.1 = and i64 %y.ld.0, %y2.ld.0
+      %iand.3 = and i64 %y.ld.0, %y2.ld.0
       %y.ld.1 = load i64, i64* %y
       %y2.ld.1 = load i64, i64* %y2
-      %ior.1 = or i64 %y.ld.1, %y2.ld.1
+      %ior.2 = or i64 %y.ld.1, %y2.ld.1
+      %y.ld.2 = load i64, i64* %y
+      %y2.ld.2 = load i64, i64* %y2
+      %iand.4 = and i64 %y.ld.2, %y2.ld.2
+      %y.ld.3 = load i64, i64* %y
+      %y2.ld.3 = load i64, i64* %y2
+      %ior.3 = or i64 %y.ld.3, %y2.ld.3
+      %y.ld.4 = load i64, i64* %y
+      %y2.ld.4 = load i64, i64* %y2
+      %xor.1 = xor i64 %y.ld.4, %y2.ld.4
+      %y.ld.5 = load i64, i64* %y
+      %y2.ld.5 = load i64, i64* %y2
+      %iand.5 = and i64 %y.ld.5, %y2.ld.5
       %z.ld.0 = load i8, i8* %z
       %z2.ld.0 = load i8, i8* %z2
-      %iand.2 = and i8 %z.ld.0, %z2.ld.0
+      %iand.6 = and i8 %z.ld.0, %z2.ld.0
       %z.ld.1 = load i8, i8* %z
       %z2.ld.1 = load i8, i8* %z2
-      %ior.2 = or i8 %z.ld.1, %z2.ld.1
+      %ior.4 = or i8 %z.ld.1, %z2.ld.1
+      %z.ld.2 = load i8, i8* %z
+      %z2.ld.2 = load i8, i8* %z2
+      %iand.7 = and i8 %z.ld.2, %z2.ld.2
+      %z.ld.3 = load i8, i8* %z
+      %z2.ld.3 = load i8, i8* %z2
+      %ior.5 = or i8 %z.ld.3, %z2.ld.3
+      %z.ld.4 = load i8, i8* %z
+      %z2.ld.4 = load i8, i8* %z2
+      %xor.2 = xor i8 %z.ld.4, %z2.ld.4
+      %z.ld.5 = load i8, i8* %z
+      %z2.ld.5 = load i8, i8* %z2
+      %iand.8 = and i8 %z.ld.5, %z2.ld.5
     )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);
@@ -569,6 +606,60 @@ TEST(BackendExprTests, TestMulDiv) {
   %fmul.0 = fmul double 9.000000e+00, %z.ld.0
   %z.ld.1 = load double, double* %z
   %fdiv.0 = fdiv double 9.000000e+00, %z.ld.1
+    )RAW_RESULT";
+
+  bool isOK = h.expectBlock(exp);
+  EXPECT_TRUE(isOK && "Block does not have expected contents");
+
+  bool broken = h.finish(StripDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+}
+
+TEST(BackendExprTests, TestShift) {
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
+  Bfunction *func = h.func();
+
+  Operator optotest[] = {OPERATOR_LSHIFT,OPERATOR_RSHIFT};
+
+  Btype *bi64t = be->integer_type(false, 64);
+  Btype *bu64t = be->integer_type(true, 64);
+  Bvariable *x = h.mkLocal("x", bi64t);
+  Bvariable *y = h.mkLocal("y", bu64t);
+  Bvariable *s = h.mkLocal("s", bu64t);
+  std::vector<std::pair<Bvariable *, Bvariable *>> valtotest;
+  valtotest.push_back(std::make_pair(x, s)); // signed shifts
+  valtotest.push_back(std::make_pair(y, s)); // unsigned shifts
+
+  Location loc;
+  for (unsigned tidx = 0; tidx < valtotest.size(); ++tidx) {
+    Bvariable *bvl = valtotest[tidx].first;
+    Bvariable *bvr = valtotest[tidx].second;
+    for (auto op : optotest) {
+      Bexpression *bleft = be->var_expression(bvl, VE_rvalue, loc);
+      Bexpression *bright = be->var_expression(bvr, VE_rvalue, loc);
+      Bexpression *cmp = be->binary_expression(op, bleft, bright, Location());
+      Bstatement *es = be->expression_statement(func, cmp);
+      h.addStmt(es);
+    }
+  }
+
+  const char *exp = R"RAW_RESULT(
+      store i64 0, i64* %x
+      store i64 0, i64* %y
+      store i64 0, i64* %s
+      %x.ld.0 = load i64, i64* %x
+      %s.ld.0 = load i64, i64* %s
+      %shl.0 = shl i64 %x.ld.0, %s.ld.0
+      %x.ld.1 = load i64, i64* %x
+      %s.ld.1 = load i64, i64* %s
+      %shr.0 = ashr i64 %x.ld.1, %s.ld.1
+      %y.ld.0 = load i64, i64* %y
+      %s.ld.2 = load i64, i64* %s
+      %shl.1 = shl i64 %y.ld.0, %s.ld.2
+      %y.ld.1 = load i64, i64* %y
+      %s.ld.3 = load i64, i64* %s
+      %shr.1 = lshr i64 %y.ld.1, %s.ld.3
     )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);
