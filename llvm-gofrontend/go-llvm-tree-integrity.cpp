@@ -84,6 +84,17 @@ void IntegrityVisitor::setParent(Bnode *child, Bnode *parent, unsigned slot)
     unsigned prevSlot = pps.second;
     if (prevParent == parent && prevSlot == slot)
       return;
+    parslot ps = std::make_pair(parent, slot);
+    sharing_.push_back(std::make_pair(child, ps));
+
+    // If the sharing at this subtree is repairable, don't
+    // log an error, since the sharing will be undone later on.
+    Bexpression *expr = child->castToBexpression();
+    if (expr != nullptr &&
+        doRepairs() == DontReportRepairableSharing &&
+        repairableSubTree(expr))
+      return;
+
     const char *wh = nullptr;
     if (child->isStmt()) {
       stmtShareCount_ += 1;
@@ -92,6 +103,8 @@ void IntegrityVisitor::setParent(Bnode *child, Bnode *parent, unsigned slot)
       exprShareCount_ += 1;
       wh = "expr";
     }
+
+    // capture a description of the error
     ss_ << "error: " << wh << " has multiple parents\n";
     ss_ << "child " << wh << ":\n";
     dump(child);
@@ -99,8 +112,7 @@ void IntegrityVisitor::setParent(Bnode *child, Bnode *parent, unsigned slot)
     dump(prevParent);
     ss_ << "parent 2:\n";
     dump(parent);
-    parslot ps = std::make_pair(parent, slot);
-    sharing_.push_back(std::make_pair(child, ps));
+    return;
   }
   nparent_[child] = std::make_pair(parent, slot);
 }
@@ -137,6 +149,9 @@ bool IntegrityVisitor::repairableSubTree(Bexpression *root)
   acceptable.insert(N_Deref);
   acceptable.insert(N_StructField);
 
+  // Allow a limited set of these.
+  acceptable.insert(N_BinaryOp);
+
   std::set<Bexpression *> visited;
   visited.insert(root);
   std::vector<Bexpression *> workList;
@@ -146,6 +161,10 @@ bool IntegrityVisitor::repairableSubTree(Bexpression *root)
     Bexpression *e = workList.back();
     workList.pop_back();
     if (acceptable.find(e->flavor()) == acceptable.end())
+      return false;
+    if (e->flavor() == N_BinaryOp &&
+        (e->op() != OPERATOR_PLUS &&
+         e->op() != OPERATOR_MINUS))
       return false;
     for (auto &c : e->children()) {
       Bexpression *ce = c->castToBexpression();
@@ -159,8 +178,23 @@ bool IntegrityVisitor::repairableSubTree(Bexpression *root)
   return true;
 }
 
+class ScopedIntegrityCheckDisabler {
+ public:
+  ScopedIntegrityCheckDisabler(Llvm_backend *be)
+      : be_(be), val_(be->nodeBuilder().integrityChecksEnabled()) {
+    be_->nodeBuilder().setIntegrityChecks(false);
+  }
+  ~ScopedIntegrityCheckDisabler() {
+    be_->nodeBuilder().setIntegrityChecks(val_);
+  }
+ private:
+  Llvm_backend *be_;
+  bool val_;
+};
+
 bool IntegrityVisitor::repair(Bnode *node)
 {
+  ScopedIntegrityCheckDisabler disabler(be_);
   std::set<Bexpression *> visited;
   for (auto &p : sharing_) {
     Bexpression *child = p.first->castToBexpression();
@@ -177,6 +211,8 @@ bool IntegrityVisitor::repair(Bnode *node)
     Bexpression *childClone = be_->nodeBuilder().cloneSubtree(child);
     parent->replaceChild(slot, childClone);
   }
+  sharing_.clear();
+  exprShareCount_ = 0;
   return true;
 }
 
@@ -184,7 +220,8 @@ void IntegrityVisitor::visit(Bnode *node)
 {
   unsigned idx = 0;
   for (auto &child : node->children()) {
-    visit(child);
+    if (visitMode() == BatchMode)
+      visit(child);
     setParent(child, node, idx++);
   }
   Bexpression *expr = node->castToBexpression();
@@ -197,20 +234,28 @@ void IntegrityVisitor::visit(Bnode *node)
 
 bool IntegrityVisitor::examine(Bnode *node)
 {
-  // Walk the tree to see what sort of sharing we have.
+  // Visit node (and possibly entire subtree at node, mode depending)
   visit(node);
 
   // Inst sharing and statement sharing are not repairable.
   if (instShareCount_ != 0 || stmtShareCount_ != 0)
     return false;
 
-  if (exprShareCount_ == 0)
-    return true;
-
-  if (doRepairs() != RepairSharing)
+  if (exprShareCount_ != 0)
     return false;
 
-  // Attempt repair..
+  // If the checker is in incremental mode, don't attempt repairs
+  // (those will be done later on).
+  if (visitMode() == IncrementalMode) {
+    sharing_.clear();
+    return true;
+  }
+
+  // Batch mode: return now if no sharing.
+  if (sharing_.empty())
+    return true;
+
+  // Batch mode: perform repairs.
   if (repair(node))
     return true;
 

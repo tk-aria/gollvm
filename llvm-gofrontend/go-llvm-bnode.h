@@ -107,6 +107,7 @@ class Bnode {
   unsigned id() const { return id_; }
   const char *flavstr() const;
   LabelId label() const;
+  Operator op() const; // for unary and binary op nodes
 
   // debugging
   void dump();
@@ -270,6 +271,12 @@ class BnodeBuilder {
   // node (after which the old node will be thrown away). Returns
   std::vector<Bexpression *> extractChildenAndDestroy(Bexpression *expr);
 
+  // Get/set whether the tree integrity checker is enabled. It makes sense
+  // to turn off the integrity checker during tree cloning operations
+  // (part of sharing repair), and also for unit testing.
+  bool integrityChecksEnabled() const { return checkIntegrity_; }
+  void setIntegrityChecks(bool val) { checkIntegrity_ = val; }
+
  private:
   void appendInstIfNeeded(Bexpression *rval, llvm::Value *val);
   Bexpression *archive(Bexpression *expr);
@@ -285,6 +292,7 @@ class BnodeBuilder {
   std::vector<Bstatement *> sarchive_;
   std::vector<SwitchDescriptor*> swcases_;
   std::unique_ptr<IntegrityVisitor> integrityVisitor_;
+  bool checkIntegrity_;
 };
 
 // This class helps automate walking of a Bnode subtree; it invokes
