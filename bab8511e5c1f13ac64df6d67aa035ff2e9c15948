@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a0f27777_b001772d",
+        "filename": "llvm-gofrontend/go-llvm-typemanager.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-05-23T14:51:54Z",
+      "side": 1,
+      "message": "llvmTypeAllocSize",
+      "range": {
+        "startLine": 132,
+        "startChar": 46,
+        "endLine": 132,
+        "endChar": 57
+      },
+      "revId": "bab8511e5c1f13ac64df6d67aa035ff2e9c15948",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "be9a2fe5_15f52587",
+        "filename": "llvm-gofrontend/go-llvm-typemanager.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 137,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-05-23T14:51:54Z",
+      "side": 1,
+      "message": "llvmTypeSize",
+      "range": {
+        "startLine": 137,
+        "startChar": 29,
+        "endLine": 137,
+        "endChar": 37
+      },
+      "revId": "bab8511e5c1f13ac64df6d67aa035ff2e9c15948",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
