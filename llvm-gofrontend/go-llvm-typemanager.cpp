@@ -1299,6 +1299,20 @@ int64_t TypeManager::typeSize(Btype *btype) {
   return static_cast<int64_t>(uvalbytes);
 }
 
+uint64_t TypeManager::llvmTypeAllocSize(llvm::Type *t)
+{
+  return datalayout()->getTypeAllocSize(t);
+}
+
+uint64_t TypeManager::llvmTypeSize(llvm::Type *t)
+{
+  unsigned bits = datalayout()->getTypeSizeInBits(t);
+  if (bits == 1) // special case for 1-bit int
+    return 1;
+  assert((bits & 7) == 0);
+  return bits / 8;
+}
+
 // Return the alignment of a type.
 
 int64_t TypeManager::typeAlignment(Btype *btype) {
