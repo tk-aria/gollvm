@@ -59,6 +59,30 @@ bool IntegrityVisitor::shouldBeTracked(Bnode *child)
   return true;
 }
 
+// This helper routine is invoked in situations where the node
+// builder wants to "reparent" the children of a node, e.g. it has
+// a "foo" node with children X and Y, and it wants to convert it
+// into a "bar" node with the same children. Ex:
+//
+//     foo               bar
+//    .  .       =>     .   .
+//   .    .            .     .
+//  X      Y          X       Y
+//
+// In this situation we need to update "nparent_" to reflect the fact
+// that X and Y are no longer parented by foo. A complication can crop
+// up if sharing has already been established at the point where this
+// routine is called. For example, suppose that there is some other
+// node "baz" that has also installed "X" as a child:
+//
+//        baz    foo
+//       .  .   .   .
+//      .    . .     .
+//     W      X       Y
+//
+// If this situation arises, we need to preserve the existing nparent_
+// mapping, so as to be able to repair the sharing later on.
+
 void IntegrityVisitor::unsetParent(Bnode *child, Bnode *parent, unsigned slot)
 {
   if (! shouldBeTracked(child))
@@ -68,9 +92,8 @@ void IntegrityVisitor::unsetParent(Bnode *child, Bnode *parent, unsigned slot)
   parslot pps = it->second;
   Bnode *prevParent = pps.first;
   unsigned prevSlot = pps.second;
-  assert(prevParent == parent);
-  assert(prevSlot == slot);
-  nparent_.erase(it);
+  if (prevParent == parent || prevSlot == slot)
+    nparent_.erase(it);
 }
 
 void IntegrityVisitor::setParent(Bnode *child, Bnode *parent, unsigned slot)
