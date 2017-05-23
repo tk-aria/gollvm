@@ -57,6 +57,7 @@ Llvm_backend::Llvm_backend(llvm::LLVMContext &context,
     , exportDataStarted_(false)
     , exportDataFinalized_(false)
     , errorCount_(0u)
+    , compositeSizeThreshold_(8u) // TODO: adjust later to larger value
     , TLI_(nullptr)
     , builtinTable_(new BuiltinTable(typeManager(), false))
     , errorFunction_(nullptr)
@@ -500,15 +501,11 @@ Bexpression *Llvm_backend::nil_pointer_expression() {
   return zero_expression(uintptrt);
 }
 
-Bexpression *Llvm_backend::loadFromExpr(Bexpression *expr,
-                                        Btype *btype,
-                                        Location loc,
-                                        const std::string &tag)
+Bexpression *Llvm_backend::genLoad(Bexpression *expr,
+                                   Btype *btype,
+                                   Location loc,
+                                   const std::string &tag)
 {
-  std::string ldname(tag);
-  ldname += ".ld";
-  ldname = namegen(ldname);
-
   // If this is a load from a pointer flagged as being a circular
   // type, insert a conversion prior to the load so as to force
   // the value to the correct type. This is weird but necessary,
@@ -521,9 +518,26 @@ Bexpression *Llvm_backend::loadFromExpr(Bexpression *expr,
     space = convert_expression(pointer_type(tctyp), expr, loc);
     loadResultType = tctyp;
   }
-  llvm::Instruction *loadInst = new llvm::LoadInst(space->value(), ldname);
-  Bexpression *rval = nbuilder_.mkDeref(loadResultType, loadInst, space, loc);
-  rval->appendInstruction(loadInst);
+
+  llvm::PointerType *llpt =
+      llvm::cast<llvm::PointerType>(space->value()->getType());
+  llvm::Type *llrt = llpt->getElementType();
+
+  // If this type meets our criteria (composite/aggregate whose
+  // size is above a certain threshhold) then assume that the
+  // consumer will want an address (for memcpy) instead of a
+  // value.
+  Bexpression *rval = nullptr;
+  if (! useCopyForLoadStore(llrt)) {
+    std::string ldname(tag);
+    ldname += ".ld";
+    ldname = namegen(ldname);
+    llvm::Instruction *loadInst = new llvm::LoadInst(space->value(), ldname);
+    rval = nbuilder_.mkDeref(loadResultType, loadInst, space, loc);
+    rval->appendInstruction(loadInst);
+  } else {
+    rval = nbuilder_.mkDeref(loadResultType, space->value(), space, loc);
+  }
   return rval;
 }
 
@@ -551,7 +565,7 @@ Bexpression *Llvm_backend::indirect_expression(Btype *btype,
   }
 
   std::string tag(expr->tag().size() == 0 ? "deref" : expr->tag());
-  Bexpression *rval = loadFromExpr(expr, btype, location, tag);
+  Bexpression *rval = genLoad(expr, btype, location, tag);
   if (vc)
     rval->setVarExprPending(expr->varContext());
 
@@ -646,7 +660,7 @@ Bexpression *Llvm_backend::resolveVarContext(Bexpression *expr,
       return expr;
     }
     Btype *btype = expr->btype();
-    Bexpression *rval = loadFromExpr(expr, btype, expr->location(), expr->tag());
+    Bexpression *rval = genLoad(expr, btype, expr->location(), expr->tag());
     return rval;
   }
   return expr;
@@ -682,9 +696,8 @@ llvm::Value *Llvm_backend::genStore(BlockLIRBuilder *builder,
   if (srcVal->getType()->isVoidTy())
     return llvm::UndefValue::get(srcVal->getType());
 
-  // If the value we're storing has non-composite type,
-  // then issue a simple store instruction.
-  if (!srcType->type()->isAggregateType()) {
+  // Decide whether we want a simple store instruction or a memcpy.
+  if (! useCopyForLoadStore(srcType)) {
 
     if (srcVal->getType()->isPointerTy()) {
       llvm::PointerType *dstpt =
