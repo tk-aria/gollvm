@@ -19,29 +19,6 @@
 
 //......................................................................
 
-// Returns number of bytes needed to hold the data in an object of
-// this type. For example, typeSize() of "struct { float x; char c; }"
-// will be 5 bytes.
-
-static uint64_t typeSize(llvm::Type *t, TypeManager *tm)
-{
-  unsigned bits = tm->datalayout()->getTypeSizeInBits(t);
-  // special case for 1-bit int
-  if (bits == 1)
-    return 1;
-  assert((bits & 7) == 0);
-  return bits / 8;
-}
-
-// Returns the offset in bytes between successive objects of a
-// given type as stored in memory (for example, in an array). This
-// includes alignment padding. For example, allocSize() of
-// "struct { float x; char c; }" will be 8 bytes.
-static uint64_t allocSize(llvm::Type *t, TypeManager *tm)
-{
-  return tm->datalayout()->getTypeAllocSize(t);
-}
-
 // Given an LLVM type, classify it according to whether it would
 // need to be passed in an integer or SSE register (or if it is
 // some combination of entirely empty structs/arrays).
@@ -196,7 +173,7 @@ void EightByteInfo::addLeafTypes(Btype *bt,
   if (bat) {
     Btype *et = bat->elemType();
     for (unsigned elidx = 0; elidx < bat->nelSize(); ++elidx) {
-      unsigned eloff = elidx * allocSize(et->type(), tm());
+      unsigned eloff = elidx * tm()->llvmTypeAllocSize(et->type());
       addLeafTypes(et, offset + eloff, leaves);
     }
     return;
@@ -232,7 +209,7 @@ void EightByteInfo::addLeafTypes(Btype *bt,
 
 void EightByteInfo::explodeStruct(BStructType *bst)
 {
-  assert(allocSize(bst->type(), tm()) <= 16);
+  assert(tm()->llvmTypeAllocSize(bst->type()) <= 16);
 
   std::vector<typAndOffset> leafTypes;
   addLeafTypes(bst, 0, &leafTypes);
@@ -276,10 +253,10 @@ void EightByteInfo::explodeStruct(BStructType *bst)
 
 void EightByteInfo::explodeArray(BArrayType *bat)
 {
-  assert(allocSize(bat->type(), tm()) <= 16);
+  assert(tm()->llvmTypeAllocSize(bat->type()) <= 16);
   EightByteRegion *cur8 = nullptr;
   unsigned curOffset = 0;
-  unsigned elSize = typeSize(bat->elemType()->type(), tm());
+  unsigned elSize = tm()->llvmTypeSize(bat->elemType()->type());
   for (unsigned elidx = 0; elidx < bat->nelSize(); ++elidx) {
     unsigned offset = elidx * elSize;
     if (cur8 == nullptr || (offset >= 8 && curOffset < 8)) {
@@ -295,13 +272,13 @@ void EightByteInfo::explodeArray(BArrayType *bat)
 
 void EightByteInfo::incorporateScalar(Btype *bt)
 {
-  assert(allocSize(bt->type(), tm()) <= 8);
+  assert(tm()->llvmTypeAllocSize(bt->type()) <= 8);
   EightByteRegion ebr;
   ebr.types.push_back(bt->type());
   ebr.offsets.push_back(0u);
   ebr.abiDirectType = bt->type();
   BIntegerType *bit = bt->castToBIntegerType();
-  if (bit && typeSize(bit->type(), tm()) < 4)
+  if (bit && tm()->llvmTypeSize(bit->type()) < 4)
     ebr.attr = (bit->isUnsigned() ? AttrZext : AttrSext);
   ebrs_.push_back(ebr);
 }
@@ -339,7 +316,7 @@ void EightByteInfo::determineABITypes()
     } else {
       unsigned nel = ebr.offsets.size();
       unsigned bytes = ebr.offsets[nel-1] - ebr.offsets[0] +
-          typeSize(ebr.types[nel-1], tm());
+          tm()->llvmTypeSize(ebr.types[nel-1]);
       assert(bytes && bytes <= 8);
       ebr.abiDirectType = tm()->llvmArbitraryIntegerType(bytes);
     }
@@ -529,7 +506,7 @@ void CABIOracle::osdump(llvm::raw_ostream &os)
 
 CABIParamDisp CABIOracle::classifyArgType(llvm::Type *type)
 {
-  uint64_t sz = allocSize(type, tm());
+  uint64_t sz = tm()->llvmTypeAllocSize(type);
   return (sz == 0 ? ParmIgnore : ((sz <= 16) ? ParmDirect : ParmIndirect));
 }
 
