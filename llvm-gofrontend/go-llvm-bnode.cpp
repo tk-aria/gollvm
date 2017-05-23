@@ -295,10 +295,17 @@ LabelId Bnode::label() const
   return u.label;
 }
 
+Operator Bnode::op() const
+{
+  assert(flavor() == N_UnaryOp || flavor() == N_BinaryOp);
+  return u.op;
+}
+
 //......................................................................
 
 BnodeBuilder::BnodeBuilder(Llvm_backend *be)
-    : integrityVisitor_(new IntegrityVisitor(be, TreeIntegCtl(DumpPointers, IgnoreVarExprs, DontRepairSharing)))
+    : integrityVisitor_(new IntegrityVisitor(be, TreeIntegCtl(DumpPointers, IgnoreVarExprs, DetectRepairableSharing, IncrementalMode)))
+    , checkIntegrity_(true)
 {
 }
 
@@ -334,9 +341,9 @@ void BnodeBuilder::freeExpr(Bexpression *expr)
 
 void BnodeBuilder::checkTreeInteg(Bnode *node)
 {
-  for (unsigned idx = 0; idx < node->kids_.size(); ++idx) {
-    Bnode *kid = node->kids_[idx];
-    integrityVisitor_->setParent(kid, node, idx);
+  if (checkIntegrity_ && !integrityVisitor_->examine(node)) {
+    std::cerr << integrityVisitor_->msg();
+    assert(false);
   }
 }
 
@@ -740,8 +747,8 @@ BnodeBuilder::cloneSub(Bexpression *expr,
     newChildren.push_back(clc);
   }
   Bexpression *res = new Bexpression(*expr);
-  archive(res);
   res->kids_ = newChildren;
+  archive(res);
 
   llvm::Value *iv = expr->value();
   llvm::Value *newv = nullptr;

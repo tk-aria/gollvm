@@ -45,7 +45,8 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrity1) {
   for (auto inst : badd1->instructions())
     b4->appendInstruction(inst);
 
-  TreeIntegCtl control(NoDumpPointers, CheckVarExprs, DontRepairSharing);
+  TreeIntegCtl control(NoDumpPointers, CheckVarExprs,
+                       DontDetectRepairableSharing, BatchMode);
   std::pair<bool, std::string> result =
       be->checkTreeIntegrity(h.block(), control);
   EXPECT_FALSE(result.first);
@@ -77,7 +78,8 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrity2) {
   Bstatement *es2 = be->expression_statement(func, ve);
   addStmtToBlock(be.get(), block, es2);
 
-  TreeIntegCtl control(NoDumpPointers, CheckVarExprs, DontRepairSharing);
+  TreeIntegCtl control(NoDumpPointers, CheckVarExprs,
+                       DontDetectRepairableSharing, BatchMode);
   std::pair<bool, std::string> result =
       be->checkTreeIntegrity(block, control);
   EXPECT_FALSE(result.first);
@@ -107,7 +109,8 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrity3) {
   Bblock *block = mkBlockFromStmt(be.get(), func, es);
   addStmtToBlock(be.get(), block, es);
 
-  TreeIntegCtl control(NoDumpPointers, CheckVarExprs, DontRepairSharing);
+  TreeIntegCtl control(NoDumpPointers, CheckVarExprs,
+                       DontDetectRepairableSharing, BatchMode);
   std::pair<bool, std::string> result =
       be->checkTreeIntegrity(block, control);
   EXPECT_FALSE(result.first);

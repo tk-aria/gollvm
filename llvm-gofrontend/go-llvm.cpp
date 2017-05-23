@@ -176,7 +176,8 @@ void Llvm_backend::dumpExpr(Bexpression *e)
 {
   if (e) {
     e->srcDump(linemap_);
-    TreeIntegCtl ctl(DumpPointers, IgnoreVarExprs, DontRepairSharing);
+    TreeIntegCtl ctl(DumpPointers, IgnoreVarExprs,
+                     DontDetectRepairableSharing, BatchMode);
     auto p = checkTreeIntegrity(e, ctl);
     if (p.first)
       std::cerr << p.second;
@@ -187,7 +188,8 @@ void Llvm_backend::dumpStmt(Bstatement *s)
 {
   if (s) {
     s->srcDump(linemap_);
-    TreeIntegCtl ctl(DumpPointers, IgnoreVarExprs, DontRepairSharing);
+    TreeIntegCtl ctl(DumpPointers, IgnoreVarExprs,
+                     DontDetectRepairableSharing, BatchMode);
     auto p = checkTreeIntegrity(s, ctl);
     if (p.first)
       std::cerr << p.second;
@@ -212,7 +214,8 @@ Llvm_backend::checkTreeIntegrity(Bnode *n, TreeIntegCtl control)
 void Llvm_backend::enforceTreeIntegrity(Bnode *n)
 {
   Llvm_backend *be = const_cast<Llvm_backend *>(this);
-  TreeIntegCtl control(DumpPointers, IgnoreVarExprs, RepairSharing);
+  TreeIntegCtl control(DumpPointers, IgnoreVarExprs,
+                       DetectRepairableSharing, BatchMode);
   IntegrityVisitor iv(be, control);
   bool res = iv.examine(n);
   if (!res && checkIntegrity_) {

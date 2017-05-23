@@ -27,7 +27,8 @@ class BnodeBuilder;
 
 enum CkTreePtrDisp { DumpPointers, NoDumpPointers };
 enum CkTreeVarDisp { CheckVarExprs, IgnoreVarExprs };
-enum CkTreeRepairDisp { RepairSharing, DontRepairSharing };
+enum CkTreeRepairDisp { DetectRepairableSharing, DontDetectRepairableSharing };
+enum CkTreeVisitDisp { BatchMode, IncrementalMode };
 
 // Options/controls for the tree integrity checker.
 
@@ -35,12 +36,16 @@ struct TreeIntegCtl {
   CkTreePtrDisp ptrDisp;
   CkTreeVarDisp varDisp;
   CkTreeRepairDisp repairDisp;
+  CkTreeVisitDisp visitDisp;
   TreeIntegCtl()
       : ptrDisp(DumpPointers),
         varDisp(CheckVarExprs),
-        repairDisp(DontRepairSharing) { }
-  TreeIntegCtl(CkTreePtrDisp ptrs, CkTreeVarDisp vars, CkTreeRepairDisp rep)
-      : ptrDisp(ptrs), varDisp(vars), repairDisp(rep) { }
+        repairDisp(DontDetectRepairableSharing),
+        visitDisp(BatchMode) { }
+  TreeIntegCtl(CkTreePtrDisp ptrs, CkTreeVarDisp vars,
+               CkTreeRepairDisp repair, CkTreeVisitDisp visit)
+      : ptrDisp(ptrs), varDisp(vars),
+        repairDisp(repair), visitDisp(visit) { }
 };
 
 // This visitor class detects malformed IR trees, specifically cases
@@ -90,8 +95,23 @@ class IntegrityVisitor {
       : be_(be), ss_(str_), control_(control),
         instShareCount_(0), stmtShareCount_(0), exprShareCount_(0) { }
 
+  // Visits the node tree "n", looking for any shared nodes or
+  // instructions. Returns TRUE if there is no sharing (or if all
+  // sharing instances are repairable and repair is on), or FALSE if
+  // there is unrepairable sharing. Note that if the visit mode (in
+  // 'control' options above) is set to BatchMode, then the visitor
+  // will walk the entire subtree rooted at "n" and perform repairs
+  // after the way. Otherwise (checkers is in incremental mode), only
+  // the chidren of "n" are visited, and not repairs are performed.
   bool examine(Bnode *n);
-  std::string msg() { return ss_.str(); }
+
+  // Returns a message describing the nature of the node sharing (intended
+  // for a developer, not a compiler user).
+  std::string msg() { auto rv = ss_.str(); str_ = ""; return rv; }
+
+  // Tell the IntegrityVisitor to forget about the specified parent/child
+  // relationship (used when node child is deleted or repurposed).
+  void unsetParent(Bnode *child, Bnode *parent, unsigned slot);
 
  private:
   Llvm_backend *be_;
@@ -111,7 +131,6 @@ class IntegrityVisitor {
   void visit(Bnode *n);
   bool repairableSubTree(Bexpression *root);
   bool shouldBeTracked(Bnode *child);
-  void unsetParent(Bnode *child, Bnode *parent, unsigned slot);
   void setParent(Bnode *child, Bnode *parent, unsigned slot);
   void setParent(llvm::Instruction *inst, Bexpression *par, unsigned slot);
   void dumpTag(const char *tag, void *ptr);
@@ -120,6 +139,7 @@ class IntegrityVisitor {
   CkTreePtrDisp includePointers() const { return control_.ptrDisp; }
   CkTreeVarDisp includeVarExprs() const { return control_.varDisp; }
   CkTreeRepairDisp doRepairs() const { return control_.repairDisp; }
+  CkTreeVisitDisp visitMode() const { return control_.visitDisp; }
 
   friend BnodeBuilder;
 };
