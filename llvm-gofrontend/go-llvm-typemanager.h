@@ -125,6 +125,19 @@ class TypeManager {
   llvm::Type *landingPadExceptionType();
   llvm::FunctionType *personalityFunctionType();
 
+  // Size calculation methods for LLVM types.
+
+  // Returns the offset in bytes between successive objects of a
+  // given type as stored in memory (for example, in an array). This
+  // includes alignment padding. For example, llvmTypeAllocSize() of
+  // "struct { float x; char c; }" will be 8 bytes.
+  uint64_t llvmTypeAllocSize(llvm::Type *t);
+
+  // Returns number of bytes needed to hold the data in an object of
+  // this type. For example, llvmTypeSize() of "struct { float x; char c; }"
+  // will be 5 bytes.
+  uint64_t llvmTypeSize(llvm::Type *t);
+
   // Context + address space.
   llvm::LLVMContext &context() const { return context_; }
   unsigned addressSpace() const { return addressSpace_; }
