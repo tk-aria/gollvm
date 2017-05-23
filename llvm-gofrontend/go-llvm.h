@@ -468,11 +468,11 @@ public:
   // Helper to fix up epilog block for function (add return if needed)
   void fixupEpilogBlock(Bfunction *bfunction, llvm::BasicBlock *epilog);
 
-  // Load-generation helper
-  Bexpression *loadFromExpr(Bexpression *space,
-                            Btype *resultTyp,
-                            Location loc,
-                            const std::string &tag);
+  // Load-generation helper.
+  Bexpression *genLoad(Bexpression *space,
+                       Btype *resultTyp,
+                       Location loc,
+                       const std::string &tag);
 
   // Store generation helper. Creates store or memcpy call.
   Bexpression *genStore(Bfunction *func,
@@ -480,13 +480,35 @@ public:
                         Bexpression *dstExpr,
                         Location location);
 
-
   // Lower-level version of the above
   llvm::Value *genStore(BlockLIRBuilder *builder,
                         Btype *srcType,
                         llvm::Type *dstType,
                         llvm::Value *srcValue,
                         llvm::Value *dstLoc);
+
+  // Returns TRUE if loads/stores to/from the specified type should be
+  // carried out via memcpy as opposed to concrete load/store
+  // instructions.
+  bool useCopyForLoadStore(Btype *typ) {
+    assert(typ);
+    assert(!typ->isPlaceholder());
+    if (! typ->type()->isAggregateType())
+      return false;
+    if (typeSize(typ) > compositeSizeThreshold_)
+      return true;
+    return false;
+  }
+
+  // Similar to above but operates on LLVM type.
+  bool useCopyForLoadStore(llvm::Type *typ) {
+    assert(typ);
+    if (! typ->isAggregateType())
+      return false;
+    if (llvmTypeAllocSize(typ) > compositeSizeThreshold_)
+      return true;
+    return false;
+  }
 
   // Materialize a composite constant into a variable
   Bvariable *genVarForConstant(llvm::Constant *conval, Btype *type);
@@ -677,6 +699,12 @@ private:
   // meta-data (the idea being that there is no point going through
   // that process if there were errors).
   unsigned errorCount_;
+
+  // Composite value load/store size threshold. Tells the bridge
+  // that for any composite value whose size in bytes is greater than X,
+  // emit memcpy operations for loads and stores as opposed to
+  // emitting direct load/store instructions.
+  unsigned compositeSizeThreshold_;
 
   // Target library info oracle
   llvm::TargetLibraryInfo *TLI_;
