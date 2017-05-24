@@ -70,6 +70,24 @@
       "revId": "5ff0e07cf8b93a88c85e88036afc86b2893b8285",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cab3d827_60e04bc7",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-05-24T12:03:18Z",
+      "side": 1,
+      "message": "That\u0027s a good idea, will do.",
+      "parentUuid": "0480c327_cd6d38f9",
+      "revId": "5ff0e07cf8b93a88c85e88036afc86b2893b8285",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
