@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "6d8b21f3_4ec7af4d",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-05-24T16:08:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "13b6a665_1c17b59e",
+      "range": {
+        "startLine": 9,
+        "startChar": 23,
+        "endLine": 9,
+        "endChar": 26
+      },
+      "revId": "602e4873fed81626bc6a730373a6491598d363ea",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "a1301d1d_7f0faab1",
         "filename": "llvm-gofrontend/go-llvm-bfunction.cpp",
         "patchSetId": 1
@@ -48,6 +72,30 @@
     },
     {
       "key": {
+        "uuid": "a01f6e66_874ed1b1",
+        "filename": "llvm-gofrontend/go-llvm-bfunction.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 268,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-05-24T16:08:28Z",
+      "side": 1,
+      "message": "Oops. I was thinking \"bad\" \u003d\u003d B_lock Ad_ress but you are right it\u0027s not quite working that way. I will fix it up.",
+      "parentUuid": "a1301d1d_7f0faab1",
+      "range": {
+        "startLine": 268,
+        "startChar": 22,
+        "endLine": 268,
+        "endChar": 25
+      },
+      "revId": "602e4873fed81626bc6a730373a6491598d363ea",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "d1da8a86_9e6ed789",
         "filename": "llvm-gofrontend/go-llvm.cpp",
         "patchSetId": 1
@@ -59,6 +107,24 @@
       "writtenOn": "2017-05-24T15:56:51Z",
       "side": 1,
       "message": "Why is it pointer to bool? I guess it doesn\u0027t really matter.",
+      "revId": "602e4873fed81626bc6a730373a6491598d363ea",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "01f2dbbc_d236a0be",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2957,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-05-24T16:08:28Z",
+      "side": 1,
+      "message": "I\u0027ll add a comment -- it is a bit confusing. The reason I\u0027m choosing pointer to bool is that it\u0027s what you get when you ask for the llvm::Type of an llvm::BlockAddress value.",
+      "parentUuid": "d1da8a86_9e6ed789",
       "revId": "602e4873fed81626bc6a730373a6491598d363ea",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
