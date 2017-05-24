@@ -34,6 +34,24 @@
       "revId": "5ff0e07cf8b93a88c85e88036afc86b2893b8285",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5a1c1f7a_512b03e7",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2017-05-24T00:47:44Z",
+      "side": 1,
+      "message": "OK.",
+      "parentUuid": "f002dfda_b95196f3",
+      "revId": "5ff0e07cf8b93a88c85e88036afc86b2893b8285",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
