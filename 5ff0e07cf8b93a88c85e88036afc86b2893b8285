@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "27b63ab4_273a4f7e",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2017-05-24T00:39:56Z",
+      "side": 1,
+      "message": "Any reason for such a low value?  The SSE registers can easily copy a 16 byte value.",
+      "revId": "5ff0e07cf8b93a88c85e88036afc86b2893b8285",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
