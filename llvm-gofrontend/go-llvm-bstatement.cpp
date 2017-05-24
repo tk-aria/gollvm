@@ -158,14 +158,21 @@ Bstatement *Bstatement::getSwitchStmtNthStmt(unsigned idx)
   return st;
 }
 
-LabelId Bstatement::getGotoStmtTargetLabel()
+Blabel *Bstatement::getGotoStmtTargetLabel()
 {
   return label();
 }
 
-LabelId Bstatement::getLabelStmtDefinedLabel()
+Blabel *Bstatement::getLabelStmtDefinedLabel()
 {
   return label();
+}
+
+void Blabel::setPlaceholder(llvm::Value *ph)
+{
+  assert(!placeholder_);
+  assert(ph);
+  placeholder_ = ph;
 }
 
 Bblock::Bblock(Bfunction *func,

@@ -97,11 +97,11 @@ class Bstatement : public Bnode {
 
   // If this is a goto statement (flavor N_GotoStmt), return
   // the target label for the goto.
-  LabelId getGotoStmtTargetLabel();
+  Blabel *getGotoStmtTargetLabel();
 
   // If this is a label statement (flavor N_LabelStmt), return
-  // the ID of the label defined by this stmt.
-  LabelId getLabelStmtDefinedLabel();
+  // the label defined by this stmt.
+  Blabel *getLabelStmtDefinedLabel();
 
   // Generic hook for collecting all statements that are children of
   // this statement. Used when walking statements to assign
@@ -130,13 +130,16 @@ class Blabel {
 public:
   Blabel(const Bfunction *function, LabelId lab, Location loc)
       : function_(const_cast<Bfunction *>(function)),
-        lab_(lab), location_(loc) {}
+        placeholder_(nullptr), lab_(lab), location_(loc) {}
   LabelId label() const { return lab_; }
   Bfunction *function() { return function_; }
   Location location() const { return location_; }
+  llvm::Value *placeholder() const { return placeholder_; }
+  void setPlaceholder(llvm::Value *ph);
 
 private:
   Bfunction *function_;
+  llvm::Value *placeholder_;
   LabelId lab_;
   Location location_;
 };

@@ -492,13 +492,11 @@ Bexpression *Llvm_backend::error_expression()
   return errorExpression();
 }
 
-Bexpression *Llvm_backend::nil_pointer_expression() {
-
+Bexpression *Llvm_backend::nil_pointer_expression()
+{
   // What type should we assign a NIL pointer expression? This
   // is something of a head-scratcher. For now use uintptr.
-  llvm::Type *pti = llvm::PointerType::get(llvmIntegerType(), addressSpace_);
-  Btype *uintptrt = makeAuxType(pti);
-  return zero_expression(uintptrt);
+  return zero_expression(pointerType(uintPtrType()));
 }
 
 Bexpression *Llvm_backend::genLoad(Bexpression *expr,
@@ -2942,8 +2940,22 @@ Bstatement *Llvm_backend::goto_statement(Blabel *label, Location location)
 
 // Get the address of a label.
 
-Bexpression *Llvm_backend::label_address(Blabel *label, Location location) {
-  assert(false);
+Bexpression *Llvm_backend::label_address(Blabel *label, Location location)
+{
+  assert(label);
+
+  // Reuse existing placeholder (if address already taken for this label), or
+  // create new placeholder if needed.
+  llvm::Value *pval = nullptr;
+  if (label->placeholder()) {
+    pval = label->placeholder();
+  } else {
+    Bfunction *fcn = label->function();
+    pval = fcn->createLabelAddressPlaceholder(boolType());
+    label->setPlaceholder(pval);
+  }
+  Btype *ppt = pointerType(boolType());
+  return nbuilder_.mkLabelAddress(ppt, pval, label, location);
 }
 
 Bfunction *Llvm_backend::error_function()
@@ -3077,7 +3089,7 @@ public:
  private:
   llvm::BasicBlock *mkLLVMBlock(const std::string &name,
                             unsigned expl = Llvm_backend::ChooseVer);
-  llvm::BasicBlock *getBlockForLabel(LabelId lab);
+  llvm::BasicBlock *getBlockForLabel(Blabel *lab);
   llvm::BasicBlock *walkExpr(llvm::BasicBlock *curblock, Bexpression *expr);
   std::pair<llvm::Instruction*, llvm::BasicBlock *>
   rewriteToMayThrowCall(llvm::CallInst *call,
@@ -3140,12 +3152,12 @@ llvm::BasicBlock *GenBlocks::mkLLVMBlock(const std::string &name,
   return llvm::BasicBlock::Create(context_, tname, func);
 }
 
-llvm::BasicBlock *GenBlocks::getBlockForLabel(LabelId lab) {
-  auto it = labelmap_.find(lab);
+llvm::BasicBlock *GenBlocks::getBlockForLabel(Blabel *lab) {
+  auto it = labelmap_.find(lab->label());
   if (it != labelmap_.end())
     return it->second;
-  llvm::BasicBlock *bb = mkLLVMBlock("label", lab);
-  labelmap_[lab] = bb;
+  llvm::BasicBlock *bb = mkLLVMBlock("label", lab->label());
+  labelmap_[lab->label()] = bb;
   return bb;
 }
 
@@ -3600,8 +3612,10 @@ llvm::BasicBlock *GenBlocks::walk(Bnode *node,
       break;
     }
     case N_LabelStmt: {
-      llvm::BasicBlock *lbb =
-          getBlockForLabel(stmt->getLabelStmtDefinedLabel());
+      Blabel *label = stmt->getLabelStmtDefinedLabel();
+      llvm::BasicBlock *lbb = getBlockForLabel(label);
+      if (label->placeholder())
+        function()->replaceLabelAddressPlaceholder(label->placeholder(), lbb);
       if (curblock)
         llvm::BranchInst::Create(lbb, curblock);
       curblock = lbb;
