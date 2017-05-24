@@ -743,7 +743,7 @@ Bexpression *Llvm_backend::genStore(Bfunction *func,
 {
   BlockLIRBuilder builder(func->function(), this);
 
-  Varexpr_context ctx = srcExpr->varContextDisp();
+  Varexpr_context ctx = varContextDisp(srcExpr);
 
   // Resolve pending var exprs and/or composites
   Bexpression *valexp = resolve(srcExpr, func, ctx);
@@ -790,7 +790,7 @@ Bexpression *Llvm_backend::genArrayInit(llvm::ArrayType *llat,
     llvm::Value *gep = builder.CreateGEP(llat, storage, elems, tag);
 
     // Resolve element value if needed
-    Varexpr_context ctx = aexprs[eidx]->varContextDisp();
+    Varexpr_context ctx = varContextDisp(aexprs[eidx]);
     Bexpression *valexp = resolve(aexprs[eidx], bfunc, ctx);
 
     // Store field value into GEP
@@ -825,7 +825,7 @@ Bexpression *Llvm_backend::genStructInit(llvm::StructType *llst,
     Bexpression *fieldValExpr = fexprs[fidx];
     assert(fieldValExpr);
 
-    Varexpr_context ctx = fieldValExpr->varContextDisp();
+    Varexpr_context ctx = varContextDisp(fieldValExpr);
     Bexpression *valexp = resolve(fieldValExpr, bfunc, ctx);
 
     // Create GEP
@@ -882,6 +882,13 @@ Bexpression *Llvm_backend::resolveCompositeInit(Bexpression *expr,
     tvar->setInitializerExpr(rval);
   }
   return rval;
+}
+
+Varexpr_context Llvm_backend::varContextDisp(Bexpression *varexp)
+{
+  if (useCopyForLoadStore(varexp->btype()))
+    return VE_lvalue;
+  return VE_rvalue;
 }
 
 // An expression that references a variable.
@@ -1955,7 +1962,7 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
     }
 
     // Resolve argument
-    Varexpr_context ctx = fn_args[idx]->varContextDisp();
+    Varexpr_context ctx = varContextDisp(fn_args[idx]);
     if (paramInfo.abiTypes().size() == 2)
       ctx = VE_lvalue;
     Bexpression *resarg = resolve(fn_args[idx], state.callerFcn, ctx);
@@ -2388,7 +2395,7 @@ Llvm_backend::return_statement(Bfunction *bfunction,
   // Resolve arguments
   std::vector<Bexpression *> resolvedVals;
   for (auto &val : vals)
-    resolvedVals.push_back(resolve(val, bfunction, val->varContextDisp()));
+    resolvedVals.push_back(resolve(val, bfunction, varContextDisp(val)));
 
   // Collect up the return value
   Bexpression *toret = nullptr;
