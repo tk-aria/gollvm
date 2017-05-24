@@ -70,6 +70,15 @@ public:
                                  Btype *btype,
                                  Location location);
 
+  // Create a label address placeholder. This is a temporary construct
+  // that we can use to record the use of a label address.
+  llvm::Instruction *createLabelAddressPlaceholder(Btype *typ);
+
+  // Replace all uses of the specified label address placeholder with
+  // the specified real value.
+  void replaceLabelAddressPlaceholder(llvm::Value *placeholder,
+                                      llvm::BasicBlock *bbForLabel);
+
   // Record a new Bblock for this function.
   void addBlock(Bblock *block) { blocks_.push_back(block); }
 
@@ -149,6 +158,10 @@ public:
   // This includes all alloca's created for the function, including
   // local variables, temp vars, and spill locations for formal params.
   std::vector<llvm::Instruction *> allocas_;
+
+  // Label address placeholders. To be deleted prior to finalization
+  // of control flow for the function.
+  std::set<llvm::Instruction *> labelAddressPlaceholders_;
 
   // List of local variables created for the function.
   std::vector<Bvariable *> localVariables_;

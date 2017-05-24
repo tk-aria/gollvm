@@ -55,6 +55,7 @@ Bfunction::~Bfunction()
     delete lab;
   for (auto &kv : valueVarMap_)
     delete kv.second;
+  assert(labelAddressPlaceholders_.empty());
 }
 
 std::string Bfunction::namegen(const std::string &tag)
@@ -236,6 +237,40 @@ llvm::Value *Bfunction::createTemporary(Btype *btype, const std::string &tag)
 llvm::Value *Bfunction::createTemporary(llvm::Type *typ, const std::string &tag)
 {
   return addAlloca(typ, tag);
+}
+
+// This implementation uses an alloca instruction as a placeholder
+// for a block address.
+
+llvm::Instruction *
+Bfunction::createLabelAddressPlaceholder(Btype *btype)
+{
+  std::string name(namegen("labeladdrplaceholder"));
+  llvm::Instruction *inst = new llvm::AllocaInst(btype->type(), 0);
+  labelAddressPlaceholders_.insert(inst);
+  return inst;
+}
+
+// Called at the point where we have a concrete basic block for
+// a Blabel that has had its address taken. Replaces uses of the
+// placeholder instruction with the real thing.
+
+void Bfunction::replaceLabelAddressPlaceholder(llvm::Value *placeholder,
+                                               llvm::BasicBlock *bbForLabel)
+{
+  // Locate the PH inst and remove it from the tracking set.
+  llvm::Instruction *phinst = llvm::cast<llvm::Instruction>(placeholder);
+  auto it = labelAddressPlaceholders_.find(phinst);
+  assert(it != labelAddressPlaceholders_.end());
+  labelAddressPlaceholders_.erase(it);
+
+  // Create real block address and replace uses of the PH inst with it.
+  llvm::BlockAddress *blockad =
+      llvm::BlockAddress::get(function(), bbForLabel);
+  phinst->replaceAllUsesWith(blockad);
+
+  // Placeholder inst no longer needed.
+  phinst->deleteValue();
 }
 
 std::vector<Bvariable*> Bfunction::getParameterVars()
