@@ -145,6 +145,10 @@ class TypeManager {
   // Go string type
   Btype *stringType() const { return stringType_; }
 
+  // Go uintptr type. The FE manufactures this on its own, but there
+  // are places where we need to materialize it in the bridge as well.
+  Btype *uintPtrType() const { return uintPtrType_; }
+
   // LLVM type creation helpers
   llvm::Type *makeLLVMFloatType(int bits);
   llvm::Type *makeLLVMTwoElementStructType(llvm::Type *f1, llvm::Type *f2);
@@ -347,6 +351,7 @@ class TypeManager {
   Btype *complexDoubleType_;
   Btype *errorType_;
   Btype *stringType_;
+  Btype *uintPtrType_;
   llvm::Type *llvmVoidType_;
   llvm::Type *llvmBoolType_;
   llvm::Type *llvmPtrType_;

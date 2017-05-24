@@ -43,6 +43,7 @@ static BnodePropVals BnodeProperties[] = {
   /* N_Const */       {  "const", 0, IsExpr },
   /* N_Var */         {  "var", 0, IsExpr },
   /* N_FcnAddress */  {  "fcn", 0, IsExpr },
+  /* N_LabelAddress */{  "labelad", 0, IsExpr },
   /* N_Conversion */  {  "conv", 1, IsExpr },
   /* N_Deref */       {  "deref", 1, IsExpr },
   /* N_Address */     {  "addr", 1, IsExpr },
@@ -211,6 +212,11 @@ void Bnode::osdump(llvm::raw_ostream &os, unsigned ilevel,
       }
       break;
     }
+    case N_LabelAddress: {
+      assert(expr);
+      os << "label_addr " << u.label->label();
+      break;
+    }
     case N_Var: {
       os << "'" << u.var->name() << "' type: ";
       u.var->btype()->osdump(os, 0);
@@ -240,7 +246,7 @@ void Bnode::osdump(llvm::raw_ostream &os, unsigned ilevel,
     }
     case N_LabelStmt:
     case N_GotoStmt: {
-      os << "label " << u.label;
+      os << "label " << u.label->label();
       break;
     }
     default: break;
@@ -289,9 +295,10 @@ void Bnode::removeAllChildren()
   kids_.clear();
 }
 
-LabelId Bnode::label() const
+Blabel *Bnode::label() const
 {
-  assert(flavor() == N_LabelStmt || flavor() == N_GotoStmt);
+  assert(flavor() == N_LabelStmt || flavor() == N_GotoStmt ||
+         flavor() == N_LabelAddress);
   return u.label;
 }
 
@@ -501,6 +508,17 @@ Bexpression *BnodeBuilder::mkFcnAddress(Btype *typ, llvm::Value *val,
   return archive(rval);
 }
 
+Bexpression *BnodeBuilder::mkLabelAddress(Btype *typ,
+                                          llvm::Value *val,
+                                          Blabel *label,
+                                          Location loc)
+{
+  std::vector<Bnode *> kids;
+  Bexpression *rval = new Bexpression(N_LabelAddress, kids, val, typ, loc);
+  rval->u.label = label;
+  return archive(rval);
+}
+
 Bexpression *BnodeBuilder::mkDeref(Btype *typ, llvm::Value *val,
                                    Bexpression *src, Location loc)
 {
@@ -630,7 +648,7 @@ Bstatement *BnodeBuilder::mkLabelDefStmt(Bfunction *func,
 {
   std::vector<Bnode *> kids;
   Bstatement *rval = new Bstatement(N_LabelStmt, func, kids, loc);
-  rval->u.label = label->label();
+  rval->u.label = label;
   return archive(rval);
 }
 
@@ -640,7 +658,7 @@ Bstatement *BnodeBuilder::mkGotoStmt(Bfunction *func,
 {
   std::vector<Bnode *> kids;
   Bstatement *rval = new Bstatement(N_GotoStmt, func, kids, loc);
-  rval->u.label = label->label();
+  rval->u.label = label;
   return archive(rval);
 }
 

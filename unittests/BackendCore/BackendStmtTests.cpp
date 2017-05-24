@@ -150,6 +150,54 @@ TEST(BackendStmtTests, TestLabelGotoStmts) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
+TEST(BackendStmtTests, TestLabelAddressExpression) {
+
+  FcnTestHarness h;
+  Llvm_backend *be = h.be();
+  BFunctionType *befty = mkFuncTyp(be, L_END);
+  Bfunction *func = h.mkFunction("foo", befty);
+  Btype *bu8t = be->integer_type(true, 8);
+  Bvariable *loc1 = h.mkLocal("loc1", bu8t);
+  Btype *bpvt = be->pointer_type(be->void_type());
+  BFunctionType *befty2 = mkFuncTyp(be, L_PARM, bpvt, L_END);
+  Bfunction *f2 = mkFuncFromType(be, "bar", befty2);
+
+  // Create a label and take it's address, then pass the
+  // value in question in a call to the function "bar".
+  Blabel *lab1 = be->label(func, "retaddr", h.newloc());
+  Bexpression *labadex = be->label_address(lab1, h.newloc());
+  Bexpression *fn2ex = be->function_code_expression(f2, h.loc());
+  std::vector<Bexpression *> args;
+  args.push_back(labadex);
+  Bexpression *call = be->call_expression(func, fn2ex, args, nullptr, h.loc());
+  h.mkExprStmt(call);
+
+  // Now define the label, throw a statement in it.
+  Bstatement *ldef = be->label_definition_statement(lab1);
+  h.addStmt(ldef);
+  h.mkAssign(be->var_expression(loc1, VE_lvalue, h.loc()),
+             be->zero_expression(bu8t));
+
+  bool broken = h.finish(StripDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+
+  const char *exp = R"RAW_RESULT(
+    define void @foo(i8* nest %nest.0) #0 {
+    entry:
+      %loc1 = alloca i8
+      store i8 0, i8* %loc1
+      call void @bar(i8* nest undef, i8* blockaddress(@foo, %label.0))
+      br label %label.0
+    label.0:                                          ; preds = %entry
+      store i8 0, i8* %loc1
+      ret void
+    }
+    )RAW_RESULT";
+
+  bool isOK = h.expectValue(func->function(), exp);
+  EXPECT_TRUE(isOK && "Function does not have expected contents");
+}
+
 TEST(BackendStmtTests, TestIfStmt) {
   FcnTestHarness h("foo");
   Llvm_backend *be = h.be();

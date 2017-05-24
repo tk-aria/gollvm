@@ -35,6 +35,7 @@ TypeManager::TypeManager(llvm::LLVMContext &context, llvm::CallingConv::ID conv)
     , complexDoubleType_(nullptr)
     , errorType_(nullptr)
     , stringType_(nullptr)
+    , uintPtrType_(nullptr)
     , llvmVoidType_(nullptr)
     , llvmBoolType_(nullptr)
     , llvmPtrType_(nullptr)
@@ -102,6 +103,7 @@ void TypeManager::initializeTypeManager(Bexpression *errorExpression,
   llvmIntegerType_ =
       llvm::IntegerType::get(context_, datalayout_->getPointerSizeInBits());
   llvmSizeType_ = llvmIntegerType_;
+  uintPtrType_ = makeAuxType(llvmIntegerType_);
 }
 
 // Used for creation of intermediate ABI types, not used by FE

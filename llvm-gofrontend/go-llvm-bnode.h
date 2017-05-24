@@ -55,6 +55,7 @@ enum NodeFlavor {
   N_Const=N_FirstExpr,
   N_Var,
   N_FcnAddress,
+  N_LabelAddress,
   N_Conversion,
   N_Deref,
   N_Address,
@@ -106,7 +107,7 @@ class Bnode {
   Location location() const { return location_; }
   unsigned id() const { return id_; }
   const char *flavstr() const;
-  LabelId label() const;
+  Blabel *label() const;
   Operator op() const; // for unary and binary op nodes
 
   // debugging
@@ -162,7 +163,7 @@ class Bnode {
     Bvariable *var;
     Bfunction *func; // filled in only for fcn constants
     SwitchDescriptor *swcases;
-    LabelId label;
+    Blabel *label;
     Operator op;
     unsigned fieldIndex;
   } u;
@@ -204,6 +205,8 @@ class BnodeBuilder {
                          Bexpression *src, Location loc);
   Bexpression *mkFcnAddress(Btype *typ, llvm::Value *val,
                             Bfunction *func, Location loc);
+  Bexpression *mkLabelAddress(Btype *typ, llvm::Value *val,
+                              Blabel *label, Location loc);
   Bexpression *mkUnaryOp(Operator op, Btype *typ, llvm::Value *val,
                          Bexpression *src, Location loc);
   Bexpression *mkBinaryOp(Operator op, Btype *typ, llvm::Value *val,
