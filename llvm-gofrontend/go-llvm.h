@@ -495,9 +495,9 @@ public:
     assert(!typ->isPlaceholder());
     if (! typ->type()->isAggregateType())
       return false;
-    if (typeSize(typ) > compositeSizeThreshold_)
-      return true;
-    return false;
+    //if (typeSize(typ) <= compositeSizeThreshold_)
+    //  return false;
+    return true;
   }
 
   // Similar to above but operates on LLVM type.
@@ -505,10 +505,15 @@ public:
     assert(typ);
     if (! typ->isAggregateType())
       return false;
-    if (llvmTypeAllocSize(typ) > compositeSizeThreshold_)
-      return true;
-    return false;
+    //if (llvmTypeAllocSize(typ) <= compositeSizeThreshold_)
+    //  return false;
+    return true;
   }
+
+  // Return context disposition based on expression type.
+  // Composite values need to be referred to by address,
+  // whereas non-composite values can be used directly.
+  Varexpr_context varContextDisp(Bexpression *varexp);
 
   // Materialize a composite constant into a variable
   Bvariable *genVarForConstant(llvm::Constant *conval, Btype *type);

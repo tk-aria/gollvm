@@ -476,4 +476,62 @@ TEST(BackendArrayStructTests, CreateComplexIndexingAndFieldExprs) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
+TEST(BackendArrayStructTests, TestStructAssignment) {
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
+
+  // type T1 struct { f1 bool }
+  // type T2 struct { f1, f2, f3, f4, f5, f6 int64 }
+  Location loc;
+  Btype *bt = be->bool_type();
+  Btype *pbt = be->pointer_type(bt);
+  Btype *bi64t = be->integer_type(false, 64);
+  Btype *s1t = mkBackendStruct(be, pbt, "f1", nullptr);
+  Btype *s2t = mkBackendStruct(be, bi64t, "f1", bi64t, "f2", bi64t, "f3",
+                               bi64t, "f4", bi64t, "f5", bi64t, "f6", nullptr);
+
+  // var x1, y1 T1
+  // var x2, y2 T2
+  Bvariable *x1 = h.mkLocal("x1", s1t);
+  Bvariable *y1 = h.mkLocal("y1", s1t);
+  Bvariable *x2 = h.mkLocal("x2", s2t);
+  Bvariable *y2 = h.mkLocal("y2", s2t);
+
+  // x1 = y1
+  // x2 = y2
+  Bexpression *ve1 = be->var_expression(x1, VE_lvalue, loc);
+  Bexpression *ve2 = be->var_expression(y1, VE_rvalue, loc);
+  h.mkAssign(ve1, ve2);
+  Bexpression *ve3 = be->var_expression(x2, VE_lvalue, loc);
+  Bexpression *ve4 = be->var_expression(y2, VE_rvalue, loc);
+  h.mkAssign(ve3, ve4);
+
+  const char *exp = R"RAW_RESULT(
+  %cast.0 = bitcast { i8* }* %x1 to i8*
+  %cast.1 = bitcast { i8* }* @const.0 to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.0, i8* %cast.1, i64 8, i32 8, i1 false)
+  %cast.2 = bitcast { i8* }* %y1 to i8*
+  %cast.3 = bitcast { i8* }* @const.1 to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.2, i8* %cast.3, i64 8, i32 8, i1 false)
+  %cast.4 = bitcast { i64, i64, i64, i64, i64, i64 }* %x2 to i8*
+  %cast.5 = bitcast { i64, i64, i64, i64, i64, i64 }* @const.2 to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.4, i8* %cast.5, i64 48, i32 8, i1 false)
+  %cast.6 = bitcast { i64, i64, i64, i64, i64, i64 }* %y2 to i8*
+  %cast.7 = bitcast { i64, i64, i64, i64, i64, i64 }* @const.3 to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.6, i8* %cast.7, i64 48, i32 8, i1 false)
+  %cast.8 = bitcast { i8* }* %x1 to i8*
+  %cast.9 = bitcast { i8* }* %y1 to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.8, i8* %cast.9, i64 8, i32 8, i1 false)
+  %cast.10 = bitcast { i64, i64, i64, i64, i64, i64 }* %x2 to i8*
+  %cast.11 = bitcast { i64, i64, i64, i64, i64, i64 }* %y2 to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.10, i8* %cast.11, i64 48, i32 8, i1 false)
+   )RAW_RESULT";
+
+  bool isOK = h.expectBlock(exp);
+  EXPECT_TRUE(isOK && "Block does not have expected contents");
+
+  bool broken = h.finish(PreserveDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+}
+
 }

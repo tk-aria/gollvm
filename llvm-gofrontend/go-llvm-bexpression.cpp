@@ -117,13 +117,6 @@ void Bexpression::setValue(llvm::Value *val)
   value_ = val;
 }
 
-Varexpr_context Bexpression::varContextDisp() const
-{
-  if (btype()->type()->isAggregateType())
-    return VE_lvalue;
-  return VE_rvalue;
-}
-
 void Bexpression::srcDump(Llvm_linemap *linemap)
 {
   std::string s;
