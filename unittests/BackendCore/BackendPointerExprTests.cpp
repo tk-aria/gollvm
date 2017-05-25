@@ -409,12 +409,14 @@ TEST(BackEndPointerExprTests, CreatePointerOffsetExprs) {
   Bvariable *p3 = func->getNthParamVar(2);
 
   {
-    // ptr_offset(p3, 5) = 9
-    Bexpression *ve = be->var_expression(p3, VE_rvalue, loc);
+    // deref(ptr_offset(p3, 5)) = 9
+    Btype *bi64t = be->integer_type(false, 64);
+    Bexpression *ve = be->var_expression(p3, VE_lvalue, loc);
     Bexpression *cfive = mkInt32Const(be, 5);
     Bexpression *poe1 = be->pointer_offset_expression(ve, cfive, loc);
+    Bexpression *der = be->indirect_expression(bi64t, poe1, false, loc);
     Bexpression *cnine = mkInt64Const(be, 9);
-    h.mkAssign(poe1, cnine);
+    h.mkAssign(der, cnine);
   }
 
   {
@@ -431,14 +433,14 @@ TEST(BackEndPointerExprTests, CreatePointerOffsetExprs) {
   }
 
   const char *exp = R"RAW_RESULT(
-      %param3.ld.0 = load i64*, i64** %param3.addr
-      %ptroff.0 = getelementptr i64, i64* %param3.ld.0, i32 5
-      store i64 9, i64* %ptroff.0
-      %cast.0 = bitcast i64** %param3.addr to i32**
-      %.ld.0 = load i32*, i32** %cast.0
-      %ptroff.1 = getelementptr i32, i32* %.ld.0, i32 7
-      %.ptroff.ld.0 = load i32, i32* %ptroff.1
-      store i32 %.ptroff.ld.0, i32* %param1.addr
+  %ptroff.0 = getelementptr i64*, i64** %param3.addr, i32 5
+  %param3.ptroff.ld.0 = load i64*, i64** %ptroff.0
+  store i64 9, i64* %param3.ptroff.ld.0
+  %cast.0 = bitcast i64** %param3.addr to i32**
+  %ptroff.1 = getelementptr i32*, i32** %cast.0, i32 7
+  %.ptroff.ld.0 = load i32*, i32** %ptroff.1
+  %.ld.0 = load i32, i32* %.ptroff.ld.0
+  store i32 %.ld.0, i32* %param1.addr
   )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);

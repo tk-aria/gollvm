@@ -1229,8 +1229,7 @@ llvm::Value *Llvm_backend::makePointerOffsetGEP(llvm::PointerType *llpt,
   LIRBuilder builder(context_, llvm::ConstantFolder());
   llvm::SmallVector<llvm::Value *, 1> elems(1);
   elems[0] = idxval;
-  llvm::Type *pointee = llpt->getElementType();
-  llvm::Value *val = builder.CreateGEP(pointee, sptr, elems, namegen("ptroff"));
+  llvm::Value *val = builder.CreateGEP(llpt, sptr, elems, namegen("ptroff"));
   return val;
 }
 
@@ -1809,7 +1808,6 @@ Bexpression *Llvm_backend::pointer_offset_expression(Bexpression *base,
   if (base == errorExpression() || index == errorExpression())
     return errorExpression();
 
-  base = resolveVarContext(base);
   index = resolveVarContext(index);
 
   // Construct an appropriate GEP
@@ -1817,12 +1815,12 @@ Bexpression *Llvm_backend::pointer_offset_expression(Bexpression *base,
       llvm::cast<llvm::PointerType>(base->btype()->type());
   llvm::Value *gep =
       makePointerOffsetGEP(llpt, index->value(), base->value());
-  //  BPointerType *bpft = base->btype()->castToBPointerType();
-  //Btype *bet = bpft->toType();
 
   // Wrap in a Bexpression
   Bexpression *rval = nbuilder_.mkArrayIndex(base->btype(), gep, base,
                                              index, location);
+  if (base->varExprPending())
+    rval->setVarExprPending(base->varContext());
 
   std::string tag(base->tag());
   tag += ".ptroff";
