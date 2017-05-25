@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "e66b9d06_906723c5",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1232,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-05-25T13:54:43Z",
+      "side": 1,
+      "message": "It looks this will not be undo. So just delete commented code?",
+      "revId": "c5679bcb36356312350794e875a01c188d992b2a",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fa395d22_17ca768b",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1812,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-05-25T13:54:43Z",
+      "side": 1,
+      "message": "(also here)",
+      "revId": "c5679bcb36356312350794e875a01c188d992b2a",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
