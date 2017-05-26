@@ -1344,7 +1344,7 @@ Bexpression *Llvm_backend::conditional_expression(Bfunction *function,
     thenStmt = expression_statement(function, then_expr);
   else
     tempv = temporary_variable(function, nullptr,
-                               then_expr->btype(), then_expr, false,
+                               btype, then_expr, false,
                                location, &thenStmt);
   nbuilder_.addStatementToBlock(thenBlock, thenStmt);
 
@@ -1358,9 +1358,15 @@ Bexpression *Llvm_backend::conditional_expression(Bfunction *function,
       // then_expr if then_expr had non-void type.
       if (!tempv) {
         tempv = temporary_variable(function, nullptr,
-                                   else_expr->btype(), else_expr, false,
+                                   btype, else_expr, false,
                                    location, &elseStmt);
       } else {
+        // Ideally it would be nice to assert that the types are
+        // identical for if_expr and else_expr, but particularly for
+        // pointer types we need to allow for some disagreement (ex:
+        // nil_pointer_expression, which is untyped/polymorphic).
+        // Assume that the type checking in the call to
+        // assignment_statement will catch any problems.
         assert(then_expr->btype() == else_expr->btype());
         Bexpression *varExpr = var_expression(tempv, VE_lvalue, location);
         elseStmt = assignment_statement(function, varExpr, else_expr, location);
