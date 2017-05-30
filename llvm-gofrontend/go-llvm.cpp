@@ -1367,7 +1367,6 @@ Bexpression *Llvm_backend::conditional_expression(Bfunction *function,
         // nil_pointer_expression, which is untyped/polymorphic).
         // Assume that the type checking in the call to
         // assignment_statement will catch any problems.
-        assert(then_expr->btype() == else_expr->btype());
         Bexpression *varExpr = var_expression(tempv, VE_lvalue, location);
         elseStmt = assignment_statement(function, varExpr, else_expr, location);
       }
