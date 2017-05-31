@@ -311,7 +311,7 @@ Operator Bnode::op() const
 //......................................................................
 
 BnodeBuilder::BnodeBuilder(Llvm_backend *be)
-    : integrityVisitor_(new IntegrityVisitor(be, TreeIntegCtl(DumpPointers, IgnoreVarExprs, DontReportRepairableSharing, IncrementalMode)))
+    : integrityVisitor_(new IntegrityVisitor(be, TreeIntegCtl(DumpPointers, DontReportRepairableSharing, IncrementalMode)))
     , checkIntegrity_(true)
 {
 }

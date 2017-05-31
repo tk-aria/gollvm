@@ -26,7 +26,7 @@
 #include "go-llvm-bvariable.h"
 
 // Other helper classes
-#include "go-llvm-maptypes.h"
+#include "go-llvm-containertypes.h"
 #include "go-llvm-tree-integrity.h"
 #include "go-llvm-typemanager.h"
 
@@ -377,7 +377,7 @@ public:
 
   // Disable tree integrity checking. This is mainly
   // so that we can unit test the integrity checker.
-  void disableIntegrityChecks() { checkIntegrity_ = false; }
+  void disableIntegrityChecks();
 
   // Disable debug meta-data generation. Should be used only during
   // unit testing, where we're manufacturing IR that might not verify
