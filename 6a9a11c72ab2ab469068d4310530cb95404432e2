@@ -16,6 +16,24 @@
       "revId": "6a9a11c72ab2ab469068d4310530cb95404432e2",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f598c68a_9bc41a0a",
+        "filename": "llvm-gofrontend/go-llvm-tree-integrity.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 227,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-05-31T19:31:20Z",
+      "side": 0,
+      "message": "Thanks, looks like that got lost in the sauce. I\u0027ll put the assert back in -- I don\u0027t think it is likely to fire, but it can\u0027t hurt.",
+      "parentUuid": "10b57352_808c7694",
+      "revId": "6a9a11c72ab2ab469068d4310530cb95404432e2",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
