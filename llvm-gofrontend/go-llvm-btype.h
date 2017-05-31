@@ -32,6 +32,7 @@ class BStructType;
 class BArrayType;
 class BPointerType;
 class BIntegerType;
+class BComplexType;
 class BFloatType;
 class BFunctionType;
 
@@ -40,7 +41,7 @@ class BFunctionType;
 class Btype {
  public:
   enum TyFlavor {
-    ArrayT, FloatT, FunctionT, IntegerT, PointerT, StructT, AuxT
+    ArrayT, ComplexT, FloatT, FunctionT, IntegerT, PointerT, StructT, AuxT
   };
   Btype(TyFlavor flavor, llvm::Type *type, Location location)
       : type_(type), location_(location), flavor_(flavor),
@@ -93,12 +94,14 @@ class Btype {
   inline BArrayType *castToBArrayType();
   inline BPointerType *castToBPointerType();
   inline BIntegerType *castToBIntegerType();
+  inline BComplexType *castToBComplexType();
   inline BFloatType *castToBFloatType();
   inline BFunctionType *castToBFunctionType();
   inline const BStructType *castToBStructType() const;
   inline const BArrayType *castToBArrayType() const;
   inline const BPointerType *castToBPointerType() const;
   inline const BIntegerType *castToBIntegerType() const;
+  inline const BComplexType *castToBComplexType() const;
   inline const BFloatType *castToBFloatType() const;
   inline const BFunctionType *castToBFunctionType() const;
 
@@ -138,6 +141,33 @@ inline BIntegerType *Btype::castToBIntegerType() {
 
 inline const BIntegerType *Btype::castToBIntegerType() const {
   return (flavor_ == IntegerT ? static_cast<const BIntegerType *>(this)
+          : nullptr);
+}
+
+class BComplexType : public Btype {
+ public:
+  BComplexType(unsigned bits, llvm::Type *type, Location location)
+      : Btype(ComplexT, type, location), bits_(bits) { }
+
+  // Here 'bits' is for the entire object, not for each sub-part
+  unsigned bits() const { return bits_; }
+
+  // Create a shallow copy of this type
+  Btype *clone() const {
+    return new BComplexType(bits_, type(), location());
+  }
+
+ private:
+  unsigned bits_;
+};
+
+inline BComplexType *Btype::castToBComplexType() {
+  return (flavor_ == ComplexT ? static_cast<BComplexType *>(this)
+          : nullptr);
+}
+
+inline const BComplexType *Btype::castToBComplexType() const {
+  return (flavor_ == ComplexT ? static_cast<const BComplexType *>(this)
           : nullptr);
 }
 
