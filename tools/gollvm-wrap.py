@@ -104,11 +104,14 @@ def perform():
     args = [sys.argv[0]] + sys.argv[1:]
     u.verbose(1, "args: '%s'" % " ".join(args))
     if not os.path.exists(driver):
-      u.warning("internal error: %s does not exist" % driver)
-      u.warning("[most likely this script was not installed correctly]")
-      usage()
+      usage("internal error: %s does not exist [most likely this "
+            "script was not installed correctly]" % driver)
     os.execv(driver, args)
     u.error("exec failed: %s" % driver)
+
+  # These hold the arguments of -I and -L options
+  largs = []
+  iargs = []
 
   # Create a set of massaged args.
   nargs = []
@@ -127,6 +130,16 @@ def perform():
       nargs.append("-o")
       nargs.append(asmfile)
       continue
+    if clarg == "-I":
+      skipc = 1
+      iarg = sys.argv[ii+1]
+      iargs.append(iarg)
+      continue
+    if clarg == "-L":
+      skipc = 1
+      larg = sys.argv[ii+1]
+      largs.append(larg)
+      continue
     nargs.append(clarg)
 
   if not asmfile or not outfile:
@@ -134,6 +147,12 @@ def perform():
             "option in clargs: %s" % " ".join(sys.argv))
   golibargs = form_golibargs(sys.argv[0])
   nargs += golibargs
+  if largs:
+    nargs.append("-L")
+    nargs.append(":".join(largs))
+  if iargs:
+    nargs.append("-I")
+    nargs.append(":".join(iargs))
   u.verbose(1, "revised args: %s" % " ".join(nargs))
 
   # Invoke gollvm.
@@ -169,6 +188,11 @@ def install_shim(scriptpath):
   if not os.path.exists("bin/gccgo"):
     usage("expected to find bin/gccgo")
 
+  # Copy script, or update if already in place.
+  docmd("cp %s bin" % scriptpath)
+  sdir = os.path.dirname(scriptpath)
+  docmd("cp %s/script_utils.py bin" % sdir)
+
   # Check to see if installed already
   if os.path.exists("bin/gccgo.real") and os.path.exists("bin/gollvm-wrap.py"):
     u.error("wrapper appears to be installed already in this dir")
@@ -189,11 +213,6 @@ def install_shim(scriptpath):
     except IOError:
       u.error("open/write failed for bin/gccgo wrapper")
   docmd("chmod 0755 bin/gccgo")
-
-  # Copy script
-  docmd("cp %s bin" % scriptpath)
-  sdir = os.path.dirname(scriptpath)
-  docmd("cp %s/script_utils.py bin" % sdir)
 
   # Success
   u.verbose(0, "wrapper installed successfully")
