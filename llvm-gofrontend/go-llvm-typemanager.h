@@ -32,6 +32,7 @@ class Module;
 class Value;
 class raw_ostream;
 class FunctionType;
+class StructType;
 }
 
 class DIBuildHelper;
@@ -137,6 +138,9 @@ class TypeManager {
   // this type. For example, llvmTypeSize() of "struct { float x; char c; }"
   // will be 5 bytes.
   uint64_t llvmTypeSize(llvm::Type *t);
+
+  // Return byte offset of field FIDX in llvm struct type LLST
+  int64_t llvmTypeFieldOffset(llvm::StructType *llst, size_t fidx);
 
   // Context + address space.
   llvm::LLVMContext &context() const { return context_; }
@@ -326,8 +330,6 @@ class TypeManager {
   Bexpression *errorExpression_;
 
   // Various predefined or pre-computed types that we cache away
-  Btype *complexFloatType_;
-  Btype *complexDoubleType_;
   Btype *errorType_;
   Btype *stringType_;
   Btype *uintPtrType_;

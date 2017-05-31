@@ -132,7 +132,7 @@ class EightByteInfo {
   typedef std::pair<Btype *, unsigned> typAndOffset;
   void addLeafTypes(Btype *bt, unsigned off,
                     std::vector<typAndOffset> *leaves);
-  void explodeStruct(BStructType *bst);
+  void explodeStruct(Btype *bst);
   void explodeArray(BArrayType *bat);
   void incorporateScalar(Btype *bt);
   void determineABITypes();
@@ -143,9 +143,10 @@ EightByteInfo::EightByteInfo(Btype *bt, TypeManager *tmgr)
     : typeManager_(tmgr)
 {
   BStructType *bst = bt->castToBStructType();
+  BComplexType *bct = bt->castToBComplexType();
   BArrayType *bat = bt->castToBArrayType();
-  if (bst) {
-    explodeStruct(bst);
+  if (bst || bct) {
+    explodeStruct(bt);
   } else if (bat) {
     explodeArray(bat);
   } else {
@@ -178,6 +179,18 @@ void EightByteInfo::addLeafTypes(Btype *bt,
     }
     return;
   }
+  BComplexType *bct = bt->castToBComplexType();
+  if (bct) {
+    llvm::StructType *llst = llvm::cast<llvm::StructType>(bct->type());
+    unsigned bits = bct->bits() / 2;
+    for (unsigned fidx = 0; fidx < 2; ++fidx) {
+      Btype *leaf = tm()->floatType(bits);
+      unsigned foff = tm()->llvmTypeFieldOffset(llst, fidx);
+      leaves->push_back(std::make_pair(leaf, foff));
+    }
+    return;
+  }
+
   assert(bt->flavor() != Btype::AuxT && bt->flavor() != Btype::FunctionT);
   leaves->push_back(std::make_pair(bt, offset));
 }
@@ -207,7 +220,7 @@ void EightByteInfo::addLeafTypes(Btype *bt,
 //    }
 //
 
-void EightByteInfo::explodeStruct(BStructType *bst)
+void EightByteInfo::explodeStruct(Btype *bst)
 {
   assert(tm()->llvmTypeAllocSize(bst->type()) <= 16);
 

@@ -61,7 +61,12 @@ bool Btype::equal(const Btype &other) const
     return false;
   switch(flavor_) {
     case AuxT:
+    case ComplexT:
     case FloatT: {
+      // Ordinarily it would make sense to compare number of bits
+      // when checking to see if complex/float types are equal, but
+      // this will already be taken care of by the llvm type equality
+      // test above.
       return true;
     }
     case IntegerT: {
@@ -144,6 +149,7 @@ Btype *Btype::clone() const
   Btype *rval = nullptr;
   switch(flavor_) {
     case AuxT:
+    case ComplexT:
     case FloatT: {
       rval = new Btype(flavor(), type(), location());
       break;
