@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "10b57352_808c7694",
+        "filename": "llvm-gofrontend/go-llvm-tree-integrity.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 227,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-05-31T19:16:20Z",
+      "side": 0,
+      "message": "Is there a reason to remove the assertion?",
+      "revId": "6a9a11c72ab2ab469068d4310530cb95404432e2",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
