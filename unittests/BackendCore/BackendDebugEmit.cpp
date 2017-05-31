@@ -61,12 +61,16 @@ TEST(BackendDebugEmit, MoreComplexVarDecls) {
   Btype *set = mkBackendStruct(be, nullptr); // struct with no fields
   Bexpression *val10 = mkInt64Const(be, int64_t(10));
   Btype *beat = be->array_type(set, val10);
+  Btype *bc64t = be->complex_type(64);
+  Btype *bc128t = be->complex_type(128);
 
   BFunctionType *befty1 = mkFuncTyp(be,
                                     L_RES, set,
                                     L_PARM, set,
                                     L_PARM, beat,
                                     L_PARM, bi32t,
+                                    L_PARM, bc64t,
+                                    L_PARM, bc128t,
                                     L_PARM, set,
                                     L_PARM, beat,
                                     L_END);
@@ -120,9 +124,9 @@ TEST(BackendDebugEmit, MoreComplexVarDecls) {
     if (t == "@llvm.dbg.declare(metadata")
       declcount += 1;
 
-  // five formals and six locals => 11 var decls
-  EXPECT_EQ(declcount, 11u);
-  if (declcount != 11)
+  // seven formals and six locals => 13 var decls
+  EXPECT_EQ(declcount, 13u);
+  if (declcount != 13)
     std::cerr << fdump;
 }
 

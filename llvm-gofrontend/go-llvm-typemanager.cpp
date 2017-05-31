@@ -31,8 +31,6 @@ TypeManager::TypeManager(llvm::LLVMContext &context, llvm::CallingConv::ID conv)
     , traceLevel_(0)
     , nametags_(nullptr)
     , errorExpression_(nullptr)
-    , complexFloatType_(nullptr)
-    , complexDoubleType_(nullptr)
     , errorType_(nullptr)
     , stringType_(nullptr)
     , uintPtrType_(nullptr)
@@ -452,23 +450,33 @@ Btype *TypeManager::placeholderStructType(const std::string &name,
 }
 
 // LLVM has no such thing as a complex type -- it expects the front
-// end to lower all complex operations from the get-go, meaning
-// that the back end only sees two-element structs.
+// end to lower all complex operations from the get-go, meaning that
+// the back end will see only two-element structs. In order to create
+// the proper debug information, however, we have to keep track of
+// which two-float / two-double structs are complex objects and which
+// are simply regular structs.
 
-Btype *TypeManager::complexType(int bits) {
-  if (bits == 64 && complexFloatType_)
-    return complexFloatType_;
-  if (bits == 128 && complexDoubleType_)
-    return complexDoubleType_;
+Btype *TypeManager::complexType(int bits)
+{
   assert(bits == 64 || bits == 128);
   llvm::Type *elemTy = (bits == 64 ? llvm::Type::getFloatTy(context_)
                                    : llvm::Type::getDoubleTy(context_));
-  llvm::Type *cType = makeLLVMTwoElementStructType(elemTy, elemTy);
-  Btype *rval = makeAuxType(cType);
-  if (bits == 64)
-    complexFloatType_ = rval;
-  else
-    complexDoubleType_ = rval;
+  llvm::Type *llct = makeLLVMTwoElementStructType(elemTy, elemTy);
+
+  // Check for and return existing anon type if we have one already
+  Location loc;
+  BComplexType cand(bits, llct, loc);
+  auto it = anonTypes_.find(&cand);
+  if (it != anonTypes_.end()) {
+    Btype *existing = *it;
+    BComplexType *bct = existing->castToBComplexType();
+    assert(bct);
+    return bct;
+  }
+
+  // Install in cache
+  BComplexType *rval = new BComplexType(bits, llct, loc);
+  anonTypes_.insert(rval);
   return rval;
 }
 
@@ -1359,8 +1367,15 @@ int64_t TypeManager::typeFieldOffset(Btype *btype, size_t index) {
     return 0;
   assert(btype->type()->isStructTy());
   llvm::StructType *llvm_st = llvm::cast<llvm::StructType>(btype->type());
-  const llvm::StructLayout *sl = datalayout_->getStructLayout(llvm_st);
-  uint64_t uoff = sl->getElementOffset(index);
+  return llvmTypeFieldOffset(llvm_st, index);
+}
+
+// Return the offset of a field in an LLVM struct type.
+
+int64_t TypeManager::llvmTypeFieldOffset(llvm::StructType *llst, size_t fidx)
+{
+  const llvm::StructLayout *sl = datalayout_->getStructLayout(llst);
+  uint64_t uoff = sl->getElementOffset(fidx);
   return static_cast<int64_t>(uoff);
 }
 
@@ -1468,6 +1483,11 @@ TypeManager::typToStringRec(Btype *typ, std::map<Btype *, std::string> &smap)
       llvm::raw_string_ostream os(s);
       typ->type()->print(os);
       ss << os.str();
+      break;
+    }
+    case Btype::ComplexT: {
+      BComplexType *bct = typ->castToBComplexType();
+      ss << "complex" << bct->bits();
       break;
     }
     case Btype::FloatT: {
@@ -1660,6 +1680,12 @@ llvm::DIType *TypeManager::buildDIType(Btype *typ, DIBuildHelper &helper)
       std::cerr << "unhandled aux type: "; typ->dump();
       assert(false);
       return nullptr;
+    }
+    case Btype::ComplexT: {
+      BComplexType *bct = typ->castToBComplexType();
+      std::string tstr = typToString(typ);
+      return dibuilder.createBasicType(tstr, bct->bits(),
+                                       llvm::dwarf::DW_ATE_complex_float);
     }
     case Btype::FloatT: {
       BFloatType *bft = typ->castToBFloatType();
