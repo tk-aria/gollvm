@@ -1,4 +1,4 @@
-//===-- go-llvm-maptypes.h - hashmap type declarations --------------------===//
+//===-- go-llvm-containertypes.h - hashmap/hashset type declarations ------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,14 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Templated type declarations for hashmap helper classes.
+// Templated type declarations for hash map/set helper classes.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVMGOFRONTEND_GO_LLVM_MAPTYPES_H
-#define LLVMGOFRONTEND_GO_LLVM_MAPTYPES_H
+#ifndef LLVMGOFRONTEND_GO_LLVM_CONTAINERTYPES_H
+#define LLVMGOFRONTEND_GO_LLVM_CONTAINERTYPES_H
 
 #include <unordered_map>
+#include <unordered_set>
 
 // In various bridge classes it is useful to keep tables that incorporate
 // a key of pair type <X,Y> and with some arbitrary value type. Set up a
@@ -41,4 +42,9 @@ using pairvalmap =
     std::unordered_map<std::pair<T1, T2>, V, pairvalmap_hash<T1, T2>,
                        pairvalmap_equal<T1, T2>>;
 
-#endif // LLVMGOFRONTEND_GO_LLVM_MAPTYPES_H
+template <typename T1, typename T2>
+using pairhashset =
+    std::unordered_set<std::pair<T1, T2>, pairvalmap_hash<T1, T2>,
+                       pairvalmap_equal<T1, T2>>;
+
+#endif // LLVMGOFRONTEND_GO_LLVM_CONTAINERTYPES_H

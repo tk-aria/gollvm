@@ -45,8 +45,7 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrity1) {
   for (auto inst : badd1->instructions())
     b4->appendInstruction(inst);
 
-  TreeIntegCtl control(NoDumpPointers, CheckVarExprs,
-                       ReportRepairableSharing, BatchMode);
+  TreeIntegCtl control(NoDumpPointers, ReportRepairableSharing, BatchMode);
   std::pair<bool, std::string> result =
       be->checkTreeIntegrity(h.block(), control);
   EXPECT_FALSE(result.first);
@@ -71,15 +70,14 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrity2) {
   Btype *bi64t = be->integer_type(false, 64);
   Bvariable *loc1 = be->local_variable(func, "loc1", bi64t, true, loc);
 
-  // Create "loc1", then supply to more than one statement
+  // Create "loc1" varexpr, then supply to more than one statement
   Bexpression *ve = be->var_expression(loc1, VE_lvalue, loc);
   Bstatement *es1 = be->expression_statement(func, ve);
   Bblock *block = mkBlockFromStmt(be.get(), func, es1);
   Bstatement *es2 = be->expression_statement(func, ve);
   addStmtToBlock(be.get(), block, es2);
 
-  TreeIntegCtl control(NoDumpPointers, CheckVarExprs,
-                       ReportRepairableSharing, BatchMode);
+  TreeIntegCtl control(NoDumpPointers, ReportRepairableSharing, BatchMode);
   std::pair<bool, std::string> result =
       be->checkTreeIntegrity(block, control);
   EXPECT_FALSE(result.first);
@@ -109,8 +107,7 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrity3) {
   Bblock *block = mkBlockFromStmt(be.get(), func, es);
   addStmtToBlock(be.get(), block, es);
 
-  TreeIntegCtl control(NoDumpPointers, CheckVarExprs,
-                       ReportRepairableSharing, BatchMode);
+  TreeIntegCtl control(NoDumpPointers, ReportRepairableSharing, BatchMode);
   std::pair<bool, std::string> result =
       be->checkTreeIntegrity(block, control);
   EXPECT_FALSE(result.first);
