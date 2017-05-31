@@ -16,6 +16,8 @@
 
 #include "llvm/Support/raw_ostream.h"
 
+#include "go-llvm-containertypes.h"
+
 namespace llvm {
 class Instruction;
 }
@@ -26,7 +28,6 @@ class Llvm_backend;
 class BnodeBuilder;
 
 enum CkTreePtrDisp { DumpPointers, NoDumpPointers };
-enum CkTreeVarDisp { CheckVarExprs, IgnoreVarExprs };
 enum CkTreeRepairDisp { DontReportRepairableSharing, ReportRepairableSharing };
 enum CkTreeVisitDisp { BatchMode, IncrementalMode };
 
@@ -34,18 +35,15 @@ enum CkTreeVisitDisp { BatchMode, IncrementalMode };
 
 struct TreeIntegCtl {
   CkTreePtrDisp ptrDisp;
-  CkTreeVarDisp varDisp;
   CkTreeRepairDisp repairDisp;
   CkTreeVisitDisp visitDisp;
   TreeIntegCtl()
       : ptrDisp(DumpPointers),
-        varDisp(CheckVarExprs),
         repairDisp(ReportRepairableSharing),
         visitDisp(BatchMode) { }
-  TreeIntegCtl(CkTreePtrDisp ptrs, CkTreeVarDisp vars,
-               CkTreeRepairDisp repair, CkTreeVisitDisp visit)
-      : ptrDisp(ptrs), varDisp(vars),
-        repairDisp(repair), visitDisp(visit) { }
+  TreeIntegCtl(CkTreePtrDisp ptrs, CkTreeRepairDisp repair,
+               CkTreeVisitDisp visit)
+      : ptrDisp(ptrs), repairDisp(repair), visitDisp(visit) { }
 };
 
 // This visitor class detects malformed IR trees, specifically cases
@@ -63,30 +61,13 @@ struct TreeIntegCtl {
 // specifically sharing of Bexpressions corresponding to module-scope
 // constants.
 //
-// In addition, we provide a mode of the checker ("IgnoreVarExprs"
-// above) in which we don't try to enforce sharing for var exprs,
-// since gofrontend tends to reuse them in a number of places.  The
-// one place where this can cause issues is with nested functions and
-// closures. Example:
-//
-//     func simple(x, q int) int {
-//      pf := func(xx int) int {
-//              qm2 := q - 2
-//              qm1 := q - 1
-//              return xx + qm2 + qm1
-//      }
-//      return pf(x)
-//     }
-//
-// Note the references to "q" within the nested function -- in a
-// non-nested function these woule be simple var expressions, however
-// in the case above they will appear to the backend as loads of
-// fields from the closure pointer passed via the static chain. To
-// support this case there is yet another option/control that tells
-// the checker to "unshare" the nodes in question (clone them to
-// restore tree integrity). This unsharing/repairing is applied only
-// to a whitelisted set of expression nodes (for example, cloning of
-// call expressions is not allowed).
+// In addition, we provide a mode of the checker in which we allow the
+// front end to manufacture IR that includes sharing of certain nodes
+// but runs an "unsharing" or repair phase to replicate any node that
+// is specified as a child in more than one tree location.  This
+// unsharing/repairing is applied only to a whitelisted set of
+// expression nodes (for example, cloning of call expressions is not
+// allowed).
 
 class IntegrityVisitor {
  public:
@@ -118,7 +99,7 @@ class IntegrityVisitor {
   typedef std::pair<Bnode *, unsigned> parslot; // parent and child index
   std::unordered_map<llvm::Instruction *, parslot> iparent_;
   std::unordered_map<Bnode *, parslot> nparent_;
-  std::vector<std::pair<Bnode *, parslot> > sharing_; // child -> parent+slot
+  pairhashset<Bnode *, unsigned> sharing_;
   std::string str_;
   llvm::raw_string_ostream ss_;
   TreeIntegCtl control_;
@@ -137,7 +118,6 @@ class IntegrityVisitor {
   void dump(llvm::Instruction *inst);
   void dump(Bnode *node);
   CkTreePtrDisp includePointers() const { return control_.ptrDisp; }
-  CkTreeVarDisp includeVarExprs() const { return control_.varDisp; }
   CkTreeRepairDisp doRepairs() const { return control_.repairDisp; }
   CkTreeVisitDisp visitMode() const { return control_.visitDisp; }
 
