@@ -148,10 +148,18 @@ Btype *Btype::clone() const
 {
   Btype *rval = nullptr;
   switch(flavor_) {
-    case AuxT:
-    case ComplexT:
-    case FloatT: {
+    case AuxT: {
       rval = new Btype(flavor(), type(), location());
+      break;
+    }
+    case ComplexT: {
+      const BComplexType *bct = castToBComplexType();
+      rval = bct->clone();
+      break;
+    }
+    case FloatT: {
+      const BFloatType *bft = castToBFloatType();
+      rval = bft->clone();
       break;
     }
     case IntegerT: {
