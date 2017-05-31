@@ -24,6 +24,9 @@
 #include "go-llvm-bstatement.h"
 #include "go-llvm-bfunction.h"
 #include "go-llvm-bvariable.h"
+
+// Other helper classes
+#include "go-llvm-maptypes.h"
 #include "go-llvm-tree-integrity.h"
 #include "go-llvm-typemanager.h"
 
@@ -623,33 +626,6 @@ public:
   llvm::Instruction *storeToTemporary(Bfunction *func, llvm::Value *val);
 
 private:
-  template <typename T1, typename T2> class pairvalmap_hash {
-    typedef std::pair<T1, T2> pairtype;
-
-  public:
-    unsigned int operator()(const pairtype &p) const {
-      std::size_t h1 = std::hash<T1>{}(p.first);
-      std::size_t h2 = std::hash<T2>{}(p.second);
-      return h1 + h2;
-    }
-  };
-
-  template <typename T1, typename T2> class pairvalmap_equal {
-    typedef std::pair<T1, T2> pairtype;
-
-  public:
-    bool operator()(const pairtype &p1, const pairtype &p2) const {
-      return (p1.first == p2.first && p1.second == p2.second);
-    }
-  };
-
-  template <typename T1, typename T2, typename V>
-  using pairvalmap =
-      std::unordered_map<std::pair<T1, T2>, V, pairvalmap_hash<T1, T2>,
-                         pairvalmap_equal<T1, T2>>;
-
-  typedef std::pair<llvm::Type *, bool> type_plus_unsigned;
-  typedef pairvalmap<llvm::Type *, bool, Btype *> integer_type_maptyp;
 
   typedef std::pair<llvm::Value *, Btype *> valbtype;
   typedef pairvalmap<llvm::Value *, Btype *, Bexpression *>
