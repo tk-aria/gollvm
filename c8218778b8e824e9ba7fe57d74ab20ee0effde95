@@ -22,6 +22,30 @@
       "revId": "c8218778b8e824e9ba7fe57d74ab20ee0effde95",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4af8a475_bb4bce6d",
+        "filename": "llvm-gofrontend/go-llvm-maptypes.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-05-31T13:38:39Z",
+      "side": 1,
+      "message": "Thanks -- fixed.",
+      "parentUuid": "0fb05773_646af7aa",
+      "range": {
+        "startLine": 27,
+        "startChar": 0,
+        "endLine": 27,
+        "endChar": 6
+      },
+      "revId": "c8218778b8e824e9ba7fe57d74ab20ee0effde95",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
