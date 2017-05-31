@@ -177,8 +177,7 @@ void Llvm_backend::dumpExpr(Bexpression *e)
 {
   if (e) {
     e->srcDump(linemap_);
-    TreeIntegCtl ctl(DumpPointers, IgnoreVarExprs,
-                     ReportRepairableSharing, BatchMode);
+    TreeIntegCtl ctl(DumpPointers, ReportRepairableSharing, BatchMode);
     auto p = checkTreeIntegrity(e, ctl);
     if (p.first)
       std::cerr << p.second;
@@ -189,8 +188,7 @@ void Llvm_backend::dumpStmt(Bstatement *s)
 {
   if (s) {
     s->srcDump(linemap_);
-    TreeIntegCtl ctl(DumpPointers, IgnoreVarExprs,
-                     ReportRepairableSharing, BatchMode);
+    TreeIntegCtl ctl(DumpPointers, ReportRepairableSharing, BatchMode);
     auto p = checkTreeIntegrity(s, ctl);
     if (p.first)
       std::cerr << p.second;
@@ -212,11 +210,16 @@ Llvm_backend::checkTreeIntegrity(Bnode *n, TreeIntegCtl control)
   return std::make_pair(rval, iv.msg());
 }
 
+void Llvm_backend::disableIntegrityChecks()
+{
+  checkIntegrity_ = false;
+  nodeBuilder().setIntegrityChecks(false);
+}
+
 void Llvm_backend::enforceTreeIntegrity(Bnode *n)
 {
   Llvm_backend *be = const_cast<Llvm_backend *>(this);
-  TreeIntegCtl control(DumpPointers, IgnoreVarExprs,
-                       DontReportRepairableSharing, BatchMode);
+  TreeIntegCtl control(DumpPointers, DontReportRepairableSharing, BatchMode);
   IntegrityVisitor iv(be, control);
   bool res = iv.examine(n);
   if (!res && checkIntegrity_) {
@@ -2200,7 +2203,6 @@ Bstatement *Llvm_backend::expression_statement(Bfunction *bfunction,
       nbuilder_.mkExprStmt(bfunction,
                            resolve(expr, bfunction),
                            expr->location());
-  enforceTreeIntegrity(es);
   return es;
 }
 
@@ -2219,7 +2221,6 @@ Bstatement *Llvm_backend::init_statement(Bfunction *bfunction,
       Bstatement *es = nbuilder_.mkExprStmt(bfunction, init,
                                             init->location());
       var->setInitializer(es->getExprStmtExpr()->value());
-      enforceTreeIntegrity(es);
       return es;
     }
   } else {
@@ -2231,7 +2232,6 @@ Bstatement *Llvm_backend::init_statement(Bfunction *bfunction,
   llvm::Value *ival = st->getExprStmtExpr()->value();
   if (! llvm::isa<llvm::UndefValue>(ival))
     var->setInitializer(ival);
-  enforceTreeIntegrity(st);
   return st;
 }
 
@@ -2378,13 +2378,11 @@ Bstatement *Llvm_backend::assignment_statement(Bfunction *bfunction,
         nbuilder_.mkBinaryOp(OPERATOR_EQ, voidType(), lhs2->value(),
                              lhs2, rhs2, location);
     Bstatement *es = nbuilder_.mkExprStmt(bfunction, stexp, location);
-    enforceTreeIntegrity(es);
     return es;
   }
 
   Bstatement *st = makeAssignment(bfunction, lhs->value(),
                                   lhs2, rhs2, location);
-  enforceTreeIntegrity(st);
   return st;
 }
 
@@ -2460,8 +2458,6 @@ Bstatement *Llvm_backend::exception_handler_statement(Bstatement *bstat,
   Bstatement *excepst = nbuilder_.mkExcepStmt(func, bstat,
                                               except_stmt,
                                               finally_stmt, location);
-  enforceTreeIntegrity(excepst);
-
   return excepst;
 }
 
@@ -2481,7 +2477,6 @@ Bstatement *Llvm_backend::if_statement(Bfunction *bfunction,
 
   Bstatement *ifst = nbuilder_.mkIfStmt(bfunction, conv, then_block,
                                         else_block, location);
-  enforceTreeIntegrity(ifst);
   return ifst;
 }
 
@@ -2515,7 +2510,6 @@ Bstatement *Llvm_backend::switch_statement(Bfunction *bfunction,
   Bstatement *swst =
       nbuilder_.mkSwitchStmt(bfunction, value, cases, statements,
                              switch_location);
-  enforceTreeIntegrity(swst);
   return swst;
 }
 
@@ -2555,7 +2549,6 @@ Llvm_backend::statement_list(const std::vector<Bstatement *> &statements) {
   Bblock *block = nbuilder_.mkBlock(func, novars, Location());
   for (auto &st : statements)
     nbuilder_.addStatementToBlock(block, st);
-  enforceTreeIntegrity(block);
   return block;
 }
 
@@ -2589,12 +2582,12 @@ void Llvm_backend::block_add_statements(Bblock *bblock,
   assert(bblock);
   for (auto st : statements)
     nbuilder_.addStatementToBlock(bblock, st);
-  enforceTreeIntegrity(bblock);
 }
 
 // Return a block as a statement.
 
-Bstatement *Llvm_backend::block_statement(Bblock *bblock) {
+Bstatement *Llvm_backend::block_statement(Bblock *bblock)
+{
   return bblock; // class Bblock inherits from Bstatement
 }
 
@@ -3057,8 +3050,6 @@ Bstatement *Llvm_backend::function_defer_statement(Bfunction *function,
 
   Bstatement *defst = nbuilder_.mkDeferStmt(function, undefer, defer,
                                             location);
-  enforceTreeIntegrity(defst);
-
   return defst;
 }
 
@@ -3686,9 +3677,10 @@ bool Llvm_backend::function_set_body(Bfunction *function,
     code_stmt->dump();
   }
 
-  // Sanity checks
-  if (checkIntegrity_)
-    enforceTreeIntegrity(code_stmt);
+  // Invoke the tree integrity checker. We do this even if
+  // checkIntegrity_ is false so to deal with any repairable
+  // sharing that the front end may have introduced.
+  enforceTreeIntegrity(code_stmt);
 
   // Create and populate entry block
   llvm::BasicBlock *entryBlock = genEntryBlock(function);

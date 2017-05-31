@@ -36,25 +36,10 @@ void IntegrityVisitor::dump(llvm::Instruction *inst) {
   ss_ << "\n";
 }
 
-static bool varExprOrConvVar(Bnode *node)
-{
-  Bexpression *expr = node->castToBexpression();
-  if (!expr)
-    return false;
-  if (expr->flavor() == N_Var)
-    return true;
-  if (expr->flavor() == N_Conversion &&
-      expr->getChildExprs()[0]->flavor() == N_Var)
-    return true;
-  return false;
-}
-
 bool IntegrityVisitor::shouldBeTracked(Bnode *child)
 {
   Bexpression *expr = child->castToBexpression();
   if (expr && be_->moduleScopeValue(expr->value(), expr->btype()))
-    return false;
-  if (includeVarExprs() == IgnoreVarExprs && varExprOrConvVar(child))
     return false;
   return true;
 }
@@ -87,6 +72,7 @@ void IntegrityVisitor::unsetParent(Bnode *child, Bnode *parent, unsigned slot)
 {
   if (! shouldBeTracked(child))
     return;
+  assert(sharing_.find(std::make_pair(parent, slot)) == sharing_.end());
   auto it = nparent_.find(child);
   assert(it != nparent_.end());
   parslot pps = it->second;
@@ -107,8 +93,17 @@ void IntegrityVisitor::setParent(Bnode *child, Bnode *parent, unsigned slot)
     unsigned prevSlot = pps.second;
     if (prevParent == parent && prevSlot == slot)
       return;
+    if (child->flavor() == N_Error)
+      return;
+
+    // Was this instance of sharing recorded previously?
     parslot ps = std::make_pair(parent, slot);
-    sharing_.push_back(std::make_pair(child, ps));
+    auto it = sharing_.find(ps);
+    if (it != sharing_.end())
+      return;
+
+    // Keep track of this location for future use in repair operations.
+    sharing_.insert(ps);
 
     // If the sharing at this subtree is repairable, don't
     // log an error, since the sharing will be undone later on.
@@ -219,12 +214,13 @@ bool IntegrityVisitor::repair(Bnode *node)
 {
   ScopedIntegrityCheckDisabler disabler(be_);
   std::set<Bexpression *> visited;
-  for (auto &p : sharing_) {
-    Bexpression *child = p.first->castToBexpression();
-    parslot ps = p.second;
+  for (auto &ps : sharing_) {
     Bnode *parent = ps.first;
     unsigned slot = ps.second;
+    const std::vector<Bnode *> &pkids = parent->children();
+    Bexpression *child = pkids[slot]->castToBexpression();
     assert(child);
+
     if (visited.find(child) == visited.end()) {
       // Repairable?
       if (!repairableSubTree(child))
