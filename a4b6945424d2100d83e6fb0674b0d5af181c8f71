@@ -52,6 +52,24 @@
       "revId": "a4b6945424d2100d83e6fb0674b0d5af181c8f71",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "34db7658_bfe056cf",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2347,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-06-02T17:57:31Z",
+      "side": 1,
+      "message": "OK, that sounds reasonable. I will take a stab at it and see how it goes... may ask for help if I run into trouble.",
+      "parentUuid": "846f29cc_fac60628",
+      "revId": "a4b6945424d2100d83e6fb0674b0d5af181c8f71",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
