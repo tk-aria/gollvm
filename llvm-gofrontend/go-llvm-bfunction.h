@@ -24,6 +24,7 @@
 #include "backend.h"
 
 namespace llvm {
+class AllocaInst;
 class Argument;
 class BasicBlock;
 class Function;
@@ -93,8 +94,11 @@ public:
   void genProlog(llvm::BasicBlock *entry);
 
   // Perform an necessary prolog fixups after instructions have been
-  // assigned to LLVM basic blocks for the function.
-  void fixupProlog(llvm::BasicBlock *entry);
+  // assigned to LLVM basic blocks for the function. Here "entry" is
+  // the the entry BB for the function, and "temps" is a set of temporary
+  // variables that need to be adopted into the function.
+  void fixupProlog(llvm::BasicBlock *entry,
+                   const std::set<llvm::AllocaInst *> &temps);
 
   // Create code to return a function value from this fcn, following ABI rules.
   llvm::Value *genReturnSequence(Bexpression *toRet,

@@ -14,6 +14,22 @@
 #include "go-llvm-irbuilders.h"
 #include "namegen.h"
 
+BlockLIRBuilder::BlockLIRBuilder(llvm::Function *dummyFcn,
+                                 NameGen *namegen)
+    : LIRBuilder(dummyFcn->getContext(), llvm::ConstantFolder()),
+      dummyBlock_(llvm::BasicBlock::Create(dummyFcn->getContext(), "",
+                                           dummyFcn)),
+      namegen_(namegen)
+{
+  SetInsertPoint(dummyBlock_.get());
+}
+
+BlockLIRBuilder::~BlockLIRBuilder()
+{
+  assert(dummyBlock_->getInstList().empty());
+  dummyBlock_->removeFromParent();
+}
+
 std::vector<llvm::Instruction*> BlockLIRBuilder::instructions()
 {
   std::vector<llvm::Instruction*> rv;
