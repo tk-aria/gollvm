@@ -34,6 +34,24 @@
       "revId": "a4b6945424d2100d83e6fb0674b0d5af181c8f71",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "846f29cc_fac60628",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2347,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2017-06-02T17:49:55Z",
+      "side": 1,
+      "message": "Ah, I was looking in the wrong place.  Looks like Interface_mtable_expression::do_type is buggy.  It builds up a struct of Go function types, but the actual types should be C function pointer types.  Of course, we can\u0027t represent a C function pointer type in the Go type system.  Func_code_reference_expression just uses *void, and Interface_mtable_expression::do_type should do the same.  And then I think in Interface_mtable_expression::do_get_backend we should build up the correct backend type, using Backend::function_type, rather than what we do now which is just call this-\u003etype()-\u003eget_backend().\n\nI\u0027m happy to work on that unless you want to tackle it (but it will probably happen faster if you do it).",
+      "parentUuid": "c13bcbc5_c3e534e0",
+      "revId": "a4b6945424d2100d83e6fb0674b0d5af181c8f71",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
