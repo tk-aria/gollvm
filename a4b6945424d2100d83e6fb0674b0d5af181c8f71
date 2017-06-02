@@ -16,6 +16,24 @@
       "revId": "a4b6945424d2100d83e6fb0674b0d5af181c8f71",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c13bcbc5_c3e534e0",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2347,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-06-02T17:00:44Z",
+      "side": 1,
+      "message": "The example I am debugging is at\n\nhttps://play.golang.org/p/lTbWghik1b\n\nHere is the stack trace from the debugger, at the point where the descriptor type is finalized (the \"D\" in my comment) in the runup to creating the actual expression in the first call to \"doit\":\n\n# 1  0x0000000001789ba4 in Llvm_backend::set_placeholder_struct_type (\n    this\u003d0x4e2f440, placeholder\u003d0x4e7c4b0, fields\u003d...)\n    at /x/go-llvm.cpp:319\n# 2  0x0000000001753591 in Function_type::do_get_backend (this\u003d0x4e3c980, \n    gogo\u003d0x4e34760)\n    at /x/gofrontend/go/types.cc:4899\n# 3  0x0000000001742777 in Type::get_btype_without_hash (this\u003d0x4e3c980, \n    gogo\u003d0x4e34760)\n    at /x/gofrontend/go/types.cc:951\n# 4  0x00000000017426a5 in Type::get_backend (this\u003d0x4e3c980, gogo\u003d0x4e34760)\n    at /x/gofrontend/go/types.cc:920\n# 5  0x000000000174324f in get_backend_struct_fields (gogo\u003d0x4e34760, \n    fields\u003d0x4e70f20, use_placeholder\u003dfalse, bfields\u003d0x7fffffffbec8)\n    at /x/gofrontend/go/types.cc:6244\n# 6  0x0000000001756c7b in Struct_type::do_get_backend (this\u003d0x4e7cd20, \n    gogo\u003d0x4e34760)\n    at /x/gofrontend/go/types.cc:6256\n# 7  0x0000000001742777 in Type::get_btype_without_hash (this\u003d0x4e7cd20, \n    gogo\u003d0x4e34760)\n    at /x/gofrontend/go/types.cc:951\n# 8  0x00000000017426a5 in Type::get_backend (this\u003d0x4e7cd20, gogo\u003d0x4e34760)\n    at /x/gofrontend/go/types.cc:920\n# 9  0x0000000001808a66 in Interface_mtable_expression::do_get_backend (\n    this\u003d0x4e7c810, context\u003d0x7fffffffc740)\n    at /x/gofrontend/go/expressions.cc:15486\n# 10 0x00000000017d985f in Expression::get_backend (this\u003d0x4e7c810, \n    context\u003d0x7fffffffc740)\n    at /x/gofrontend/go/expressions.cc:402\n# 11 0x00000000017e45ac in Unary_expression::do_get_backend (this\u003d0x4e73040, \n    context\u003d0x7fffffffc740)\n    at /x/gofrontend/go/expressions.cc:4298\n# 12 0x00000000017d985f in Expression::get_backend (this\u003d0x4e73040, \n    context\u003d0x7fffffffc740)\n    at /x/gofrontend/go/expressions.cc:402\n# 13 0x00000000016c20d6 in Build_method_tables::type (this\u003d0x7fffffffc920, \n    type\u003d0x4e3cee0)\n    at /x/gofrontend/go/gogo.cc:4508\n# 14 0x000000000173e80d in Type::traverse (type\u003d0x4e3cee0, \n    traverse\u003d0x7fffffffc920)\n    at /x/gofrontend/go/types.cc:290\n# 15 0x00000000016bb988 in Bindings::traverse (this\u003d0x4e3ac00, \n    traverse\u003d0x7fffffffc920, is_global\u003dtrue)\n    at /x/gofrontend/go/gogo.cc:7902\n# 16 0x00000000016bb532 in Gogo::traverse (this\u003d0x4e34760, \n    traverse\u003d0x7fffffffc920)\n    at /x/gofrontend/go/gogo.cc:2566\n# 17 0x00000000016b5c07 in Gogo::build_interface_method_tables (this\u003d0x4e34760)\n    at /x/gofrontend/go/gogo.cc:4475\n# 18 0x00000000016b49ef in Gogo::write_globals (this\u003d0x4e34760)\n    at /x/gofrontend/go/gogo.cc:1276\n\n\n If I walk back up the stack to Interface_mtable_expression::do_get_backend and look at the vlaue of \"type()\", I see\n\n(gdb) p type()-\u003emangled_name(gogo)\n...\n    _M_p \u003d 0x4e7d3c8 \"S17___type_descriptorpN5__type10_.main.blixFpN6_stringee10_.main.frobFpN3_inteexe\"}}\n\nwhich demangles thus:\n\n$ echo S17___type_descriptorpN5__type10_.main.blixFpN6_stringee10_.main.frobFpN3_inteexe | gccgo-dem\nstruct{__type_descriptor *_type, .main.blix func{(string)}, .main.frob func{(int)}}\n$\n\nThe types for the second and third fields above wind up as descriptors, not raw pointer-to function types. mind. So this seems to say that the actual expression is using descriptors and not raw function pointers. \n\nLet me know if this makes sense. It is somewhat hairy to debug this stuff.",
+      "parentUuid": "1f3752cb_26cdfcf5",
+      "revId": "a4b6945424d2100d83e6fb0674b0d5af181c8f71",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
