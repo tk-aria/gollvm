@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1f3752cb_26cdfcf5",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2347,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2017-06-02T16:23:07Z",
+      "side": 1,
+      "message": "When do we see a value of type { { T1*, D* }, O* }?  That looks wrong, and if the gofrontend is generating it that seems like a mistake.  I looked at Interface_type::do_get_backend and it seems to do the right thing--it goes through Interface_type::get_backend_methods which get_backend_fntype which should give it F*, not D*.",
+      "revId": "a4b6945424d2100d83e6fb0674b0d5af181c8f71",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
