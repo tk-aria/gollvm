@@ -62,7 +62,6 @@ Llvm_backend::Llvm_backend(llvm::LLVMContext &context,
     , builtinTable_(new BuiltinTable(typeManager(), false))
     , errorFunction_(nullptr)
     , personalityFunction_(nullptr)
-    , curFcn_(nullptr)
 {
   // If nobody passed in a linemap, create one for internal use (unit testing)
   if (!linemap_) {
@@ -637,12 +636,11 @@ bool Llvm_backend::stmtVectorHasError(const std::vector<Bstatement *> &stmts)
 }
 
 Bexpression *Llvm_backend::resolve(Bexpression *expr,
-                                   Bfunction *func,
                                    Varexpr_context ctx)
 
 {
   if (expr->compositeInitPending())
-    expr = resolveCompositeInit(expr, func, nullptr);
+    expr = resolveCompositeInit(expr, nullptr);
   if (expr->varExprPending())
     expr = resolveVarContext(expr, ctx);
   return expr;
@@ -744,12 +742,13 @@ Bexpression *Llvm_backend::genStore(Bfunction *func,
                                     Bexpression *dstExpr,
                                     Location location)
 {
-  BlockLIRBuilder builder(func->function(), this);
+  llvm::Function *dummyFcn = errorFunction_->function();
+  BlockLIRBuilder builder(dummyFcn, this);
 
   Varexpr_context ctx = varContextDisp(srcExpr);
 
   // Resolve pending var exprs and/or composites
-  Bexpression *valexp = resolve(srcExpr, func, ctx);
+  Bexpression *valexp = resolve(srcExpr, ctx);
 
   // Call helper to generate instructions
   llvm::Value *val = valexp->value();
@@ -768,8 +767,7 @@ Bexpression *Llvm_backend::genStore(Bfunction *func,
 
 Bexpression *Llvm_backend::genArrayInit(llvm::ArrayType *llat,
                                         Bexpression *expr,
-                                        llvm::Value *storage,
-                                        Bfunction *bfunc)
+                                        llvm::Value *storage)
 {
   Location loc = expr->location();
   Btype *btype = expr->btype();
@@ -779,7 +777,8 @@ Bexpression *Llvm_backend::genArrayInit(llvm::ArrayType *llat,
   unsigned nElements = llat->getNumElements();
   assert(nElements == aexprs.size());
 
-  BlockLIRBuilder builder(bfunc->function(), this);
+  llvm::Function *dummyFcn = errorFunction_->function();
+  BlockLIRBuilder builder(dummyFcn, this);
   std::vector<Bexpression *> values;
 
   for (unsigned eidx = 0; eidx < nElements; ++eidx) {
@@ -794,7 +793,7 @@ Bexpression *Llvm_backend::genArrayInit(llvm::ArrayType *llat,
 
     // Resolve element value if needed
     Varexpr_context ctx = varContextDisp(aexprs[eidx]);
-    Bexpression *valexp = resolve(aexprs[eidx], bfunc, ctx);
+    Bexpression *valexp = resolve(aexprs[eidx], ctx);
 
     // Store field value into GEP
     genStore(&builder, valexp->btype(), gep->getType(),
@@ -811,8 +810,7 @@ Bexpression *Llvm_backend::genArrayInit(llvm::ArrayType *llat,
 
 Bexpression *Llvm_backend::genStructInit(llvm::StructType *llst,
                                          Bexpression *expr,
-                                         llvm::Value *storage,
-                                         Bfunction *bfunc)
+                                         llvm::Value *storage)
 {
   Location loc = expr->location();
   Btype *btype = expr->btype();
@@ -821,7 +819,8 @@ Bexpression *Llvm_backend::genStructInit(llvm::StructType *llst,
   unsigned nFields = llst->getNumElements();
   assert(nFields == fexprs.size());
 
-  BlockLIRBuilder builder(bfunc->function(), this);
+  llvm::Function *dummyFcn = errorFunction_->function();
+  BlockLIRBuilder builder(dummyFcn, this);
   std::vector<Bexpression *> values;
 
   for (unsigned fidx = 0; fidx < nFields; ++fidx) {
@@ -829,7 +828,7 @@ Bexpression *Llvm_backend::genStructInit(llvm::StructType *llst,
     assert(fieldValExpr);
 
     Varexpr_context ctx = varContextDisp(fieldValExpr);
-    Bexpression *valexp = resolve(fieldValExpr, bfunc, ctx);
+    Bexpression *valexp = resolve(fieldValExpr, ctx);
 
     // Create GEP
     assert(fidx < llst->getNumElements());
@@ -852,17 +851,14 @@ Bexpression *Llvm_backend::genStructInit(llvm::StructType *llst,
 }
 
 Bexpression *Llvm_backend::resolveCompositeInit(Bexpression *expr,
-                                                Bfunction *func,
                                                 llvm::Value *storage)
 {
-  if (expr == errorExpression() || func == errorFunction_.get())
-    return errorExpression();
+  assert(expr != errorExpression());
   bool setPending = false;
   Bvariable *tvar = nullptr;
   if (!storage) {
-    assert(func);
     std::string tname(namegen("tmp"));
-    tvar = local_variable(func, tname, expr->btype(), true, Location());
+    tvar = nbuilder_.mkTempVar(expr->btype(), expr->location(), tname);
     assert(tvar != errorVariable_.get());
     tvar->markAsTemporary();
     storage = tvar->value();
@@ -875,10 +871,10 @@ Bexpression *Llvm_backend::resolveCompositeInit(Bexpression *expr,
   Bexpression *rval = nullptr;
   if (llt->isStructTy()) {
     llvm::StructType *llst = llvm::cast<llvm::StructType>(llt);
-    rval = genStructInit(llst, expr, storage, func);
+    rval = genStructInit(llst, expr, storage);
   } else {
     llvm::ArrayType *llat = llvm::cast<llvm::ArrayType>(llt);
-    rval = genArrayInit(llat, expr, storage, func);
+    rval = genArrayInit(llat, expr, storage);
   }
   if (setPending) {
     rval->setVarExprPending(false, 0);
@@ -1328,13 +1324,12 @@ Bexpression *Llvm_backend::conditional_expression(Bfunction *function,
       else_expr == errorExpression())
     return errorExpression();
 
-  curFcn_ = function;
   assert(condition && then_expr);
 
   condition = resolveVarContext(condition);
-  then_expr = resolve(then_expr, function);
+  then_expr = resolve(then_expr);
   if (else_expr)
-    else_expr = resolve(else_expr, function);
+    else_expr = resolve(else_expr);
 
   std::vector<Bvariable *> novars;
   Bblock *thenBlock = nbuilder_.mkBlock(function, novars, location);
@@ -1954,7 +1949,7 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
     if (paramInfo.disp() == ParmIndirect) {
       Bexpression *fnarg = fn_args[idx];
       if (fnarg->compositeInitPending())
-        fnarg = resolveCompositeInit(fnarg, state.callerFcn, nullptr);
+        fnarg = resolveCompositeInit(fnarg, nullptr);
       state.resolvedArgs.push_back(fnarg);
       llvm::Value *val = fnarg->value();
       assert(val);
@@ -1973,7 +1968,7 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
     Varexpr_context ctx = varContextDisp(fn_args[idx]);
     if (paramInfo.abiTypes().size() == 2)
       ctx = VE_lvalue;
-    Bexpression *resarg = resolve(fn_args[idx], state.callerFcn, ctx);
+    Bexpression *resarg = resolve(fn_args[idx], ctx);
     state.resolvedArgs.push_back(resarg);
 
     if (paramInfo.disp() == ParmIgnore)
@@ -2002,7 +1997,7 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
       // Apply any necessary pointer type conversions.
       Btype *paramTyp = paramTypes[idx];
       if (val->getType()->isPointerTy() && ctx == VE_rvalue)
-        val = convertForAssignment(resarg, paramTyp->type(), state.callerFcn);
+        val = convertForAssignment(resarg, paramTyp->type());
 
       // Apply any necessary sign-extensions or zero-extensions.
       if (paramInfo.abiType()->isIntegerTy()) {
@@ -2198,26 +2193,23 @@ Bstatement *Llvm_backend::expression_statement(Bfunction *bfunction,
 {
   if (expr == errorExpression() || bfunction == errorFunction_.get())
     return errorStatement();
-  curFcn_ = bfunction;
   Bstatement *es =
-      nbuilder_.mkExprStmt(bfunction,
-                           resolve(expr, bfunction),
-                           expr->location());
+      nbuilder_.mkExprStmt(bfunction, resolve(expr), expr->location());
   return es;
 }
 
 // Variable initialization.
 
 Bstatement *Llvm_backend::init_statement(Bfunction *bfunction,
-                                         Bvariable *var, Bexpression *init)
+                                         Bvariable *var,
+                                         Bexpression *init)
 {
   if (var == errorVariable_.get() || init == errorExpression() ||
       bfunction == errorFunction_.get())
     return errorStatement();
-  curFcn_ = bfunction;
   if (init) {
     if (init->compositeInitPending()) {
-      init = resolveCompositeInit(init, bfunction, var->value());
+      init = resolveCompositeInit(init, var->value());
       Bstatement *es = nbuilder_.mkExprStmt(bfunction, init,
                                             init->location());
       var->setInitializer(es->getExprStmtExpr()->value());
@@ -2237,13 +2229,13 @@ Bstatement *Llvm_backend::init_statement(Bfunction *bfunction,
 
 llvm::Value *
 Llvm_backend::convertForAssignment(Bexpression *src,
-                                   llvm::Type *dstToType,
-                                   Bfunction *bfunc)
+                                   llvm::Type *dstToType)
 {
   if (src->value()->getType() == dstToType)
     return src->value();
 
-  BlockLIRBuilder builder(bfunc->function(), this);
+  llvm::Function *dummyFcn = errorFunction_->function();
+  BlockLIRBuilder builder(dummyFcn, this);
   llvm::Value *val = convertForAssignment(src->btype(), src->value(),
                                           dstToType, &builder);
   src->appendInstructions(builder.instructions());
@@ -2369,11 +2361,10 @@ Bstatement *Llvm_backend::assignment_statement(Bfunction *bfunction,
   if (lhs == errorExpression() || rhs == errorExpression() ||
       bfunction == errorFunction_.get())
     return errorStatement();
-  curFcn_ = bfunction;
   Bexpression *lhs2 = resolveVarContext(lhs, VE_lvalue);
   Bexpression *rhs2 = rhs;
   if (rhs->compositeInitPending()) {
-    rhs2 = resolveCompositeInit(rhs, bfunction, lhs2->value());
+    rhs2 = resolveCompositeInit(rhs, lhs2->value());
     Bexpression *stexp =
         nbuilder_.mkBinaryOp(OPERATOR_EQ, voidType(), lhs2->value(),
                              lhs2, rhs2, location);
@@ -2393,12 +2384,11 @@ Llvm_backend::return_statement(Bfunction *bfunction,
 {
   if (bfunction == errorFunction_.get() || exprVectorHasError(vals))
     return errorStatement();
-  curFcn_ = bfunction;
 
   // Resolve arguments
   std::vector<Bexpression *> resolvedVals;
   for (auto &val : vals)
-    resolvedVals.push_back(resolve(val, bfunction, varContextDisp(val)));
+    resolvedVals.push_back(resolve(val, varContextDisp(val)));
 
   // Collect up the return value
   Bexpression *toret = nullptr;
@@ -2415,7 +2405,7 @@ Llvm_backend::return_statement(Bfunction *bfunction,
     Bexpression *structVal =
         constructor_expression(rtyp, resolvedVals, location);
     if (structVal->compositeInitPending()) {
-      structVal = resolveCompositeInit(structVal, bfunction, nullptr);
+      structVal = resolveCompositeInit(structVal, nullptr);
     } else if (llvm::isa<llvm::Constant>(structVal->value())) {
       llvm::Constant *cval = llvm::cast<llvm::Constant>(structVal->value());
       Bvariable *cv = genVarForConstant(cval, structVal->btype());
@@ -2469,8 +2459,7 @@ Bstatement *Llvm_backend::if_statement(Bfunction *bfunction,
                                        Location location) {
   if (condition == errorExpression())
     return errorStatement();
-  curFcn_ = bfunction;
-  condition = resolve(condition, bfunction);
+  condition = resolve(condition);
   assert(then_block);
   Btype *bt = makeAuxType(llvmBoolType());
   Bexpression *conv = convert_expression(bt, condition, location);
@@ -2490,7 +2479,6 @@ Bstatement *Llvm_backend::switch_statement(Bfunction *bfunction,
   // Error handling
   if (value == errorExpression())
     return errorStatement();
-  curFcn_ = bfunction;
   for (auto casev : cases)
     if (exprVectorHasError(casev))
       return errorStatement();
@@ -2498,7 +2486,7 @@ Bstatement *Llvm_backend::switch_statement(Bfunction *bfunction,
       return errorStatement();
 
   // Resolve value
-  value = resolve(value, bfunction);
+  value = resolve(value);
 
   // Case expressions are expected to be constants for this flavor of switch
   for (auto &bexpvec : cases)
@@ -2678,7 +2666,7 @@ void Llvm_backend::global_variable_set_init(Bvariable *var, Bexpression *expr)
   llvm::GlobalVariable *gvar = llvm::cast<llvm::GlobalVariable>(var->value());
 
   if (expr->compositeInitPending())
-    expr = resolveCompositeInit(expr, nullptr, gvar);
+    expr = resolveCompositeInit(expr, gvar);
 
   assert(llvm::isa<llvm::Constant>(expr->value()));
   llvm::Constant *econ = llvm::cast<llvm::Constant>(expr->value());
@@ -2703,7 +2691,6 @@ Bvariable *Llvm_backend::local_variable(Bfunction *function,
   assert(function);
   if (btype == errorType() || function == errorFunction_.get())
     return errorVariable_.get();
-  curFcn_ = function;
   return function->localVariable(name, btype, is_address_taken, location);
 }
 
@@ -2715,7 +2702,6 @@ Bvariable *Llvm_backend::parameter_variable(Bfunction *function,
                                             Location location)
 {
   assert(function);
-  curFcn_ = function;
   if (btype == errorType() || function == errorFunction_.get())
     return errorVariable_.get();
   return function->parameterVariable(name, btype,
@@ -2746,7 +2732,6 @@ Bvariable *Llvm_backend::temporary_variable(Bfunction *function,
 {
   if (binit == errorExpression())
     return errorVariable_.get();
-  curFcn_ = function;
   std::string tname(namegen("tmpv"));
   Bvariable *tvar = local_variable(function, tname, btype,
                                    is_address_taken, location);
@@ -3112,6 +3097,7 @@ public:
   std::unique_ptr<DIBuildHelper> dibuildhelper_;
   std::map<LabelId, llvm::BasicBlock *> labelmap_;
   std::vector<llvm::BasicBlock*> padBlockStack_;
+  std::set<llvm::AllocaInst *> temporariesDiscovered_;
   llvm::BasicBlock* finallyBlock_;
   Bstatement *cachedReturn_;
   bool emitOrphanedCode_;
@@ -3143,7 +3129,7 @@ GenBlocks::GenBlocks(llvm::LLVMContext &context,
 
 void GenBlocks::finishFunction(llvm::BasicBlock *entry)
 {
-  function_->fixupProlog(entry);
+  function_->fixupProlog(entry, temporariesDiscovered_);
   if (createDebugMetaData_)
     dibuildhelper().endFunction(function_);
 }
@@ -3217,6 +3203,23 @@ std::pair<llvm::Instruction*, llvm::BasicBlock *>
 GenBlocks::postProcessInst(llvm::Instruction *inst,
                            llvm::BasicBlock *curblock)
 {
+  for (llvm::Instruction::op_iterator oi = inst->op_begin(),
+           oe = inst->op_end(); oi != oe; ++oi) {
+    if (llvm::isa<llvm::AllocaInst>(*oi)) {
+      llvm::AllocaInst *ai = llvm::cast<llvm::AllocaInst>(*oi);
+
+      // If this alloca is associated with a temporary variable
+      // that was manufactured at some point during IR construction,
+      // then gather it up into a set to be inserted into the prolog
+      // block.
+      Bvariable *tvar = be_->nodeBuilder().adoptTemporaryVariable(ai);
+      if (tvar) {
+        temporariesDiscovered_.insert(ai);
+        delete tvar;
+      }
+    }
+  }
+
   if (llvm::isa<llvm::CallInst>(inst) && !padBlockStack_.empty()) {
     llvm::CallInst *call = llvm::cast<llvm::CallInst>(inst);
     llvm::Function *func = call->getCalledFunction();
@@ -3668,8 +3671,6 @@ bool Llvm_backend::function_set_body(Bfunction *function,
 {
   if (function == errorFunction_.get())
     return true;
-  assert(curFcn_ == nullptr || curFcn_ == function);
-  curFcn_ = nullptr;
 
   // debugging
   if (traceLevel() > 1) {

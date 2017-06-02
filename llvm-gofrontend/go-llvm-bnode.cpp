@@ -308,6 +308,12 @@ Operator Bnode::op() const
   return u.op;
 }
 
+Bvariable *Bnode::var() const
+{
+  assert(flavor() == N_Var);
+  return u.var;
+}
+
 //......................................................................
 
 BnodeBuilder::BnodeBuilder(Llvm_backend *be)
@@ -322,6 +328,10 @@ BnodeBuilder::~BnodeBuilder()
   for (auto &expr : earchive_) {
     if (expr)
       delete expr;
+  }
+  for (auto ivpair : tempvars_) {
+    delete ivpair.first;
+    delete ivpair.second;
   }
 }
 
@@ -410,6 +420,30 @@ Bexpression *BnodeBuilder::mkVar(Bvariable *var, Location loc)
       new Bexpression(N_Var, kids, var->value(), vt, loc);
   rval->u.var = var;
   return archive(rval);
+}
+
+Bvariable *BnodeBuilder::mkTempVar(Btype *varType,
+                                   Location loc,
+                                   const std::string &name)
+{
+  assert(varType);
+  llvm::AllocaInst *inst = new llvm::AllocaInst(varType->type(), 0);
+  if (! name.empty())
+    inst->setName(name);
+  Bvariable *tvar = new Bvariable(varType, loc, name, LocalVar, true, inst);
+  tempvars_[inst] = tvar;
+  return tvar;
+}
+
+Bvariable *BnodeBuilder::adoptTemporaryVariable(llvm::AllocaInst *alloca)
+{
+  assert(alloca);
+  auto mit = tempvars_.find(alloca);
+  if (mit == tempvars_.end())
+    return nullptr;
+  Bvariable *ret = mit->second;
+  tempvars_.erase(mit);
+  return ret;
 }
 
 // This is somewhat unpleasant but necessary due to the way LLVM's

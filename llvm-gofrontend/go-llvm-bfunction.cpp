@@ -419,17 +419,31 @@ void Bfunction::genProlog(llvm::BasicBlock *entry)
   prologGenerated_ = true;
 }
 
-void Bfunction::fixupProlog(llvm::BasicBlock *entry)
+void Bfunction::fixupProlog(llvm::BasicBlock *entry,
+                            const std::set<llvm::AllocaInst *> &temps)
 {
+  // Make sure that each parameter variable has an initializer (this is
+  // needed for debug generation. In the case of by-reference vars,
+  // we can simply use the first inst in the fcn as the position where
+  // the parameter's value is available.
   const std::vector<Btype *> &paramTypes = fcnType()->paramTypes();
   unsigned nParms = paramTypes.size();
   for (unsigned pidx = 0; pidx < nParms; ++pidx) {
-      Bvariable *v = getNthParamVar(pidx);
-      if (v->initializer() == nullptr) {
-        assert(! entry->empty());
-        v->setInitializer(&entry->front());
-      }
+    Bvariable *v = getNthParamVar(pidx);
+    if (v->initializer() == nullptr) {
+      assert(! entry->empty());
+      v->setInitializer(&entry->front());
+    }
   }
+
+  // If there are any "new" temporaries discovered during the control
+  // flow generation walk, incorporate them into the entry block. At this
+  // stage in the game the entry block is already fully populated, including
+  // (potentially) references to the alloca instructions themselves, so
+  // we insert any new temps into the start of the block.
+  if (! temps.empty())
+    for (auto ai : temps)
+      entry->getInstList().push_front(ai);
 }
 
 llvm::Value *Bfunction::genReturnSequence(Bexpression *toRet,

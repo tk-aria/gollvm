@@ -22,7 +22,7 @@
 #include "backend.h"
 
 namespace llvm {
-class Instruction;
+class AllocaInst;
 class Value;
 class raw_ostream;
 }
@@ -108,7 +108,6 @@ class Bnode {
   unsigned id() const { return id_; }
   const char *flavstr() const;
   Blabel *label() const;
-  Operator op() const; // for unary and binary op nodes
 
   // debugging
   void dump();
@@ -134,6 +133,12 @@ class Bnode {
 
   // Cast to Bblock. Returns NULL if not correct flavor.
   Bblock *castToBblock() const;
+
+  // For unary and binary op expression nodes, this returns the opcode
+  Operator op() const;
+
+  // For var exprs, this returns the underlying bvariable
+  Bvariable *var() const;
 
   template<class Visitor> friend class SimpleNodeWalker;
   template<class Visitor> friend class UpdatingNodeWalker;
@@ -263,6 +268,21 @@ class BnodeBuilder {
                   Location loc);
   void addStatementToBlock(Bblock *block, Bstatement *st);
 
+  // Create a temporary variable of the specified type, to be
+  // incorporated into some expression we're building. Although this
+  // strictly speaking doesn't relate to Bnode building, it helps to
+  // have this interface here, since IR construction methods will
+  // always have access to a BnodeBuilder but may not have the current
+  // function we're processing.
+  Bvariable *mkTempVar(Btype *varType, Location loc, const std::string &name);
+
+  // This helper looks up the specified variable (as identified by its
+  // alloca) to see if it is an unparented temp created during IR
+  // construction (via the mkTempVar method above). If so, the
+  // variable is extracted from the builder's set and returned. If the
+  // var is not an unadopted temp, then NULL is returned.
+  Bvariable *adoptTemporaryVariable(llvm::AllocaInst *alloca);
+
   // Free up this expr (it is garbage). Does not free up children.
   void freeExpr(Bexpression *expr);
 
@@ -294,6 +314,7 @@ class BnodeBuilder {
   std::vector<Bexpression *> earchive_;
   std::vector<Bstatement *> sarchive_;
   std::vector<SwitchDescriptor*> swcases_;
+  std::unordered_map<llvm::AllocaInst*, Bvariable*> tempvars_;
   std::unique_ptr<IntegrityVisitor> integrityVisitor_;
   bool checkIntegrity_;
 };

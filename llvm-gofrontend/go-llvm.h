@@ -529,18 +529,15 @@ public:
   // Array init helper
   Bexpression *genArrayInit(llvm::ArrayType *llat,
                             Bexpression *expr,
-                            llvm::Value *storage,
-                            Bfunction *bfunc);
+                            llvm::Value *storage);
 
   // Struct init helper
   Bexpression *genStructInit(llvm::StructType *llst,
                              Bexpression *expr,
-                             llvm::Value *storage,
-                             Bfunction *bfunc);
+                             llvm::Value *storage);
 
   // Composite init management
   Bexpression *resolveCompositeInit(Bexpression *expr,
-                                    Bfunction *func,
                                     llvm::Value *storage);
   // Var expr management
   Bexpression *resolveVarContext(Bexpression *expr,
@@ -548,8 +545,7 @@ public:
 
   // General-purpose resolver, handles var expr context and
   // composite init context.
-  Bexpression *resolve(Bexpression *expr, Bfunction *func,
-                       Varexpr_context ctx=VE_rvalue);
+  Bexpression *resolve(Bexpression *expr, Varexpr_context ctx=VE_rvalue);
 
   // Check a vector of Bexpression's to see if any are the
   // error expression, returning TRUE if so.
@@ -585,8 +581,7 @@ public:
   // Return value will be a new convert Bexpression if a convert is
   // needed, NULL otherwise.
   llvm::Value *convertForAssignment(Bexpression *src,
-                                    llvm::Type *dstToType,
-                                    Bfunction *bfunc);
+                                    llvm::Type *dstToType);
   // lower-level version of the routine above
   llvm::Value *convertForAssignment(Btype *srcType,
                                     llvm::Value *srcVal,
@@ -739,11 +734,6 @@ private:
 
   // Personality function
   llvm::Function *personalityFunction_;
-
-  // Pointer to current function being generated. Used for sanity checking,
-  // to catch cases where the front end switches between functions in
-  // an expected way.
-  Bfunction *curFcn_;
 };
 
 #endif
