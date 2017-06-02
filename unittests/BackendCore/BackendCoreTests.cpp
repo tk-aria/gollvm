@@ -294,4 +294,49 @@ TEST(BackendCoreTests, TypeUtils) {
   Btype *u32 = be->integer_type(true, 32);
   EXPECT_EQ(be->type_field_alignment(u32), 4);
 }
+
+TEST(BackendCoreTests, TypeEquivalence) {
+
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
+  TypeManager *tm = be->typeManager();
+  Location loc;
+
+  // Create a struct that looks like
+  //
+  //  struct S { int8, void(int8)*, *S }
+  //
+  Btype *pht = be->placeholder_pointer_type("ph", loc, false);
+  Btype *bi8t = be->integer_type(false, 8);
+  BFunctionType *befty1 = mkFuncTyp(be, L_PARM, bi8t, L_END);
+  Btype *pft = be->pointer_type(befty1);
+  Btype *s1t = mkBackendStruct(be, bi8t, "f1", pft, "f2", pht, "n", nullptr);
+  Btype *ps1t = be->pointer_type(s1t);
+  be->set_placeholder_pointer_type(pht, ps1t);
+  h.mkLocal("y", s1t);
+
+  // Create a struct that looks like
+  //
+  //  struct S { int8, void*, *S }
+  //
+  Btype *pht2 = be->placeholder_pointer_type("ph", loc, false);
+  Btype *pvt = be->pointer_type(be->void_type());
+  Btype *s2t = mkBackendStruct(be, bi8t, "f1", pvt, "f2", pht2, "n", nullptr);
+  Btype *ps2t = be->pointer_type(s2t);
+  be->set_placeholder_pointer_type(pht2, ps2t);
+  h.mkLocal("x", s2t);
+
+  // These two types are not structurally equivalent
+  EXPECT_FALSE(pht2->equal(*pht));
+
+  // However the underlying LLVM types should be considered
+  // assignment-compatible.
+  std::set<llvm::Type *> visited;
+  bool equiv = tm->fcnPointerCompatible(pht->type(), pht2->type(), visited);
+  EXPECT_TRUE(equiv);
+
+  bool broken = h.finish(PreserveDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+}
+
 }
