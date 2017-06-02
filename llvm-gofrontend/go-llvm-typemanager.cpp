@@ -1451,6 +1451,57 @@ bool TypeManager::isPtrToArrayOf(llvm::Type *typ, llvm::Type *arElmTyp)
   return llat->getTypeAtIndex(0u) == arElmTyp;
 }
 
+bool TypeManager::fcnDescriptorCompatible(llvm::Type *left,
+                                          llvm::Type *right,
+                                          std::set<llvm::Type *> &visited)
+{
+  bool visleft = (visited.find(left) != visited.end());
+  bool visright = (visited.find(right) != visited.end());
+  if (visleft != visright)
+    return false;
+  if (visleft)
+    return true;
+  visited.insert(left);
+  visited.insert(right);
+
+  // Allow for pointer-to-fp and func-desc matching
+  bool leftFPD = isPtrToFuncType(left) || isPtrToFuncDescriptorType(left);
+  bool rightFPD = isPtrToFuncType(right) || isPtrToFuncDescriptorType(right);
+  if (leftFPD && rightFPD)
+    return true;
+
+  // Compare type ID, children, etc.
+  if (left->getTypeID() != right->getTypeID())
+    return false;
+
+  // For pointer types, visit pointed-to elements
+  if (left->isPointerTy()) {
+    llvm::PointerType *ptl = llvm::cast<llvm::PointerType>(left);
+    llvm::PointerType *ptr = llvm::cast<llvm::PointerType>(right);
+    llvm::Type *eltl = ptl->getElementType();
+    llvm::Type *eltr = ptr->getElementType();
+    return fcnDescriptorCompatible(eltl, eltr, visited);
+  }
+
+  // For aggregate types, compare children.
+  if (left->isAggregateType()) {
+    unsigned leftnct = left->getNumContainedTypes();
+    unsigned rightnct = right->getNumContainedTypes();
+    if (leftnct != rightnct)
+      return false;
+    for (unsigned cti = 0; cti < leftnct; cti++) {
+      llvm::Type *leftchild = left->getContainedType(cti);
+      llvm::Type *rightchild = right->getContainedType(cti);
+      if (!fcnDescriptorCompatible(leftchild, rightchild, visited))
+        return false;
+    }
+    return true;
+  } else {
+    // For non-aggregate types, we expect underlying llvm types to match
+    return (left == right);
+  }
+}
+
 std::string TypeManager::typToString(Btype *typ)
 {
   std::map<Btype *, std::string> smap;

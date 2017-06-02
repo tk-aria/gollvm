@@ -200,6 +200,15 @@ class TypeManager {
   bool isPtrToVoidType(llvm::Type *typ);
   bool isPtrToArrayOf(llvm::Type *ptyp, llvm::Type *arrayElmTyp);
 
+  // This helper looks at two LLVM types and does a structural
+  // comparison to determine if 'left' is equivalent to 'right'
+  // modulo discrepancies between raw function pointers and
+  // function descriptors (struct with single field that is a
+  // function pointer).
+  bool fcnDescriptorCompatible(llvm::Type *left,
+                               llvm::Type *right,
+                               std::set<llvm::Type *> &visited);
+
   // If specified type is a pointer flagged as being a circular
   // type, return conversion needed on load from that type, or NULL
   // if the type is not circular.

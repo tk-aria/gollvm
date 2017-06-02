@@ -2341,6 +2341,20 @@ Llvm_backend::convertForAssignment(Btype *srcBType,
     return bitcast;
   }
 
+  // Case 8: related to case 1 above, interface value expressions can
+  // have embedded function values that are then assigned to similar
+  // structs with raw function pointers. For example, a value V1 = { {
+  // T1*, D* }, O* } where T1 is a type descriptor, D is a function
+  // descriptor, and O is an object can be assigned to a location with
+  // type { { T1*, F* }, O* } where F is a raw function (as opposed to
+  // function descriptor struct). Allow conversions of this sort for now.
+  std::set<llvm::Type *> visited;
+  if (fcnDescriptorCompatible(dstToType, srcType, visited)) {
+    std::string tag(namegen("cast"));
+    llvm::Value *bitcast = builder->CreateBitCast(srcVal, dstToType, tag);
+    return bitcast;
+  }
+
   return srcVal;
 }
 
