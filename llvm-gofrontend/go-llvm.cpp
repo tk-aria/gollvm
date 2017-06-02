@@ -2354,10 +2354,31 @@ Llvm_backend::convertForAssignment(Btype *srcBType,
     return bitcast;
   }
 
-  // Case 7: also when creating slice values it's common for the
+  // Case 8: also when creating slice values it's common for the
   // frontend to assign pointer-to-X to unsafe.Pointer or equivalent,
   // without an explicit cast. Allow this for now.
   if (dstToType == llvmPtrType() && llvm::isa<llvm::PointerType>(srcType)) {
+    std::string tag(namegen("cast"));
+    llvm::Value *bitcast = builder->CreateBitCast(srcVal, dstToType, tag);
+    return bitcast;
+  }
+
+  // Case 9: related to case 1 above, interface value expressions can
+  // contain C function pointers stored as "void *" instead of
+  // concrete pointer-to-function values. For example, consider a
+  // value V1 of the form
+  //
+  //       { { T1*, void* }, O* }
+  //
+  // where T1 is a type descriptor and O is an object; this value can
+  // sometimes be assigned to a location of type
+  //
+  //       { { T1*, F* }, O* }
+  //
+  // where F is a concrete C pointer-to-function (as opposed to "void*").
+  // Allow conversions of this sort for now.
+  std::set<llvm::Type *> visited;
+  if (fcnPointerCompatible(dstToType, srcType, visited)) {
     std::string tag(namegen("cast"));
     llvm::Value *bitcast = builder->CreateBitCast(srcVal, dstToType, tag);
     return bitcast;
