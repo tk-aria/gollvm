@@ -2341,6 +2341,20 @@ Llvm_backend::convertForAssignment(Btype *srcBType,
     return bitcast;
   }
 
+  // Case 8: related to case 1 above, interface value expressions can
+  // contain C function pointers stored as "void *" instead of
+  // concrete pointer-to-function values. For example, a value V1 = {
+  // { T1*, void* }, O* } where T1 is a type descriptor, and O is an
+  // object can be assigned to a location with type { { T1*, F* }, O* }
+  // where F is a concrete C pointer-to-function (as opposed to
+  // "void *"). Allow conversions of this sort for now.
+  std::set<llvm::Type *> visited;
+  if (fcnPointerCompatible(dstToType, srcType, visited)) {
+    std::string tag(namegen("cast"));
+    llvm::Value *bitcast = builder->CreateBitCast(srcVal, dstToType, tag);
+    return bitcast;
+  }
+
   return srcVal;
 }
 
