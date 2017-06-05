@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "42491abb_ff0980c4",
+        "filename": "llvm-gofrontend/go-llvm-bfunction.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 443,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-06-05T19:25:57Z",
+      "side": 1,
+      "message": "Could these allocas be simply inserted at the beginning of the entry block?",
+      "revId": "5dc3689d39ee85eeb4fa8b289298721a385e5f30",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a5f4e2ce_eed14375",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3209,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-06-05T19:25:57Z",
+      "side": 1,
+      "message": "nit: would it be ai or aInst?",
+      "range": {
+        "startLine": 3209,
+        "startChar": 24,
+        "endLine": 3209,
+        "endChar": 30
+      },
+      "revId": "5dc3689d39ee85eeb4fa8b289298721a385e5f30",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
