@@ -1271,15 +1271,23 @@ Bexpression *Llvm_backend::struct_field_expression(Bexpression *bstruct,
   if (bstruct == errorExpression())
     return errorExpression();
 
+  if (bstruct->compositeInitPending())
+    bstruct = resolveCompositeInit(bstruct, nullptr);
+
   // Construct an appropriate GEP
   llvm::Type *llt = bstruct->btype()->type();
   assert(llt->isStructTy());
   llvm::StructType *llst = llvm::cast<llvm::StructType>(llt);
-  llvm::Value *gep = makeFieldGEP(llst, index, bstruct->value());
+  llvm::Value *sval = bstruct->value();
+  llvm::Value *fval;
+  if (llvm::isa<llvm::Constant>(sval) && sval->getType()->isStructTy())
+    fval = llvm::cast<llvm::Constant>(sval)->getAggregateElement(index);
+  else
+    fval = makeFieldGEP(llst, index, sval);
   Btype *bft = elementTypeByIndex(bstruct->btype(), index);
 
   // Wrap result in a Bexpression
-  Bexpression *rval = nbuilder_.mkStructField(bft, gep, bstruct,
+  Bexpression *rval = nbuilder_.mkStructField(bft, fval, bstruct,
                                               index, location);
 
   if (bstruct->varExprPending())
@@ -1849,17 +1857,39 @@ Bexpression *Llvm_backend::array_index_expression(Bexpression *barray,
   if (barray == errorExpression() || index == errorExpression())
     return errorExpression();
 
+  if (barray->compositeInitPending())
+    barray = resolveCompositeInit(barray, nullptr);
+
   index = resolveVarContext(index);
 
   // Construct an appropriate GEP
   llvm::ArrayType *llat =
       llvm::cast<llvm::ArrayType>(barray->btype()->type());
-  llvm::Value *gep =
-      makeArrayIndexGEP(llat, index->value(), barray->value());
+  llvm::Value *aval = barray->value();
+  llvm::Value *ival = index->value();
+  llvm::Value *eval = nullptr;
+  bool pending = false;
+  if (llvm::isa<llvm::Constant>(aval) && aval->getType()->isArrayTy()) {
+    if (llvm::isa<llvm::Constant>(ival))
+      eval = llvm::cast<llvm::Constant>(aval)->getAggregateElement(llvm::cast<llvm::Constant>(ival));
+    else {
+      // Constant array with non-constant index. Put the array
+      // into a temp var and load from there.
+      llvm::Constant *cval = llvm::cast<llvm::Constant>(aval);
+      Bvariable *cv = genVarForConstant(cval, barray->btype());
+      aval = cv->value();
+      pending = true;
+    }
+  }
+  if (!eval)
+    eval = makeArrayIndexGEP(llat, ival, aval);
+
   Btype *bet = elementTypeByIndex(barray->btype(), 0);
 
   // Wrap in a Bexpression
-  Bexpression *rval = nbuilder_.mkArrayIndex(bet, gep, barray, index, location);
+  Bexpression *rval = nbuilder_.mkArrayIndex(bet, eval, barray, index, location);
+  if (pending)
+    rval->setVarExprPending(false, 0);
   if (barray->varExprPending())
     rval->setVarExprPending(barray->varContext());
 
