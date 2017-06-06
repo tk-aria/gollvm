@@ -701,7 +701,7 @@ Bstatement *BnodeBuilder::mkIfStmt(Bfunction *func,
                                    Bblock *falseBlock, Location loc)
 {
   if (falseBlock == nullptr)
-    falseBlock = new Bblock(func, std::vector<Bvariable *>(), loc);
+    falseBlock = mkBlock(func, std::vector<Bvariable *>(), loc);
   std::vector<Bnode *> kids = { cond, trueBlock, falseBlock };
   Bstatement *rval = new Bstatement(N_IfStmt, func, kids, loc);
   return archive(rval);
