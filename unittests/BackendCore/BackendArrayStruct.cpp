@@ -92,6 +92,172 @@ TEST(BackendArrayStructTests, TestStructFieldExprs) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
+TEST(BackendArrayStructTests, TestStructFieldExprs2) {
+  // Testing struct field expression for composites.
+  FcnTestHarness h;
+  Llvm_backend *be = h.be();
+  BFunctionType *befty = mkFuncTyp(be, L_END);
+  Bfunction *func = h.mkFunction("foo", befty);
+
+  // type X struct {
+  //    f1 *bool
+  //    f2 int32
+  // }
+  Location loc;
+  Btype *bt = be->bool_type();
+  Btype *pbt = be->pointer_type(bt);
+  Btype *bi32t = be->integer_type(false, 32);
+  Btype *s2t = mkBackendStruct(be, pbt, "f1", bi32t, "f2", nullptr);
+
+  // Taking a field of non-constant composite.
+  // var x, y int32
+  // x = X{nil, y}.f2
+  Bvariable *x = h.mkLocal("x", bi32t);
+  Bvariable *y = h.mkLocal("y", bi32t);
+  std::vector<Bexpression *> vals1;
+  vals1.push_back(be->zero_expression(pbt));
+  vals1.push_back(be->var_expression(y, VE_rvalue, loc));
+  Bexpression *vex1 = be->var_expression(x, VE_lvalue, loc);
+  Bexpression *sex1 = be->constructor_expression(s2t, vals1, loc);
+  Bexpression *fex1 = be->struct_field_expression(sex1, 1, loc);
+  h.mkAssign(vex1, fex1);
+
+  // Taking a field of constant composite.
+  // var z int32
+  // z = X{nil, 42}.f2
+  Bvariable *z = h.mkLocal("z", bi32t);
+  std::vector<Bexpression *> vals2;
+  vals2.push_back(be->zero_expression(pbt));
+  vals2.push_back(mkInt32Const(be, int32_t(42)));
+  Bexpression *vex2 = be->var_expression(z, VE_lvalue, loc);
+  Bexpression *sex2 = be->constructor_expression(s2t, vals2, loc);
+  Bexpression *fex2 = be->struct_field_expression(sex2, 1, loc);
+  h.mkAssign(vex2, fex2);
+
+  const char *exp = R"RAW_RESULT(
+    define void @foo(i8* nest %nest.0) #0 {
+    entry:
+      %tmp.0 = alloca { i8*, i32 }
+      %x = alloca i32
+      %y = alloca i32
+      %z = alloca i32
+      store i32 0, i32* %x
+      store i32 0, i32* %y
+      %y.ld.0 = load i32, i32* %y
+      %field.0 = getelementptr inbounds { i8*, i32 }, { i8*, i32 }* %tmp.0, i32 0, i32 0
+      store i8* null, i8** %field.0
+      %field.1 = getelementptr inbounds { i8*, i32 }, { i8*, i32 }* %tmp.0, i32 0, i32 1
+      store i32 %y.ld.0, i32* %field.1
+      %field.2 = getelementptr inbounds { i8*, i32 }, { i8*, i32 }* %tmp.0, i32 0, i32 1
+      %.field.ld.0 = load i32, i32* %field.2
+      store i32 %.field.ld.0, i32* %x
+      store i32 0, i32* %z
+      store i32 42, i32* %z
+      ret void
+    }
+  )RAW_RESULT";
+
+  bool broken = h.finish(StripDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+
+  bool isOK = h.expectValue(func->function(), exp);
+  EXPECT_TRUE(isOK && "Block does not have expected contents");
+}
+
+TEST(BackendArrayStructTests, TestArrayIndexingExprs) {
+  // Testing array indexing expression for composites.
+  FcnTestHarness h;
+  Llvm_backend *be = h.be();
+  BFunctionType *befty = mkFuncTyp(be, L_END);
+  Bfunction *func = h.mkFunction("foo", befty);
+
+  // type T [4]int64
+  Location loc;
+  Bexpression *val4 = mkInt64Const(be, int64_t(4));
+  Btype *bi64t = be->integer_type(false, 64);
+  Btype *at4 = be->array_type(bi64t, val4);
+
+  // Taking an element of non-constant composite.
+  // var x, y int64
+  // x = T{y, 3, 2, 1}[1]
+  Bvariable *x = h.mkLocal("x", bi64t);
+  Bvariable *y = h.mkLocal("y", bi64t);
+  std::vector<unsigned long> indexes = { 0, 1, 2, 3 };
+  std::vector<Bexpression *> vals1;
+  vals1.push_back(be->var_expression(y, VE_rvalue, loc));
+  vals1.push_back(mkInt64Const(be, 3));
+  vals1.push_back(mkInt64Const(be, 2));
+  vals1.push_back(mkInt64Const(be, 1));
+  Bexpression *aex1 = be->array_constructor_expression(at4, indexes, vals1, loc);
+  Bexpression *vex1 = be->var_expression(x, VE_lvalue, loc);
+  Bexpression *bi32one = mkInt32Const(be, 1);
+  Bexpression *eex1 = be->array_index_expression(aex1, bi32one, loc);
+  h.mkAssign(vex1, eex1);
+
+  // Taking an element of constant composite.
+  // var z int64
+  // z = T{4, 3, 2, 1}[1]
+  Bvariable *z = h.mkLocal("z", bi64t);
+  std::vector<Bexpression *> vals2;
+  for (int64_t v : {4, 3, 2, 1})
+    vals2.push_back(mkInt64Const(be, v));
+  Bexpression *aex2 = be->array_constructor_expression(at4, indexes, vals2, loc);
+  Bexpression *vex2 = be->var_expression(z, VE_lvalue, loc);
+  Bexpression *eex2 = be->array_index_expression(aex2, bi32one, loc);
+  h.mkAssign(vex2, eex2);
+
+  // Taking an element of constant composite with non-constant index.
+  // var w int64
+  // w = T{4, 3, 2, 1}[x]
+  Bvariable *w = h.mkLocal("w", bi64t);
+  std::vector<Bexpression *> vals3;
+  for (int64_t v : {4, 3, 2, 1})
+    vals3.push_back(mkInt64Const(be, v));
+  Bexpression *aex3 = be->array_constructor_expression(at4, indexes, vals3, loc);
+  Bexpression *vex3 = be->var_expression(w, VE_lvalue, loc);
+  Bexpression *iex3 = be->var_expression(x, VE_rvalue, loc);
+  Bexpression *eex3 = be->array_index_expression(aex3, iex3, loc);
+  h.mkAssign(vex3, eex3);
+
+  const char *exp = R"RAW_RESULT(
+    define void @foo(i8* nest %nest.0) #0 {
+    entry:
+      %tmp.0 = alloca [4 x i64]
+      %x = alloca i64
+      %y = alloca i64
+      %z = alloca i64
+      %w = alloca i64
+      store i64 0, i64* %x
+      store i64 0, i64* %y
+      %y.ld.0 = load i64, i64* %y
+      %index.0 = getelementptr [4 x i64], [4 x i64]* %tmp.0, i32 0, i32 0
+      store i64 %y.ld.0, i64* %index.0
+      %index.1 = getelementptr [4 x i64], [4 x i64]* %tmp.0, i32 0, i32 1
+      store i64 3, i64* %index.1
+      %index.2 = getelementptr [4 x i64], [4 x i64]* %tmp.0, i32 0, i32 2
+      store i64 2, i64* %index.2
+      %index.3 = getelementptr [4 x i64], [4 x i64]* %tmp.0, i32 0, i32 3
+      store i64 1, i64* %index.3
+      %index.4 = getelementptr [4 x i64], [4 x i64]* %tmp.0, i32 0, i32 1
+      %.index.ld.0 = load i64, i64* %index.4
+      store i64 %.index.ld.0, i64* %x
+      store i64 0, i64* %z
+      store i64 3, i64* %z
+      store i64 0, i64* %w
+      %x.ld.0 = load i64, i64* %x
+      %index.5 = getelementptr [4 x i64], [4 x i64]* @const.0, i32 0, i64 %x.ld.0
+      %.index.ld.1 = load i64, i64* %index.5
+      store i64 %.index.ld.1, i64* %w
+      ret void    }
+  )RAW_RESULT";
+
+  bool broken = h.finish(StripDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+
+  bool isOK = h.expectValue(func->function(), exp);
+  EXPECT_TRUE(isOK && "Block does not have expected contents");
+}
+
 TEST(BackendArrayStructTests, CreateArrayConstructionExprs) {
 
   FcnTestHarness h("foo");
