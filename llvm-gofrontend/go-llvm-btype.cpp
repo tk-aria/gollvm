@@ -49,15 +49,28 @@ void Btype::osdump(llvm::raw_ostream &os, unsigned ilevel) const {
 
 bool Btype::equal(const Btype &other) const
 {
+  return equalImpl(other, Default);
+}
+
+bool Btype::equivalent(const Btype &other) const
+{
+  return equalImpl(other, IgnoreNames);
+}
+
+bool Btype::equalImpl(const Btype &other, CompareCtl ctl) const
+{
   if (this == &other)
     return true;
   if (flavor() != other.flavor())
     return false;
-  if (name() != other.name())
+  if ((ctl & IgnoreNames) == 0 && name() != other.name())
     return false;
   if (isPlaceholder() != other.isPlaceholder())
     return false;
-  if (type() != other.type())
+  bool compareLlvmType = true;
+  if ((ctl & IgnoreNames) != 0 && type()->isStructTy())
+    compareLlvmType = false;
+  if (compareLlvmType && type() != other.type())
     return false;
   switch(flavor_) {
     case AuxT:
@@ -79,7 +92,7 @@ bool Btype::equal(const Btype &other) const
       const BPointerType *obpt = other.castToBPointerType();
       if ((bpt->toType() != nullptr) != (obpt->toType() != nullptr))
         return false;
-      return bpt->toType()->equal(*obpt->toType());
+      return bpt->toType()->equalImpl(*obpt->toType(), ctl);
     }
     case ArrayT: {
       const BArrayType *bat = castToBArrayType();
@@ -87,7 +100,7 @@ bool Btype::equal(const Btype &other) const
       if ((bat->elemType() != nullptr) != (obat->elemType() != nullptr))
         return false;
       return (bat->nelSize() == obat->nelSize() &&
-              bat->elemType()->equal(*obat->elemType()));
+              bat->elemType()->equalImpl(*obat->elemType(), ctl));
     }
     case StructT: {
       const BStructType *bst = castToBStructType();
@@ -97,9 +110,9 @@ bool Btype::equal(const Btype &other) const
       if (ft.size() != fo.size())
         return false;
       for (unsigned i = 0; i < ft.size(); ++i) {
-        if (! ft[i].btype->equal(*fo[i].btype))
+        if (! ft[i].btype->equalImpl(*fo[i].btype, ctl))
           return false;
-        if (ft[i].name != fo[i].name)
+        if ((ctl & IgnoreNames) == 0 && ft[i].name != fo[i].name)
           return false;
         if (! (ft[i].location == fo[i].location))
           return false;
@@ -113,16 +126,16 @@ bool Btype::equal(const Btype &other) const
           (obft->receiverType() != nullptr))
         return false;
       if (bft->receiverType() &&
-          ! bft->receiverType()->equal(*obft->receiverType()))
+          ! bft->receiverType()->equalImpl(*obft->receiverType(), ctl))
         return false;
-      if (! bft->resultType()->equal(*obft->resultType()))
+      if (! bft->resultType()->equalImpl(*obft->resultType(), ctl))
         return false;
       const std::vector<Btype *> &pt = bft->paramTypes();
       const std::vector<Btype *> &po = obft->paramTypes();
       if (pt.size() != po.size())
         return false;
       for (unsigned i = 0; i < pt.size(); ++i) {
-        if (! pt[i]->equal(*po[i]))
+        if (! pt[i]->equalImpl(*po[i], ctl))
           return false;
       }
       if (bft->followsCabi() != obft->followsCabi())

@@ -82,8 +82,11 @@ class Btype {
   // dump to raw ostream buffer
   void osdump(llvm::raw_ostream &os, unsigned ilevel) const;
 
-  // test for structural equality
+  // test for exact equality (including type names)
   bool equal(const Btype &other) const;
+
+  // test for structural equality (ignores naming)
+  bool equivalent(const Btype &other) const;
 
   // hash
   unsigned hash() const;
@@ -106,6 +109,8 @@ class Btype {
   inline const BFunctionType *castToBFunctionType() const;
 
  private:
+  enum  CompareCtl { Default=0, IgnoreNames=1 };
+  bool equalImpl(const Btype &other, CompareCtl ctl) const;
   Btype() : type_(NULL) {}
   std::string name_;
   llvm::Type *type_;

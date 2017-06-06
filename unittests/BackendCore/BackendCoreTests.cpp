@@ -267,6 +267,7 @@ TEST(BackendCoreTests, NamedTypes) {
       be->named_type("another_int32", be->integer_type(false, 32), loc);
   ASSERT_TRUE(nt2 != nullptr);
   EXPECT_TRUE(nt != nt2);
+  EXPECT_TRUE(nt->equivalent(*nt2));
 }
 
 TEST(BackendCoreTests, TypeUtils) {
@@ -295,7 +296,40 @@ TEST(BackendCoreTests, TypeUtils) {
   EXPECT_EQ(be->type_field_alignment(u32), 4);
 }
 
-TEST(BackendCoreTests, TypeEquivalence) {
+TEST(BackendCoreTests, TestTypeEquivalence) {
+  LLVMContext C;
+
+  std::unique_ptr<Backend> be(go_get_backend(C));
+
+  // Two structs with same field type but different field names
+  Btype *bi32t = be->integer_type(false, 32);
+  Btype *pbi32t = be->pointer_type(bi32t);
+  Btype *s1t = mkBackendStruct(be.get(), pbi32t, "f1", bi32t, "f2", nullptr);
+  Btype *s2t = mkBackendStruct(be.get(), pbi32t, "f2", bi32t, "f1", nullptr);
+
+  // Not ::equal, but should be ::equivalent
+  EXPECT_FALSE(s1t->equal(*s2t));
+  EXPECT_TRUE(s1t->equivalent(*s2t));
+
+  // Structs created via placholders
+  Location loc;
+  Btype *phst1 = be->placeholder_struct_type("ph1", loc);
+  std::vector<Backend::Btyped_identifier> fields1 = {
+    Backend::Btyped_identifier("f1", s1t, loc),
+    Backend::Btyped_identifier("f2", s2t, loc)};
+  be->set_placeholder_struct_type(phst1, fields1);
+
+  Btype *phst2 = be->placeholder_struct_type("ph2", loc);
+  std::vector<Backend::Btyped_identifier> fields2 = {
+    Backend::Btyped_identifier("x", s2t, loc),
+    Backend::Btyped_identifier("y", s1t, loc)};
+  be->set_placeholder_struct_type(phst2, fields2);
+
+  EXPECT_FALSE(phst1->equal(*phst2));
+  EXPECT_TRUE(phst1->equivalent(*phst2));
+}
+
+TEST(BackendCoreTests, TestFcnPointerCompatible) {
 
   FcnTestHarness h("foo");
   Llvm_backend *be = h.be();

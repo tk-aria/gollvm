@@ -443,7 +443,7 @@ Btype *TypeManager::placeholderStructType(const std::string &name,
                                           Location location)
 {
   BStructType *pst = new BStructType(name, location);
-  llvm::Type *opaque = makeOpaqueLlvmType("PST");
+  llvm::Type *opaque = makeOpaqueLlvmType(name.c_str());
   pst->setType(opaque);
   placeholders_.insert(pst);
   return pst;
