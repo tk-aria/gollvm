@@ -164,12 +164,12 @@ TEST(BackendNodeTests, CloneSubtree) {
 
   const char *exp = R"RAW_RESULT(
   %x.ld.0 = load i32, i32* %x
-  %cast.0 = bitcast i16* %z to i32*
-  %.ld.0 = load i32, i32* %cast.0
-  %add.0 = add i32 %x.ld.0, %.ld.0
+  %z.ld.0 = load i16, i16* %z
+  %sext.0 = sext i16 %z.ld.0 to i32
+  %add.0 = add i32 %x.ld.0, %sext.0
   %y.ld.0 = load i32*, i32** %y
-  %.ld.1 = load i32, i32* %y.ld.0
-  %add.1 = add i32 %add.0, %.ld.1
+  %.ld.0 = load i32, i32* %y.ld.0
+  %add.1 = add i32 %add.0, %.ld.0
     )RAW_RESULT";
 
   bool isOK = h.expectRepr(add, exp);
