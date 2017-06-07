@@ -409,10 +409,10 @@ TEST(BackEndPointerExprTests, CreatePointerOffsetExprs) {
 
   Bvariable *p0 = func->getNthParamVar(0);
   Bvariable *p3 = func->getNthParamVar(2);
+  Btype *bi64t = be->integer_type(false, 64);
 
   {
     // deref(ptr_offset(p3, 5)) = 9
-    Btype *bi64t = be->integer_type(false, 64);
     Bexpression *ve = be->var_expression(p3, VE_lvalue, loc);
     Bexpression *cfive = mkInt32Const(be, 5);
     Bexpression *poe1 = be->pointer_offset_expression(ve, cfive, loc);
@@ -422,27 +422,26 @@ TEST(BackEndPointerExprTests, CreatePointerOffsetExprs) {
   }
 
   {
-    // p0 = deref(ptr_offset((uint32*)p3, 7))
+    // p0 = int32(deref(ptr_offset(p3, 7)))
     Btype *bi32t = be->integer_type(false, 32);
     Bexpression *ve = be->var_expression(p0, VE_lvalue, loc);
     Bexpression *ver = be->var_expression(p3, VE_rvalue, loc);
-    Btype *bpi32t = be->pointer_type(bi32t);
-    Bexpression *bcon = be->convert_expression(bpi32t, ver, loc);
     Bexpression *cseven = mkInt32Const(be, 7);
-    Bexpression *poe2 = be->pointer_offset_expression(bcon, cseven, loc);
-    Bexpression *der = be->indirect_expression(bi32t, poe2, false, loc);
-    h.mkAssign(ve, der);
+    Bexpression *poe2 = be->pointer_offset_expression(ver, cseven, loc);
+    Bexpression *der = be->indirect_expression(bi64t, poe2, false, loc);
+    Bexpression *con32 = be->convert_expression(bi32t, der, loc);
+    h.mkAssign(ve, con32);
   }
 
   const char *exp = R"RAW_RESULT(
   %ptroff.0 = getelementptr i64*, i64** %param3.addr, i32 5
   %param3.ptroff.ld.0 = load i64*, i64** %ptroff.0
   store i64 9, i64* %param3.ptroff.ld.0
-  %cast.0 = bitcast i64** %param3.addr to i32**
-  %ptroff.1 = getelementptr i32*, i32** %cast.0, i32 7
-  %.ptroff.ld.0 = load i32*, i32** %ptroff.1
-  %.ld.0 = load i32, i32* %.ptroff.ld.0
-  store i32 %.ld.0, i32* %param1.addr
+  %ptroff.1 = getelementptr i64*, i64** %param3.addr, i32 7
+  %param3.ptroff.ld.1 = load i64*, i64** %ptroff.1
+  %.ld.0 = load i64, i64* %param3.ptroff.ld.1
+  %trunc.0 = trunc i64 %.ld.0 to i32
+  store i32 %trunc.0, i32* %param1.addr
   )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);

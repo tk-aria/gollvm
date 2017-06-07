@@ -224,6 +224,142 @@ TEST(BackendExprTests, TestMoreConversionExpressions) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
+TEST(BackendExprTests, TestFloatConversionExpressions) {
+  FcnTestHarness h;
+  Llvm_backend *be = h.be();
+  Btype *bf32t = be->float_type(32);
+  Btype *bf64t = be->float_type(64);
+  Btype *bi32t = be->integer_type(false, 32);
+  Btype *bi64t = be->integer_type(false, 64);
+  Btype *bu32t = be->integer_type(true, 32);
+  Btype *bu64t = be->integer_type(true, 64);
+  BFunctionType *befty1 = mkFuncTyp(be,
+                                    L_PARM, bf32t,
+                                    L_PARM, bf64t,
+                                    L_PARM, bi32t,
+                                    L_PARM, bi64t,
+                                    L_PARM, bu32t,
+                                    L_PARM, bu64t,
+                                    L_END);
+  Bfunction *func = h.mkFunction("foo", befty1);
+  Location loc = h.loc();
+
+  std::vector<Bvariable *> parms;
+  for (unsigned ii = 0; ii < 6; ii++)
+    parms.push_back(func->getNthParamVar(ii));
+
+  // Generate pairwise conversions between permutations of p0 -- p5.
+  for (unsigned jj = 0; jj < 6; ++jj) {
+    for (unsigned ii = 0; ii < jj; ++ii) {
+      Bvariable *vii = parms[ii];
+      Bvariable *vjj = parms[jj];
+      Bexpression *vel1 = be->var_expression(vii, VE_lvalue, loc);
+      Bexpression *ver1 = be->var_expression(vjj, VE_rvalue, loc);
+      Bexpression *conv1 = be->convert_expression(vel1->btype(), ver1, loc);
+      h.mkAssign(vel1, conv1);
+      Bexpression *vel2 = be->var_expression(vjj, VE_lvalue, loc);
+      Bexpression *ver2 = be->var_expression(vii, VE_rvalue, loc);
+      Bexpression *conv2 = be->convert_expression(vel2->btype(), ver2, loc);
+      h.mkAssign(vel2, conv2);
+    }
+  }
+
+  const char *exp = R"RAW_RESULT(
+  %p1.ld.0 = load double, double* %p1.addr
+  %trunc.0 = fptrunc double %p1.ld.0 to float
+  store float %trunc.0, float* %p0.addr
+  %p0.ld.0 = load float, float* %p0.addr
+  %trunc.1 = fpext float %p0.ld.0 to double
+  store double %trunc.1, double* %p1.addr
+  %p2.ld.0 = load i32, i32* %p2.addr
+  %sitof.0 = sitofp i32 %p2.ld.0 to float
+  store float %sitof.0, float* %p0.addr
+  %p0.ld.1 = load float, float* %p0.addr
+  %ftosi.0 = fptosi float %p0.ld.1 to i32
+  store i32 %ftosi.0, i32* %p2.addr
+  %p2.ld.1 = load i32, i32* %p2.addr
+  %sitof.1 = sitofp i32 %p2.ld.1 to double
+  store double %sitof.1, double* %p1.addr
+  %p1.ld.1 = load double, double* %p1.addr
+  %ftosi.1 = fptosi double %p1.ld.1 to i32
+  store i32 %ftosi.1, i32* %p2.addr
+  %p3.ld.0 = load i64, i64* %p3.addr
+  %sitof.2 = sitofp i64 %p3.ld.0 to float
+  store float %sitof.2, float* %p0.addr
+  %p0.ld.2 = load float, float* %p0.addr
+  %ftosi.2 = fptosi float %p0.ld.2 to i64
+  store i64 %ftosi.2, i64* %p3.addr
+  %p3.ld.1 = load i64, i64* %p3.addr
+  %sitof.3 = sitofp i64 %p3.ld.1 to double
+  store double %sitof.3, double* %p1.addr
+  %p1.ld.2 = load double, double* %p1.addr
+  %ftosi.3 = fptosi double %p1.ld.2 to i64
+  store i64 %ftosi.3, i64* %p3.addr
+  %p3.ld.2 = load i64, i64* %p3.addr
+  %trunc.2 = trunc i64 %p3.ld.2 to i32
+  store i32 %trunc.2, i32* %p2.addr
+  %p2.ld.2 = load i32, i32* %p2.addr
+  %sext.0 = sext i32 %p2.ld.2 to i64
+  store i64 %sext.0, i64* %p3.addr
+  %p4.ld.0 = load i32, i32* %p4.addr
+  %uitof.0 = uitofp i32 %p4.ld.0 to float
+  store float %uitof.0, float* %p0.addr
+  %p0.ld.3 = load float, float* %p0.addr
+  %ftoui.0 = fptoui float %p0.ld.3 to i32
+  store i32 %ftoui.0, i32* %p4.addr
+  %p4.ld.1 = load i32, i32* %p4.addr
+  %uitof.1 = uitofp i32 %p4.ld.1 to double
+  store double %uitof.1, double* %p1.addr
+  %p1.ld.3 = load double, double* %p1.addr
+  %ftoui.1 = fptoui double %p1.ld.3 to i32
+  store i32 %ftoui.1, i32* %p4.addr
+  %p4.ld.2 = load i32, i32* %p4.addr
+  store i32 %p4.ld.2, i32* %p2.addr
+  %p2.ld.3 = load i32, i32* %p2.addr
+  store i32 %p2.ld.3, i32* %p4.addr
+  %p4.ld.3 = load i32, i32* %p4.addr
+  %zext.0 = zext i32 %p4.ld.3 to i64
+  store i64 %zext.0, i64* %p3.addr
+  %p3.ld.3 = load i64, i64* %p3.addr
+  %trunc.5 = trunc i64 %p3.ld.3 to i32
+  store i32 %trunc.5, i32* %p4.addr
+  %p5.ld.0 = load i64, i64* %p5.addr
+  %uitof.2 = uitofp i64 %p5.ld.0 to float
+  store float %uitof.2, float* %p0.addr
+  %p0.ld.4 = load float, float* %p0.addr
+  %ftoui.2 = fptoui float %p0.ld.4 to i64
+  store i64 %ftoui.2, i64* %p5.addr
+  %p5.ld.1 = load i64, i64* %p5.addr
+  %uitof.3 = uitofp i64 %p5.ld.1 to double
+  store double %uitof.3, double* %p1.addr
+  %p1.ld.4 = load double, double* %p1.addr
+  %ftoui.3 = fptoui double %p1.ld.4 to i64
+  store i64 %ftoui.3, i64* %p5.addr
+  %p5.ld.2 = load i64, i64* %p5.addr
+  %trunc.6 = trunc i64 %p5.ld.2 to i32
+  store i32 %trunc.6, i32* %p2.addr
+  %p2.ld.4 = load i32, i32* %p2.addr
+  %sext.1 = sext i32 %p2.ld.4 to i64
+  store i64 %sext.1, i64* %p5.addr
+  %p5.ld.3 = load i64, i64* %p5.addr
+  store i64 %p5.ld.3, i64* %p3.addr
+  %p3.ld.4 = load i64, i64* %p3.addr
+  store i64 %p3.ld.4, i64* %p5.addr
+  %p5.ld.4 = load i64, i64* %p5.addr
+  %trunc.9 = trunc i64 %p5.ld.4 to i32
+  store i32 %trunc.9, i32* %p4.addr
+  %p4.ld.4 = load i32, i32* %p4.addr
+  %zext.1 = zext i32 %p4.ld.4 to i64
+  store i64 %zext.1, i64* %p5.addr
+    )RAW_RESULT";
+
+  bool isOK = h.expectBlock(exp);
+  EXPECT_TRUE(isOK && "Block does not have expected contents");
+
+  bool broken = h.finish(StripDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+}
+
 TEST(BackendExprTests, MakeVarExpressions) {
   FcnTestHarness h("foo");
   Llvm_backend *be = h.be();
