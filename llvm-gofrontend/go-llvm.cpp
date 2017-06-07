@@ -1118,31 +1118,67 @@ Bexpression *Llvm_backend::convert_expression(Btype *type, Bexpression *expr,
   if (expr->btype() == type)
     return expr;
 
-  llvm::Value *val = expr->value();
-  assert(val);
-
-  // No-op casts are ok
-  llvm::Type *toType = type->type();
-  llvm::Type *valType = val->getType();
-  if (toType == valType)
-    return expr;
-
   // When the frontend casts something to function type, what this
   // really means in the LLVM realm is "pointer to function" type.
+  llvm::Type *toType = type->type();
   if (toType->isFunctionTy()) {
     type = pointer_type(type);
     toType = type->type();
   }
 
-  LIRBuilder builder(context_, llvm::ConstantFolder());
-
-  // Adjust the "to" type if pending var expr.
-  if (expr->varExprPending()) {
-    llvm::Type *pet = llvm::PointerType::get(expr->btype()->type(),
-                                             addressSpace_);
-    if (valType == pet)
-      toType = llvm::PointerType::get(toType, addressSpace_);
+  // For composite-init-pending values, materialize a variable now.
+  if (expr->compositeInitPending()) {
+    assert(!expr->varExprPending());
+    expr = resolveCompositeInit(expr, nullptr);
   }
+
+  llvm::Value *val = expr->value();
+  assert(val);
+  llvm::Type *valType = val->getType();
+
+  // In the varexpr pending case, decide what to do depending on whether
+  // the var is in an lvalue or rvalue context. For something like
+  //
+  //     var y int32
+  //     z = int64(y)
+  //
+  // we want to force the load of "y" before converting to int64. For
+  // an lvalue context, the conversion will be applied to the pointed-to-type
+  // as well as the value type.
+  if (expr->varExprPending()) {
+    bool lvalue = expr->varContext().lvalue();
+    if (!expr->varContext().lvalue()) {
+      expr = resolveVarContext(expr);
+      val = expr->value();
+      valType = val->getType();
+    }
+    if (lvalue || useCopyForLoadStore(type->type())) {
+      llvm::Type *pet = llvm::PointerType::get(expr->btype()->type(),
+                                               addressSpace_);
+      if (valType == pet)
+        toType = llvm::PointerType::get(toType, addressSpace_);
+    }
+  }
+
+  // We have to be careful when comparing the types for equality, since
+  // there can be situations where the underlying LLVM type is the same,
+  // but the Btype is different. Example:
+  //
+  //     foo (x int32) uint32 {
+  //       q := uint32(x)
+  //       return q
+  //     }
+  //
+  // For the conversion above (int32 -> uint32) the underlying LLVM type
+  // is identical, but we do need to return an expr with the new Btype.
+  if (expr->btype()->equivalent(*type)) {
+     if (toType == valType)
+       return expr;
+     else
+       return nbuilder_.mkConversion(type, expr->value(), expr, location);
+  }
+
+  LIRBuilder builder(context_, llvm::ConstantFolder());
 
   // Pointer type to pointer-sized-integer type. Comes up when
   // converting function pointer to function descriptor (during
@@ -1157,7 +1193,7 @@ Bexpression *Llvm_backend::convert_expression(Btype *type, Bexpression *expr,
 
   // Pointer-sized-integer type pointer type. This comes up
   // in type hash/compare functions.
-  if (toType && valType == llvmIntegerType()) {
+  if (toType->isPointerTy() && valType == llvmIntegerType()) {
     std::string tname(namegen("itpcast"));
     llvm::Value *itpcast = builder.CreateIntToPtr(val, toType, tname);
     return nbuilder_.mkConversion(type, itpcast, expr, location);
@@ -1181,7 +1217,8 @@ Bexpression *Llvm_backend::convert_expression(Btype *type, Bexpression *expr,
     unsigned tobits = toIntTyp->getBitWidth();
     llvm::Value *conv = nullptr;
     if (tobits > valbits) {
-      if (type->castToBIntegerType()->isUnsigned())
+      if (expr->btype()->type() == llvmBoolType() ||
+          expr->btype()->castToBIntegerType()->isUnsigned())
         conv = builder.CreateZExt(val, toType, namegen("zext"));
       else
         conv = builder.CreateSExt(val, toType, namegen("sext"));
@@ -1192,7 +1229,7 @@ Bexpression *Llvm_backend::convert_expression(Btype *type, Bexpression *expr,
   }
 
   // Float -> float conversions
-  if (toType->isFloatTy() && valType->isFloatTy()) {
+  if (toType->isFloatingPointTy() && valType->isFloatingPointTy()) {
     llvm::Value *conv = nullptr;
     if (toType == llvmFloatType() && valType == llvmDoubleType())
       conv = builder.CreateFPTrunc(val, toType, namegen("trunc"));
@@ -1204,17 +1241,17 @@ Bexpression *Llvm_backend::convert_expression(Btype *type, Bexpression *expr,
   }
 
   // Float -> integer conversions
-  if (toType->isIntegerTy() && valType->isFloatTy()) {
+  if (toType->isIntegerTy() && valType->isFloatingPointTy()) {
     llvm::Value *conv = nullptr;
     if (type->castToBIntegerType()->isUnsigned())
       conv = builder.CreateFPToUI(val, toType, namegen("ftoui"));
     else
-      conv = builder.CreateFPToUI(val, toType, namegen("ftosi"));
+      conv = builder.CreateFPToSI(val, toType, namegen("ftosi"));
     return nbuilder_.mkConversion(type, conv, expr, location);
   }
 
   // Integer -> float conversions
-  if (toType->isFloatTy() && valType->isIntegerTy()) {
+  if (toType->isFloatingPointTy() && valType->isIntegerTy()) {
     llvm::Value *conv = nullptr;
     if (expr->btype()->castToBIntegerType()->isUnsigned())
       conv = builder.CreateUIToFP(val, toType, namegen("uitof"));
@@ -2376,9 +2413,10 @@ Llvm_backend::convertForAssignment(Btype *srcBType,
   }
 
   // Case 8: also when creating slice values it's common for the
-  // frontend to assign pointer-to-X to unsafe.Pointer or equivalent,
+  // frontend to assign pointer-to-X to unsafe.Pointer (and vice versa)
   // without an explicit cast. Allow this for now.
-  if (dstToType == llvmPtrType() && llvm::isa<llvm::PointerType>(srcType)) {
+  if (dstToType == llvmPtrType() && llvm::isa<llvm::PointerType>(srcType) ||
+      srcType == llvmPtrType() && llvm::isa<llvm::PointerType>(dstToType)) {
     std::string tag(namegen("cast"));
     llvm::Value *bitcast = builder->CreateBitCast(srcVal, dstToType, tag);
     return bitcast;
