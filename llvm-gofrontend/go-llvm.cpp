@@ -501,6 +501,27 @@ Bexpression *Llvm_backend::nil_pointer_expression()
   return zero_expression(pointerType(uintPtrType()));
 }
 
+Bexpression *Llvm_backend::genCircularConversion(Btype *toType,
+                                                 Bexpression *expr,
+                                                 Location loc)
+{
+  llvm::Value *val = expr->value();
+  llvm::Type *llToType = toType->type();
+  if (val->getType() == llToType)
+    return expr;
+  if (expr->varExprPending()) {
+    llvm::Type *pet = llvm::PointerType::get(expr->btype()->type(),
+                                             addressSpace_);
+    if (val->getType() == pet)
+      llToType = llvm::PointerType::get(llToType, addressSpace_);
+  }
+
+  std::string tag(namegen("cast"));
+  LIRBuilder builder(context_, llvm::ConstantFolder());
+  llvm::Value *bitcast = builder.CreateBitCast(val, llToType, tag);
+  return nbuilder_.mkConversion(toType, bitcast, expr, loc);
+}
+
 Bexpression *Llvm_backend::genLoad(Bexpression *expr,
                                    Btype *btype,
                                    Location loc,
@@ -515,7 +536,7 @@ Bexpression *Llvm_backend::genLoad(Bexpression *expr,
   Btype *loadResultType = btype;
   Btype *tctyp = circularTypeLoadConversion(expr->btype());
   if (tctyp != nullptr) {
-    space = convert_expression(pointer_type(tctyp), expr, loc);
+    space = genCircularConversion(pointer_type(tctyp), expr, loc);
     loadResultType = tctyp;
   }
 
@@ -615,7 +636,7 @@ Bexpression *Llvm_backend::address_expression(Bexpression *bexpr,
   // Handle circular types
   Btype *ctypconv = circularTypeAddrConversion(bexpr->btype());
   if (ctypconv != nullptr)
-    return convert_expression(ctypconv, rval, location);
+    return genCircularConversion(ctypconv, rval, location);
 
   return rval;
 }
