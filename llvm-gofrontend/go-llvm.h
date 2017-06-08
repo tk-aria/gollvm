@@ -608,6 +608,10 @@ public:
   std::pair<llvm::Value *, llvm::Value *>
   convertForBinary(Bexpression *left, Bexpression *right);
 
+  // Generate a conversion induced by the use of a circular pointer type.
+  Bexpression *genCircularConversion(Btype *toType, Bexpression *expr,
+                                     Location loc);
+
   // Helpers for call sequence generation.
   void genCallProlog(GenCallState &state);
   void genCallAttributes(GenCallState &state, llvm::CallInst *call);
