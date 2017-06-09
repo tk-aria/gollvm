@@ -79,6 +79,7 @@ def form_golibargs(driver):
 
 def perform():
   """Main driver routine."""
+  global flag_trace_llinvoc
 
   u.verbose(1, "argv: %s" % " ".join(sys.argv))
 
@@ -118,17 +119,18 @@ def perform():
   skipc = 0
   outfile = None
   asmfile = None
+  minus_s = False
   for ii in range(1, len(sys.argv)):
     clarg = sys.argv[ii]
     if skipc != 0:
       skipc -= 1
       continue
+    if clarg == "-S":
+      minus_s = True
+      continue
     if clarg == "-o":
-      skipc = 1
       outfile = sys.argv[ii+1]
-      asmfile = "%s.s" % outfile
-      nargs.append("-o")
-      nargs.append(asmfile)
+      skipc = 1
       continue
     if clarg == "-I":
       skipc = 1
@@ -140,11 +142,21 @@ def perform():
       larg = sys.argv[ii+1]
       largs.append(larg)
       continue
+    if clarg == "-v":
+      flag_trace_llinvoc = True
     nargs.append(clarg)
 
-  if not asmfile or not outfile:
+  if not outfile:
     u.error("fatal error: unable to find -o "
             "option in clargs: %s" % " ".join(sys.argv))
+
+  if minus_s:
+    asmfile = "%s" % outfile
+  else:
+    asmfile = "%s.s" % outfile
+  nargs.append("-o")
+  nargs.append(asmfile)
+
   golibargs = form_golibargs(sys.argv[0])
   nargs += golibargs
   if largs:
@@ -167,12 +179,13 @@ def perform():
     return 1
 
   # Invoke the assembler
-  ascmd = "as %s -o %s" % (asmfile, outfile)
-  u.verbose(1, "asm command is: %s" % ascmd)
-  rc = u.docmdnf(ascmd)
-  if rc != 0:
-    u.verbose(1, "return code %d from %s" % (rc, ascmd))
-    return 1
+  if not minus_s:
+    ascmd = "as %s -o %s" % (asmfile, outfile)
+    u.verbose(1, "asm command is: %s" % ascmd)
+    rc = u.docmdnf(ascmd)
+    if rc != 0:
+      u.verbose(1, "return code %d from %s" % (rc, ascmd))
+      return 1
 
   return 0
 
@@ -193,17 +206,24 @@ def install_shim(scriptpath):
   sdir = os.path.dirname(scriptpath)
   docmd("cp %s/script_utils.py bin" % sdir)
 
-  # Check to see if installed already
-  if os.path.exists("bin/gccgo.real") and os.path.exists("bin/gollvm-wrap.py"):
-    u.error("wrapper appears to be installed already in this dir")
+  # Test to see if script installed already
+  cmd = "file bin/gccgo"
+  lines = u.docmdlines(cmd)
+  if not lines:
+    u.error("no output from %s -- bad gccgo install dir?" % cmd)
+  else:
+    reg = re.compile(r"^.+ ELF .+$")
+    m = reg.match(lines[0])
+    if not m:
+      u.warning("wrapper appears to be installed already in this dir")
+      return
 
   # Move aside the real gccgo binary
   docmd("mv bin/gccgo bin/gccgo.real")
 
   # Emit a script into gccgo
-  if flag_dryrun:
-    sys.stderr.write("<emit script into bin/gccgo>\n")
-  else:
+  sys.stderr.write("emitting wrapper script into bin/gccgo\n")
+  if not flag_dryrun:
     try:
       with open("./bin/gccgo", "w") as wf:
         here = os.getcwd()
