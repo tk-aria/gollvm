@@ -284,6 +284,14 @@ int main(int argc, char **argv)
                                      Options, getRelocModel(), CMModel, OLvl));
   assert(Target && "Could not allocate target machine!");
 
+  // FIXME: this hard-wires on the equivalent of -ffunction-sections
+  // and -fdata-sections, since there doesn't seem to be a high-level
+  // hook for selecting a separate section for a specific variable or
+  // function (other than forcing it into a comdat, which is not
+  // always what we want).
+  Options.FunctionSections = true;
+  Options.DataSections = true;
+
   // Print a stack trace if we signal out.
   llvm::LLVMContext Context;
   bool hasError = false;
