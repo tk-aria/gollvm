@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "04af0421_9edda2f0",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1150,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-06-09T13:18:46Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2b9b2001_584d7673",
+      "range": {
+        "startLine": 1150,
+        "startChar": 9,
+        "endLine": 1150,
+        "endChar": 36
+      },
+      "revId": "6036c31bb0bad768985b4eb103fedb122d822f05",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d9fe037f_719d4d7e",
         "filename": "llvm-gofrontend/go-llvm.cpp",
         "patchSetId": 1
@@ -42,6 +66,24 @@
     },
     {
       "key": {
+        "uuid": "5cc65a57_f54d67f2",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1174,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-06-09T13:18:46Z",
+      "side": 1,
+      "message": "OK, clearly that comment is incorrect. I will use a different example.",
+      "parentUuid": "d9fe037f_719d4d7e",
+      "revId": "6036c31bb0bad768985b4eb103fedb122d822f05",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "adedd6fc_017174be",
         "filename": "llvm-gofrontend/go-llvm.cpp",
         "patchSetId": 1
@@ -53,6 +95,30 @@
       "writtenOn": "2017-06-09T12:49:39Z",
       "side": 1,
       "message": "Better be \"ext\"? (found by reading the test)",
+      "range": {
+        "startLine": 1237,
+        "startChar": 55,
+        "endLine": 1237,
+        "endChar": 60
+      },
+      "revId": "6036c31bb0bad768985b4eb103fedb122d822f05",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "34109d8e_0637b296",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1237,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-06-09T13:18:46Z",
+      "side": 1,
+      "message": "Thanks for catching that. I\u0027ve switched to more descriptive names (\"fptrunc\" and \"fpext\") for improved readability.",
+      "parentUuid": "adedd6fc_017174be",
       "range": {
         "startLine": 1237,
         "startChar": 55,
