@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2b9b2001_584d7673",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1150,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-06-09T12:49:39Z",
+      "side": 1,
+      "message": "lvalue (use the bool)",
+      "range": {
+        "startLine": 1150,
+        "startChar": 9,
+        "endLine": 1150,
+        "endChar": 36
+      },
+      "revId": "6036c31bb0bad768985b4eb103fedb122d822f05",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d9fe037f_719d4d7e",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1174,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-06-09T12:49:39Z",
+      "side": 1,
+      "message": "But int32 and uint32 are not \"equivalent\"... What did I miss?",
+      "revId": "6036c31bb0bad768985b4eb103fedb122d822f05",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "adedd6fc_017174be",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1237,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-06-09T12:49:39Z",
+      "side": 1,
+      "message": "Better be \"ext\"? (found by reading the test)",
+      "range": {
+        "startLine": 1237,
+        "startChar": 55,
+        "endLine": 1237,
+        "endChar": 60
+      },
+      "revId": "6036c31bb0bad768985b4eb103fedb122d822f05",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
