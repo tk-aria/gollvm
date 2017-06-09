@@ -288,7 +288,7 @@ TEST(BackendVarTests, ImmutableStructSetInit) {
   Btype *uintptrt = be->integer_type(true, be->type_size(pbt)*8);
   Btype *desct = mkBackendStruct(be, uintptrt, "x", nullptr);
   Bvariable *ims = be->immutable_struct("desc", "desc",
-                                        false, false, desct, loc);
+                                        true, false, desct, loc);
   Bexpression *fp = be->function_code_expression(func, loc);
   Bexpression *confp = be->convert_expression(uintptrt, fp, loc);
 
@@ -298,9 +298,8 @@ TEST(BackendVarTests, ImmutableStructSetInit) {
   be->immutable_struct_set_init(ims, "", false, false,
                                 desct, loc, scon);
 
-  // Q: do we want weak_odr here?
   const char *exp = R"RAW_RESULT(
-    @desc = weak_odr constant { i64 } { i64 ptrtoint
+    @desc = internal constant { i64 } { i64 ptrtoint
     (i64 (i8*, i32, i32, i64*)* @foo to i64) }
   )RAW_RESULT";
 
@@ -343,13 +342,13 @@ TEST(BackendVarTests, ImplicitVariableSetInit) {
                                  isHidden, isConst, isCommon, con1);
 
   const char *exp1 = R"RAW_RESULT(
-     @v1 = weak_odr global { i32, i32 } { i32 101, i32 202 }, align 8
+     @v1 = global { i32, i32 } { i32 101, i32 202 }, align 8
     )RAW_RESULT";
 
   bool isOK1 = h.expectValue(ims1->value(), exp1);
   EXPECT_TRUE(isOK1 && "Value does not have expected contents");
 
-  // Case 2: common, no init value.
+  // Case 2: const, common, no init value.
   isConst = true;
   isCommon = true;
   Bvariable *ims2 =
@@ -359,7 +358,7 @@ TEST(BackendVarTests, ImplicitVariableSetInit) {
                                  isHidden, isConst, isCommon, nullptr);
 
   const char *exp2 = R"RAW_RESULT(
-    @v2 = weak_odr constant { i32, i32 } zeroinitializer, align 8
+    @v2 = constant { i32, i32 } zeroinitializer, comdat, align 8
     )RAW_RESULT";
 
   bool isOK2 = h.expectValue(ims2->value(), exp2);

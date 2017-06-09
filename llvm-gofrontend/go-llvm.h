@@ -416,6 +416,7 @@ public:
   enum ModVarSec { MV_UniqueSection, MV_DefaultSection };
   enum ModVarComdat { MV_InComdat, MV_NotInComdat };
   enum ModVarVis { MV_HiddenVisibility, MV_DefaultVisibility };
+  enum ModVarExtInit { MV_ExternallyInitialized, MV_NotExternallyInitialized };
 
   // Make a module-scope variable (static, global, or external).
   Bvariable *makeModuleVar(Btype *btype,
@@ -426,6 +427,7 @@ public:
                            ModVarSec inUniqueSection,
                            ModVarComdat inComdat,
                            ModVarVis isHiddenVisibility,
+                           ModVarExtInit isExtInit,
                            llvm::GlobalValue::LinkageTypes linkage,
                            llvm::Constant *initializer,
                            unsigned alignmentInBytes = 0);

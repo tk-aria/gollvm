@@ -697,6 +697,7 @@ Bvariable *Llvm_backend::genVarForConstant(llvm::Constant *conval,
   Bvariable *rv = makeModuleVar(type, ctag, "", Location(),
                                 MV_Constant, MV_DefaultSection,
                                 MV_NotInComdat, MV_DefaultVisibility,
+                                MV_NotExternallyInitialized,
                                 llvm::GlobalValue::PrivateLinkage,
                                 conval, 0);
   assert(llvm::isa<llvm::GlobalVariable>(rv->value()));
@@ -1061,6 +1062,7 @@ Bexpression *Llvm_backend::string_constant_expression(const std::string &val)
       makeModuleVar(makeAuxType(scon->getType()),
                     "", "", Location(), MV_Constant, MV_DefaultSection,
                     MV_NotInComdat, MV_DefaultVisibility,
+                    MV_NotExternallyInitialized,
                     llvm::GlobalValue::PrivateLinkage, scon, 1);
   llvm::Constant *varval = llvm::cast<llvm::Constant>(svar->value());
   llvm::Constant *bitcast =
@@ -2694,6 +2696,7 @@ Llvm_backend::makeModuleVar(Btype *btype,
                             ModVarSec inUniqueSection,
                             ModVarComdat inComdat,
                             ModVarVis isHiddenVisibility,
+                            ModVarExtInit isExtInit,
                             llvm::GlobalValue::LinkageTypes linkage,
                             llvm::Constant *initializer,
                             unsigned alignment)
@@ -2706,15 +2709,17 @@ Llvm_backend::makeModuleVar(Btype *btype,
   assert(datalayout().getTypeSizeInBits(btype->type()) != 0);
 #endif
 
-  // FIXME: add support for this
+  // FIXME: at the moment the driver is enabling separate sections
+  // for all variables, since there doesn't seem to be an easily
+  // accessible hook for requesting a separate section for a single
+  // variable.
   assert(inUniqueSection == MV_DefaultSection);
-
-  // FIXME: add support for this
-  assert(inComdat == MV_NotInComdat);
 
   // FIXME: add DIGlobalVariable to debug info for this variable
 
-  llvm::Constant *init = llvm::Constant::getNullValue(btype->type());
+  llvm::Constant *init =
+      (isExtInit == MV_ExternallyInitialized ? nullptr :
+       llvm::Constant::getNullValue(btype->type()));
   std::string gname(asm_name.empty() ? name : asm_name);
   llvm::GlobalVariable *glob = new llvm::GlobalVariable(
       module(), btype->type(), isConstant == MV_Constant,
@@ -2725,6 +2730,15 @@ Llvm_backend::makeModuleVar(Btype *btype,
     glob->setAlignment(alignment);
   if (initializer)
     glob->setInitializer(initializer);
+  if (inComdat == MV_InComdat) {
+    assert(! gname.empty());
+    glob->setComdat(module().getOrInsertComdat(gname));
+  }
+  if (isExtInit == MV_ExternallyInitialized) {
+    assert(!init);
+    glob->setExternallyInitialized(true);
+  }
+
   bool addressTaken = true; // for now
   Bvariable *bv =
       new Bvariable(btype, location, gname, GlobalVar, addressTaken, glob);
@@ -2741,22 +2755,20 @@ Bvariable *Llvm_backend::global_variable(const std::string &var_name,
                                          bool is_external,
                                          bool is_hidden,
                                          bool in_unique_section,
-                                         Location location) {
-#if 0
-  llvm::GlobalValue::LinkageTypes linkage =
-      (is_external || is_hidden ? llvm::GlobalValue::ExternalLinkage
-       : llvm::GlobalValue::InternalLinkage);
-#endif
+                                         Location location)
+{
   llvm::GlobalValue::LinkageTypes linkage = llvm::GlobalValue::ExternalLinkage;
 
   ModVarSec inUniqSec =
       (in_unique_section ? MV_UniqueSection : MV_DefaultSection);
   ModVarVis varVis =
       (is_hidden ? MV_HiddenVisibility : MV_DefaultVisibility);
+  ModVarExtInit extInit =
+      (is_external ? MV_ExternallyInitialized : MV_NotExternallyInitialized);
   Bvariable *gvar =
       makeModuleVar(btype, var_name, asm_name, location,
                     MV_NonConstant, inUniqSec, MV_NotInComdat,
-                    varVis, linkage, nullptr);
+                    varVis, extInit, linkage, nullptr);
   return gvar;
 }
 
@@ -2870,20 +2882,19 @@ Bvariable *Llvm_backend::implicit_variable(const std::string &name,
   assert(!(is_hidden && is_common));
 
   llvm::GlobalValue::LinkageTypes linkage =
-      (is_hidden ? llvm::GlobalValue::ExternalLinkage
-       : llvm::GlobalValue::WeakODRLinkage);
+      (is_hidden ? llvm::GlobalValue::InternalLinkage
+       : llvm::GlobalValue::ExternalLinkage);
 
-  // bool isComdat = is_common;
-  ModVarComdat inComdat = MV_NotInComdat; // for now
-  ModVarSec inUniqSec = MV_DefaultSection; // override for now
-  ModVarVis varVis =
-      (is_hidden ? MV_HiddenVisibility : MV_DefaultVisibility);
+  ModVarComdat inComdat = (is_common ? MV_InComdat : MV_NotInComdat);
+  ModVarSec inUniqSec = MV_DefaultSection;
+  ModVarVis varVis = MV_DefaultVisibility;
   ModVarConstant isConst = (is_constant ? MV_Constant : MV_NonConstant);
+  ModVarExtInit extInit = MV_NotExternallyInitialized;
 
   Bvariable *gvar =
       makeModuleVar(btype, name, asm_name, Location(),
                     isConst, inUniqSec, inComdat,
-                    varVis, linkage, nullptr, alignment);
+                    varVis, extInit, linkage, nullptr, alignment);
   return gvar;
 }
 
@@ -2931,17 +2942,17 @@ Bvariable *Llvm_backend::immutable_struct(const std::string &name,
   assert(!(is_hidden && is_common));
 
   llvm::GlobalValue::LinkageTypes linkage =
-      (is_hidden ? llvm::GlobalValue::ExternalLinkage
-       : llvm::GlobalValue::WeakODRLinkage);
+      (is_hidden ? llvm::GlobalValue::InternalLinkage
+       : llvm::GlobalValue::ExternalLinkage);
 
-  ModVarComdat inComdat = MV_NotInComdat; // for now
-  ModVarSec inUniqueSec = MV_DefaultSection; // override for now
-  ModVarVis varVis =
-      (is_hidden ? MV_HiddenVisibility : MV_DefaultVisibility);
+  ModVarSec inUniqueSec = MV_DefaultSection;
+  ModVarComdat inComdat = (is_common ? MV_InComdat : MV_NotInComdat);
+  ModVarVis varVis = MV_DefaultVisibility;
+  ModVarExtInit extInit = MV_NotExternallyInitialized;
   Bvariable *gvar =
       makeModuleVar(btype, name, asm_name, location,
                     MV_Constant, inUniqueSec, inComdat,
-                    varVis, linkage, nullptr);
+                    varVis, extInit, linkage, nullptr);
   return gvar;
 }
 
@@ -3110,10 +3121,9 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
     bfunc->setSplitStack(Bfunction::NoSplit);
 
   // TODO: unique section support. llvm::GlobalObject has support for
-  // setting COMDAT groups and section names, but nothing to manage how
-  // section names are created or doled out as far as I can tell, need
-  // to look a little more closely at how -ffunction-sections is implemented
-  // for clang/LLVM.
+  // setting COMDAT groups and section names, but there doesn't seem
+  // to be an interface available to request a unique section on a
+  // per-function basis (only a translation-unit-wide default).
   assert(!in_unique_section || is_declaration);
 
   if (is_declaration)
