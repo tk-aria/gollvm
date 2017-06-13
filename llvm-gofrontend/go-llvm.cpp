@@ -911,6 +911,22 @@ Varexpr_context Llvm_backend::varContextDisp(Bexpression *varexp)
   return VE_rvalue;
 }
 
+// Create a temporary variable holding the value of EXPR.
+// Return the variable and the assignment statement (to be
+// attached to some node).
+
+std::pair<Bvariable*, Bstatement*>
+Llvm_backend::makeTempVar(Bexpression *expr, Location location) {
+  assert(expr);
+  std::string tname(namegen("tmp"));
+  Bvariable *var = nbuilder_.mkTempVar(expr->btype(), location, tname);
+  assert(var != errorVariable_.get());
+  Bfunction *dummyFcn = errorFunction_.get();
+  Bstatement *init = makeInitStatement(dummyFcn, var, expr);
+  assert(init != errorStatement_);
+  return std::make_pair(var, init);
+}
+
 // An expression that references a variable.
 
 Bexpression *Llvm_backend::var_expression(Bvariable *var,
@@ -1400,10 +1416,9 @@ Bexpression *Llvm_backend::makeComplexConvertExpr(Btype *type,
   // We need to avoid sharing between real part and imag part of the operand.
   // Create temp variables and assign operand to the temp variable first.
   // TODO: maybe not make temp var if the operand is already a var or constant?
-  std::string tname1(namegen("tmp"));
-  Bvariable *var = nbuilder_.mkTempVar(expr->btype(), location, tname1);
-  Bfunction *dummyFcn = errorFunction_.get();
-  Bstatement *einit = makeInitStatement(dummyFcn, var, expr);
+  auto it = makeTempVar(expr, location);
+  Bvariable *var = it.first;
+  Bstatement *einit = it.second;
 
   Bexpression *vex = nbuilder_.mkVar(var, location);
   vex->setVarExprPending(false, 0);
@@ -1419,9 +1434,9 @@ Bexpression *Llvm_backend::makeComplexConvertExpr(Btype *type,
   // Currently we can't resolve composite storage for compound
   // expression, so we resolve the inner complex expression
   // here with another temp variable.
-  std::string tname2(namegen("tmp"));
-  Bvariable *rvar = nbuilder_.mkTempVar(val->btype(), location, tname2);
-  Bstatement *rinit = makeInitStatement(dummyFcn, rvar, val);
+  auto it2 = makeTempVar(val, location);
+  Bvariable *rvar = it2.first;
+  Bstatement *rinit = it2.second;
   Bexpression *rvex = nbuilder_.mkVar(rvar, location);
   Bstatement *init = statement_list(std::vector<Bstatement*>{einit, rinit});
   return compound_expression(init, rvex, location);
@@ -1910,12 +1925,9 @@ Bexpression *Llvm_backend::makeComplexBinaryExpr(Operator op, Bexpression *left,
   // We need to avoid sharing between real part and imag part of the operand.
   // Create temp variables and assign operands to the temp vars first.
   // TODO: maybe not make temp var if the operand is already a var or constant?
-  std::string tname1(namegen("tmp")), tname2(namegen("tmp"));
-  Bvariable *lvar = nbuilder_.mkTempVar(left->btype(), location, tname1);
-  Bvariable *rvar = nbuilder_.mkTempVar(right->btype(), location, tname2);
-  Bfunction *dummyFcn = errorFunction_.get();
-  Bstatement *linit = makeInitStatement(dummyFcn, lvar, left);
-  Bstatement *rinit = makeInitStatement(dummyFcn, rvar, right);
+  auto it = makeTempVar(left, location), it2 = makeTempVar(right, location);
+  Bvariable *lvar = it.first, *rvar = it2.first;
+  Bstatement *linit = it.second, *rinit = it2.second;
 
   Bexpression *lvex = nbuilder_.mkVar(lvar, location);
   lvex->setVarExprPending(false, 0);
@@ -1966,9 +1978,9 @@ Bexpression *Llvm_backend::makeComplexBinaryExpr(Operator op, Bexpression *left,
   // Currently we can't resolve composite storage for compound
   // expression, so we resolve the inner complex expression
   // here with another temp variable.
-  std::string tname3(namegen("tmp"));
-  Bvariable *vvar = nbuilder_.mkTempVar(val->btype(), location, tname3);
-  Bstatement *vinit = makeInitStatement(dummyFcn, vvar, val);
+  auto it3 = makeTempVar(val, location);
+  Bvariable *vvar = it3.first;
+  Bstatement *vinit = it3.second;
   Bexpression *vvex = nbuilder_.mkVar(vvar, location);
   Bstatement *init = statement_list(std::vector<Bstatement*>{linit, rinit, vinit});
   return compound_expression(init, vvex, location);
