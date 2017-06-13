@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7e844e79_40d43ff9",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1406,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-06-13T15:09:07Z",
+      "side": 1,
+      "message": "This sequence (create temp var, store expr into it, etc)gets repeated a couple of times, so it might be something we could put into a helper class. Probably something to consider for a follow-on change, though.",
+      "range": {
+        "startLine": 1403,
+        "startChar": 2,
+        "endLine": 1406,
+        "endChar": 61
+      },
+      "revId": "f6bf13cb4168a0c79351182574684b602e60e256",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "00410aa7_c4e40f12",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1420,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-06-13T15:09:07Z",
+      "side": 1,
+      "message": "typo inner",
+      "range": {
+        "startLine": 1420,
+        "startChar": 35,
+        "endLine": 1420,
+        "endChar": 41
+      },
+      "revId": "f6bf13cb4168a0c79351182574684b602e60e256",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "146d1993_d3db0f88",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1967,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-06-13T15:09:07Z",
+      "side": 1,
+      "message": "typo inner",
+      "range": {
+        "startLine": 1967,
+        "startChar": 35,
+        "endLine": 1967,
+        "endChar": 41
+      },
+      "revId": "f6bf13cb4168a0c79351182574684b602e60e256",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
