@@ -481,6 +481,11 @@ public:
   Bstatement *makeInitStatement(Bfunction *bfunction, Bvariable *var,
                               Bexpression *init);
 
+  // Helper to make a temporary variable holding the value of an
+  // expression
+  std::pair<Bvariable*, Bstatement*> makeTempVar(Bexpression *expr,
+                                                 Location location);
+
   // Helper to set up entry block for function
   llvm::BasicBlock *genEntryBlock(Bfunction *bfunction);
 
