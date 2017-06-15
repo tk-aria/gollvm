@@ -602,7 +602,7 @@ Bexpression *Llvm_backend::address_expression(Bexpression *bexpr,
 
   // Gofrontend tends to take the address of things that are already
   // pointer-like to begin with (for example, C strings and and
-  // arrays). This presents wrinkles here, since since an array type
+  // arrays). This presents wrinkles here, since an array type
   // in LLVM is already effectively a pointer (you can feed it
   // directly into a GEP as opposed to having to take the address of
   // it first).  Bypass the effects of the address operator if
@@ -618,7 +618,7 @@ Bexpression *Llvm_backend::address_expression(Bexpression *bexpr,
   // constant, we have to spill it to memory here in order for us to
   // take its address.
   llvm::Value *val = bexpr->value();
-  if (llvm::isa<llvm::Constant>(val)) {
+  if (bexpr->isConstant()) {
     llvm::Constant *cval = llvm::cast<llvm::Constant>(val);
     Bvariable *cv = genVarForConstant(cval, bexpr->btype());
     val = cv->value();
@@ -1162,7 +1162,7 @@ Bexpression *Llvm_backend::real_part_expression(Bexpression *bcomplex,
   llvm::StructType *llst = llvm::cast<llvm::StructType>(llt);
   llvm::Value *cval = bcomplex->value();
   llvm::Value *fval;
-  if (llvm::isa<llvm::Constant>(cval) && cval->getType()->isStructTy())
+  if (bcomplex->isConstant())
     fval = llvm::cast<llvm::Constant>(cval)->getAggregateElement((unsigned int)0);
   else
     fval = makeFieldGEP(llst, 0, cval);
@@ -1198,7 +1198,7 @@ Bexpression *Llvm_backend::imag_part_expression(Bexpression *bcomplex,
   llvm::StructType *llst = llvm::cast<llvm::StructType>(llt);
   llvm::Value *cval = bcomplex->value();
   llvm::Value *fval;
-  if (llvm::isa<llvm::Constant>(cval) && cval->getType()->isStructTy())
+  if (bcomplex->isConstant())
     fval = llvm::cast<llvm::Constant>(cval)->getAggregateElement((unsigned int)1);
   else
     fval = makeFieldGEP(llst, 1, cval);
@@ -1514,7 +1514,7 @@ Bexpression *Llvm_backend::struct_field_expression(Bexpression *bstruct,
   llvm::StructType *llst = llvm::cast<llvm::StructType>(llt);
   llvm::Value *sval = bstruct->value();
   llvm::Value *fval;
-  if (llvm::isa<llvm::Constant>(sval) && sval->getType()->isStructTy())
+  if (bstruct->isConstant())
     fval = llvm::cast<llvm::Constant>(sval)->getAggregateElement(index);
   else
     fval = makeFieldGEP(llst, index, sval);
@@ -1990,9 +1990,8 @@ bool
 Llvm_backend::valuesAreConstant(const std::vector<Bexpression *> &vals)
 {
   for (auto &val : vals)
-    if (val->value() == nullptr ||
-        ! llvm::isa<llvm::Constant>(val->value()))
-      return false;
+    if (!val->isConstant())
+       return false;
   return true;
 }
 
@@ -2176,8 +2175,8 @@ Bexpression *Llvm_backend::array_index_expression(Bexpression *barray,
   llvm::Value *ival = index->value();
   llvm::Value *eval = nullptr;
   bool pending = false;
-  if (llvm::isa<llvm::Constant>(aval) && aval->getType()->isArrayTy()) {
-    if (llvm::isa<llvm::Constant>(ival))
+  if (barray->isConstant()) {
+    if (index->isConstant())
       eval = llvm::cast<llvm::Constant>(aval)->getAggregateElement(llvm::cast<llvm::Constant>(ival));
     else {
       // Constant array with non-constant index. Put the array
@@ -2291,7 +2290,7 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
       llvm::Value *val = fnarg->value();
       assert(val);
       // spill a constant arg to memory if needed
-      if (llvm::isa<llvm::Constant>(val)) {
+      if (fnarg->isConstant()) {
         llvm::Constant *cval = llvm::cast<llvm::Constant>(val);
         Bvariable *cv = genVarForConstant(cval, fn_args[idx]->btype());
         val = cv->value();
@@ -2359,7 +2358,7 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
 
     // If the value we're passing is a composite constant, we have to
     // spill it to memory here in order for the casts below to work.
-    if (llvm::isa<llvm::Constant>(val)) {
+    if (llvm::isa<llvm::Constant>(val) && val->getType()->isAggregateType()) {
       llvm::Constant *cval = llvm::cast<llvm::Constant>(val);
       Bvariable *cv = genVarForConstant(cval, resarg->btype());
       val = cv->value();
@@ -2773,7 +2772,7 @@ Llvm_backend::return_statement(Bfunction *bfunction,
         constructor_expression(rtyp, resolvedVals, location);
     if (structVal->compositeInitPending()) {
       structVal = resolveCompositeInit(structVal, nullptr);
-    } else if (llvm::isa<llvm::Constant>(structVal->value())) {
+    } else if (structVal->isConstant()) {
       llvm::Constant *cval = llvm::cast<llvm::Constant>(structVal->value());
       Bvariable *cv = genVarForConstant(cval, structVal->btype());
       structVal = var_expression(cv, VE_rvalue, location);

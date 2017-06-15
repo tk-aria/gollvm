@@ -117,6 +117,37 @@ void Bexpression::setValue(llvm::Value *val)
   value_ = val;
 }
 
+bool Bexpression::isConstant()
+{
+  if (!value_)
+    return false;
+  if (!llvm::isa<llvm::Constant>(value_))
+    return false;
+
+  // In some cases, even the underlying value is an
+  // llvm::Constant, the expression may be not. For
+  // example, a var experssion for a global variable,
+  // its value is an llvm::GlobalVariable, which is an
+  // llvm::Constant, but this is generally not what
+  // we want. Extra checking is needed.
+  switch (flavor()) {
+  case N_Var:
+    return false;
+  case N_StructField: {
+    std::vector<Bexpression*> kids = getChildExprs();
+    assert(kids.size() == 1);
+    return kids[0]->isConstant();
+  }
+  case N_ArrayIndex: {
+    std::vector<Bexpression*> kids = getChildExprs();
+    assert(kids.size() == 2);
+    return kids[0]->isConstant() && kids[1]->isConstant();
+  }
+  default:
+    return true;
+  }
+}
+
 void Bexpression::srcDump(Llvm_linemap *linemap)
 {
   std::string s;

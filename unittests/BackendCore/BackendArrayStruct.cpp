@@ -480,6 +480,58 @@ TEST(BackendArrayStructTests, CreateStructConstructionExprs2) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
+TEST(BackendArrayStructTests, CreateStructConstructionExprs3) {
+  // Test struct construction involving global variavbles.
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
+  Location loc;
+
+  // type T struct {
+  //    f1 int32
+  // }
+  Btype *bi32t = be->integer_type(false, 32);
+  Btype *s1t = mkBackendStruct(be, bi32t, "f1", nullptr);
+
+  // Construct a struct with a global var field
+  // var x int32  // global
+  // var t = T{x} // global
+  Bvariable *x = be->global_variable("x", "x", bi32t, false, /* is_external */
+                                     false, /* is_hidden */
+                                     false, /* unique_section */
+                                     loc);
+  Bexpression *xvex = be->var_expression(x, VE_rvalue, loc);
+  std::vector<Bexpression *> vals1 = {xvex};
+  Bexpression *scon1 = be->constructor_expression(s1t, vals1, loc);
+  Bvariable *t = be->global_variable("t", "t", s1t, false, /* is_external */
+                                     false, /* is_hidden */
+                                     false, /* unique_section */
+                                     loc);
+  Bexpression *tvex = be->var_expression(t, VE_lvalue, loc);
+  h.mkAssign(tvex, scon1);
+
+  // Construct a struct with a field from a field of global var
+  // var t2 = T{t.x}
+  Bexpression *tvex2 = be->var_expression(t, VE_rvalue, loc);
+  Bexpression *fex = be->struct_field_expression(tvex2, 0, loc);
+  std::vector<Bexpression *> vals2 = {fex};
+  Bexpression *scon2 = be->constructor_expression(s1t, vals2, loc);
+  h.mkLocal("t2", s1t, scon2);
+
+  const char *exp = R"RAW_RESULT(
+    %x.ld.0 = load i32, i32* @x
+    store i32 %x.ld.0, i32* getelementptr inbounds ({ i32 }, { i32 }* @t, i32 0, i32 0)
+    %t.field.ld.0 = load i32, i32* getelementptr inbounds ({ i32 }, { i32 }* @t, i32 0, i32 0)
+    %field.2 = getelementptr inbounds { i32 }, { i32 }* %t2, i32 0, i32 0
+    store i32 %t.field.ld.0, i32* %field.2
+  )RAW_RESULT";
+
+  bool isOK = h.expectBlock(exp);
+  EXPECT_TRUE(isOK && "Block does not have expected contents");
+
+  bool broken = h.finish(PreserveDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+}
+
 TEST(BackendArrayStructTests, CreateArrayIndexingExprs) {
 
   FcnTestHarness h("foo");
@@ -692,6 +744,54 @@ TEST(BackendArrayStructTests, TestStructAssignment) {
   %cast.11 = bitcast { i64, i64, i64, i64, i64, i64 }* %y2 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.10, i8* %cast.11, i64 48, i32 8, i1 false)
    )RAW_RESULT";
+
+  bool isOK = h.expectBlock(exp);
+  EXPECT_TRUE(isOK && "Block does not have expected contents");
+
+  bool broken = h.finish(PreserveDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+}
+
+TEST(BackendArrayStructTests, TestStructFieldAddressExpr) {
+  // Test address expression of struct field.
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
+  Location loc;
+
+  // type T struct {
+  //    f1 int32
+  // }
+  Btype *bi32t = be->integer_type(false, 32);
+  Btype *bpi32t = be->pointer_type(bi32t);
+  Btype *s1t = mkBackendStruct(be, bi32t, "f1", nullptr);
+
+  // var t1 T // local
+  // var t2 T // global
+  // var a1 = &t1.f1
+  // var a2 = &t2.f1
+  Bvariable *t1 = h.mkLocal("t1", s1t);
+  Bexpression *t1vex = be->var_expression(t1, VE_rvalue, loc);
+  Bexpression *fex1 = be->struct_field_expression(t1vex, 0, loc);
+  Bexpression *aex1 = be->address_expression(fex1, loc);
+  h.mkLocal("a1", bpi32t, aex1);
+
+  Bvariable *t2 = be->global_variable("t2", "t2", s1t, false, /* is_external */
+                                      false, /* is_hidden */
+                                      false, /* unique_section */
+                                      loc);
+  Bexpression *t2vex = be->var_expression(t2, VE_rvalue, loc);
+  Bexpression *fex2 = be->struct_field_expression(t2vex, 0, loc);
+  Bexpression *aex2 = be->address_expression(fex2, loc);
+  h.mkLocal("a2", bpi32t, aex2);
+
+  const char *exp = R"RAW_RESULT(
+    %cast.0 = bitcast { i32 }* %t1 to i8*
+    %cast.1 = bitcast { i32 }* @const.0 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.0, i8* %cast.1, i64 4, i32 8, i1 false)
+    %field.0 = getelementptr inbounds { i32 }, { i32 }* %t1, i32 0, i32 0
+    store i32* %field.0, i32** %a1
+    store i32* getelementptr inbounds ({ i32 }, { i32 }* @t2, i32 0, i32 0), i32** %a2
+  )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
