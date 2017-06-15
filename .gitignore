@@ -30,6 +30,9 @@ llvm-gofrontend/gofrontend/
 *.a
 *.lib
 
+# Compiled python files
+*.pyc
+
 # Executables
 *.exe
 *.out
