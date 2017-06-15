@@ -185,6 +185,10 @@ class Bexpression : public Bnode, public Binstructions {
   // whereas non-composite values can be used directly.
   Varexpr_context varContextDisp() const;
 
+  // Return whether the expression is a constant.
+  // True implies the underlying llvm::Value is llvm::Constant.
+  bool isConstant();
+
   // debugging
   void dumpInstructions(llvm::raw_ostream &os, unsigned ilevel,
                         Llvm_linemap *linemap, bool terse) const;
