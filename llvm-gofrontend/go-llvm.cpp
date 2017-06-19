@@ -2320,6 +2320,13 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
     if (paramInfo.abiTypes().size() == 1) {
       if (ctx == VE_lvalue) {
         // Passing single-eightbyte struct or array directly.
+        if (resarg->isConstant()) {
+          // If the value we're passing is a composite constant, we have to
+          // spill it to memory here in order for the casts below to work.
+          llvm::Constant *cval = llvm::cast<llvm::Constant>(val);
+          Bvariable *cv = genVarForConstant(cval, resarg->btype());
+          val = cv->value();
+        }
         std::string castname(namegen("cast"));
         llvm::Type *ptv = makeLLVMPointerType(paramInfo.abiType());
         llvm::Value *bitcast = builder.CreateBitCast(val, ptv, castname);
@@ -2358,7 +2365,7 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
 
     // If the value we're passing is a composite constant, we have to
     // spill it to memory here in order for the casts below to work.
-    if (llvm::isa<llvm::Constant>(val) && val->getType()->isAggregateType()) {
+    if (resarg->isConstant()) {
       llvm::Constant *cval = llvm::cast<llvm::Constant>(val);
       Bvariable *cv = genVarForConstant(cval, resarg->btype());
       val = cv->value();

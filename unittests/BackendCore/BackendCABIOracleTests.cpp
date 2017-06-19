@@ -436,5 +436,78 @@ TEST(BackendCABIOracleTests, CallBuiltinFunction) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
+TEST(BackendCABIOracleTests, PassAndReturnComplex) {
+  FcnTestHarness h;
+  Llvm_backend *be = h.be();
+
+  Btype *bc64t = be->complex_type(64);
+  Btype *bc128t = be->complex_type(128);
+
+  // func foo(x complex64, y complex128) complex64
+  BFunctionType *befty1 = mkFuncTyp(be,
+                                    L_PARM, bc64t,
+                                    L_PARM, bc128t,
+                                    L_RES, bc64t,
+                                    L_END);
+  Bfunction *func = h.mkFunction("foo", befty1);
+
+  // z = foo(x, y)
+  Location loc;
+  Bvariable *x = func->getNthParamVar(0);
+  Bvariable *y = func->getNthParamVar(1);
+  Bexpression *xvex = be->var_expression(x, VE_rvalue, loc);
+  Bexpression *yvex = be->var_expression(y, VE_rvalue, loc);
+  Bexpression *fn1 = be->function_code_expression(func, loc);
+  std::vector<Bexpression *> args1 = {xvex, yvex};
+  Bexpression *call1 = be->call_expression(func, fn1, args1, nullptr, h.loc());
+  h.mkLocal("z", bc64t, call1);
+
+  // Call with constant args
+  // foo(1+2i, 3+4i)
+  mpc_t mpc_val1, mpc_val2;
+  mpc_init2(mpc_val1, 256);
+  mpc_set_d_d(mpc_val1, 1.0, 2.0, GMP_RNDN);
+  mpc_init2(mpc_val2, 256);
+  mpc_set_d_d(mpc_val2, 3.0, 4.0, GMP_RNDN);
+  Bexpression *ccon1 = be->complex_constant_expression(bc64t, mpc_val1);
+  Bexpression *ccon2 = be->complex_constant_expression(bc128t, mpc_val2);
+  Bexpression *fn2 = be->function_code_expression(func, loc);
+  std::vector<Bexpression *> args2 = {ccon1, ccon2};
+  Bexpression *call2 = be->call_expression(func, fn2, args2, nullptr, h.loc());
+
+  // return the call expr above
+  std::vector<Bexpression *> rvals = {call2};
+  h.mkReturn(rvals);
+
+  const char *exp = R"RAW_RESULT(
+    %cast.0 = bitcast { float, float }* %p0.addr to <2 x float>*
+    %ld.0 = load <2 x float>, <2 x float>* %cast.0
+    %field0.0 = getelementptr inbounds { double, double }, { double, double }* %p1.addr, i32 0, i32 0
+    %ld.1 = load double, double* %field0.0
+    %field1.0 = getelementptr inbounds { double, double }, { double, double }* %p1.addr, i32 0, i32 1
+    %ld.2 = load double, double* %field1.0
+    %call.0 = call <2 x float> @foo(i8* nest undef, <2 x float> %ld.0, double %ld.1, double %ld.2)
+    %cast.2 = bitcast { float, float }* %sret.actual.0 to <2 x float>*
+    store <2 x float> %call.0, <2 x float>* %cast.2
+    %cast.3 = bitcast { float, float }* %z to i8*
+    %cast.4 = bitcast { float, float }* %sret.actual.0 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.3, i8* %cast.4, i64 8, i32 8, i1 false)
+    %ld.3 = load <2 x float>, <2 x float>* bitcast ({ float, float }* @const.0 to <2 x float>*)
+    %ld.4 = load double, double* getelementptr inbounds ({ double, double }, { double, double }* @const.1, i32 0, i32 0)
+    %ld.5 = load double, double* getelementptr inbounds ({ double, double }, { double, double }* @const.1, i32 0, i32 1)
+    %call.1 = call <2 x float> @foo(i8* nest undef, <2 x float> %ld.3, double %ld.4, double %ld.5)
+    %cast.7 = bitcast { float, float }* %sret.actual.1 to <2 x float>*
+    store <2 x float> %call.1, <2 x float>* %cast.7
+    %cast.8 = bitcast { float, float }* %sret.actual.1 to <2 x float>*
+    %ld.6 = load <2 x float>, <2 x float>* %cast.8
+    ret <2 x float> %ld.6
+  )RAW_RESULT";
+
+  bool isOK = h.expectBlock(exp);
+  EXPECT_TRUE(isOK && "Block does not have expected contents");
+
+  bool broken = h.finish(PreserveDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+}
 
 }
