@@ -156,6 +156,25 @@ EightByteInfo::EightByteInfo(Btype *bt, TypeManager *tmgr)
   determineABITypes();
 }
 
+// Perform a pre-order walk of a type, collecting the various leaf
+// elements within the type. The general idea is to flatten out any
+// nested structs/arrays and expose each of the underlying scalar
+// elements of the type along with their offsets. Return value is a
+// list of type/offset pairs, where the offset represents the location
+// of the scalar type within the larger aggregate type. Example:
+//
+//      struct {
+//        f1 int8
+//        f2 [0]uint64
+//        struct {
+//          f1 int8
+//        }
+//      }
+//
+// The return for the struct above in "preserve" mode would be:
+//
+//     { int8, 0 }, { int8, 8 }
+//
 void EightByteInfo::addLeafTypes(Btype *bt,
                                  unsigned offset,
                                  std::vector<typAndOffset> *leaves)
@@ -307,10 +326,33 @@ void EightByteInfo::getRegisterRequirements(unsigned *numInt, unsigned *numSSE)
       *numInt += 1;
 }
 
-// Select the appropriate abi type for each eight-byte region
-
+// Select the appropriate abi type for each eight-byte region within
+// an EightByteInfo. Pure floating point types are mapped onto float,
+// double, or <2 x float> (a vector type), integer types (or something
+// that is a mix of integer and non-integer) are mapped onto the
+// appropriately sized integer type.
+//
+// Problems arise in the code below when dealing with structures with
+// constructs that inject additional padding. For example, consider
+// the following struct passed by value:
+//
+//      struct {
+//        f1 int8
+//        f2 [0]uint64
+//        f3 int8
+//      }
+//
+// Without taking into account the over-alignment of field f3, we would
+// wind up with two regions, each with type int8. This in itself is not so
+// bad, but creating a struct from these two types (via ::computeABIStructType)
+// would give us { int8, int8 }, in which the second field doesn't have
+// the correct alignment. Work around this by checking for such situations
+// and promoting the type of the first EBR to 64 bits.
+//
 void EightByteInfo::determineABITypes()
 {
+  unsigned intRegions = 0;
+  unsigned floatRegions = 0;
   for (auto &ebr : ebrs_) {
     if (ebr.abiDirectType != nullptr)
       continue;
@@ -326,14 +368,23 @@ void EightByteInfo::determineABITypes()
       } else {
         assert(false && "this should never happen");
       }
+      floatRegions += 1;
     } else {
       unsigned nel = ebr.offsets.size();
       unsigned bytes = ebr.offsets[nel-1] - ebr.offsets[0] +
           tm()->llvmTypeSize(ebr.types[nel-1]);
       assert(bytes && bytes <= 8);
       ebr.abiDirectType = tm()->llvmArbitraryIntegerType(bytes);
+      intRegions += 1;
     }
   }
+
+  // See the example above for more on why this is needed.
+  if (intRegions == 2)
+    ebrs_[0].abiDirectType = tm()->llvmArbitraryIntegerType(8);
+  else if (floatRegions == 2 &&
+           ebrs_[0].abiDirectType == tm()->llvmFloatType())
+    ebrs_[0].abiDirectType = tm()->llvmDoubleType();
 }
 
 //......................................................................

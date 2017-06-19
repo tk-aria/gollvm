@@ -95,22 +95,26 @@ TEST(BackendCABIOracleTests, Extended) {
   Btype *nt = nullptr;
   std::vector<FcnItem> items = {
 
+    // 1
     FcnItem( {  }, {  },
              "Return: Ignore { void } sigOffset: -1 "
              "Param 1: Direct AttrNest { i8* } sigOffset: 0",
              "void (i8*)"),
 
+    // 2
     FcnItem( { bi8t }, { },
              "Return: Direct AttrSext { i8 } sigOffset: -1 "
              "Param 1: Direct AttrNest { i8* } sigOffset: 0",
              "i8 (i8*)"),
 
+    // 3
     FcnItem( {  }, { bi8t },
              "Return: Ignore { void } sigOffset: -1 "
              "Param 1: Direct AttrNest { i8* } sigOffset: 0 "
              "Param 2: Direct AttrSext { i8 } sigOffset: 1",
              "void (i8*, i8)"),
 
+    // 4
     FcnItem( {  }, { st5, bpf64t },
              "Return: Ignore { void } sigOffset: -1 "
              "Param 1: Direct AttrNest { i8* } sigOffset: 0 "
@@ -118,6 +122,7 @@ TEST(BackendCABIOracleTests, Extended) {
              "Param 3: Direct { double* } sigOffset: 2",
              "void (i8*, float, double*)"),
 
+    // 5
     FcnItem({ bi8t, bf64t }, { bi8t, bu8t, st0 },
             "Return: Direct { { i8, double } } sigOffset: -1 "
             "Param 1: Direct AttrNest { i8* } sigOffset: 0 "
@@ -126,6 +131,7 @@ TEST(BackendCABIOracleTests, Extended) {
             "Param 4: Ignore { void } sigOffset: -1",
             "{ i8, double } (i8*, i8, i8)"),
 
+    // 6
     FcnItem({ st2 }, { st2, st0, st4, st1 },
             "Return: Direct { { double, double } } sigOffset: -1 "
             "Param 1: Direct AttrNest { i8* } sigOffset: 0 "
@@ -135,6 +141,7 @@ TEST(BackendCABIOracleTests, Extended) {
             "Param 5: Direct { i64 } sigOffset: 4 ",
             "{ double, double } (i8*, double, double, <2 x float>, i64)"),
 
+    // 7
     FcnItem({ st3 }, { st3, st0, bu8t },
             "Return: Indirect AttrStructReturn { { { double, double }, i8 }* } sigOffset: 0 "
             "Param 1: Direct AttrNest { i8* } sigOffset: 1 "
@@ -144,13 +151,15 @@ TEST(BackendCABIOracleTests, Extended) {
             "void ({ { double, double }, i8 }*, i8*, "
             "{ { double, double }, i8 }*, i8)"),
 
+    // 8
     FcnItem( { st6 }, { st6, st6 },
-             "Return: Direct { { i48, i64 } } sigOffset: -1 "
+             "Return: Direct { { i64, i64 } } sigOffset: -1 "
              "Param 1: Direct AttrNest { i8* } sigOffset: 0 "
-             "Param 2: Direct { i48, i64 } sigOffset: 1 "
-             "Param 3: Direct { i48, i64 } sigOffset: 3",
-             "{ i48, i64 } (i8*, i48, i64, i48, i64)"),
+             "Param 2: Direct { i64, i64 } sigOffset: 1 "
+             "Param 3: Direct { i64, i64 } sigOffset: 3",
+             "{ i64, i64 } (i8*, i64, i64, i64, i64)"),
 
+    // 9
     FcnItem( { st8 }, { st8 },
              "Return: Direct { { i64, i32 } } sigOffset: -1 "
              "Param 1: Direct AttrNest { i8* } sigOffset: 0 "
@@ -158,6 +167,7 @@ TEST(BackendCABIOracleTests, Extended) {
              "{ i64, i32 } (i8*, i64, i32)"),
   };
 
+  unsigned count = 1;
   for (auto &item : items) {
     std::vector<Backend::Btyped_identifier> results;
     std::vector<Backend::Btyped_identifier> params;
@@ -176,6 +186,7 @@ TEST(BackendCABIOracleTests, Extended) {
       bool equal = difftokens(item.expDump, cab.toString(), reason);
       EXPECT_EQ("pass", equal ? "pass" : reason);
       if (!equal) {
+        std::cerr << "count: " << count << "\n";
         std::cerr << "exp:\n" << item.expDump << "\n";
         std::cerr << "act:\n" << cab.toString() << "\n";
       }
@@ -185,10 +196,12 @@ TEST(BackendCABIOracleTests, Extended) {
       bool equal = difftokens(item.expTyp, result, reason);
       EXPECT_EQ("pass", equal ? "pass" : reason);
       if (!equal) {
+        std::cerr << "count: " << count << "\n";
         std::cerr << "exp:\n" << item.expTyp << "\n";
         std::cerr << "act:\n" << result << "\n";
       }
     }
+    count++;
   }
 }
 
