@@ -64,6 +64,7 @@ enum NodeFlavor {
   N_BinaryOp,
   N_Compound,
   N_ArrayIndex,
+  N_PointerOffset,
   N_Composite,
   N_Call,
   N_LastExpr = N_Call,
@@ -229,6 +230,11 @@ class BnodeBuilder {
                             Bexpression *arval,
                             Bexpression *index,
                             Location loc);
+  Bexpression *mkPointerOffset(Btype *typ,
+                               llvm::Value *val,
+                               Bexpression *ptr,
+                               Bexpression *offset,
+                               Location loc);
   Bexpression *mkComposite(Btype *btype, llvm::Value *value,
                            const std::vector<Bexpression *> &vals,
                            Binstructions &instructions,

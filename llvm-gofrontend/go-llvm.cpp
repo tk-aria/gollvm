@@ -558,6 +558,7 @@ Bexpression *Llvm_backend::genLoad(Bexpression *expr,
     rval->appendInstruction(loadInst);
   } else {
     rval = nbuilder_.mkDeref(loadResultType, space->value(), space, loc);
+    rval->setVarExprPending(false, 0);
   }
   return rval;
 }
@@ -587,8 +588,11 @@ Bexpression *Llvm_backend::indirect_expression(Btype *btype,
 
   std::string tag(expr->tag().size() == 0 ? "deref" : expr->tag());
   Bexpression *rval = genLoad(expr, btype, location, tag);
-  if (vc)
+  if (vc) {
+    if (rval->varExprPending())
+      rval->resetVarExprContext();
     rval->setVarExprPending(expr->varContext());
+  }
 
   return rval;
 }
@@ -1468,7 +1472,7 @@ llvm::Value *Llvm_backend::makePointerOffsetGEP(llvm::PointerType *llpt,
   LIRBuilder builder(context_, llvm::ConstantFolder());
   llvm::SmallVector<llvm::Value *, 1> elems(1);
   elems[0] = idxval;
-  llvm::Value *val = builder.CreateGEP(llpt, sptr, elems, namegen("ptroff"));
+  llvm::Value *val = builder.CreateGEP(llpt->getElementType(), sptr, elems, namegen("ptroff"));
   return val;
 }
 
@@ -2132,7 +2136,27 @@ Bexpression *Llvm_backend::pointer_offset_expression(Bexpression *base,
   if (base == errorExpression() || index == errorExpression())
     return errorExpression();
 
+  // Resolve index expression
   index = resolveVarContext(index);
+
+  // When a pointer offset expression appears in a left-hand-side (assignment)
+  // context, the expected semantics are that location to be written is the
+  // one pointer to by the result of the pointer offset, meaning that we want
+  // to propagate any "lvalue-ness" found in 'base' up into the result
+  // expression (as opposed to delaying a load from 'base' itself).
+  //
+  // To achieve this effect, the code below essentially hides away the
+  // lvalue context on 'base' and then re-establishes it on 'rval' after the
+  // GEP. This is a painful hack, it would be nice to have a clean way
+  // to do this.
+  VarContext vc;
+  bool setLHS = false;
+  if (base->varExprPending() && base->varContext().lvalue()) {
+    setLHS = true;
+    base->resetVarExprContext();
+    base->setVarExprPending(false, 0);
+  }
+  base = resolveVarContext(base);
 
   // Construct an appropriate GEP
   llvm::PointerType *llpt =
@@ -2141,10 +2165,12 @@ Bexpression *Llvm_backend::pointer_offset_expression(Bexpression *base,
       makePointerOffsetGEP(llpt, index->value(), base->value());
 
   // Wrap in a Bexpression
-  Bexpression *rval = nbuilder_.mkArrayIndex(base->btype(), gep, base,
-                                             index, location);
-  if (base->varExprPending())
-    rval->setVarExprPending(base->varContext());
+  Bexpression *rval = nbuilder_.mkPointerOffset(base->btype(), gep, base,
+                                                index, location);
+
+  // Re-establish lvalue context (as described above)
+  if (setLHS)
+    rval->setVarExprPending(true, 1);
 
   std::string tag(base->tag());
   tag += ".ptroff";
