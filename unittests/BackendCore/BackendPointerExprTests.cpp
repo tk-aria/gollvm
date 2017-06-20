@@ -434,13 +434,13 @@ TEST(BackEndPointerExprTests, CreatePointerOffsetExprs) {
   }
 
   const char *exp = R"RAW_RESULT(
-  %ptroff.0 = getelementptr i64*, i64** %param3.addr, i32 5
-  %param3.ptroff.ld.0 = load i64*, i64** %ptroff.0
-  store i64 9, i64* %param3.ptroff.ld.0
-  %ptroff.1 = getelementptr i64*, i64** %param3.addr, i32 7
-  %param3.ptroff.ld.1 = load i64*, i64** %ptroff.1
-  %.ld.0 = load i64, i64* %param3.ptroff.ld.1
-  %trunc.0 = trunc i64 %.ld.0 to i32
+  %param3.ld.0 = load i64*, i64** %param3.addr
+  %ptroff.0 = getelementptr i64, i64* %param3.ld.0, i32 5
+  store i64 9, i64* %ptroff.0
+  %param3.ld.1 = load i64*, i64** %param3.addr
+  %ptroff.1 = getelementptr i64, i64* %param3.ld.1, i32 7
+  %.ptroff.ld.0 = load i64, i64* %ptroff.1
+  %trunc.0 = trunc i64 %.ptroff.ld.0 to i32
   store i32 %trunc.0, i32* %param1.addr
   )RAW_RESULT";
 
