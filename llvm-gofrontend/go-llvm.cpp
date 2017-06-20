@@ -3715,8 +3715,12 @@ llvm::BasicBlock *GenBlocks::genSwitch(Bstatement *swst,
     Bstatement *st = swst->getSwitchStmtNthStmt(idx);
     walk(st, blocks[idx]);
     if (! blocks[idx]->getTerminator()) {
+      // The front end inserts a goto statement at the end for
+      // non-fallthrough cases. Fall through to the next case
+      // otherwise.
+      assert(idx < ncases-1);
       builder.SetInsertPoint(blocks[idx]);
-      builder.CreateBr(epilogBB);
+      builder.CreateBr(blocks[idx+1]);
     }
   }
 
