@@ -280,27 +280,38 @@ TEST(BackendStmtTests, TestSwitchStmt) {
   Btype *bi64t = be->integer_type(false, 64);
   Bvariable *loc1 = h.mkLocal("loc1", bi64t);
 
+  // label for break
+  Blabel *brklab = be->label(func, "break", loc);
+
+  // first case
   // loc1 = loc1 / 123
   Bexpression *ve1 = be->var_expression(loc1, VE_lvalue, loc);
   Bexpression *ve1r = be->var_expression(loc1, VE_rvalue, loc);
   Bexpression *c123 = mkInt64Const(be, 123);
   Bexpression *div = be->binary_expression(OPERATOR_DIV, ve1r, c123, loc);
   Bstatement *as1 = be->assignment_statement(func, ve1, div, loc);
+  Bstatement *goto1 = be->goto_statement(brklab, loc);
+  Bstatement *cs1 = be->compound_statement(as1, goto1);
 
+  // second case
   // loc1 = 987 * loc1
   Bexpression *ve2 = be->var_expression(loc1, VE_lvalue, loc);
   Bexpression *ve2r = be->var_expression(loc1, VE_rvalue, loc);
   Bexpression *c987 = mkInt64Const(be, 987);
   Bexpression *mul = be->binary_expression(OPERATOR_MULT, c987, ve2r, loc);
   Bstatement *as2 = be->assignment_statement(func, ve2, mul, loc);
+  // implicit fallthrough
 
+  // third case
   // loc1 = 456
   Bexpression *ve3 = be->var_expression(loc1, VE_lvalue, loc);
   Bexpression *c456 = mkInt64Const(be, 456);
   Bstatement *as3 = be->assignment_statement(func, ve3, c456, loc);
+  Bstatement *goto3 = be->goto_statement(brklab, loc);
+  Bstatement *cs3 = be->compound_statement(as3, goto3);
 
   // Set up switch statements
-  std::vector<Bstatement*> statements = {as1, as2, as3};
+  std::vector<Bstatement*> statements = {cs1, as2, cs3};
   std::vector<std::vector<Bexpression*> > cases = {
     { mkInt64Const(be, 1), mkInt64Const(be, 2) },
     { mkInt64Const(be, 3), mkInt64Const(be, 4) } };
@@ -309,6 +320,10 @@ TEST(BackendStmtTests, TestSwitchStmt) {
   // switch
   Bexpression *vesw = be->var_expression(loc1, VE_rvalue, loc);
   h.mkSwitch(vesw, cases, statements);
+
+  // label definition
+  Bstatement *labdef = be->label_definition_statement(brklab);
+  h.addStmt(labdef);
 
   // return 10101
   h.mkReturn(mkInt64Const(be, 10101));
@@ -339,19 +354,21 @@ TEST(BackendStmtTests, TestSwitchStmt) {
      %loc1.ld.0 = load i64, i64* %loc1
      %div.0 = sdiv i64 %loc1.ld.0, 123
      store i64 %div.0, i64* %loc1
-     br label %epilog.0
+     br label %label.0
    case.1:                               ; preds = %entry, %entry
      %loc1.ld.1 = load i64, i64* %loc1
      %mul.0 = mul i64 987, %loc1.ld.1
      store i64 %mul.0, i64* %loc1
-     br label %epilog.0
-   default.0:                            ; preds = %entry
+     br label %default.0
+   default.0:                            ; preds = %entry, %case.1
      store i64 456, i64* %loc1
-     br label %epilog.0
-   epilog.0:                             ; preds = %default.0, %case.1, %case.0
+     br label %label.0
+   epilog.0:                             ; No predecessors!
+     br label %label.0
+   label.0:                              ; preds = %epilog.0, %default.0, %case.0
      ret i64 10101
    }
-    )RAW_RESULT";
+  )RAW_RESULT";
 
   bool isOK = h.expectValue(func->function(), exp);
   EXPECT_TRUE(isOK && "Function does not have expected contents");
