@@ -39,32 +39,33 @@ static constexpr unsigned Variadic = 0xffffffff;
 
 static BnodePropVals BnodeProperties[] = {
 
-  /* N_Error */       {  "error", 0, IsExpr },
-  /* N_Const */       {  "const", 0, IsExpr },
-  /* N_Var */         {  "var", 0, IsExpr },
-  /* N_FcnAddress */  {  "fcn", 0, IsExpr },
-  /* N_LabelAddress */{  "labelad", 0, IsExpr },
-  /* N_Conversion */  {  "conv", 1, IsExpr },
-  /* N_Deref */       {  "deref", 1, IsExpr },
-  /* N_Address */     {  "addr", 1, IsExpr },
-  /* N_UnaryOp */     {  "unary", 1, IsExpr },
-  /* N_StructField */ {  "field", 1, IsExpr },
-  /* N_BinaryOp */    {  "binary", 2, IsExpr },
-  /* N_Compound */    {  "compound", 2, IsExpr },
-  /* N_ArrayIndex */  {  "arindex", 2, IsExpr },
-  /* N_Composite */   {  "composite", Variadic, IsExpr },
-  /* N_Call */        {  "call", Variadic, IsExpr },
+  /* N_Error */         {  "error", 0, IsExpr },
+  /* N_Const */         {  "const", 0, IsExpr },
+  /* N_Var */           {  "var", 0, IsExpr },
+  /* N_FcnAddress */    {  "fcn", 0, IsExpr },
+  /* N_LabelAddress */  {  "labelad", 0, IsExpr },
+  /* N_Conversion */    {  "conv", 1, IsExpr },
+  /* N_Deref */         {  "deref", 1, IsExpr },
+  /* N_Address */       {  "addr", 1, IsExpr },
+  /* N_UnaryOp */       {  "unary", 1, IsExpr },
+  /* N_StructField */   {  "field", 1, IsExpr },
+  /* N_BinaryOp */      {  "binary", 2, IsExpr },
+  /* N_Compound */      {  "compound", 2, IsExpr },
+  /* N_ArrayIndex */    {  "arindex", 2, IsExpr },
+  /* N_PointerOffset */ {  "ptroff", 2, IsExpr },
+  /* N_Composite */     {  "composite", Variadic, IsExpr },
+  /* N_Call */          {  "call", Variadic, IsExpr },
 
-  /* N_EmptyStmt */   {  "empty", 0, IsStmt },
-  /* N_LabelStmt */   {  "label", 0, IsStmt },
-  /* N_GotoStmt */    {  "goto", 0, IsStmt },
-  /* N_ExprStmt */    {  "exprst", 1, IsStmt },
-  /* N_ReturnStmt */  {  "return", 1, IsStmt },
-  /* N_DeferStmt */   {  "defer", 2, IsStmt },
-  /* N_IfStmt */      {  "ifstmt", 3, IsStmt },
-  /* N_ExcepStmt */   {  "excepstmt", 3, IsStmt },
-  /* N_BlockStmt */   {  "block", Variadic, IsStmt },
-  /* N_SwitchStmt */  {  "switch", Variadic, IsStmt }
+  /* N_EmptyStmt */     {  "empty", 0, IsStmt },
+  /* N_LabelStmt */     {  "label", 0, IsStmt },
+  /* N_GotoStmt */      {  "goto", 0, IsStmt },
+  /* N_ExprStmt */      {  "exprst", 1, IsStmt },
+  /* N_ReturnStmt */    {  "return", 1, IsStmt },
+  /* N_DeferStmt */     {  "defer", 2, IsStmt },
+  /* N_IfStmt */        {  "ifstmt", 3, IsStmt },
+  /* N_ExcepStmt */     {  "excepstmt", 3, IsStmt },
+  /* N_BlockStmt */     {  "block", Variadic, IsStmt },
+  /* N_SwitchStmt */    {  "switch", Variadic, IsStmt }
 };
 
 Bnode::Bnode(NodeFlavor flavor, const std::vector<Bnode *> &kids, Location loc)
@@ -610,6 +611,19 @@ Bexpression *BnodeBuilder::mkArrayIndex(Btype *typ,
   appendInstIfNeeded(rval, val);
   if (arval->varExprPending())
     rval->setVarExprPending(arval->varContext());
+  return archive(rval);
+}
+
+Bexpression *BnodeBuilder::mkPointerOffset(Btype *typ,
+                                           llvm::Value *val,
+                                           Bexpression *ptr,
+                                           Bexpression *offset,
+                                           Location loc)
+{
+  std::vector<Bnode *> kids = { ptr, offset };
+  Bexpression *rval =
+      new Bexpression(N_PointerOffset, kids, val, typ, loc);
+  appendInstIfNeeded(rval, val);
   return archive(rval);
 }
 
