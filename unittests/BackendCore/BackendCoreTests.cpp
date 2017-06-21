@@ -272,6 +272,7 @@ TEST(BackendCoreTests, NamedTypes) {
 
 TEST(BackendCoreTests, TypeUtils) {
   LLVMContext C;
+  Location loc;
 
   // Type size and alignment. Size and align are in bytes.
   std::unique_ptr<Backend> be(go_get_backend(C));
@@ -290,6 +291,20 @@ TEST(BackendCoreTests, TypeUtils) {
   // it does appear that this needs to be supported.
   Btype *emptyf = mkFuncTyp(be.get(), L_END);
   EXPECT_EQ(be->type_size(emptyf), be->type_size(be->pointer_type(u64)));
+
+  // We need to support type size queries on types that are not fully
+  // resolved, specifically struct types that incorporate unresolved
+  // placeholder pointer fields.
+  Btype *pvt = be->pointer_type(be->void_type());
+  Btype *phpt = be->placeholder_pointer_type("ph1", loc, false);
+  Btype *ptphpt = be->pointer_type(phpt);
+  Btype *phst = be->placeholder_struct_type("ph2", loc);
+  std::vector<Backend::Btyped_identifier> fields = {
+    Backend::Btyped_identifier("f1", phpt, loc),
+    Backend::Btyped_identifier("f2", ptphpt, loc)};
+  be->set_placeholder_struct_type(phst, fields);
+  Btype *rst = mkTwoFieldStruct(be.get(), pvt, pvt);
+  EXPECT_EQ(be->type_size(rst), be->type_size(phst));
 
   // type field alignment
   Btype *u32 = be->integer_type(true, 32);
