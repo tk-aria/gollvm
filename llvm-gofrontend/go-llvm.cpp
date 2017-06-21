@@ -1738,7 +1738,9 @@ static llvm::CmpInst::Predicate compare_op_to_pred(Operator op,
 }
 
 std::pair<llvm::Value *, llvm::Value *>
-Llvm_backend::convertForBinary(Bexpression *left, Bexpression *right)
+Llvm_backend::convertForBinary(Operator op,
+                               Bexpression *left,
+                               Bexpression *right)
 {
   llvm::Value *leftVal = left->value();
   llvm::Value *rightVal = right->value();
@@ -1770,6 +1772,22 @@ Llvm_backend::convertForBinary(Bexpression *left, Bexpression *right)
     return rval;
   }
 
+  // Case 3: shift with different sized operands (ex: int64(v) << uint8(3)).
+  // Promote or demote shift amount operand to match width of left operand.
+  if ((op == OPERATOR_LSHIFT || op == OPERATOR_RSHIFT) &&
+      leftType != rightType) {
+    BexprLIRBuilder builder(context_, right);
+    llvm::IntegerType *leftITyp = llvm::cast<llvm::IntegerType>(leftType);
+    llvm::IntegerType *rightITyp = llvm::cast<llvm::IntegerType>(rightType);
+    llvm::Value *conv = nullptr;
+    if (leftITyp->getBitWidth() > rightITyp->getBitWidth())
+      conv = builder.CreateZExt(rightVal, leftType, namegen("zext"));
+    else
+      conv = builder.CreateTrunc(rightVal, leftType, namegen("trunc"));
+    rval.second = conv;
+    return rval;
+  }
+
   return rval;
 }
 
@@ -1794,7 +1812,7 @@ Bexpression *Llvm_backend::binary_expression(Operator op, Bexpression *left,
   assert(left->value() && right->value());
 
   std::pair<llvm::Value *, llvm::Value *> converted =
-      convertForBinary(left, right);
+      convertForBinary(op, left, right);
   llvm::Value *leftVal = converted.first;
   llvm::Value *rightVal = converted.second;
   llvm::Type *ltype = leftVal->getType();

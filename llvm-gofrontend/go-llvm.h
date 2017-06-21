@@ -627,7 +627,7 @@ public:
   // instructions will be added to the args and the resulting LLVM
   // values will be returned.
   std::pair<llvm::Value *, llvm::Value *>
-  convertForBinary(Bexpression *left, Bexpression *right);
+  convertForBinary(Operator op, Bexpression *left, Bexpression *right);
 
   // Generate a conversion induced by the use of a circular pointer type.
   Bexpression *genCircularConversion(Btype *toType, Bexpression *expr,
