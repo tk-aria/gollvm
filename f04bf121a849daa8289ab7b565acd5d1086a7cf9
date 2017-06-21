@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "37d57dae_9d7f5ab8",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 561,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-06-21T18:54:48Z",
+      "side": 1,
+      "message": "Yes, I agree that this is confusing. \n\nThe Bexpression \"VarContext\" concept started out as a way of delaying the load of a var expression in case the address needed to feed into a store. When the VarContext \"pending\" flag is set, the Btype of the expression is set to the concrete expr type (for example \"int64\") whereas the type of the llvm::Value for the expression is that of the not-yet-loaded address (e.g. \"int64*\").\n\nFor values with composite type, we\u0027re playing the same game: the concrete type of the expressison is a composite (ex: { int64, int64 }) but the type for the llvm::Value is of pointer to struct (\"{ int64, int64 }*\").\n\nSo in this case even though there is no load pending, the resulting expression needs to be flagged to indicate that the underlying value is of pointer type. \n\nMaybe it makes sense to come with some other sort of flag or indicator (e.g. \"CompositeContext\"?).\n\nAlternatively I can just go with detailed comment here to explain what\u0027s going on?",
+      "parentUuid": "78c0a5e6_626f9bd9",
+      "revId": "f04bf121a849daa8289ab7b565acd5d1086a7cf9",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "97d891f8_2a726429",
         "filename": "llvm-gofrontend/go-llvm.cpp",
         "patchSetId": 1
@@ -42,6 +60,30 @@
     },
     {
       "key": {
+        "uuid": "5fe67146_6e336502",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2154,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-06-21T18:54:48Z",
+      "side": 1,
+      "message": "Agreed, this is weird, but in fact where this pops up is in append(). For something like\n\nvar a1 []int\na1 \u003d append(a1, 10)\n\nYou get a gofrontend tree that looks like\n\n        tmp.104434432 \u003d .main.a1 \n        tmp.104430496 (N3_int) \u003d len(tmp.104434432) \n        tmp.104425024 \u003d 10 \n        tmp.104497104 (N3_int) \u003d (tmp.104430496 + 1) \n        tmp.104499280 \u003d 0 \n        tmp.104434432 \u003d (((N4_uint)(tmp.104497104)  \u003e (N4_uint)(cap(tmp.104434432) ) )  ? (AN3_inte)(growslice((N3_int),(Apve)(tmp.104434432) ,tmp.104497104) )  : tmp.104434432[tmp.104499280:tmp.104497104]) \n        tmp.104499936 \u003d (tmp.104430496 + 0) \n        tmp.104434432[tmp.104499936] \u003d tmp.104425024\n        .main.a1 \u003d tmp.104434432\n\nIt\u0027s the \"tmp.104434432[tmp.104499936] \u003d tmp.104425024\" that exercises the code above.",
+      "parentUuid": "97d891f8_2a726429",
+      "range": {
+        "startLine": 2154,
+        "startChar": 51,
+        "endLine": 2154,
+        "endChar": 57
+      },
+      "revId": "f04bf121a849daa8289ab7b565acd5d1086a7cf9",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "4afc1308_5e4564f3",
         "filename": "unittests/BackendCore/BackendPointerExprTests.cpp",
         "patchSetId": 1
@@ -53,6 +95,30 @@
       "writtenOn": "2017-06-21T14:38:53Z",
       "side": 1,
       "message": "Not sure why this is changed. Seems indirect_expression should take the type of the value after dereference.",
+      "range": {
+        "startLine": 431,
+        "startChar": 47,
+        "endLine": 431,
+        "endChar": 58
+      },
+      "revId": "f04bf121a849daa8289ab7b565acd5d1086a7cf9",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "dc197b46_856777c3",
+        "filename": "unittests/BackendCore/BackendPointerExprTests.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 431,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-06-21T18:54:48Z",
+      "side": 1,
+      "message": "You are right, that was a mistake. I\u0027ve fixed it up. I believe it was a leftover from a previous iteration.",
+      "parentUuid": "4afc1308_5e4564f3",
       "range": {
         "startLine": 431,
         "startChar": 47,
