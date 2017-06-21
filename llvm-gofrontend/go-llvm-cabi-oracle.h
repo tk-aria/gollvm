@@ -196,7 +196,7 @@ class CABIOracle {
   CABIParamInfo analyzeABIParam(Btype *pType, ABIState &state);
   bool canPassDirectly(unsigned regsInt, unsigned regsSSE, ABIState &state);
   const llvm::DataLayout *datalayout() const;
-  CABIParamDisp classifyArgType(llvm::Type *type);
+  CABIParamDisp classifyArgType(Btype *btype);
 };
 
 #endif // LLVMGOFRONTEND_GO_LLVM_CABI_ORACLE_H

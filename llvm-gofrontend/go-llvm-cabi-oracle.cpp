@@ -568,9 +568,9 @@ void CABIOracle::osdump(llvm::raw_ostream &os)
 // rules here are a good deal more complicated, but for Go
 // it all boils down to the size of the type.
 
-CABIParamDisp CABIOracle::classifyArgType(llvm::Type *type)
+CABIParamDisp CABIOracle::classifyArgType(Btype *btype)
 {
-  uint64_t sz = tm()->llvmTypeAllocSize(type);
+  int64_t sz = tm()->typeSize(btype);
   return (sz == 0 ? ParmIgnore : ((sz <= 16) ? ParmDirect : ParmIndirect));
 }
 
@@ -578,7 +578,7 @@ CABIParamInfo CABIOracle::analyzeABIReturn(Btype *resultType, ABIState &state)
 {
   llvm::Type *rtyp = resultType->type();
   CABIParamDisp rdisp = (rtyp == tm()->llvmVoidType() ?
-                        ParmIgnore : classifyArgType(rtyp));
+                        ParmIgnore : classifyArgType(resultType));
 
   if (rdisp == ParmIgnore) {
     // This corresponds to a function with no returns or
@@ -636,7 +636,7 @@ CABIParamInfo CABIOracle::analyzeABIParam(Btype *paramType, ABIState &state)
            ptyp->isVectorTy() || ptyp->isEmptyTy() ||
            ptyp->isIntegerTy(8) || ptyp->isIntegerTy(16)));
 
-  CABIParamDisp pdisp = classifyArgType(ptyp);
+  CABIParamDisp pdisp = classifyArgType(paramType);
 
   if (pdisp == ParmIgnore) {
     // Empty struct or array
