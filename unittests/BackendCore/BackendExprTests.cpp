@@ -916,9 +916,11 @@ TEST(BackendExprTests, TestShift) {
 
   Btype *bi64t = be->integer_type(false, 64);
   Btype *bu64t = be->integer_type(true, 64);
+  Btype *bu32t = be->integer_type(true, 32);
   Bvariable *x = h.mkLocal("x", bi64t);
   Bvariable *y = h.mkLocal("y", bu64t);
   Bvariable *s = h.mkLocal("s", bu64t);
+  Bvariable *z = h.mkLocal("z", bu32t);
   std::vector<std::pair<Bvariable *, Bvariable *>> valtotest;
   valtotest.push_back(std::make_pair(x, s)); // signed shifts
   valtotest.push_back(std::make_pair(y, s)); // unsigned shifts
@@ -936,10 +938,30 @@ TEST(BackendExprTests, TestShift) {
     }
   }
 
+  // Verify correct behavior when type of shift amount does not match
+  // type of shift value.
+  {
+    Bexpression *bleft = be->var_expression(x, VE_rvalue, loc);
+    Bexpression *bright = be->var_expression(z, VE_rvalue, loc);
+    Bexpression *mix = be->binary_expression(OPERATOR_LSHIFT, bleft, bright,
+                                             Location());
+    Bstatement *es = be->expression_statement(func, mix);
+    h.addStmt(es);
+  }
+  {
+    Bexpression *bleft = be->var_expression(z, VE_rvalue, loc);
+    Bexpression *bright = be->var_expression(y, VE_rvalue, loc);
+    Bexpression *mix = be->binary_expression(OPERATOR_RSHIFT, bleft, bright,
+                                             Location());
+    Bstatement *es = be->expression_statement(func, mix);
+    h.addStmt(es);
+  }
+
   const char *exp = R"RAW_RESULT(
       store i64 0, i64* %x
       store i64 0, i64* %y
       store i64 0, i64* %s
+      store i32 0, i32* %z
       %x.ld.0 = load i64, i64* %x
       %s.ld.0 = load i64, i64* %s
       %shl.0 = shl i64 %x.ld.0, %s.ld.0
@@ -952,6 +974,14 @@ TEST(BackendExprTests, TestShift) {
       %y.ld.1 = load i64, i64* %y
       %s.ld.3 = load i64, i64* %s
       %shr.1 = lshr i64 %y.ld.1, %s.ld.3
+      %x.ld.2 = load i64, i64* %x
+      %z.ld.0 = load i32, i32* %z
+      %zext.0 = zext i32 %z.ld.0 to i64
+      %shl.2 = shl i64 %x.ld.2, %zext.0
+      %z.ld.1 = load i32, i32* %z
+      %y.ld.2 = load i64, i64* %y
+      %trunc.0 = trunc i64 %y.ld.2 to i32
+      %shr.2 = lshr i32 %z.ld.1, %trunc.0
     )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);
