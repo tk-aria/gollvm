@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78c0a5e6_626f9bd9",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 561,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-06-21T14:38:53Z",
+      "side": 1,
+      "message": "genLoad is called by resolveVarContext (at line 687). With this, resolveVarContext may return an expr that still has var context pending? This seems a bit convoluted.",
+      "revId": "f04bf121a849daa8289ab7b565acd5d1086a7cf9",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "97d891f8_2a726429",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2154,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-06-21T14:38:53Z",
+      "side": 1,
+      "message": "Where is it set? I tried \"s :\u003d []int{1,2,3}; s[1] \u003d 5\", but this is not set.",
+      "range": {
+        "startLine": 2154,
+        "startChar": 51,
+        "endLine": 2154,
+        "endChar": 57
+      },
+      "revId": "f04bf121a849daa8289ab7b565acd5d1086a7cf9",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4afc1308_5e4564f3",
+        "filename": "unittests/BackendCore/BackendPointerExprTests.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 431,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-06-21T14:38:53Z",
+      "side": 1,
+      "message": "Not sure why this is changed. Seems indirect_expression should take the type of the value after dereference.",
+      "range": {
+        "startLine": 431,
+        "startChar": 47,
+        "endLine": 431,
+        "endChar": 58
+      },
+      "revId": "f04bf121a849daa8289ab7b565acd5d1086a7cf9",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
