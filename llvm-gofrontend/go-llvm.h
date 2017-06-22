@@ -507,6 +507,7 @@ public:
   // Lower-level version of the above
   llvm::Value *genStore(BlockLIRBuilder *builder,
                         Btype *srcType,
+                        bool srcConstant,
                         llvm::Type *dstType,
                         llvm::Value *srcValue,
                         llvm::Value *dstLoc);
