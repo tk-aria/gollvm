@@ -1665,9 +1665,9 @@ llvm::DIType *TypeManager::buildStructDIType(BStructType *bst,
   for (unsigned fidx = 0; fidx < bst->fields().size(); ++fidx) {
     const Backend::Btyped_identifier &field = fields[fidx];
     llvm::DIType *fieldType = buildDIType(field.btype, helper);
-    uint64_t memberBits = typeSize(field.btype);
-    uint32_t memberAlign = typeFieldAlignment(field.btype);
-    uint64_t memberOffset = typeFieldOffset(bst, fidx);
+    uint64_t memberBits = typeSize(field.btype) * 8;
+    uint32_t memberAlign = typeFieldAlignment(field.btype) * 8;
+    uint64_t memberOffset = typeFieldOffset(bst, fidx) * 8;
     unsigned lineNumber = helper.linemap()->location_line(field.location);
     llvm::DIDerivedType *ft =
         dibuilder.createMemberType(scope, field.name, file, lineNumber,
