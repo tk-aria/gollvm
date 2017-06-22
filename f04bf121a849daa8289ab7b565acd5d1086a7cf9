@@ -37,6 +37,24 @@
     },
     {
       "key": {
+        "uuid": "67bdb6ef_4d663800",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 561,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-06-22T12:55:02Z",
+      "side": 1,
+      "message": "Ok. Thanks for the explanation and the comment. Make sense.",
+      "parentUuid": "37d57dae_9d7f5ab8",
+      "revId": "f04bf121a849daa8289ab7b565acd5d1086a7cf9",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "97d891f8_2a726429",
         "filename": "llvm-gofrontend/go-llvm.cpp",
         "patchSetId": 1
@@ -72,6 +90,30 @@
       "side": 1,
       "message": "Agreed, this is weird, but in fact where this pops up is in append(). For something like\n\nvar a1 []int\na1 \u003d append(a1, 10)\n\nYou get a gofrontend tree that looks like\n\n        tmp.104434432 \u003d .main.a1 \n        tmp.104430496 (N3_int) \u003d len(tmp.104434432) \n        tmp.104425024 \u003d 10 \n        tmp.104497104 (N3_int) \u003d (tmp.104430496 + 1) \n        tmp.104499280 \u003d 0 \n        tmp.104434432 \u003d (((N4_uint)(tmp.104497104)  \u003e (N4_uint)(cap(tmp.104434432) ) )  ? (AN3_inte)(growslice((N3_int),(Apve)(tmp.104434432) ,tmp.104497104) )  : tmp.104434432[tmp.104499280:tmp.104497104]) \n        tmp.104499936 \u003d (tmp.104430496 + 0) \n        tmp.104434432[tmp.104499936] \u003d tmp.104425024\n        .main.a1 \u003d tmp.104434432\n\nIt\u0027s the \"tmp.104434432[tmp.104499936] \u003d tmp.104425024\" that exercises the code above.",
       "parentUuid": "97d891f8_2a726429",
+      "range": {
+        "startLine": 2154,
+        "startChar": 51,
+        "endLine": 2154,
+        "endChar": 57
+      },
+      "revId": "f04bf121a849daa8289ab7b565acd5d1086a7cf9",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "18826130_9b41142d",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2154,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-06-22T12:55:02Z",
+      "side": 1,
+      "message": "Ok. The assignment s[1]\u003d5 also works after I update gofrontend. Seems https://go-review.googlesource.com/c/46170/ does it. Thanks.",
+      "parentUuid": "5fe67146_6e336502",
       "range": {
         "startLine": 2154,
         "startChar": 51,
