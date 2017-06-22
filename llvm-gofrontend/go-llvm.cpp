@@ -716,6 +716,7 @@ Bvariable *Llvm_backend::genVarForConstant(llvm::Constant *conval,
 
 llvm::Value *Llvm_backend::genStore(BlockLIRBuilder *builder,
                                     Btype *srcType,
+                                    bool srcConstant,
                                     llvm::Type *dstType,
                                     llvm::Value *srcVal,
                                     llvm::Value *dstLoc)
@@ -750,7 +751,7 @@ llvm::Value *Llvm_backend::genStore(BlockLIRBuilder *builder,
 
   // memcpy src: handle constant input (we need something addressable
   // in order to do a memcpy, not a raw constant value)
-  if (llvm::isa<llvm::Constant>(srcVal)) {
+  if (srcConstant) {
     llvm::Constant *cval = llvm::cast<llvm::Constant>(srcVal);
     Bvariable *cvar = genVarForConstant(cval, srcType);
     srcVal = cvar->value();
@@ -786,6 +787,7 @@ Bexpression *Llvm_backend::genStore(Bfunction *func,
   llvm::Value *val = valexp->value();
   llvm::Value *dst = dstExpr->value();
   llvm::Value *result = genStore(&builder, srcExpr->btype(),
+                                 valexp->isConstant(),
                                  dstExpr->value()->getType(),
                                  val, dst);
 
@@ -828,8 +830,8 @@ Bexpression *Llvm_backend::genArrayInit(llvm::ArrayType *llat,
     Bexpression *valexp = resolve(aexprs[eidx], ctx);
 
     // Store field value into GEP
-    genStore(&builder, valexp->btype(), gep->getType(),
-             valexp->value(), gep);
+    genStore(&builder, valexp->btype(), valexp->isConstant(),
+             gep->getType(), valexp->value(), gep);
 
     values.push_back(valexp);
   }
@@ -870,8 +872,8 @@ Bexpression *Llvm_backend::genStructInit(llvm::StructType *llst,
                                            0, fidx, tag);
 
     // Store field value into GEP
-    genStore(&builder, valexp->btype(), gep->getType(),
-             valexp->value(), gep);
+    genStore(&builder, valexp->btype(), valexp->isConstant(),
+             gep->getType(), valexp->value(), gep);
 
     values.push_back(valexp);
   }
