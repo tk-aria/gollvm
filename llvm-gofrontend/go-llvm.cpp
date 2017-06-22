@@ -1601,7 +1601,7 @@ Bexpression *Llvm_backend::conditional_expression(Bfunction *function,
   if (else_expr) {
     Bstatement *elseStmt = nullptr;
     elseBlock = nbuilder_.mkBlock(function, novars, location);
-    if (!btype || else_expr->btype() == void_type()) {
+    if (!btype || btype == void_type() || else_expr->btype() == void_type()) {
       elseStmt = expression_statement(function, else_expr);
     } else {
       // Capture "else_expr" into temporary. Type needs to agree with
