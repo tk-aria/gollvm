@@ -703,6 +703,15 @@ bool FcnTestHarness::expectBlock(const std::string &expected)
   return equal;
 }
 
+bool FcnTestHarness::expectModuleDumpContains(const std::string &expected)
+{
+  std::string res;
+  llvm::raw_string_ostream os(res);
+  be()->module().print(os, nullptr);
+  std::string actual(trimsp(os.str()));
+  return containstokens(actual, expected);
+}
+
 bool FcnTestHarness::expectRepr(Bnode *node, const std::string &expected)
 {
   std::string reason;
@@ -715,21 +724,24 @@ bool FcnTestHarness::expectRepr(Bnode *node, const std::string &expected)
 
 bool FcnTestHarness::finish(DebugDisposition whatToDoWithDebugInfo)
 {
-  // Emit a label def for the pending block if needed
-  Bstatement *bst = be()->block_statement(curBlock_);
-  if (nextLabel_) {
-    Bstatement *ldef = be()->label_definition_statement(nextLabel_);
-    bst = be()->compound_statement(ldef, bst);
+  if (func_) {
+
+    // Emit a label def for the pending block if needed
+    Bstatement *bst = be()->block_statement(curBlock_);
+    if (nextLabel_) {
+      Bstatement *ldef = be()->label_definition_statement(nextLabel_);
+      bst = be()->compound_statement(ldef, bst);
+    }
+
+    // Add current block as stmt to entry block
+    addStmtToBlock(be(), entryBlock_, bst);
+
+    // Set function body
+    be()->function_set_body(func_, entryBlock_);
+
   }
-
-  // Add current block as stmt to entry block
-  addStmtToBlock(be(), entryBlock_, bst);
-
-  // Set function body
-  be()->function_set_body(func_, entryBlock_);
-
-  // Finalize export data. This has the side effect of finalizing
-  // debug meta-data, which we need to do before invoking the verifier.
+    // Finalize export data. This has the side effect of finalizing
+    // debug meta-data, which we need to do before invoking the verifier.
   be()->finalizeExportData();
 
   // Strip debug info now if requested
