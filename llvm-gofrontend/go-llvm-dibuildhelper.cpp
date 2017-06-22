@@ -39,6 +39,20 @@ DIBuildHelper::DIBuildHelper(Bnode *topnode,
   pushDIScope(moduleScope);
 }
 
+void DIBuildHelper::processGlobals(const std::unordered_set<Bvariable *> &vars)
+{
+  for (auto v : vars) {
+    llvm::DIFile *vfile = diFileFromLocation(v->location());
+    unsigned vline = linemap()->location_line(v->location());
+    llvm::DIType *vdit = typemanager()->buildDIType(v->btype(), *this);
+    bool isLocalToUnit = !v->isExternal();
+    dibuilder().createGlobalVariableExpression(moduleScope_,
+                                               v->name(), v->name(),
+                                               vfile, vline, vdit,
+                                               isLocalToUnit);
+  }
+}
+
 void DIBuildHelper::beginFunction(llvm::DIScope *scope, Bfunction *function)
 {
   known_locations_ = 0;

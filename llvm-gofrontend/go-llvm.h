@@ -417,6 +417,7 @@ public:
   enum ModVarComdat { MV_InComdat, MV_NotInComdat };
   enum ModVarVis { MV_HiddenVisibility, MV_DefaultVisibility };
   enum ModVarExtInit { MV_ExternallyInitialized, MV_NotExternallyInitialized };
+  enum ModVarGenDebug { MV_GenDebug, MV_SkipDebug };
 
   // Make a module-scope variable (static, global, or external).
   Bvariable *makeModuleVar(Btype *btype,
@@ -428,6 +429,7 @@ public:
                            ModVarComdat inComdat,
                            ModVarVis isHiddenVisibility,
                            ModVarExtInit isExtInit,
+                           ModVarGenDebug genDebug,
                            llvm::GlobalValue::LinkageTypes linkage,
                            llvm::Constant *initializer,
                            unsigned alignmentInBytes = 0);
@@ -733,6 +735,12 @@ private:
   // Map from LLVM values to Bvariable. This is used for
   // module-scope variables, not vars local to a function.
   std::unordered_map<llvm::Value *, Bvariable *> valueVarMap_;
+
+  // Set of global variables for which we want to emit debug
+  // info. Generation of debug meta-data for global vars is not
+  // done eagerly, we postpone the process so as consolidate
+  // all debug generation in the DIBuildHelper class.
+  std::unordered_set<Bvariable *> globalsForDebug_;
 
   // Table for commoning strings by value. String constants have
   // concrete types like "[5 x i8]", whereas we would like to return

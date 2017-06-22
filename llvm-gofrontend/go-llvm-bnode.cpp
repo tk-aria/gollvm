@@ -431,7 +431,9 @@ Bvariable *BnodeBuilder::mkTempVar(Btype *varType,
   llvm::AllocaInst *inst = new llvm::AllocaInst(varType->type(), 0);
   if (! name.empty())
     inst->setName(name);
-  Bvariable *tvar = new Bvariable(varType, loc, name, LocalVar, true, inst);
+  bool address_taken = true, external = false;
+  Bvariable *tvar = new Bvariable(varType, loc, name, LocalVar,
+                                  address_taken, external, inst);
   tempvars_[inst] = tvar;
   tvar->markAsTemporary();
   return tvar;

@@ -32,7 +32,7 @@ class Bvariable {
 public:
   Bvariable(Btype *type, Location location,
             const std::string &name, WhichVar which,
-            bool address_taken, llvm::Value *value);
+            bool address_taken, bool external, llvm::Value *value);
 
   // Common to all varieties of variables
   Location location() { return location_; }
@@ -43,6 +43,7 @@ public:
   WhichVar flavor() const { return which_; }
   bool isTemporary() const { return temporary_; }
   void markAsTemporary() { temporary_ = true; }
+  bool isExternal() const { return external_; }
 
   // Set/get variable initializer. Some variables may not have an
   // initializer, for example module-scoped globals, or variables
@@ -74,6 +75,7 @@ private:
   WhichVar which_;
   bool addrtaken_;
   bool temporary_;
+  bool external_;
 
   friend class Llvm_backend;
 };

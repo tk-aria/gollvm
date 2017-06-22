@@ -54,6 +54,8 @@ class DIBuildHelper {
                 llvm::DIScope *moduleScope,
                 llvm::BasicBlock *entryBlock);
 
+  void processGlobals(const std::unordered_set<Bvariable *> &vars);
+
   void beginFunction(llvm::DIScope *scope, Bfunction *function);
   void endFunction(Bfunction *function);
 

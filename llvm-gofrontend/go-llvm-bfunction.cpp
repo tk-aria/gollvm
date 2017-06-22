@@ -148,8 +148,10 @@ Bvariable *Bfunction::parameterVariable(const std::string &name,
   // Create Bvariable and install in value->var map.
   llvm::Value *argVal = paramValues_[argIdx];
   assert(valueVarMap_.find(argVal) == valueVarMap_.end());
+  bool external = false;
   Bvariable *bv =
-      new Bvariable(btype, location, name, ParamVar, is_address_taken, argVal);
+      new Bvariable(btype, location, name, ParamVar,
+                    is_address_taken, external, argVal);
   valueVarMap_[argVal] = bv;
 
   // Set parameter name or names.
@@ -207,8 +209,10 @@ Bvariable *Bfunction::staticChainVariable(const std::string &name,
   chainVal_ = inst;
 
   // Create backend variable to encapsulate the above.
+  bool external = false;
+  bool addrTaken = false;
   Bvariable *bv =
-      new Bvariable(btype, location, name, ParamVar, false, inst);
+      new Bvariable(btype, location, name, ParamVar, addrTaken, external, inst);
   assert(valueVarMap_.find(bv->value()) == valueVarMap_.end());
   valueVarMap_[bv->value()] = bv;
 
@@ -221,8 +225,10 @@ Bvariable *Bfunction::localVariable(const std::string &name,
                                      Location location)
 {
   llvm::Instruction *inst = addAlloca(btype->type(), name);
+  bool external = false;
   Bvariable *bv =
-      new Bvariable(btype, location, name, LocalVar, is_address_taken, inst);
+      new Bvariable(btype, location, name, LocalVar,
+                    is_address_taken, external, inst);
   localVariables_.push_back(bv);
   assert(valueVarMap_.find(bv->value()) == valueVarMap_.end());
   valueVarMap_[bv->value()] = bv;

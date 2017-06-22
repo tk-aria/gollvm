@@ -19,10 +19,10 @@
 
 Bvariable::Bvariable(Btype *type, Location location,
                      const std::string &name, WhichVar which,
-                     bool address_taken, llvm::Value *value)
+                     bool address_taken, bool external, llvm::Value *value)
     : name_(name), value_(value), initializer_(nullptr),
       type_(type), location_(location), which_(which),
-      addrtaken_(address_taken), temporary_(false)
+      addrtaken_(address_taken), temporary_(false), external_(external)
 {
 }
 

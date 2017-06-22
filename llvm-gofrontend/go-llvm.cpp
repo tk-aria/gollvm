@@ -107,7 +107,7 @@ Llvm_backend::Llvm_backend(llvm::LLVMContext &context,
   // Error variable.
   Location loc;
   errorVariable_.reset(
-      new Bvariable(errorType(), loc, "", ErrorVar, false, nullptr));
+      new Bvariable(errorType(), loc, "", ErrorVar, false, false, nullptr));
 
   // Initialize machinery for builtins
   builtinTable_->defineAllBuiltins();
@@ -707,7 +707,7 @@ Bvariable *Llvm_backend::genVarForConstant(llvm::Constant *conval,
   Bvariable *rv = makeModuleVar(type, ctag, "", Location(),
                                 MV_Constant, MV_DefaultSection,
                                 MV_NotInComdat, MV_DefaultVisibility,
-                                MV_NotExternallyInitialized,
+                                MV_NotExternallyInitialized, MV_SkipDebug,
                                 llvm::GlobalValue::PrivateLinkage,
                                 conval, 0);
   assert(llvm::isa<llvm::GlobalVariable>(rv->value()));
@@ -1134,7 +1134,7 @@ Bexpression *Llvm_backend::string_constant_expression(const std::string &val)
       makeModuleVar(makeAuxType(scon->getType()),
                     "", "", Location(), MV_Constant, MV_DefaultSection,
                     MV_NotInComdat, MV_DefaultVisibility,
-                    MV_NotExternallyInitialized,
+                    MV_NotExternallyInitialized, MV_SkipDebug,
                     llvm::GlobalValue::PrivateLinkage, scon, 1);
   llvm::Constant *varval = llvm::cast<llvm::Constant>(svar->value());
   llvm::Constant *bitcast =
@@ -3016,6 +3016,7 @@ Llvm_backend::makeModuleVar(Btype *btype,
                             ModVarComdat inComdat,
                             ModVarVis isHiddenVisibility,
                             ModVarExtInit isExtInit,
+                            ModVarGenDebug genDebug,
                             llvm::GlobalValue::LinkageTypes linkage,
                             llvm::Constant *initializer,
                             unsigned alignment)
@@ -3033,8 +3034,6 @@ Llvm_backend::makeModuleVar(Btype *btype,
   // accessible hook for requesting a separate section for a single
   // variable.
   assert(inUniqueSection == MV_DefaultSection);
-
-  // FIXME: add DIGlobalVariable to debug info for this variable
 
   llvm::Constant *init =
       (isExtInit == MV_ExternallyInitialized ? nullptr :
@@ -3059,10 +3058,14 @@ Llvm_backend::makeModuleVar(Btype *btype,
   }
 
   bool addressTaken = true; // for now
+  bool external = (isHiddenVisibility != MV_HiddenVisibility);
   Bvariable *bv =
-      new Bvariable(btype, location, gname, GlobalVar, addressTaken, glob);
+      new Bvariable(btype, location, gname, GlobalVar, addressTaken,
+                    external, glob);
   assert(valueVarMap_.find(bv->value()) == valueVarMap_.end());
   valueVarMap_[bv->value()] = bv;
+  if (genDebug == MV_GenDebug)
+    globalsForDebug_.insert(bv);
   return bv;
 }
 
@@ -3087,7 +3090,7 @@ Bvariable *Llvm_backend::global_variable(const std::string &var_name,
   Bvariable *gvar =
       makeModuleVar(btype, var_name, asm_name, location,
                     MV_NonConstant, inUniqSec, MV_NotInComdat,
-                    varVis, extInit, linkage, nullptr);
+                    varVis, extInit, MV_GenDebug, linkage, nullptr);
   return gvar;
 }
 
@@ -3213,7 +3216,8 @@ Bvariable *Llvm_backend::implicit_variable(const std::string &name,
   Bvariable *gvar =
       makeModuleVar(btype, name, asm_name, Location(),
                     isConst, inUniqSec, inComdat,
-                    varVis, extInit, linkage, nullptr, alignment);
+                    varVis, extInit, MV_SkipDebug, linkage,
+                    nullptr, alignment);
   return gvar;
 }
 
@@ -3271,7 +3275,7 @@ Bvariable *Llvm_backend::immutable_struct(const std::string &name,
   Bvariable *gvar =
       makeModuleVar(btype, name, asm_name, location,
                     MV_Constant, inUniqueSec, inComdat,
-                    varVis, extInit, linkage, nullptr);
+                    varVis, extInit, MV_SkipDebug, linkage, nullptr);
   return gvar;
 }
 
@@ -3324,7 +3328,7 @@ Bvariable *Llvm_backend::immutable_struct_reference(const std::string &name,
   llvm::GlobalVariable *glob = new llvm::GlobalVariable(
       module(), btype->type(), isConstant, linkage, init, gname);
   Bvariable *bv =
-      new Bvariable(btype, location, name, GlobalVar, false, glob);
+      new Bvariable(btype, location, name, GlobalVar, false, false, glob);
   assert(valueVarMap_.find(bv->value()) == valueVarMap_.end());
   valueVarMap_[bv->value()] = bv;
   immutableStructRefs_[gname] = bv;
@@ -3491,7 +3495,8 @@ class GenBlocks {
 public:
   GenBlocks(llvm::LLVMContext &context, Llvm_backend *be,
             Bfunction *function, Bnode *topNode, llvm::DIScope *scope,
-            bool createDebugMetadata, llvm::BasicBlock *entryBlock);
+            bool createDebugMetadata, llvm::BasicBlock *entryBlock,
+            const std::unordered_set<Bvariable *> &globals);
 
   llvm::BasicBlock *walk(Bnode *node, llvm::BasicBlock *curblock);
   void finishFunction(llvm::BasicBlock *entry);
@@ -3543,7 +3548,8 @@ GenBlocks::GenBlocks(llvm::LLVMContext &context,
                      Bnode *topNode,
                      llvm::DIScope *scope,
                      bool createDebugMetadata,
-                     llvm::BasicBlock *entryBlock)
+                     llvm::BasicBlock *entryBlock,
+                     const std::unordered_set<Bvariable *> &globals)
     : context_(context), be_(be), function_(function),
       dibuildhelper_(nullptr), finallyBlock_(nullptr),
       cachedReturn_(nullptr), emitOrphanedCode_(false),
@@ -3556,6 +3562,7 @@ GenBlocks::GenBlocks(llvm::LLVMContext &context,
                                            be->dibuilder(),
                                            be->getDICompUnit(),
                                            entryBlock));
+    dibuildhelper().processGlobals(globals);
     dibuildhelper().beginFunction(scope, function);
   }
 }
@@ -4128,9 +4135,12 @@ bool Llvm_backend::function_set_body(Bfunction *function,
 
   // Walk the code statements
   GenBlocks gb(context_, this, function, code_stmt,
-               getDICompUnit(), dodebug, entryBlock);
+               getDICompUnit(), dodebug, entryBlock,
+               globalsForDebug_);
   llvm::BasicBlock *block = gb.walk(code_stmt, entryBlock);
   gb.finishFunction(entryBlock);
+  globalsForDebug_.clear();
+
 
   // Fix up epilog block if needed
   if (block)
