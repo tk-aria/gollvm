@@ -339,8 +339,8 @@ public:
   // Type manager functionality
   TypeManager *typeManager() const;
 
-  // DI builder
-  llvm::DIBuilder &dibuilder() { return *dibuilder_.get(); }
+  // DI build helper. Will be NULL if debug meta-data generation disabled.
+  DIBuildHelper *dibuildhelper() { return dibuildhelper_.get(); }
 
   // Bnode builder
   BnodeBuilder &nodeBuilder() { return nbuilder_; }
@@ -417,6 +417,7 @@ public:
   enum ModVarComdat { MV_InComdat, MV_NotInComdat };
   enum ModVarVis { MV_HiddenVisibility, MV_DefaultVisibility };
   enum ModVarExtInit { MV_ExternallyInitialized, MV_NotExternallyInitialized };
+  enum ModVarGenDebug { MV_GenDebug, MV_SkipDebug };
 
   // Make a module-scope variable (static, global, or external).
   Bvariable *makeModuleVar(Btype *btype,
@@ -428,6 +429,7 @@ public:
                            ModVarComdat inComdat,
                            ModVarVis isHiddenVisibility,
                            ModVarExtInit isExtInit,
+                           ModVarGenDebug genDebug,
                            llvm::GlobalValue::LinkageTypes linkage,
                            llvm::Constant *initializer,
                            unsigned alignmentInBytes = 0);
@@ -666,11 +668,8 @@ private:
   // Builder for constructing Bexpressions and Bstatements.
   BnodeBuilder nbuilder_;
 
-  // Debug info builder
-  std::unique_ptr<llvm::DIBuilder> dibuilder_;
-
-  // Root debug meta-data scope for compilation unit
-  llvm::DICompileUnit *diCompileUnit_;
+  // Debug info builder.
+  std::unique_ptr<DIBuildHelper> dibuildhelper_;
 
   // Linemap to use. If client did not supply a linemap during
   // construction, then ownLinemap_ is filled in.

@@ -229,6 +229,12 @@ class FcnTestHarness {
   // and emit diagnostics if not.
   bool expectRepr(Bnode *node, const std::string &expected);
 
+  // Verify that a dump of the module contains the specified token sequence
+  // somewhere within it. To be used only if the various methods above
+  // are inadequate, since obviously there is more potential for
+  // trouble here.
+  bool expectModuleDumpContains(const std::string &expected);
+
   //
   // Finish function:
   // - attach current block to function
