@@ -38,7 +38,6 @@
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
 #include "llvm/IR/Verifier.h"
-#include "llvm/Support/FileSystem.h"
 
 Llvm_backend::Llvm_backend(llvm::LLVMContext &context,
                            llvm::Module *module,
@@ -48,7 +47,6 @@ Llvm_backend::Llvm_backend(llvm::LLVMContext &context,
     , module_(module)
     , datalayout_(module ? &module->getDataLayout() : nullptr)
     , nbuilder_(this)
-    , diCompileUnit_(nullptr)
     , linemap_(linemap)
     , addressSpace_(0)
     , traceLevel_(0)
@@ -111,6 +109,9 @@ Llvm_backend::Llvm_backend(llvm::LLVMContext &context,
 
   // Initialize machinery for builtins
   builtinTable_->defineAllBuiltins();
+
+  if (createDebugMetaData_)
+    dibuildhelper_.reset(new DIBuildHelper(module_, typeManager(), linemap_));
 }
 
 Llvm_backend::~Llvm_backend() {
@@ -118,34 +119,6 @@ Llvm_backend::~Llvm_backend() {
     delete kv.second;
   for (auto &bfcn : functions_)
     delete bfcn;
-}
-
-llvm::DICompileUnit *Llvm_backend::getDICompUnit()
-{
-  if (!createDebugMetaData_)
-    return nullptr;
-
-  if (diCompileUnit_ || !createDebugMetaData_)
-    return diCompileUnit_;
-
-  // Create debug info builder
-  assert(dibuilder_.get() == nullptr);
-  dibuilder_.reset(new llvm::DIBuilder(*module_));
-
-  // Create compile unit
-  llvm::SmallString<256> currentDir;
-  llvm::sys::fs::current_path(currentDir);
-  auto primaryFile =
-      dibuilder_->createFile(linemap_->get_initial_file(), currentDir);
-  bool isOptimized = true;
-  std::string compileFlags; // FIXME
-  unsigned runtimeVersion = 0; // not sure what would be for Go
-  diCompileUnit_ =
-      dibuilder_->createCompileUnit(llvm::dwarf::DW_LANG_Go, primaryFile,
-                                    "llvm-goparse", isOptimized,
-                                    compileFlags, runtimeVersion);
-
-  return diCompileUnit_;
 }
 
 TypeManager *Llvm_backend::typeManager() const {
@@ -707,7 +680,7 @@ Bvariable *Llvm_backend::genVarForConstant(llvm::Constant *conval,
   Bvariable *rv = makeModuleVar(type, ctag, "", Location(),
                                 MV_Constant, MV_DefaultSection,
                                 MV_NotInComdat, MV_DefaultVisibility,
-                                MV_NotExternallyInitialized,
+                                MV_NotExternallyInitialized, MV_SkipDebug,
                                 llvm::GlobalValue::PrivateLinkage,
                                 conval, 0);
   assert(llvm::isa<llvm::GlobalVariable>(rv->value()));
@@ -1134,7 +1107,7 @@ Bexpression *Llvm_backend::string_constant_expression(const std::string &val)
       makeModuleVar(makeAuxType(scon->getType()),
                     "", "", Location(), MV_Constant, MV_DefaultSection,
                     MV_NotInComdat, MV_DefaultVisibility,
-                    MV_NotExternallyInitialized,
+                    MV_NotExternallyInitialized, MV_SkipDebug,
                     llvm::GlobalValue::PrivateLinkage, scon, 1);
   llvm::Constant *varval = llvm::cast<llvm::Constant>(svar->value());
   llvm::Constant *bitcast =
@@ -3016,6 +2989,7 @@ Llvm_backend::makeModuleVar(Btype *btype,
                             ModVarComdat inComdat,
                             ModVarVis isHiddenVisibility,
                             ModVarExtInit isExtInit,
+                            ModVarGenDebug genDebug,
                             llvm::GlobalValue::LinkageTypes linkage,
                             llvm::Constant *initializer,
                             unsigned alignment)
@@ -3033,8 +3007,6 @@ Llvm_backend::makeModuleVar(Btype *btype,
   // accessible hook for requesting a separate section for a single
   // variable.
   assert(inUniqueSection == MV_DefaultSection);
-
-  // FIXME: add DIGlobalVariable to debug info for this variable
 
   llvm::Constant *init =
       (isExtInit == MV_ExternallyInitialized ? nullptr :
@@ -3063,6 +3035,10 @@ Llvm_backend::makeModuleVar(Btype *btype,
       new Bvariable(btype, location, gname, GlobalVar, addressTaken, glob);
   assert(valueVarMap_.find(bv->value()) == valueVarMap_.end());
   valueVarMap_[bv->value()] = bv;
+  if (genDebug == MV_GenDebug && dibuildhelper() && !errorCount_) {
+    bool exported = (isHiddenVisibility != MV_HiddenVisibility);
+    dibuildhelper()->processGlobal(bv, exported);
+  }
   return bv;
 }
 
@@ -3087,7 +3063,7 @@ Bvariable *Llvm_backend::global_variable(const std::string &var_name,
   Bvariable *gvar =
       makeModuleVar(btype, var_name, asm_name, location,
                     MV_NonConstant, inUniqSec, MV_NotInComdat,
-                    varVis, extInit, linkage, nullptr);
+                    varVis, extInit, MV_GenDebug, linkage, nullptr);
   return gvar;
 }
 
@@ -3213,7 +3189,8 @@ Bvariable *Llvm_backend::implicit_variable(const std::string &name,
   Bvariable *gvar =
       makeModuleVar(btype, name, asm_name, Location(),
                     isConst, inUniqSec, inComdat,
-                    varVis, extInit, linkage, nullptr, alignment);
+                    varVis, extInit, MV_SkipDebug, linkage,
+                    nullptr, alignment);
   return gvar;
 }
 
@@ -3271,7 +3248,7 @@ Bvariable *Llvm_backend::immutable_struct(const std::string &name,
   Bvariable *gvar =
       makeModuleVar(btype, name, asm_name, location,
                     MV_Constant, inUniqueSec, inComdat,
-                    varVis, extInit, linkage, nullptr);
+                    varVis, extInit, MV_SkipDebug, linkage, nullptr);
   return gvar;
 }
 
@@ -3490,8 +3467,8 @@ bool Llvm_backend::function_set_parameters(
 class GenBlocks {
 public:
   GenBlocks(llvm::LLVMContext &context, Llvm_backend *be,
-            Bfunction *function, Bnode *topNode, llvm::DIScope *scope,
-            bool createDebugMetadata, llvm::BasicBlock *entryBlock);
+            Bfunction *function, Bnode *topNode,
+            DIBuildHelper *diBuildHelper, llvm::BasicBlock *entryBlock);
 
   llvm::BasicBlock *walk(Bnode *node, llvm::BasicBlock *curblock);
   void finishFunction(llvm::BasicBlock *entry);
@@ -3519,15 +3496,14 @@ public:
   std::pair<llvm::Instruction*, llvm::BasicBlock *>
   postProcessInst(llvm::Instruction *inst,
                   llvm::BasicBlock *curblock);
-  llvm::DIBuilder &dibuilder() { return be_->dibuilder(); }
-  DIBuildHelper &dibuildhelper() { return *dibuildhelper_.get(); }
+  DIBuildHelper *dibuildhelper() const { return dibuildhelper_; }
   Llvm_linemap *linemap() { return be_->linemap(); }
 
  private:
   llvm::LLVMContext &context_;
   Llvm_backend *be_;
   Bfunction *function_;
-  std::unique_ptr<DIBuildHelper> dibuildhelper_;
+  DIBuildHelper *dibuildhelper_;
   std::map<LabelId, llvm::BasicBlock *> labelmap_;
   std::vector<llvm::BasicBlock*> padBlockStack_;
   std::set<llvm::AllocaInst *> temporariesDiscovered_;
@@ -3535,37 +3511,27 @@ public:
   llvm::BasicBlock* finallyBlock_;
   Bstatement *cachedReturn_;
   bool emitOrphanedCode_;
-  bool createDebugMetaData_;
 };
 
 GenBlocks::GenBlocks(llvm::LLVMContext &context,
                      Llvm_backend *be,
                      Bfunction *function,
                      Bnode *topNode,
-                     llvm::DIScope *scope,
-                     bool createDebugMetadata,
+                     DIBuildHelper *dibuildhelper,
                      llvm::BasicBlock *entryBlock)
     : context_(context), be_(be), function_(function),
-      dibuildhelper_(nullptr), finallyBlock_(nullptr),
-      cachedReturn_(nullptr), emitOrphanedCode_(false),
-      createDebugMetaData_(createDebugMetadata)
+      dibuildhelper_(dibuildhelper), finallyBlock_(nullptr),
+      cachedReturn_(nullptr), emitOrphanedCode_(false)
 {
-  if (createDebugMetaData_) {
-    dibuildhelper_.reset(new DIBuildHelper(topNode,
-                                           be->typeManager(),
-                                           be->linemap(),
-                                           be->dibuilder(),
-                                           be->getDICompUnit(),
-                                           entryBlock));
-    dibuildhelper().beginFunction(scope, function);
-  }
+  if (dibuildhelper_)
+    dibuildhelper_->beginFunction(function, topNode, entryBlock);
 }
 
 void GenBlocks::finishFunction(llvm::BasicBlock *entry)
 {
   function_->fixupProlog(entry, newTemporaries_);
-  if (createDebugMetaData_)
-    dibuildhelper().endFunction(function_);
+  if (dibuildhelper_)
+    dibuildhelper_->endFunction(function_);
 }
 
 llvm::BasicBlock *GenBlocks::mkLLVMBlock(const std::string &name,
@@ -3680,8 +3646,8 @@ llvm::BasicBlock *GenBlocks::walkExpr(llvm::BasicBlock *curblock,
     }
     auto pair = postProcessInst(originst, curblock);
     auto inst = pair.first;
-    if (createDebugMetaData_)
-      dibuildhelper().processExprInst(expr, inst);
+    if (dibuildhelper_)
+      dibuildhelper_->processExprInst(expr, inst);
     curblock->getInstList().push_back(inst);
     curblock = pair.second;
   }
@@ -4015,12 +3981,12 @@ llvm::BasicBlock *GenBlocks::walk(Bnode *node,
     }
     case N_BlockStmt: {
       Bblock *bblock = stmt->castToBblock();
-      if (createDebugMetaData_)
-        dibuildhelper().beginLexicalBlock(bblock);
+      if (dibuildhelper_)
+        dibuildhelper_->beginLexicalBlock(bblock);
       for (auto &st : stmt->getChildStmts())
         curblock = walk(st, curblock);
-      if (createDebugMetaData_)
-        dibuildhelper().endLexicalBlock(bblock);
+      if (dibuildhelper_)
+        dibuildhelper_->endLexicalBlock(bblock);
       break;
     }
     case N_IfStmt: {
@@ -4126,11 +4092,13 @@ bool Llvm_backend::function_set_body(Bfunction *function,
   llvm::BasicBlock *entryBlock = genEntryBlock(function);
 
   // Avoid debug meta-generation if errors seen
-  bool dodebug = (createDebugMetaData_ && errorCount_ == 0);
+  DIBuildHelper *dibh = nullptr;
+  if (createDebugMetaData_ && errorCount_ == 0)
+    dibh = dibuildhelper();
 
   // Walk the code statements
   GenBlocks gb(context_, this, function, code_stmt,
-               getDICompUnit(), dodebug, entryBlock);
+               dibh, entryBlock);
   llvm::BasicBlock *block = gb.walk(code_stmt, entryBlock);
   gb.finishFunction(entryBlock);
 
@@ -4190,8 +4158,8 @@ static void postProcessExportDataChunk(const char *bytes,
 void Llvm_backend::finalizeExportData()
 {
   // Calling this here, for lack of a better spot
-  if (dibuilder_.get())
-    dibuilder_->finalize();
+  if (errorCount_ == 0 && dibuildhelper())
+    dibuildhelper_->finalize();
 
   assert(! exportDataFinalized_);
   exportDataFinalized_ = true;

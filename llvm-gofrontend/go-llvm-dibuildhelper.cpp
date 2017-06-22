@@ -24,23 +24,70 @@
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/Support/FileSystem.h"
 
-DIBuildHelper::DIBuildHelper(Bnode *topnode,
+DIBuildHelper::DIBuildHelper(llvm::Module *module,
                              TypeManager *typemanager,
-                             Llvm_linemap *linemap,
-                             llvm::DIBuilder &builder,
-                             llvm::DIScope *moduleScope,
-                             llvm::BasicBlock *entryBlock)
-    : typemanager_(typemanager), linemap_(linemap),
-      dibuilder_(builder), moduleScope_(moduleScope),
-      topblock_(topnode->castToBblock()),
-      entryBlock_(entryBlock), known_locations_(0)
+                             Llvm_linemap *linemap)
+    : module_(module), typemanager_(typemanager), linemap_(linemap), moduleScope_(nullptr),
+      dibuilder_(new llvm::DIBuilder(*module)), topblock_(nullptr),
+      entryBlock_(nullptr), known_locations_(0)
 {
-  pushDIScope(moduleScope);
 }
 
-void DIBuildHelper::beginFunction(llvm::DIScope *scope, Bfunction *function)
+void DIBuildHelper::createCompileUnitIfNeeded()
 {
+  if (moduleScope_)
+    return;
+
+  // Create compile unit
+  llvm::SmallString<256> currentDir;
+  llvm::sys::fs::current_path(currentDir);
+  auto primaryFile =
+      dibuilder_->createFile(linemap_->get_initial_file(), currentDir);
+  bool isOptimized = true;
+  std::string compileFlags; // FIXME
+  unsigned runtimeVersion = 0; // not sure what would be for Go
+  moduleScope_ =
+      dibuilder_->createCompileUnit(llvm::dwarf::DW_LANG_Go, primaryFile,
+                                    "llvm-goparse", isOptimized,
+                                    compileFlags, runtimeVersion);
+  pushDIScope(moduleScope_);
+}
+
+void DIBuildHelper::finalize()
+{
+  dibuilder_->finalize();
+}
+
+void DIBuildHelper::processGlobal(Bvariable *v, bool isExported)
+{
+  createCompileUnitIfNeeded();
+
+  llvm::DIFile *vfile = diFileFromLocation(v->location());
+  unsigned vline = linemap()->location_line(v->location());
+  llvm::DIType *vdit = typemanager()->buildDIType(v->btype(), *this);
+  bool isLocalToUnit = !isExported;
+  dibuilder().createGlobalVariableExpression(moduleScope_,
+                                             v->name(), v->name(),
+                                             vfile, vline, vdit,
+                                             isLocalToUnit);
+}
+
+void DIBuildHelper::beginFunction(Bfunction *function,
+                                  Bnode *topnode,
+                                  llvm::BasicBlock *entryBlock)
+{
+  createCompileUnitIfNeeded();
+
+  assert(entryBlock_ == nullptr);
+  assert(entryBlock != nullptr);
+  entryBlock_ = entryBlock;
+
+  assert(topblock_ == nullptr);
+  assert(topnode->castToBblock());
+  topblock_ = topnode->castToBblock();
+
   known_locations_ = 0;
 
   // Create proper DIType for function
@@ -56,11 +103,10 @@ void DIBuildHelper::beginFunction(llvm::DIScope *scope, Bfunction *function)
   unsigned scopeLine = fcnLine; // FIXME -- determine correct value here
   llvm::DIFile *difile = diFileFromLocation(function->location());
   auto difunc =
-      dibuilder().createFunction(scope, function->name(), function->asmName(),
+      dibuilder().createFunction(moduleScope(), function->name(), function->asmName(),
                                  difile, fcnLine, dst, isLocalToUnit,
                                  isDefinition, scopeLine);
   pushDIScope(difunc);
-
 }
 
 void DIBuildHelper::processVarsInBLock(const std::vector<Bvariable*> &vars,
@@ -139,6 +185,13 @@ void DIBuildHelper::endFunction(Bfunction *function)
 
   // Done with this scope
   popDIScope();
+  assert(diScopeStack_.size() == 1);
+
+  // Clean up
+  entryBlock_ = nullptr;
+  topblock_ = nullptr;
+  known_locations_ = 0;
+  declared_.clear();
 }
 
 // Front end tends to declare more blocks than strictly required for
@@ -210,12 +263,6 @@ llvm::DIFile *DIBuildHelper::diFileFromLocation(Location location)
   llvm::StringRef locfilename = llvm::sys::path::filename(locfile);
   if (linemap()->is_predeclared(location))
     locdir = "";
-#if 0
-  llvm::SmallString<256> currentDir;
-  llvm::sys::fs::current_path(currentDir);
-  if (locdir == "" || locdir == ".")
-    locdir = currentDir;
-#endif
   return dibuilder().createFile(locfilename, locdir);
 }
 

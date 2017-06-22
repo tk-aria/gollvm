@@ -29,6 +29,7 @@ class DIScope;
 class DIType;
 class DebugLoc;
 class Instruction;
+class Module;
 class Type;
 }
 
@@ -47,18 +48,19 @@ class TypeManager;
 
 class DIBuildHelper {
  public:
-  DIBuildHelper(Bnode *topNode,
+  DIBuildHelper(llvm::Module *module,
                 TypeManager *typemanager,
-                Llvm_linemap *linemap,
-                llvm::DIBuilder &builder,
-                llvm::DIScope *moduleScope,
-                llvm::BasicBlock *entryBlock);
+                Llvm_linemap *linemap);
 
-  void beginFunction(llvm::DIScope *scope, Bfunction *function);
+  void processGlobal(Bvariable *gvar, bool isExported);
+
+  void beginFunction(Bfunction *function, Bnode *topnode, llvm::BasicBlock *entryBlock);
   void endFunction(Bfunction *function);
 
   void beginLexicalBlock(Bblock *block);
   void endLexicalBlock(Bblock *block);
+
+  void finalize();
 
   llvm::DIFile *diFileFromLocation(Location location);
 
@@ -75,7 +77,7 @@ class DIBuildHelper {
   void pushDIScope(llvm::DIScope *);
 
   // Various getters
-  llvm::DIBuilder &dibuilder() { return dibuilder_; }
+  llvm::DIBuilder &dibuilder() { return *dibuilder_.get(); }
   Llvm_linemap *linemap() { return linemap_; }
   TypeManager *typemanager() { return typemanager_; }
 
@@ -88,20 +90,23 @@ class DIBuildHelper {
   }
 
  private:
+  llvm::Module *module_;
   TypeManager *typemanager_;
   Llvm_linemap *linemap_;
-  llvm::DIBuilder &dibuilder_;
   llvm::DIScope *moduleScope_;
-  Bblock *topblock_;
+  std::unique_ptr<llvm::DIBuilder> dibuilder_;
   std::vector<llvm::DIScope*> diScopeStack_;
   std::unordered_map<Btype *, llvm::DIType*> typeCache_;
   std::unordered_map<llvm::DIType *, llvm::DIType*> typeReplacements_;
+
+  // The following items are specific to the current function we're visiting.
   std::unordered_set<Bvariable *> declared_;
+  Bblock *topblock_;
   llvm::BasicBlock *entryBlock_;
   unsigned known_locations_;
 
-
  private:
+  void createCompileUnitIfNeeded();
   llvm::DebugLoc debugLocFromLocation(Location location);
   void insertVarDecl(Bvariable *var, llvm::DILocalVariable *dilv);
   bool interestingBlock(Bblock *block);
