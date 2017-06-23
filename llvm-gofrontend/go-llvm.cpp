@@ -3531,6 +3531,7 @@ public:
   std::map<LabelId, llvm::BasicBlock *> labelmap_;
   std::vector<llvm::BasicBlock*> padBlockStack_;
   std::set<llvm::AllocaInst *> temporariesDiscovered_;
+  std::vector<llvm::AllocaInst *> newTemporaries_;
   llvm::BasicBlock* finallyBlock_;
   Bstatement *cachedReturn_;
   bool emitOrphanedCode_;
@@ -3562,7 +3563,7 @@ GenBlocks::GenBlocks(llvm::LLVMContext &context,
 
 void GenBlocks::finishFunction(llvm::BasicBlock *entry)
 {
-  function_->fixupProlog(entry, temporariesDiscovered_);
+  function_->fixupProlog(entry, newTemporaries_);
   if (createDebugMetaData_)
     dibuildhelper().endFunction(function_);
 }
@@ -3648,6 +3649,7 @@ GenBlocks::postProcessInst(llvm::Instruction *inst,
       Bvariable *tvar = be_->nodeBuilder().adoptTemporaryVariable(ai);
       if (tvar) {
         temporariesDiscovered_.insert(ai);
+        newTemporaries_.push_back(ai);
         delete tvar;
       }
     }

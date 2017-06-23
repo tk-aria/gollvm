@@ -1029,12 +1029,12 @@ TEST(BackendExprTests, TestComplexOps) {
     %tmp.8 = alloca { double, double }
     %tmp.7 = alloca { double, double }
     %tmp.6 = alloca { double, double }
+    %tmp.5 = alloca { double, double }
     %tmp.4 = alloca { double, double }
     %tmp.3 = alloca { double, double }
     %tmp.2 = alloca { double, double }
-    %tmp.5 = alloca { double, double }
-    %tmp.0 = alloca { double, double }
     %tmp.1 = alloca { double, double }
+    %tmp.0 = alloca { double, double }
     %x = alloca { double, double }
     %y = alloca { double, double }
     %z = alloca { double, double }
