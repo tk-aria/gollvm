@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "80868031_231836c4",
+        "filename": "llvm-gofrontend/go-llvm-bvariable.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-06-23T13:39:00Z",
+      "side": 1,
+      "message": "Minor: it took me a while to understand what this flag is for. Sounds more like \"exported\", or \"nonlocal\", or \"externallyVisible\"?",
+      "range": {
+        "startLine": 35,
+        "startChar": 37,
+        "endLine": 35,
+        "endChar": 45
+      },
+      "revId": "e3558707151d130e10d8c28e31a1a539e8fb1eed",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "401bf2d8_9c370626",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 4139,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-06-23T13:39:00Z",
+      "side": 1,
+      "message": "So this is generated in function_set_body. But a global variable is not defined in a function and may be not associated with any function. Will such variables be missing?",
+      "revId": "e3558707151d130e10d8c28e31a1a539e8fb1eed",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
