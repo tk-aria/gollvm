@@ -484,6 +484,8 @@ TEST(BackendCABIOracleTests, PassAndReturnComplex) {
   mpc_set_d_d(mpc_val2, 3.0, 4.0, GMP_RNDN);
   Bexpression *ccon1 = be->complex_constant_expression(bc64t, mpc_val1);
   Bexpression *ccon2 = be->complex_constant_expression(bc128t, mpc_val2);
+  mpc_clear(mpc_val1);
+  mpc_clear(mpc_val2);
   Bexpression *fn2 = be->function_code_expression(func, loc);
   std::vector<Bexpression *> args2 = {ccon1, ccon2};
   Bexpression *call2 = be->call_expression(func, fn2, args2, nullptr, h.loc());
