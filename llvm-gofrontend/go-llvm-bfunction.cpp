@@ -420,7 +420,7 @@ void Bfunction::genProlog(llvm::BasicBlock *entry)
 }
 
 void Bfunction::fixupProlog(llvm::BasicBlock *entry,
-                            const std::set<llvm::AllocaInst *> &temps)
+                            const std::vector<llvm::AllocaInst *> &temps)
 {
   // Make sure that each parameter variable has an initializer (this is
   // needed for debug generation. In the case of by-reference vars,
