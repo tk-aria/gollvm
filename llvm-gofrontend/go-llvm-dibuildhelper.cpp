@@ -57,21 +57,30 @@ void DIBuildHelper::createCompileUnitIfNeeded()
 
 void DIBuildHelper::finalize()
 {
+  createCompileUnitIfNeeded();
+
+  // Emit any globals we've collected along the way.
+  for (auto it : globalsToProcess_) {
+    Bvariable *v = it.first;
+    bool isExported = it.second;
+    llvm::DIFile *vfile = diFileFromLocation(v->location());
+    unsigned vline = linemap()->location_line(v->location());
+    llvm::DIType *vdit = typemanager()->buildDIType(v->btype(), *this);
+    bool isLocalToUnit = !isExported;
+    dibuilder().createGlobalVariableExpression(moduleScope_,
+                                               v->name(), v->name(),
+                                               vfile, vline, vdit,
+                                               isLocalToUnit);
+  }
+
   dibuilder_->finalize();
 }
 
+
+
 void DIBuildHelper::processGlobal(Bvariable *v, bool isExported)
 {
-  createCompileUnitIfNeeded();
-
-  llvm::DIFile *vfile = diFileFromLocation(v->location());
-  unsigned vline = linemap()->location_line(v->location());
-  llvm::DIType *vdit = typemanager()->buildDIType(v->btype(), *this);
-  bool isLocalToUnit = !isExported;
-  dibuilder().createGlobalVariableExpression(moduleScope_,
-                                             v->name(), v->name(),
-                                             vfile, vline, vdit,
-                                             isLocalToUnit);
+  globalsToProcess_.push_back(std::make_pair(v, isExported));
 }
 
 void DIBuildHelper::beginFunction(Bfunction *function,

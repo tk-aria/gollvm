@@ -1520,6 +1520,7 @@ std::string TypeManager::typToString(Btype *typ)
 std::string
 TypeManager::typToStringRec(Btype *typ, std::map<Btype *, std::string> &smap)
 {
+  assert(typ != nullptr);
   if (namedTypes_.find(typ) != namedTypes_.end())
     return typ->name();
 
@@ -1564,6 +1565,9 @@ TypeManager::typToStringRec(Btype *typ, std::map<Btype *, std::string> &smap)
     }
     case Btype::PointerT: {
       BPointerType *bpt = typ->castToBPointerType();
+      // all placeholders should be resolved at this point
+      assert(!bpt->isPlaceholder());
+      assert(bpt->toType() != nullptr);
       ss << "*" << typToStringRec(bpt->toType(), smap);
       break;
     }
@@ -1764,6 +1768,9 @@ llvm::DIType *TypeManager::buildDIType(Btype *typ, DIBuildHelper &helper)
     }
     case Btype::PointerT: {
       const BPointerType *bpt = typ->castToBPointerType();
+      // all placeholders should be resolved at this point
+      assert(!bpt->isPlaceholder());
+      assert(bpt->toType() != nullptr);
       llvm::DIType *toDI = buildDIType(bpt->toType(), helper);
       uint64_t bits = datalayout_->getPointerSizeInBits();
       return dibuilder.createPointerType(toDI, bits);
