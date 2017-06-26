@@ -305,6 +305,7 @@ TEST(BackendCoreTests, TypeUtils) {
   be->set_placeholder_struct_type(phst, fields);
   Btype *rst = mkTwoFieldStruct(be.get(), pvt, pvt);
   EXPECT_EQ(be->type_size(rst), be->type_size(phst));
+  EXPECT_EQ(be->type_field_offset(rst,1), be->type_field_offset(phst,1));
 
   // type field alignment
   Btype *u32 = be->integer_type(true, 32);

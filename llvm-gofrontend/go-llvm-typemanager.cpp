@@ -1285,6 +1285,21 @@ llvm::Type *TypeManager::placeholderProxyType(Btype *typ,
   return nullptr;
 }
 
+// Helper for use with typeSize() and typeFieldOffset methods.
+// Handles situations where we're asking about size/offset for
+// types that still incorporate placeholders.
+llvm::Type *TypeManager::getPlaceholderProxyIfNeeded(Btype *btype)
+{
+  llvm::Type *toget = btype->type();
+  llvm::SmallPtrSet<llvm::Type *, 32> vis;
+  if (!btype->type()->isSized(&vis)) {
+    pproxymap pmap;
+    toget = placeholderProxyType(btype, &pmap);
+    assert(toget);
+  }
+  return toget;
+}
+
 // Return the size of a type.
 
 // Note: frontend sometimes asks for the size of a placeholder
@@ -1296,15 +1311,7 @@ llvm::Type *TypeManager::placeholderProxyType(Btype *typ,
 int64_t TypeManager::typeSize(Btype *btype) {
   if (btype == errorType_)
     return 1;
-
-  llvm::Type *toget = btype->type();
-  llvm::SmallPtrSet<llvm::Type *, 32> vis;
-  if (!btype->type()->isSized(&vis)) {
-    pproxymap pmap;
-    toget = placeholderProxyType(btype, &pmap);
-    assert(toget);
-  }
-
+  llvm::Type *toget = getPlaceholderProxyIfNeeded(btype);
   uint64_t uvalbytes = datalayout_->getTypeAllocSize(toget);
   return static_cast<int64_t>(uvalbytes);
 }
@@ -1365,8 +1372,10 @@ int64_t TypeManager::typeFieldAlignment(Btype *btype) {
 int64_t TypeManager::typeFieldOffset(Btype *btype, size_t index) {
   if (btype == errorType_)
     return 0;
-  assert(btype->type()->isStructTy());
-  llvm::StructType *llvm_st = llvm::cast<llvm::StructType>(btype->type());
+
+  llvm::Type *toget = getPlaceholderProxyIfNeeded(btype);
+  assert(toget->isStructTy());
+  llvm::StructType *llvm_st = llvm::cast<llvm::StructType>(toget);
   return llvmTypeFieldOffset(llvm_st, index);
 }
 
