@@ -265,6 +265,10 @@ class TypeManager {
   typedef std::unordered_map<Btype *, llvm::Type *> pproxymap;
   llvm::Type *placeholderProxyType(Btype *typ, pproxymap *pmap);
 
+  // Checks for placeholder and invokes routine above if needed,
+  // otherwise returns the LLVM type for the specified Btype.
+  llvm::Type *getPlaceholderProxyIfNeeded(Btype *btype);
+
   // Context information needed for the LLVM backend.
   llvm::LLVMContext &context_;
   const llvm::DataLayout *datalayout_;
