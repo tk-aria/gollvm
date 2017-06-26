@@ -22,6 +22,30 @@
       "revId": "419a62cfc74c6f762b00b0ba0f4823806c27930d",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "dec6784d_5f512fa2",
+        "filename": "llvm-gofrontend/go-llvm-dibuildhelper.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-06-26T12:22:06Z",
+      "side": 1,
+      "message": "Whoops, you\u0027re right... double negation. Fixed.",
+      "parentUuid": "febd586f_dd503d4c",
+      "range": {
+        "startLine": 74,
+        "startChar": 45,
+        "endLine": 74,
+        "endChar": 59
+      },
+      "revId": "419a62cfc74c6f762b00b0ba0f4823806c27930d",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
