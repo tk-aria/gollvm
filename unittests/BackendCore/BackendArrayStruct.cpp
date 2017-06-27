@@ -572,17 +572,17 @@ TEST(BackendArrayStructTests, CreateArrayIndexingExprs) {
   h.mkAssign(aa4, aa3);
 
   const char *exp = R"RAW_RESULT(
-      %cast.0 = bitcast [4 x i64]* %aa to i8*
-      %cast.1 = bitcast [4 x i64]* @const.0 to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.0, i8* %cast.1, i64 32, i32 8, i1 false)
-      %index.0 = getelementptr [4 x i64], [4 x i64]* %aa, i32 0, i32 1
-      %aa.index.ld.1 = load i64, i64* %index.0
-      %index.3 = getelementptr [4 x i64], [4 x i64]* %aa, i32 0, i64 %aa.index.ld.1
-      %index.1 = getelementptr [4 x i64], [4 x i64]* %aa, i32 0, i64 3
-      %aa.index.ld.0 = load i64, i64* %index.1
-      %index.2 = getelementptr [4 x i64], [4 x i64]* %aa, i32 0, i64 %aa.index.ld.0
-      %aa.index.ld.2 = load i64, i64* %index.2
-      store i64 %aa.index.ld.2, i64* %index.3
+  %cast.0 = bitcast [4 x i64]* %aa to i8*
+  %cast.1 = bitcast [4 x i64]* @const.0 to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.0, i8* %cast.1, i64 32, i32 8, i1 false)
+  %index.0 = getelementptr [4 x i64], [4 x i64]* %aa, i32 0, i32 1
+  %aa.index.ld.0 = load i64, i64* %index.0
+  %index.1 = getelementptr [4 x i64], [4 x i64]* %aa, i32 0, i64 %aa.index.ld.0
+  %index.2 = getelementptr [4 x i64], [4 x i64]* %aa, i32 0, i64 3
+  %aa.index.ld.1 = load i64, i64* %index.2
+  %index.3 = getelementptr [4 x i64], [4 x i64]* %aa, i32 0, i64 %aa.index.ld.1
+  %aa.index.ld.2 = load i64, i64* %index.3
+  store i64 %aa.index.ld.2, i64* %index.1
   )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);

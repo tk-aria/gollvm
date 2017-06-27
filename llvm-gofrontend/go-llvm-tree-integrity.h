@@ -94,6 +94,10 @@ class IntegrityVisitor {
   // relationship (used when node child is deleted or repurposed).
   void unsetParent(Bnode *child, Bnode *parent, unsigned slot);
 
+  // Tell the IntegrityVisitor we're about to delete the specified
+  // node, so please remove any outstanding references to it.
+  void deletePending(Bnode *node);
+
  private:
   Llvm_backend *be_;
   typedef std::pair<Bnode *, unsigned> parslot; // parent and child index

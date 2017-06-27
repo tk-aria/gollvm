@@ -45,6 +45,7 @@ Bexpression::Bexpression(const Bexpression &src)
     , Binstructions()
     , value_(src.value_)
     , btype_(src.btype_)
+    , varContext_(src.varContext_)
 {
 }
 
@@ -77,17 +78,6 @@ void Bexpression::resetVarExprContext()
 {
   varContext_.reset();
 }
-
-#if 0
-Bexpression *Bexpression::cloneConstant() const {
-  assert(flavor() == N_Const ||
-         flavor() == N_Composite ||
-         flavor() == N_FcnAddress);
-  assert(llvm::isa<llvm::Constant>(value()));
-  Bexpression *rval = new Bexpression(*this);
-  return rval;
-}
-#endif
 
 bool Bexpression::compositeInitPending() const
 {
