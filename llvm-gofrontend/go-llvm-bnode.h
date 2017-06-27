@@ -67,7 +67,8 @@ enum NodeFlavor {
   N_PointerOffset,
   N_Composite,
   N_Call,
-  N_LastExpr = N_Call,
+  N_Conditional,
+  N_LastExpr = N_Conditional,
 
   N_FirstStmt,
   N_EmptyStmt=N_FirstStmt,
@@ -141,6 +142,16 @@ class Bnode {
   // For var exprs, this returns the underlying bvariable
   Bvariable *var() const;
 
+  // Return struct field index for a field expr
+  unsigned fieldIndex() const;
+
+  // Return Bfunction operand (valid only for function constants, calls,
+  // and conditionals).
+  Bfunction *getFunction() const;
+
+  // Return vector of indices for composite, or NULL if no indexing
+  const std::vector<unsigned long> *getIndices() const;
+
   template<class Visitor> friend class SimpleNodeWalker;
   template<class Visitor> friend class UpdatingNodeWalker;
   friend class BnodeBuilder;
@@ -167,8 +178,9 @@ class Bnode {
   std::vector<Bnode *> kids_;
   union {
     Bvariable *var;
-    Bfunction *func; // filled in only for fcn constants
+    Bfunction *func; // filled in only for fcn constants, calls, conditionals
     SwitchDescriptor *swcases;
+    std::vector<unsigned long> *indices; // for composite expressions
     Blabel *label;
     Operator op;
     unsigned fieldIndex;
@@ -235,14 +247,29 @@ class BnodeBuilder {
                                Bexpression *ptr,
                                Bexpression *offset,
                                Location loc);
+  Bexpression *mkIndexedComposite(Btype *btype, llvm::Value *value,
+                                  const std::vector<Bexpression *> &vals,
+                                  const std::vector<unsigned long> &indices,
+                                  Binstructions &instructions,
+                                  Location loc);
   Bexpression *mkComposite(Btype *btype, llvm::Value *value,
                            const std::vector<Bexpression *> &vals,
                            Binstructions &instructions,
                            Location loc);
-  Bexpression *mkCall(Btype *btype, llvm::Value *value,
+  Bexpression *mkCall(Btype *btype,
+                      llvm::Value *value,
+                      Bfunction *caller,
+                      Bexpression *fnExpr,
+                      Bexpression *chainExpr,
                       const std::vector<Bexpression *> &vals,
                       Binstructions &instructions,
                       Location loc);
+  Bexpression *mkConditional(Bfunction *function,
+                             Btype *btype,
+                             Bexpression *condition,
+                             Bexpression *then_expr,
+                             Bexpression *else_expr,
+                             Location loc);
 
   // statements
   Bstatement *mkErrorStmt();
@@ -297,8 +324,14 @@ class BnodeBuilder {
 
   // Inform the builder that we're about to extract all of the
   // children of the specified node and incorporate them into a new
-  // node (after which the old node will be thrown away). Returns
+  // node (after which the old node will be thrown away). Returns vector
+  // containing expression children.
   std::vector<Bexpression *> extractChildenAndDestroy(Bexpression *expr);
+
+  // Similar to the routine above, but works at the Bnode level (so as
+  // to support dealing with Bnodes that have a mix of statement/expr
+  // children).
+  std::vector<Bnode *> extractChildNodesAndDestroy(Bnode *node);
 
   // Get/set whether the tree integrity checker is enabled. It makes sense
   // to turn off the integrity checker during tree cloning operations
@@ -320,6 +353,7 @@ class BnodeBuilder {
   std::vector<Bexpression *> earchive_;
   std::vector<Bstatement *> sarchive_;
   std::vector<SwitchDescriptor*> swcases_;
+  std::vector< std::vector<unsigned long> > indexvecs_;
   std::unordered_map<llvm::AllocaInst*, Bvariable*> tempvars_;
   std::unique_ptr<IntegrityVisitor> integrityVisitor_;
   bool checkIntegrity_;

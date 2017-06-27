@@ -1057,11 +1057,11 @@ TEST(BackendExprTests, TestComplexOps) {
     call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.8, i8* %cast.9, i64 16, i32 8, i1 false)
     %field.0 = getelementptr inbounds { double, double }, { double, double }* %tmp.0, i32 0, i32 0
     %.real.ld.0 = load double, double* %field.0
-    %field.2 = getelementptr inbounds { double, double }, { double, double }* %tmp.1, i32 0, i32 0
-    %.real.ld.1 = load double, double* %field.2
+    %field.1 = getelementptr inbounds { double, double }, { double, double }* %tmp.1, i32 0, i32 0
+    %.real.ld.1 = load double, double* %field.1
     %fadd.0 = fadd double %.real.ld.0, %.real.ld.1
-    %field.1 = getelementptr inbounds { double, double }, { double, double }* %tmp.0, i32 0, i32 1
-    %.imag.ld.0 = load double, double* %field.1
+    %field.2 = getelementptr inbounds { double, double }, { double, double }* %tmp.0, i32 0, i32 1
+    %.imag.ld.0 = load double, double* %field.2
     %field.3 = getelementptr inbounds { double, double }, { double, double }* %tmp.1, i32 0, i32 1
     %.imag.ld.1 = load double, double* %field.3
     %fadd.1 = fadd double %.imag.ld.0, %.imag.ld.1
@@ -1080,11 +1080,11 @@ TEST(BackendExprTests, TestComplexOps) {
     call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.14, i8* %cast.15, i64 16, i32 8, i1 false)
     %field.6 = getelementptr inbounds { double, double }, { double, double }* %tmp.3, i32 0, i32 0
     %.real.ld.2 = load double, double* %field.6
-    %field.8 = getelementptr inbounds { double, double }, { double, double }* %tmp.4, i32 0, i32 0
-    %.real.ld.3 = load double, double* %field.8
+    %field.7 = getelementptr inbounds { double, double }, { double, double }* %tmp.4, i32 0, i32 0
+    %.real.ld.3 = load double, double* %field.7
     %fsub.0 = fsub double %.real.ld.2, %.real.ld.3
-    %field.7 = getelementptr inbounds { double, double }, { double, double }* %tmp.3, i32 0, i32 1
-    %.imag.ld.2 = load double, double* %field.7
+    %field.8 = getelementptr inbounds { double, double }, { double, double }* %tmp.3, i32 0, i32 1
+    %.imag.ld.2 = load double, double* %field.8
     %field.9 = getelementptr inbounds { double, double }, { double, double }* %tmp.4, i32 0, i32 1
     %.imag.ld.3 = load double, double* %field.9
     %fsub.1 = fsub double %.imag.ld.2, %.imag.ld.3
@@ -1103,30 +1103,30 @@ TEST(BackendExprTests, TestComplexOps) {
     call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.20, i8* %cast.21, i64 16, i32 8, i1 false)
     %field.12 = getelementptr inbounds { double, double }, { double, double }* %tmp.6, i32 0, i32 0
     %.real.ld.4 = load double, double* %field.12
-    %field.14 = getelementptr inbounds { double, double }, { double, double }* %tmp.7, i32 0, i32 0
-    %.real.ld.5 = load double, double* %field.14
+    %field.13 = getelementptr inbounds { double, double }, { double, double }* %tmp.7, i32 0, i32 0
+    %.real.ld.5 = load double, double* %field.13
     %fmul.0 = fmul double %.real.ld.4, %.real.ld.5
-    %field.13 = getelementptr inbounds { double, double }, { double, double }* %tmp.6, i32 0, i32 1
-    %.imag.ld.4 = load double, double* %field.13
+    %field.14 = getelementptr inbounds { double, double }, { double, double }* %tmp.6, i32 0, i32 1
+    %.imag.ld.4 = load double, double* %field.14
     %field.15 = getelementptr inbounds { double, double }, { double, double }* %tmp.7, i32 0, i32 1
     %.imag.ld.5 = load double, double* %field.15
     %fmul.1 = fmul double %.imag.ld.4, %.imag.ld.5
     %fsub.2 = fsub double %fmul.0, %fmul.1
-    %field.121 = getelementptr inbounds { double, double }, { double, double }* %tmp.6, i32 0, i32 0
-    %.real.ld.6 = load double, double* %field.12
-    %field.152 = getelementptr inbounds { double, double }, { double, double }* %tmp.7, i32 0, i32 1
-    %.imag.ld.6 = load double, double* %field.15
-    %fmul.2 = fmul double %.real.ld.6, %.imag.ld.6
-    %field.133 = getelementptr inbounds { double, double }, { double, double }* %tmp.6, i32 0, i32 1
-    %.imag.ld.7 = load double, double* %field.13
-    %field.144 = getelementptr inbounds { double, double }, { double, double }* %tmp.7, i32 0, i32 0
-    %.real.ld.7 = load double, double* %field.14
-    %fmul.3 = fmul double %.imag.ld.7, %.real.ld.7
+    %field.16 = getelementptr inbounds { double, double }, { double, double }* %tmp.6, i32 0, i32 0
+    %.field.ld.0 = load double, double* %field.16
+    %field.17 = getelementptr inbounds { double, double }, { double, double }* %tmp.7, i32 0, i32 1
+    %.field.ld.1 = load double, double* %field.17
+    %fmul.2 = fmul double %.field.ld.0, %.field.ld.1
+    %field.18 = getelementptr inbounds { double, double }, { double, double }* %tmp.6, i32 0, i32 1
+    %.field.ld.2 = load double, double* %field.18
+    %field.19 = getelementptr inbounds { double, double }, { double, double }* %tmp.7, i32 0, i32 0
+    %.field.ld.3 = load double, double* %field.19
+    %fmul.3 = fmul double %.field.ld.2, %.field.ld.3
     %fadd.2 = fadd double %fmul.2, %fmul.3
-    %field.16 = getelementptr inbounds { double, double }, { double, double }* %tmp.8, i32 0, i32 0
-    store double %fsub.2, double* %field.16
-    %field.17 = getelementptr inbounds { double, double }, { double, double }* %tmp.8, i32 0, i32 1
-    store double %fadd.2, double* %field.17
+    %field.20 = getelementptr inbounds { double, double }, { double, double }* %tmp.8, i32 0, i32 0
+    store double %fsub.2, double* %field.20
+    %field.21 = getelementptr inbounds { double, double }, { double, double }* %tmp.8, i32 0, i32 1
+    store double %fadd.2, double* %field.21
     %cast.22 = bitcast { double, double }* %z to i8*
     %cast.23 = bitcast { double, double }* %tmp.8 to i8*
     call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.22, i8* %cast.23, i64 16, i32 8, i1 false)
@@ -1136,17 +1136,17 @@ TEST(BackendExprTests, TestComplexOps) {
     %cast.26 = bitcast { double, double }* %tmp.10 to i8*
     %cast.27 = bitcast { double, double }* %y to i8*
     call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.26, i8* %cast.27, i64 16, i32 8, i1 false)
-    %field.18 = getelementptr inbounds { double, double }, { double, double }* %tmp.9, i32 0, i32 0
-    %.real.ld.8 = load double, double* %field.18
-    %field.20 = getelementptr inbounds { double, double }, { double, double }* %tmp.10, i32 0, i32 0
-    %.real.ld.9 = load double, double* %field.20
-    %fcmp.0 = fcmp oeq double %.real.ld.8, %.real.ld.9
+    %field.22 = getelementptr inbounds { double, double }, { double, double }* %tmp.9, i32 0, i32 0
+    %.real.ld.6 = load double, double* %field.22
+    %field.23 = getelementptr inbounds { double, double }, { double, double }* %tmp.10, i32 0, i32 0
+    %.real.ld.7 = load double, double* %field.23
+    %fcmp.0 = fcmp oeq double %.real.ld.6, %.real.ld.7
     %zext.0 = zext i1 %fcmp.0 to i8
-    %field.19 = getelementptr inbounds { double, double }, { double, double }* %tmp.9, i32 0, i32 1
-    %.imag.ld.8 = load double, double* %field.19
-    %field.21 = getelementptr inbounds { double, double }, { double, double }* %tmp.10, i32 0, i32 1
-    %.imag.ld.9 = load double, double* %field.21
-    %fcmp.1 = fcmp oeq double %.imag.ld.8, %.imag.ld.9
+    %field.24 = getelementptr inbounds { double, double }, { double, double }* %tmp.9, i32 0, i32 1
+    %.imag.ld.6 = load double, double* %field.24
+    %field.25 = getelementptr inbounds { double, double }, { double, double }* %tmp.10, i32 0, i32 1
+    %.imag.ld.7 = load double, double* %field.25
+    %fcmp.1 = fcmp oeq double %.imag.ld.6, %.imag.ld.7
     %zext.1 = zext i1 %fcmp.1 to i8
     %iand.0 = and i8 %zext.0, %zext.1
     store i8 %iand.0, i8* %b
@@ -1156,17 +1156,17 @@ TEST(BackendExprTests, TestComplexOps) {
     %cast.30 = bitcast { double, double }* %tmp.12 to i8*
     %cast.31 = bitcast { double, double }* %y to i8*
     call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.30, i8* %cast.31, i64 16, i32 8, i1 false)
-    %field.22 = getelementptr inbounds { double, double }, { double, double }* %tmp.11, i32 0, i32 0
-    %.real.ld.10 = load double, double* %field.22
-    %field.24 = getelementptr inbounds { double, double }, { double, double }* %tmp.12, i32 0, i32 0
-    %.real.ld.11 = load double, double* %field.24
-    %fcmp.2 = fcmp one double %.real.ld.10, %.real.ld.11
+    %field.26 = getelementptr inbounds { double, double }, { double, double }* %tmp.11, i32 0, i32 0
+    %.real.ld.8 = load double, double* %field.26
+    %field.27 = getelementptr inbounds { double, double }, { double, double }* %tmp.12, i32 0, i32 0
+    %.real.ld.9 = load double, double* %field.27
+    %fcmp.2 = fcmp one double %.real.ld.8, %.real.ld.9
     %zext.2 = zext i1 %fcmp.2 to i8
-    %field.23 = getelementptr inbounds { double, double }, { double, double }* %tmp.11, i32 0, i32 1
-    %.imag.ld.10 = load double, double* %field.23
-    %field.25 = getelementptr inbounds { double, double }, { double, double }* %tmp.12, i32 0, i32 1
-    %.imag.ld.11 = load double, double* %field.25
-    %fcmp.3 = fcmp one double %.imag.ld.10, %.imag.ld.11
+    %field.28 = getelementptr inbounds { double, double }, { double, double }* %tmp.11, i32 0, i32 1
+    %.imag.ld.8 = load double, double* %field.28
+    %field.29 = getelementptr inbounds { double, double }, { double, double }* %tmp.12, i32 0, i32 1
+    %.imag.ld.9 = load double, double* %field.29
+    %fcmp.3 = fcmp one double %.imag.ld.8, %.imag.ld.9
     %zext.3 = zext i1 %fcmp.3 to i8
     %ior.0 = or i8 %zext.2, %zext.3
     store i8 %ior.0, i8* %b
@@ -1406,8 +1406,8 @@ TEST(BackendExprTests, TestConditionalExpression3) {
 define void @foo({ [16 x i32], i32 }* sret %sret.formal.0, i8* nest %nest.0, { [16 x i32], i32 }* byval %p0, i32 %p1) #0 {
 entry:
   %p1.addr = alloca i32
-  %tmpv.0 = alloca { [16 x i32], i32 }
   %a = alloca { [16 x i32], i32 }
+  %tmpv.0 = alloca { [16 x i32], i32 }
   store i32 %p1, i32* %p1.addr
   %p1.ld.0 = load i32, i32* %p1.addr
   %icmp.0 = icmp slt i32 %p1.ld.0, 7

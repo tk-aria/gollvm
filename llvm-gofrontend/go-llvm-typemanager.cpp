@@ -734,6 +734,9 @@ Btype *TypeManager::elementTypeByIndex(Btype *btype, unsigned fieldIndex)
   BStructType *st = btype->castToBStructType();
   if (st)
     return st->fieldType(fieldIndex);
+  BComplexType *ct = btype->castToBComplexType();
+  if (ct)
+    return floatType(ct->bits()/2);
   BArrayType *at = btype->castToBArrayType();
   assert(at);
   return at->elemType();
