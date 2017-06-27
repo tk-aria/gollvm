@@ -287,7 +287,6 @@ TEST(BackendCABIOracleTests, RecursiveCall1) {
   args.push_back(be->var_expression(p5, VE_rvalue, loc));
   Bexpression *call = be->call_expression(func, fn, args, nullptr, h.loc());
 
-
   // return y
   std::vector<Bexpression *> rvals1;
   rvals1.push_back(be->var_expression(p1, VE_rvalue, loc));
@@ -299,25 +298,25 @@ TEST(BackendCABIOracleTests, RecursiveCall1) {
   Bstatement *rst2 = h.mkReturn(rvals2, FcnTestHarness::NoAppend);
 
   const char *exp = R"RAW_RESULT(
-     %p3.ld.1 = load i8, i8* %p3.addr
-     %sub.0 = sub i8 %p3.ld.1, 1
-     %p4.ld.0 = load i8, i8* %p4.addr
-     %cast.0 = bitcast { float, float, i16, i16, i16 }* %p0.addr to { <2 x float>, i48 }*
-     %field0.0 = getelementptr inbounds { <2 x float>, i48 }, { <2 x float>, i48 }* %cast.0, i32 0, i32 0
-     %ld.0 = load <2 x float>, <2 x float>* %field0.0
-     %field1.0 = getelementptr inbounds { <2 x float>, i48 }, { <2 x float>, i48 }* %cast.0, i32 0, i32 1
-     %ld.1 = load i48, i48* %field1.0
-     %cast.1 = bitcast { double, float, float }* %p1.addr to { double, <2 x float> }*
-     %field0.1 = getelementptr inbounds { double, <2 x float> }, { double, <2 x float> }* %cast.1, i32 0, i32 0
-     %ld.2 = load double, double* %field0.1
-     %field1.1 = getelementptr inbounds { double, <2 x float> }, { double, <2 x float> }* %cast.1, i32 0, i32 1
-     %ld.3 = load <2 x float>, <2 x float>* %field1.1
-     %call.0 = call { double, <2 x float> } @foo(i8* nest undef, <2 x float> %ld.0, i48 %ld.1, double %ld.2, <2 x float> %ld.3, i8 zeroext %sub.0, i8 signext %p4.ld.0, { { float, float, i16, i16, i16 }, { double, float, float } }* byval %p5)
-     %cast.2 = bitcast { double, float, float }* %sret.actual.0 to { double, <2 x float> }*
-     store { double, <2 x float> } %call.0, { double, <2 x float> }* %cast.2
-     %cast.4 = bitcast { double, float, float }* %sret.actual.0 to { double, <2 x float> }*
-     %ld.5 = load { double, <2 x float> }, { double, <2 x float> }* %cast.4
-     ret { double, <2 x float> } %ld.5
+  %p3.ld.0 = load i8, i8* %p3.addr
+  %sub.0 = sub i8 %p3.ld.0, 1
+  %p4.ld.0 = load i8, i8* %p4.addr
+  %cast.1 = bitcast { float, float, i16, i16, i16 }* %p0.addr to { <2 x float>, i48 }*
+  %field0.0 = getelementptr inbounds { <2 x float>, i48 }, { <2 x float>, i48 }* %cast.1, i32 0, i32 0
+  %ld.1 = load <2 x float>, <2 x float>* %field0.0
+  %field1.0 = getelementptr inbounds { <2 x float>, i48 }, { <2 x float>, i48 }* %cast.1, i32 0, i32 1
+  %ld.2 = load i48, i48* %field1.0
+  %cast.2 = bitcast { double, float, float }* %p1.addr to { double, <2 x float> }*
+  %field0.1 = getelementptr inbounds { double, <2 x float> }, { double, <2 x float> }* %cast.2, i32 0, i32 0
+  %ld.3 = load double, double* %field0.1
+  %field1.1 = getelementptr inbounds { double, <2 x float> }, { double, <2 x float> }* %cast.2, i32 0, i32 1
+  %ld.4 = load <2 x float>, <2 x float>* %field1.1
+  %call.0 = call { double, <2 x float> } @foo(i8* nest undef, <2 x float> %ld.1, i48 %ld.2, double %ld.3, <2 x float> %ld.4, i8 zeroext %sub.0, i8 signext %p4.ld.0, { { float, float, i16, i16, i16 }, { double, float, float } }* byval %p5)
+  %cast.3 = bitcast { double, float, float }* %sret.actual.0 to { double, <2 x float> }*
+  store { double, <2 x float> } %call.0, { double, <2 x float> }* %cast.3
+  %cast.4 = bitcast { double, float, float }* %sret.actual.0 to { double, <2 x float> }*
+  %ld.5 = load { double, <2 x float> }, { double, <2 x float> }* %cast.4
+  ret { double, <2 x float> } %ld.5
     )RAW_RESULT";
 
   bool isOK = h.expectStmt(rst2, exp);

@@ -80,7 +80,8 @@ class VarContext {
   VarContext(bool lvalue, unsigned addrLevel)
       : addrLevel_(addrLevel), lvalue_(lvalue), pending_(true) { }
   explicit VarContext(const VarContext &src)
-      : addrLevel_(src.addrLevel_), lvalue_(src.lvalue_)
+      : addrLevel_(src.addrLevel_), lvalue_(src.lvalue_),
+        pending_(src.pending_)
   { }
 
   bool pending() const { return pending_; }

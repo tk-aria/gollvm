@@ -55,6 +55,7 @@ static BnodePropVals BnodeProperties[] = {
   /* N_PointerOffset */ {  "ptroff", 2, IsExpr },
   /* N_Composite */     {  "composite", Variadic, IsExpr },
   /* N_Call */          {  "call", Variadic, IsExpr },
+  /* N_Conditional */   {  "conditional", Variadic, IsExpr },
 
   /* N_EmptyStmt */     {  "empty", 0, IsStmt },
   /* N_LabelStmt */     {  "label", 0, IsStmt },
@@ -315,6 +316,26 @@ Bvariable *Bnode::var() const
   return u.var;
 }
 
+unsigned Bnode::fieldIndex() const
+{
+  assert(flavor() == N_StructField);
+  return u.fieldIndex;
+}
+
+Bfunction *Bnode::getFunction() const
+{
+  assert(flavor() == N_FcnAddress ||
+         flavor() == N_Call ||
+         flavor() == N_Conditional);
+  return u.func;
+}
+
+const std::vector<unsigned long> *Bnode::getIndices() const
+{
+  assert(flavor() == N_Composite);
+  return u.indices;
+}
+
 //......................................................................
 
 BnodeBuilder::BnodeBuilder(Llvm_backend *be)
@@ -457,10 +478,9 @@ Bvariable *BnodeBuilder::adoptTemporaryVariable(llvm::AllocaInst *alloca)
 // builder will just return left (meaning that we don't want the
 // instruction to be appended to the new Bexpression).
 
-void BnodeBuilder::appendInstIfNeeded(Bexpression *rval,
-                                      llvm::Value *val)
+void BnodeBuilder::appendInstIfNeeded(Bexpression *rval, llvm::Value *val)
 {
-  if (!llvm::isa<llvm::Instruction>(val))
+  if (val == nullptr || !llvm::isa<llvm::Instruction>(val))
     return;
   llvm::Instruction *inst = llvm::cast<llvm::Instruction>(val);
   for (auto &kid : rval->kids_) {
@@ -563,23 +583,41 @@ Bexpression *BnodeBuilder::mkDeref(Btype *typ, llvm::Value *val,
   return archive(rval);
 }
 
-Bexpression *BnodeBuilder::mkComposite(Btype *btype,
-                                       llvm::Value *value,
-                                       const std::vector<Bexpression *> &vals,
-                                       Binstructions &instructions,
-                                       Location loc)
+Bexpression *
+BnodeBuilder::mkIndexedComposite(Btype *btype,
+                                 llvm::Value *value,
+                                 const std::vector<Bexpression *> &vals,
+                                  const std::vector<unsigned long> &indices,
+                                 Binstructions &instructions,
+                                 Location loc)
 {
   std::vector<Bnode *> kids;
   for (auto &v : vals)
     kids.push_back(v);
-
-  // Note that value may be NULL; this corresponds to the
-  // case where we've delayed creation of a composite value
-  // so as to see whether it might feed into a variable init.
   Bexpression *rval =
       new Bexpression(N_Composite, kids, value, btype, loc);
   for (auto &inst : instructions.instructions())
     rval->appendInstruction(inst);
+  indexvecs_.push_back(indices);
+  rval->u.indices = &indexvecs_.back();
+  return archive(rval);
+}
+
+Bexpression *
+BnodeBuilder::mkComposite(Btype *btype,
+                          llvm::Value *value,
+                          const std::vector<Bexpression *> &vals,
+                          Binstructions &instructions,
+                          Location loc)
+{
+  std::vector<Bnode *> kids;
+  for (auto &v : vals)
+    kids.push_back(v);
+  Bexpression *rval =
+      new Bexpression(N_Composite, kids, value, btype, loc);
+  for (auto &inst : instructions.instructions())
+    rval->appendInstruction(inst);
+  rval->u.indices = nullptr;
   return archive(rval);
 }
 
@@ -642,14 +680,18 @@ Bexpression *BnodeBuilder::mkCompound(Bstatement *st,
 
 Bexpression *BnodeBuilder::mkCall(Btype *btype,
                                   llvm::Value *val,
+                                  Bfunction *caller,
+                                  Bexpression *fnExpr,
+                                  Bexpression *chainExpr,
                                   const std::vector<Bexpression *> &args,
                                   Binstructions &instructions,
                                   Location loc)
 {
   std::vector<Bnode *> kids;
+  kids.push_back(fnExpr);
+  kids.push_back(chainExpr);
   for (auto &a : args)
     kids.push_back(a);
-  assert(val);
   Bexpression *rval =
       new Bexpression(N_Call, kids, val, btype, loc);
   bool found = false;
@@ -658,10 +700,29 @@ Bexpression *BnodeBuilder::mkCall(Btype *btype,
       found = true;
     rval->appendInstruction(inst);
   }
-  if (!found && ! llvm::isa<llvm::AllocaInst>(val)) {
+  if (!found && val && !llvm::isa<llvm::AllocaInst>(val)) {
     assert(llvm::isa<llvm::Instruction>(val));
     rval->appendInstruction(llvm::cast<llvm::Instruction>(val));
   }
+  rval->u.func = caller;
+  return archive(rval);
+}
+
+Bexpression *BnodeBuilder::mkConditional(Bfunction *function,
+                                         Btype *btype,
+                                         Bexpression *condition,
+                                         Bexpression *then_expr,
+                                         Bexpression *else_expr,
+                                         Location loc)
+{
+  std::vector<Bnode *> kids;
+  kids.push_back(condition);
+  kids.push_back(then_expr);
+  if (else_expr)
+    kids.push_back(else_expr);
+  Bexpression *rval =
+      new Bexpression(N_Conditional, kids, nullptr, btype, loc);
+  rval->u.func = function;
   return archive(rval);
 }
 
@@ -861,6 +922,7 @@ BnodeBuilder::extractChildenAndDestroy(Bexpression *expr)
     assert(ekid);
     orphans.push_back(ekid);
   }
+  integrityVisitor_->deletePending(expr);
   freeExpr(expr);
   return orphans;
 }

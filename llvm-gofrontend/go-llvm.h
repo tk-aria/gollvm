@@ -438,7 +438,7 @@ public:
   Bexpression *makeConstCompositeExpr(Btype *btype,
                                       llvm::CompositeType *llct,
                                       unsigned numElements,
-                                      const std::vector<unsigned long> &indexes,
+                                      const std::vector<unsigned long> *indexes,
                                       const std::vector<Bexpression *> &vals,
                                       Location location);
 
@@ -446,7 +446,7 @@ public:
   Bexpression *makeDelayedCompositeExpr(Btype *btype,
                                         llvm::CompositeType *llct,
                                         unsigned numElements,
-                                        const std::vector<unsigned long> &idxs,
+                                        const std::vector<unsigned long> *idxs,
                                         const std::vector<Bexpression *> &vals,
                                         Location location);
 
@@ -648,8 +648,33 @@ public:
   // for the temp.
   llvm::Instruction *storeToTemporary(Bfunction *func, llvm::Value *val);
 
-private:
+  // Generate a "late" type conversion (e.g. during materialization,
+  // hence no delayed value creation).
+  Bexpression *lateConvert(Btype *type, Bexpression *expr, Location);
 
+ public:
+
+  // Exposed for unit testing.
+  Bexpression *materialize(Bexpression *expr);
+
+  // Helper routines to materialize llvm::Value's for expression nodes,
+  // invoked by routine above. Public primarily because we need to call
+  // them from MaterializeVisitor (could be privatized if the materializer
+  // was added as a friend).
+  Bexpression *materializeIndirect(Bexpression *indExpr);
+  Bexpression *materializeAddress(Bexpression *addrExpr);
+  Bexpression *materializeConversion(Bexpression *convExpr);
+  Bexpression *materializeStructField(Bexpression *fieldExpr);
+  Bexpression *materializeConditional(Bexpression *condExpr);
+  Bexpression *materializeUnary(Bexpression *unaryExpr);
+  Bexpression *materializeBinary(Bexpression *binExpr);
+  Bexpression *materializeConstructor(Bexpression *conExpr);
+  Bexpression *materializeComposite(Bexpression *comExpr);
+  Bexpression *materializePointerOffset(Bexpression *ptroffExpr);
+  Bexpression *materializeArrayIndex(Bexpression *arindExpr);
+  Bexpression *materializeCall(Bexpression *callExpr);
+
+ private:
   typedef std::pair<llvm::Value *, Btype *> valbtype;
   typedef pairvalmap<llvm::Value *, Btype *, Bexpression *>
   btyped_value_expr_maptyp;

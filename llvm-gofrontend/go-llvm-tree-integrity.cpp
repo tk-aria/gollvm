@@ -44,6 +44,15 @@ bool IntegrityVisitor::shouldBeTracked(Bnode *child)
   return true;
 }
 
+void IntegrityVisitor::deletePending(Bnode *node)
+{
+  assert(shouldBeTracked(node));
+  auto it = nparent_.find(node);
+  if (it == nparent_.end())
+    return;
+  nparent_.erase(it);
+}
+
 // This helper routine is invoked in situations where the node
 // builder wants to "reparent" the children of a node, e.g. it has
 // a "foo" node with children X and Y, and it wants to convert it
@@ -73,7 +82,8 @@ void IntegrityVisitor::unsetParent(Bnode *child, Bnode *parent, unsigned slot)
   if (! shouldBeTracked(child))
     return;
   auto it = nparent_.find(child);
-  assert(it != nparent_.end());
+  if (it == nparent_.end())
+    return;
   parslot pps = it->second;
   Bnode *prevParent = pps.first;
   unsigned prevSlot = pps.second;

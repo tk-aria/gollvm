@@ -47,21 +47,12 @@ class SimpleVisitor {
 
   std::string str() const { return ss_.str(); }
 
-  void setIds(const std::vector<Bnode *> &nodes) {
-    for (auto &n : nodes) {
-      assert(ids_.find(n) == ids_.end());
-      unsigned id = ids_.size();
-      ids_[n] = id;
-    }
-  }
   unsigned id(Bnode *node) {
-    return (ids_.find(node) != ids_.end() ?
-            ids_[node]+1 : 0);
+    return node->id();
   }
 
  private:
   std::stringstream ss_;
-  std::map<Bnode *, unsigned> ids_;
   unsigned stopAt_;
 };
 
@@ -83,45 +74,43 @@ TEST(BackendNodeTests, VerifyVisitorBehavior) {
   Bexpression *ve2 = be->var_expression(yv, VE_rvalue, loc);
   Bexpression *der = be->indirect_expression(bi32t, ve2, false, loc);
   Bexpression *sub = be->binary_expression(OPERATOR_MINUS, add, der, loc);
+  Bexpression *matsub = be->materialize(sub);
 
-  std::vector<Bnode *> nodes = { c22, ve, add, ve2, der, sub };
-  vis.setIds(nodes);
+  Bnode *res1 = update_walk_nodes(matsub, vis);
 
-  Bnode *res1 = update_walk_nodes(sub, vis);
-
-  EXPECT_EQ(res1, sub);
+  EXPECT_EQ(res1, matsub);
 
   const char *exp = R"RAW_RESULT(
-     node - pre 6
-     pre child + 6 3
-     node + pre 3
-     pre child const 3 1
-     node const pre 1
-     node const post 1
-     post child const 3 1
-     pre child deref 3 0
-     node deref pre 0
-     pre child var 0 2
-     node var pre 2
-     node var post 2
-     post child var 0 2
-     node deref post 0
-     post child deref 3 0
-     node + post 3
-     post child + 6 3
-     pre child deref 6 0
-     node deref pre 0
-     pre child deref 0 5
-     node deref pre 5
-     pre child var 5 4
-     node var pre 4
-     node var post 4
-     post child var 5 4
-     node deref post 5
-     post child deref 0 5
-     node deref post 0
-     post child deref 6 0
-     node - post 6
+    node - pre 17
+    pre child + 17 14
+    node + pre 14
+    pre child const 14 1
+    node const pre 1
+    node const post 1
+    post child const 14 1
+    pre child deref 14 13
+    node deref pre 13
+    pre child var 13 8
+    node var pre 8
+    node var post 8
+    post child var 13 8
+    node deref post 13
+    post child deref 14 13
+    node + post 14
+    post child + 17 14
+    pre child deref 17 16
+    node deref pre 16
+    pre child deref 16 15
+    node deref pre 15
+    pre child var 15 10
+    node var pre 10
+    node var post 10
+    post child var 15 10
+    node deref post 15
+    post child deref 16 15
+    node deref post 16
+    post child deref 17 16
+    node - post 17
     )RAW_RESULT";
 
   std::string reason;
@@ -132,7 +121,7 @@ TEST(BackendNodeTests, VerifyVisitorBehavior) {
     std::cerr << "result dump:\n" << vis.str() << "\n";
   }
 
-  h.mkExprStmt(sub);
+  h.mkExprStmt(matsub);
 
   bool broken = h.finish(PreserveDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
@@ -158,9 +147,9 @@ TEST(BackendNodeTests, CloneSubtree) {
   Bexpression *vey = be->var_expression(yv, VE_rvalue, loc);
   Bexpression *der = be->indirect_expression(bi32t, vey, false, loc);
   Bexpression *add = be->binary_expression(OPERATOR_PLUS, sub, der, loc);
-
-  Bexpression *addclone = be->nodeBuilder().cloneSubtree(add);
-  EXPECT_NE(add, addclone);
+  Bexpression *matadd = be->materialize(add);
+  Bexpression *matclone = be->materialize(matadd);
+  EXPECT_NE(add, matclone);
 
   const char *exp = R"RAW_RESULT(
   %x.ld.0 = load i32, i32* %x
@@ -172,13 +161,13 @@ TEST(BackendNodeTests, CloneSubtree) {
   %add.1 = add i32 %add.0, %.ld.0
     )RAW_RESULT";
 
-  bool isOK = h.expectRepr(add, exp);
+  bool isOK = h.expectRepr(matadd, exp);
   EXPECT_TRUE(isOK && "expr does not have expected contents");
-  isOK = h.expectRepr(addclone, exp);
+  isOK = h.expectRepr(matclone, exp);
   EXPECT_TRUE(isOK && "cloned expr does not have expected contents");
 
-  h.mkExprStmt(add);
-  h.mkExprStmt(addclone);
+  h.mkExprStmt(matadd);
+  h.mkExprStmt(matclone);
 
   bool broken = h.finish(PreserveDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
@@ -203,23 +192,24 @@ TEST(BackendNodeTests, FixSharing) {
   Bexpression *f2ex = be->struct_field_expression(f1ex, 0, loc);
   Bexpression *der = be->indirect_expression(bi32t, f2ex, false, loc);
   Bexpression *add = be->binary_expression(OPERATOR_PLUS, der, der, loc);
+  Bexpression *matadd = be->materialize(add);
 
   const char *exp2 = R"RAW_RESULT(
   %field.0 = getelementptr inbounds { { i32*, i32 }, { i32*, i32 } }, { { i32*, i32 }, { i32*, i32 } }* %x, i32 0, i32 0
   %field.1 = getelementptr inbounds { i32*, i32 }, { i32*, i32 }* %field.0, i32 0, i32 0
   %x.field.field.ld.0 = load i32*, i32** %field.1
   %.ld.0 = load i32, i32* %x.field.field.ld.0
-  %field.0 = getelementptr inbounds { { i32*, i32 }, { i32*, i32 } }, { { i32*, i32 }, { i32*, i32 } }* %x, i32 0, i32 0
-  %field.1 = getelementptr inbounds { i32*, i32 }, { i32*, i32 }* %field.0, i32 0, i32 0
-  %x.field.field.ld.0 = load i32*, i32** %field.1
-  %.ld.1 = load i32, i32* %x.field.field.ld.0
+  %field.2 = getelementptr inbounds { { i32*, i32 }, { i32*, i32 } }, { { i32*, i32 }, { i32*, i32 } }* %x, i32 0, i32 0
+  %field.3 = getelementptr inbounds { i32*, i32 }, { i32*, i32 }* %field.2, i32 0, i32 0
+  %.field.field.ld.0 = load i32*, i32** %field.3
+  %.ld.1 = load i32, i32* %.field.field.ld.0
   %add.0 = add i32 %.ld.0, %.ld.1
     )RAW_RESULT";
 
-  bool isOK = h.expectRepr(add, exp2);
+  bool isOK = h.expectRepr(matadd, exp2);
   EXPECT_TRUE(isOK && "expr does not have expected contents");
 
-  h.mkExprStmt(add);
+  h.mkExprStmt(matadd);
 
   bool broken = h.finish(PreserveDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");

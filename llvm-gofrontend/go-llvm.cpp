@@ -547,11 +547,25 @@ Bexpression *Llvm_backend::genLoad(Bexpression *expr,
 Bexpression *Llvm_backend::indirect_expression(Btype *btype,
                                                Bexpression *expr,
                                                bool known_valid,
-                                               Location location) {
+                                               Location location)
+{
+
   if (expr == errorExpression() || btype == errorType())
     return errorExpression();
 
   assert(expr->btype()->type()->isPointerTy());
+
+  Bexpression *rval = nbuilder_.mkDeref(btype, nullptr, expr, location);
+  return rval;
+}
+
+Bexpression *Llvm_backend::materializeIndirect(Bexpression *indExpr)
+{
+  Location location = indExpr->location();
+  Btype *btype = indExpr->btype();
+  std::vector<Bexpression *> iexprs =
+      nbuilder_.extractChildenAndDestroy(indExpr);
+  Bexpression *expr = iexprs[0];
 
   const VarContext *vc = nullptr;
   if (expr->varExprPending()) {
@@ -579,9 +593,23 @@ Bexpression *Llvm_backend::indirect_expression(Btype *btype,
 // Get the address of an expression.
 
 Bexpression *Llvm_backend::address_expression(Bexpression *bexpr,
-                                              Location location) {
+                                              Location location)
+{
   if (bexpr == errorExpression())
     return errorExpression();
+
+  Btype *pt = pointer_type(bexpr->btype());
+  Bexpression *rval = nbuilder_.mkAddress(pt, nullptr, bexpr, location);
+  return rval;
+}
+
+Bexpression *Llvm_backend::materializeAddress(Bexpression *addrExpr)
+{
+  Location location = addrExpr->location();
+  std::vector<Bexpression *> aexprs =
+      nbuilder_.extractChildenAndDestroy(addrExpr);
+  Bexpression *bexpr = aexprs[0];
+  assert(bexpr->value());
 
   // Gofrontend tends to take the address of things that are already
   // pointer-like to begin with (for example, C strings and and
@@ -916,7 +944,8 @@ Llvm_backend::makeTempVar(Bexpression *expr, Location location) {
 
 Bexpression *Llvm_backend::var_expression(Bvariable *var,
                                           Varexpr_context in_lvalue_pos,
-                                          Location location) {
+                                          Location location)
+{
   if (var == errorVariable_.get())
     return errorExpression();
 
@@ -1075,8 +1104,7 @@ Bexpression *Llvm_backend::complex_constant_expression(Btype *btype,
     return nullptr;
   }
 
-  std::vector<unsigned long> indexes = {0, 1};
-  return makeConstCompositeExpr(btype, llst, 2, indexes, exps, Location());
+  return makeConstCompositeExpr(btype, llst, 2, nullptr, exps, Location());
 }
 
 // Make a constant string expression.
@@ -1134,36 +1162,18 @@ Bexpression *Llvm_backend::boolean_constant_expression(bool val) {
 // Return the real part of a complex expression.
 
 Bexpression *Llvm_backend::real_part_expression(Bexpression *bcomplex,
-                                                Location location) {
+                                                Location location)
+{
   if (bcomplex == errorExpression())
     return errorExpression();
 
-  if (bcomplex->compositeInitPending())
-    bcomplex = resolveCompositeInit(bcomplex, nullptr);
-
-  // Construct an appropriate GEP
-  llvm::Type *llt = bcomplex->btype()->type();
-  assert(llt->isStructTy());
-  llvm::StructType *llst = llvm::cast<llvm::StructType>(llt);
-  llvm::Value *cval = bcomplex->value();
-  llvm::Value *fval;
-  if (bcomplex->isConstant())
-    fval = llvm::cast<llvm::Constant>(cval)->getAggregateElement((unsigned int)0);
-  else
-    fval = makeFieldGEP(llst, 0, cval);
   BComplexType *bct = bcomplex->btype()->castToBComplexType();
   assert(bct);
   Btype *bft = floatType(bct->bits()/2);
-
-  // Wrap result in a Bexpression
-  Bexpression *rval = nbuilder_.mkStructField(bft, fval, bcomplex,
-                                              0, location);
-
-  std::string tag(bcomplex->tag());
-  tag += ".real";
-  rval->setTag(tag);
-
-  // We're done
+  unsigned fIndex = 0;
+  Bexpression *rval = nbuilder_.mkStructField(bft, nullptr,
+                                              bcomplex, fIndex, location);
+  rval->setTag(".real");
   return rval;
 }
 
@@ -1174,32 +1184,16 @@ Bexpression *Llvm_backend::imag_part_expression(Bexpression *bcomplex,
   if (bcomplex == errorExpression())
     return errorExpression();
 
-  if (bcomplex->compositeInitPending())
-    bcomplex = resolveCompositeInit(bcomplex, nullptr);
+  if (bcomplex == errorExpression())
+    return errorExpression();
 
-  // Construct an appropriate GEP
-  llvm::Type *llt = bcomplex->btype()->type();
-  assert(llt->isStructTy());
-  llvm::StructType *llst = llvm::cast<llvm::StructType>(llt);
-  llvm::Value *cval = bcomplex->value();
-  llvm::Value *fval;
-  if (bcomplex->isConstant())
-    fval = llvm::cast<llvm::Constant>(cval)->getAggregateElement((unsigned int)1);
-  else
-    fval = makeFieldGEP(llst, 1, cval);
   BComplexType *bct = bcomplex->btype()->castToBComplexType();
   assert(bct);
   Btype *bft = floatType(bct->bits()/2);
-
-  // Wrap result in a Bexpression
-  Bexpression *rval = nbuilder_.mkStructField(bft, fval, bcomplex,
-                                              1, location);
-
-  std::string tag(bcomplex->tag());
-  tag += ".imag";
-  rval->setTag(tag);
-
-  // We're done
+  unsigned fIndex = 1;
+  Bexpression *rval = nbuilder_.mkStructField(bft, nullptr,
+                                              bcomplex, fIndex, location);
+  rval->setTag(".imag");
   return rval;
 }
 
@@ -1215,25 +1209,19 @@ Bexpression *Llvm_backend::complex_expression(Bexpression *breal,
   BFloatType *bet = breal->btype()->castToBFloatType();
   assert(bet);
   Btype *bct = complexType(bet->bits()*2);
-  llvm::Type *llt = bct->type();
-  assert(llt->isStructTy());
-  llvm::StructType *llst = llvm::cast<llvm::StructType>(llt);
-
-  std::vector<Bexpression *> vals = {breal, bimag};
-  std::vector<unsigned long> indexes = {0, 1};
-
-  // Constant values?
-  bool isConstant = valuesAreConstant(vals);
-  if (isConstant)
-    return makeConstCompositeExpr(bct, llst, 2, indexes, vals, location);
-  else
-    return makeDelayedCompositeExpr(bct, llst, 2, indexes, vals, location);
+  std::vector<Bexpression *> vals = { breal, bimag };
+  Binstructions noInstructions;
+  Bexpression *rval = nbuilder_.mkComposite(bct, nullptr, vals,
+                                            noInstructions, location);
+  return rval;
 }
 
 // An expression that converts an expression to a different type.
 
-Bexpression *Llvm_backend::convert_expression(Btype *type, Bexpression *expr,
-                                              Location location) {
+Bexpression *Llvm_backend::convert_expression(Btype *type,
+                                              Bexpression *expr,
+                                              Location location)
+{
   if (type == errorType() || expr == errorExpression())
     return errorExpression();
   if (expr->btype() == type)
@@ -1246,6 +1234,18 @@ Bexpression *Llvm_backend::convert_expression(Btype *type, Bexpression *expr,
     type = pointer_type(type);
     toType = type->type();
   }
+
+  Bexpression *rval = nbuilder_.mkConversion(type, nullptr, expr, location);
+  return rval;
+}
+
+Bexpression *Llvm_backend::materializeConversion(Bexpression *convExpr)
+{
+  Location location = convExpr->location();
+  Btype *type = convExpr->btype();
+  std::vector<Bexpression *> iexprs =
+      nbuilder_.extractChildenAndDestroy(convExpr);
+  Bexpression *expr = iexprs[0];
 
   // Complex -> complex conversion
   if (type->castToBComplexType())
@@ -1260,6 +1260,7 @@ Bexpression *Llvm_backend::convert_expression(Btype *type, Bexpression *expr,
   llvm::Value *val = expr->value();
   assert(val);
   llvm::Type *valType = val->getType();
+  llvm::Type *toType = type->type();
 
   // In the varexpr pending case, decide what to do depending on whether
   // the var is in an lvalue or rvalue context. For something like
@@ -1424,9 +1425,8 @@ Bexpression *Llvm_backend::makeComplexConvertExpr(Btype *type,
   Bstatement *rinit = p2.second;
   Bexpression *rvex = nbuilder_.mkVar(rvar, location);
   Bstatement *init = statement_list(std::vector<Bstatement*>{einit, rinit});
-  return compound_expression(init, rvex, location);
+  return nbuilder_.mkCompound(init, rvex, location);
 }
-
 
 // Get the address of a function.
 
@@ -1486,9 +1486,25 @@ llvm::Value *Llvm_backend::makeFieldGEP(llvm::StructType *llst,
 
 Bexpression *Llvm_backend::struct_field_expression(Bexpression *bstruct,
                                                    size_t index,
-                                                   Location location) {
+                                                   Location location)
+{
   if (bstruct == errorExpression())
     return errorExpression();
+
+  Btype *bft = elementTypeByIndex(bstruct->btype(), index);
+  Bexpression *rval = nbuilder_.mkStructField(bft, nullptr,
+                                              bstruct, index, location);
+  return rval;
+}
+
+Bexpression *Llvm_backend::materializeStructField(Bexpression *fieldExpr)
+{
+  Location location = fieldExpr->location();
+  const std::string ftag(fieldExpr->tag());
+  unsigned index = fieldExpr->fieldIndex();
+  std::vector<Bexpression *> fexprs =
+      nbuilder_.extractChildenAndDestroy(fieldExpr);
+  Bexpression *bstruct = fexprs[0];
 
   if (bstruct->compositeInitPending())
     bstruct = resolveCompositeInit(bstruct, nullptr);
@@ -1513,7 +1529,7 @@ Bexpression *Llvm_backend::struct_field_expression(Bexpression *bstruct,
     rval->setVarExprPending(bstruct->varContext());
 
   std::string tag(bstruct->tag());
-  tag += ".field";
+  tag += (ftag.empty() ? ".field" : ftag);
   rval->setTag(tag);
 
   // We're done
@@ -1524,9 +1540,12 @@ Bexpression *Llvm_backend::struct_field_expression(Bexpression *bstruct,
 
 Bexpression *Llvm_backend::compound_expression(Bstatement *bstat,
                                                Bexpression *bexpr,
-                                               Location location) {
+                                               Location location)
+{
   if (bstat == errorStatement() || bexpr == errorExpression())
     return errorExpression();
+
+  bexpr = materialize(bexpr);
 
   // Compound expressions can be used to produce lvalues, so we don't
   // want to call resolve() on bexpr here.
@@ -1552,6 +1571,23 @@ Bexpression *Llvm_backend::conditional_expression(Bfunction *function,
     return errorExpression();
 
   assert(condition && then_expr);
+
+  Bexpression *rval =
+      nbuilder_.mkConditional(function, btype, condition,
+                              then_expr, else_expr, location);
+  return rval;
+}
+
+Bexpression *Llvm_backend::materializeConditional(Bexpression *condExpr)
+{
+  Bfunction *function = condExpr->getFunction();
+  Location location = condExpr->location();
+  Btype *btype = condExpr->btype();
+  std::vector<Bexpression *> cexprs =
+      nbuilder_.extractChildenAndDestroy(condExpr);
+  Bexpression *condition = cexprs[0];
+  Bexpression *then_expr = cexprs[1];
+  Bexpression *else_expr = (cexprs.size() == 3 ? cexprs[2] : nullptr);
 
   condition = resolveVarContext(condition);
   then_expr = resolve(then_expr);
@@ -1612,19 +1648,39 @@ Bexpression *Llvm_backend::conditional_expression(Bfunction *function,
 
 // Return an expression for the unary operation OP EXPR.
 
-Bexpression *Llvm_backend::unary_expression(Operator op, Bexpression *expr,
-                                            Location location) {
+Bexpression *Llvm_backend::unary_expression(Operator op,
+                                            Bexpression *expr,
+                                            Location location)
+{
   if (expr == errorExpression())
     return errorExpression();
+
+  Btype *bt = expr->btype();
+
+  // FIXME: for floating point zero expr should be -0.0
+  if (op == OPERATOR_MINUS)
+    return binary_expression(OPERATOR_MINUS, zero_expression(bt),
+                             expr, location);
+
+  Bexpression *rval = nbuilder_.mkUnaryOp(op, bt, nullptr, expr, location);
+  return rval;
+}
+
+Bexpression *Llvm_backend::materializeUnary(Bexpression *unExpr)
+{
+  Operator op = unExpr->op();
+  Location location = unExpr->location();
+  std::vector<Bexpression *> uexprs =
+      nbuilder_.extractChildenAndDestroy(unExpr);
+  Bexpression *expr = uexprs[0];
 
   expr = resolveVarContext(expr);
   Btype *bt = expr->btype();
 
   switch (op) {
     case OPERATOR_MINUS: {
-      // FIXME: for floating point zero expr should be -0.0
-      return binary_expression(OPERATOR_MINUS, zero_expression(bt),
-                               expr, location);
+      assert(false && "should have been expanded away");
+      break;
     }
 
     case OPERATOR_NOT: {
@@ -1642,7 +1698,7 @@ Bexpression *Llvm_backend::unary_expression(Operator op, Bexpression *expr,
       llvm::Constant *one = llvm::ConstantInt::get(llvmBoolType(), 1);
       llvm::Value *xorex = builder.CreateXor(cmp, one, namegen("xor"));
       Bexpression *notex = nbuilder_.mkUnaryOp(op, lbt, xorex, cmpex, location);
-      Bexpression *tobool = convert_expression(bool_type(), notex, location);
+      Bexpression *tobool = lateConvert(bool_type(), notex, location);
       return tobool;
     }
     case OPERATOR_XOR: {
@@ -1774,6 +1830,23 @@ Bexpression *Llvm_backend::binary_expression(Operator op, Bexpression *left,
   if (left == errorExpression() || right == errorExpression())
     return errorExpression();
 
+  // Arbitrarily select the left child type as the type for the binop.
+  // This may be revised later during genBinary.
+  Btype *btype = left->btype();
+  Bexpression *rval =
+      nbuilder_.mkBinaryOp(op, btype, nullptr, left, right, location);
+  return rval;
+}
+
+Bexpression *Llvm_backend::materializeBinary(Bexpression *binExpr)
+{
+  Operator op = binExpr->op();
+  Location location = binExpr->location();
+  std::vector<Bexpression *> bexprs =
+      nbuilder_.extractChildenAndDestroy(binExpr);
+  Bexpression *left = bexprs[0];
+  Bexpression *right = bexprs[1];
+
   Btype *bltype = left->btype();
   Btype *brtype = right->btype();
   BComplexType *blctype = bltype->castToBComplexType();
@@ -1824,7 +1897,7 @@ Bexpression *Llvm_backend::binary_expression(Operator op, Bexpression *left,
     Bexpression *cmpex =
         nbuilder_.mkBinaryOp(op, bcmpt, val, left, right, location);
     // ... widen to go boolean type
-    return convert_expression(bool_type(), cmpex, location);
+    return lateConvert(bool_type(), cmpex, location);
   }
   case OPERATOR_MINUS: {
     if (ltype->isFloatingPointTy())
@@ -1970,7 +2043,7 @@ Bexpression *Llvm_backend::makeComplexBinaryExpr(Operator op, Bexpression *left,
     else
       val = binary_expression(OPERATOR_OROR, cmpr, cmpi, location);
     Bstatement *init = statement_list(std::vector<Bstatement*>{linit, rinit});
-    return compound_expression(init, val, location);
+    return materialize(compound_expression(init, val, location));
   }
   default:
     std::cerr << "Op " << op << " unhandled\n";
@@ -2005,24 +2078,42 @@ Bexpression *Llvm_backend::constructor_expression(
   if (btype == errorType() || exprVectorHasError(vals))
     return errorExpression();
 
-  llvm::Type *llt = btype->type();
-  assert(llt->isStructTy());
-  llvm::StructType *llst = llvm::cast<llvm::StructType>(llt);
+  Binstructions noInstructions;
+  Bexpression *rval = nbuilder_.mkComposite(btype, nullptr, vals,
+                                            noInstructions, location);
+  return rval;
+}
 
-  // Not sure if we can count on this, may have to take it out
-  unsigned numElements = llst->getNumElements();
-  assert(vals.size() == numElements);
+Bexpression *Llvm_backend::materializeComposite(Bexpression *comExpr)
+{
+  Location location = comExpr->location();
+  Btype *btype = comExpr->btype();
+  const std::vector<unsigned long> *indexes = comExpr->getIndices();
+  std::vector<Bexpression *> vals =
+      nbuilder_.extractChildenAndDestroy(comExpr);
+
+  llvm::Type *llt = btype->type();
+  unsigned numElements = 0;
+  assert(llt->isStructTy() || llt->isArrayTy());
+  llvm::CompositeType *llct = nullptr;
+  if (llt->isStructTy()) {
+    llvm::StructType *llst = llvm::cast<llvm::StructType>(llt);
+    numElements = llst->getNumElements();
+    assert(vals.size() == numElements);
+    llct = llst;
+  } else {
+    llvm::ArrayType *llat = llvm::cast<llvm::ArrayType>(llt);
+    numElements = llat->getNumElements();
+    llct = llat;
+  }
 
   // Constant values?
   bool isConstant = valuesAreConstant(vals);
-  std::vector<unsigned long> indexes;
-  for (unsigned long ii = 0; ii < vals.size(); ++ii)
-    indexes.push_back(ii);
   if (isConstant)
-    return makeConstCompositeExpr(btype, llst, numElements,
+    return makeConstCompositeExpr(btype, llct, numElements,
                                   indexes, vals, location);
   else
-    return makeDelayedCompositeExpr(btype, llst, numElements,
+    return makeDelayedCompositeExpr(btype, llct, numElements,
                                     indexes, vals, location);
 }
 
@@ -2030,32 +2121,38 @@ Bexpression *
 Llvm_backend::makeDelayedCompositeExpr(Btype *btype,
                                        llvm::CompositeType *llct,
                                        unsigned numElements,
-                                       const std::vector<unsigned long> &indexes,
+                                       const std::vector<unsigned long> *indexes,
                                        const std::vector<Bexpression *> &vals,
-                                       Location location) {
-  unsigned long nvals = vals.size();
-  std::set<unsigned long> touched;
+                                       Location location)
+{
   std::vector<Bexpression *> init_vals(numElements);
-  for (unsigned ii = 0; ii < indexes.size(); ++ii) {
-    auto idx = indexes[ii];
-    if (numElements != nvals)
-      touched.insert(idx);
-    init_vals[idx] = vals[ii];
-  }
-  if (numElements != nvals) {
-    for (unsigned long ii = 0; ii < numElements; ++ii) {
-      Btype *bElemTyp = elementTypeByIndex(btype, ii);
-      if (touched.find(ii) == touched.end())
-        init_vals[ii] = zero_expression(bElemTyp);
+  if (indexes) {
+    unsigned long nvals = vals.size();
+    unsigned long nindxs = indexes->size();
+    std::set<unsigned long> touched;
+    for (unsigned ii = 0; ii < nindxs; ++ii) {
+      auto idx = (*indexes)[ii];
+      if (numElements != nvals)
+        touched.insert(idx);
+      init_vals[idx] = vals[ii];
     }
+    if (numElements != nvals) {
+      for (unsigned long ii = 0; ii < numElements; ++ii) {
+        Btype *bElemTyp = elementTypeByIndex(btype, ii);
+        if (touched.find(ii) == touched.end())
+          init_vals[ii] = zero_expression(bElemTyp);
+      }
+    }
+  } else {
+    init_vals = vals;
   }
 
   // Here the NULL value signals that we want to delay full instantiation
   // of this constant expression until we can identify the storage for it.
   llvm::Value *nilval = nullptr;
-  Binstructions instructions;
+  Binstructions noInstructions;
   Bexpression *ccon = nbuilder_.mkComposite(btype, nilval, init_vals,
-                                            instructions, location);
+                                            noInstructions, location);
   return ccon;
 }
 
@@ -2063,32 +2160,45 @@ Bexpression *
 Llvm_backend::makeConstCompositeExpr(Btype *btype,
                                      llvm::CompositeType *llct,
                                      unsigned numElements,
-                                     const std::vector<unsigned long> &indexes,
+                                     const std::vector<unsigned long> *indexes,
                                      const std::vector<Bexpression *> &vals,
-                                     Location location) {
-  unsigned long nvals = vals.size();
-  std::set<unsigned long> touched;
+                                     Location location)
+{
   llvm::SmallVector<llvm::Constant *, 64> llvals(numElements);
-  for (unsigned ii = 0; ii < indexes.size(); ++ii) {
-    auto idx = indexes[ii];
-    if (numElements != nvals)
-      touched.insert(idx);
-    Bexpression *bex = vals[ii];
-    llvm::Constant *con = llvm::cast<llvm::Constant>(bex->value());
-    llvm::Type *elt = llct->getTypeAtIndex(ii);
-    if (elt != con->getType())
-      con = llvm::ConstantExpr::getBitCast(con, elt);
+  unsigned long nvals = vals.size();
 
-    llvals[idx] = con;
-  }
-  if (numElements != nvals) {
-    for (unsigned long ii = 0; ii < numElements; ++ii) {
-      if (touched.find(ii) == touched.end()) {
-        llvm::Type *elt = llct->getTypeAtIndex(ii);
-        llvals[ii] = llvm::Constant::getNullValue(elt);
+  if (indexes) {
+    std::set<unsigned long> touched;
+    unsigned long nindxs = indexes->size();
+    for (unsigned ii = 0; ii < nindxs; ++ii) {
+      auto idx = (*indexes)[ii];
+      if (numElements != nvals)
+        touched.insert(idx);
+      Bexpression *bex = vals[ii];
+      llvm::Constant *con = llvm::cast<llvm::Constant>(bex->value());
+      llvm::Type *elt = llct->getTypeAtIndex(ii);
+      if (elt != con->getType())
+        con = llvm::ConstantExpr::getBitCast(con, elt);
+      llvals[idx] = con;
+    }
+    if (numElements != nvals) {
+      for (unsigned long ii = 0; ii < numElements; ++ii) {
+        if (touched.find(ii) == touched.end()) {
+          llvm::Type *elt = llct->getTypeAtIndex(ii);
+          llvals[ii] = llvm::Constant::getNullValue(elt);
+        }
       }
     }
-  }
+  } else {
+    for (unsigned long ii = 0; ii < numElements; ++ii) {
+      llvm::Constant *con = llvm::cast<llvm::Constant>(vals[ii]->value());
+      llvm::Type *elt = llct->getTypeAtIndex(ii);
+      if (elt != con->getType())
+        con = llvm::ConstantExpr::getBitCast(con, elt);
+      llvals[ii] = con;
+    }
+   }
+
   llvm::Value *scon;
   if (llct->isStructTy()) {
     llvm::StructType *llst = llvm::cast<llvm::StructType>(llct);
@@ -2098,33 +2208,24 @@ Llvm_backend::makeConstCompositeExpr(Btype *btype,
     scon = llvm::ConstantArray::get(llat, llvals);
   }
 
-  Binstructions instructions;
+  Binstructions noInstructions;
   Bexpression *bcon = nbuilder_.mkComposite(btype, scon, vals,
-                                            instructions, location);
+                                            noInstructions, location);
   return makeGlobalExpression(bcon, scon, btype, location);
 }
 
 Bexpression *Llvm_backend::array_constructor_expression(
     Btype *array_btype, const std::vector<unsigned long> &indexes,
-    const std::vector<Bexpression *> &vals, Location location) {
+    const std::vector<Bexpression *> &vals, Location location)
+{
   if (array_btype == errorType() || exprVectorHasError(vals))
     return errorExpression();
 
-  llvm::Type *llt = array_btype->type();
-  assert(llt->isArrayTy());
-  llvm::ArrayType *llat = llvm::cast<llvm::ArrayType>(llt);
-  unsigned numElements = llat->getNumElements();
-
-  // frontend should be enforcing this
-  assert(indexes.size() == vals.size());
-
-  // Constant values?
-  if (valuesAreConstant(vals))
-    return makeConstCompositeExpr(array_btype, llat, numElements,
-                                  indexes, vals, location);
-  else
-    return makeDelayedCompositeExpr(array_btype, llat, numElements,
-                                    indexes, vals, location);
+  Binstructions noInstructions;
+  Bexpression *rval =
+      nbuilder_.mkIndexedComposite(array_btype, nullptr, vals,
+                                   indexes, noInstructions, location);
+  return rval;
 }
 
 // Return an expression for the address of BASE[INDEX].
@@ -2134,6 +2235,19 @@ Bexpression *Llvm_backend::pointer_offset_expression(Bexpression *base,
                                                      Location location) {
   if (base == errorExpression() || index == errorExpression())
     return errorExpression();
+
+  Bexpression *rval = nbuilder_.mkPointerOffset(base->btype(), nullptr,
+                                                base, index, location);
+  return rval;
+}
+
+Bexpression *Llvm_backend::materializePointerOffset(Bexpression *ptroffExpr)
+{
+  Location location = ptroffExpr->location();
+  std::vector<Bexpression *> cexprs =
+      nbuilder_.extractChildenAndDestroy(ptroffExpr);
+  Bexpression *base = cexprs[0];
+  Bexpression *index = cexprs[1];
 
   // Resolve index expression
   index = resolveVarContext(index);
@@ -2183,10 +2297,24 @@ Bexpression *Llvm_backend::pointer_offset_expression(Bexpression *base,
 
 Bexpression *Llvm_backend::array_index_expression(Bexpression *barray,
                                                   Bexpression *index,
-                                                  Location location) {
-
+                                                  Location location)
+{
   if (barray == errorExpression() || index == errorExpression())
     return errorExpression();
+
+  Btype *bet = elementTypeByIndex(barray->btype(), 0);
+  Bexpression *rval =
+      nbuilder_.mkArrayIndex(bet, nullptr, barray, index, location);
+  return rval;
+}
+
+Bexpression *Llvm_backend::materializeArrayIndex(Bexpression *arindExpr)
+{
+  Location location = arindExpr->location();
+  std::vector<Bexpression *> cexprs =
+      nbuilder_.extractChildenAndDestroy(arindExpr);
+  Bexpression *barray = cexprs[0];
+  Bexpression *index = cexprs[1];
 
   if (barray->compositeInitPending())
     barray = resolveCompositeInit(barray, nullptr);
@@ -2489,6 +2617,30 @@ Llvm_backend::call_expression(Bfunction *caller,
       chain_expr == errorExpression())
     return errorExpression();
 
+  Btype *rbtype = functionReturnType(fn_expr->btype());
+  assert(fn_expr->btype()->type()->isPointerTy());
+  Binstructions noInstructions;
+  if (!chain_expr)
+    chain_expr = nbuilder_.mkVoidValue(void_type());
+  Bexpression *rval = nbuilder_.mkCall(rbtype, nullptr, caller,
+                                       fn_expr, chain_expr, fn_args,
+                                       noInstructions, location);
+  return rval;
+}
+
+Bexpression *Llvm_backend::materializeCall(Bexpression *callExpr)
+{
+  Location location = callExpr->location();
+  Bfunction *caller = callExpr->getFunction();
+  std::vector<Bexpression *> cexprs =
+      nbuilder_.extractChildenAndDestroy(callExpr);
+  Bexpression *fn_expr = cexprs[0];
+  Bexpression *chain_expr = cexprs[1];
+  std::vector<Bexpression *> fn_args;
+  for (unsigned idx = 2; idx < cexprs.size(); ++idx) {
+    fn_args.push_back(cexprs[idx]);
+  }
+
   // Resolve fcn. Expect pointer-to-function type here.
   fn_expr = resolveVarContext(fn_expr);
   assert(fn_expr->btype()->type()->isPointerTy());
@@ -2500,17 +2652,15 @@ Llvm_backend::call_expression(Bfunction *caller,
   assert(calleeFcnTyp);
 
   GenCallState state(context_, caller, calleeFcnTyp, typeManager());
-  state.resolvedArgs.push_back(fn_expr);
 
   // Static chain expression if applicable
-  if (chain_expr) {
+  if (chain_expr->btype() != void_type()) {
     chain_expr = resolveVarContext(chain_expr);
     assert(chain_expr->btype()->type()->isPointerTy());
     Btype *bpt = makeAuxType(llvmPtrType());
-    chain_expr = convert_expression(bpt, chain_expr, location);
-    state.resolvedArgs.push_back(chain_expr);
+    chain_expr = lateConvert(bpt, chain_expr, location);
+    assert(chain_expr->value() != nullptr);
     state.chainVal = chain_expr->value();
-
   }
 
   // Set up for call (including creation of return tmp if needed)
@@ -2531,8 +2681,8 @@ Llvm_backend::call_expression(Bfunction *caller,
 
   llvm::Value *callValue = (state.sretTemp ? state.sretTemp : call);
   Bexpression *rval =
-      nbuilder_.mkCall(rbtype, callValue, state.resolvedArgs,
-                       state.instructions, location);
+      nbuilder_.mkCall(rbtype, callValue, caller, fn_expr, chain_expr,
+                       state.resolvedArgs, state.instructions, location);
   state.instructions.clear();
 
   genCallEpilog(state, call, rval);
@@ -2561,6 +2711,7 @@ Bstatement *Llvm_backend::expression_statement(Bfunction *bfunction,
 {
   if (expr == errorExpression() || bfunction == errorFunction_.get())
     return errorStatement();
+  expr = materialize(expr);
   Bstatement *es =
       nbuilder_.mkExprStmt(bfunction, resolve(expr), expr->location());
   return es;
@@ -2580,10 +2731,11 @@ Bstatement *Llvm_backend::init_statement(Bfunction *bfunction,
 }
 
 Bstatement *Llvm_backend::makeInitStatement(Bfunction *bfunction,
-                                          Bvariable *var,
-                                          Bexpression *init)
+                                            Bvariable *var,
+                                            Bexpression *init)
 {
   if (init) {
+    init = materialize(init);
     if (init->compositeInitPending()) {
       init = resolveCompositeInit(init, var->value());
       Bstatement *es = nbuilder_.mkExprStmt(bfunction, init,
@@ -2759,6 +2911,8 @@ Bstatement *Llvm_backend::assignment_statement(Bfunction *bfunction,
   if (lhs == errorExpression() || rhs == errorExpression() ||
       bfunction == errorFunction_.get())
     return errorStatement();
+  lhs = materialize(lhs);
+  rhs = materialize(rhs);
   Bexpression *lhs2 = resolveVarContext(lhs, VE_lvalue);
   Bexpression *rhs2 = rhs;
   if (rhs->compositeInitPending()) {
@@ -2783,9 +2937,14 @@ Llvm_backend::return_statement(Bfunction *bfunction,
   if (bfunction == errorFunction_.get() || exprVectorHasError(vals))
     return errorStatement();
 
+  // Materialize llvm instructions/values for the return vals.
+  std::vector<Bexpression *> materializedVals;
+  for (auto &val : vals)
+    materializedVals.push_back(materialize(val));
+
   // Resolve arguments
   std::vector<Bexpression *> resolvedVals;
-  for (auto &val : vals)
+  for (auto &val : materializedVals)
     resolvedVals.push_back(resolve(val, varContextDisp(val)));
 
   // Collect up the return value
@@ -2801,14 +2960,14 @@ Llvm_backend::return_statement(Bfunction *bfunction,
   } else {
     Btype *rtyp = bfunction->fcnType()->resultType();
     Bexpression *structVal =
-        constructor_expression(rtyp, resolvedVals, location);
+        materialize(constructor_expression(rtyp, resolvedVals, location));
     if (structVal->compositeInitPending()) {
       structVal = resolveCompositeInit(structVal, nullptr);
     } else if (structVal->isConstant()) {
       llvm::Constant *cval = llvm::cast<llvm::Constant>(structVal->value());
       Bvariable *cv = genVarForConstant(cval, structVal->btype());
       structVal = var_expression(cv, VE_rvalue, location);
-      structVal = address_expression(structVal, location);
+      structVal = materialize(address_expression(structVal, location));
     }
     toret = structVal;
   }
@@ -2857,10 +3016,10 @@ Bstatement *Llvm_backend::if_statement(Bfunction *bfunction,
                                        Location location) {
   if (condition == errorExpression())
     return errorStatement();
-  condition = resolve(condition);
-  assert(then_block);
   Btype *bt = makeAuxType(llvmBoolType());
   Bexpression *conv = convert_expression(bt, condition, location);
+  conv = materialize(conv);
+  assert(then_block);
 
   Bstatement *ifst = nbuilder_.mkIfStmt(bfunction, conv, then_block,
                                         else_block, location);
@@ -2882,6 +3041,8 @@ Bstatement *Llvm_backend::switch_statement(Bfunction *bfunction,
       return errorStatement();
   if (stmtVectorHasError(statements))
       return errorStatement();
+
+  value = materialize(value);
 
   // Resolve value
   value = resolve(value);
@@ -3076,6 +3237,8 @@ void Llvm_backend::global_variable_set_init(Bvariable *var, Bexpression *expr)
   assert(llvm::isa<llvm::GlobalVariable>(var->value()));
   llvm::GlobalVariable *gvar = llvm::cast<llvm::GlobalVariable>(var->value());
 
+  expr = materialize(expr);
+
   if (expr->compositeInitPending())
     expr = resolveCompositeInit(expr, gvar);
 
@@ -3266,6 +3429,8 @@ void Llvm_backend::immutable_struct_set_init(Bvariable *var,
   if (var == errorVariable_.get() || initializer == errorExpression())
     return;
 
+  initializer = materialize(initializer);
+
   assert(llvm::isa<llvm::GlobalVariable>(var->value()));
   llvm::GlobalVariable *gvar = llvm::cast<llvm::GlobalVariable>(var->value());
   assert(llvm::isa<llvm::Constant>(var->value()));
@@ -3443,9 +3608,129 @@ Bstatement *Llvm_backend::function_defer_statement(Bfunction *function,
       defer == errorExpression())
     return errorStatement();
 
+  undefer = materialize(undefer);
+  defer = materialize(defer);
+
   Bstatement *defst = nbuilder_.mkDeferStmt(function, undefer, defer,
                                             location);
   return defst;
+}
+
+class MaterializeVisitor {
+ public:
+  MaterializeVisitor(Llvm_backend *be) : be_(be) { }
+
+  std::pair<VisitDisp, Bnode *> visitNodePre(Bnode *node) {
+    return std::make_pair(ContinueWalk, node);
+  }
+  std::pair<VisitDisp, Bnode *> visitNodePost(Bnode *node) {
+    Bexpression *expr = node->castToBexpression();
+    if (expr && expr->value())
+        return std::make_pair(ContinueWalk, node);
+    switch(node->flavor()) {
+      case N_EmptyStmt:
+      case N_LabelStmt:
+      case N_GotoStmt:
+      case N_ExprStmt:
+      case N_ReturnStmt:
+      case N_DeferStmt:
+      case N_IfStmt:
+      case N_ExcepStmt:
+      case N_BlockStmt:
+      case N_SwitchStmt: {
+        return std::make_pair(ContinueWalk, node);
+      }
+      case N_Error:
+      case N_Const:
+      case N_Var:
+      case N_FcnAddress:
+      case N_LabelAddress: {
+        break;
+      }
+      case N_Conversion: {
+        expr = be_->materializeConversion(expr);
+        break;
+      }
+      case N_Deref: {
+        expr = be_->materializeIndirect(expr);
+        break;
+      }
+      case N_Address: {
+        expr = be_->materializeAddress(expr);
+        break;
+      }
+      case N_UnaryOp: {
+        expr = be_->materializeUnary(expr);
+        break;
+      }
+      case N_StructField: {
+        expr = be_->materializeStructField(expr);
+        break;
+      }
+      case N_BinaryOp: {
+        expr = be_->materializeBinary(expr);
+        break;
+      }
+      case N_Compound: {
+        break;
+      }
+      case N_ArrayIndex: {
+        expr = be_->materializeArrayIndex(expr);
+        break;
+      }
+      case N_PointerOffset: {
+        expr = be_->materializePointerOffset(expr);
+        break;
+      }
+      case N_Composite: {
+        expr = be_->materializeComposite(expr);
+        break;
+      }
+      case N_Call: {
+        expr = be_->materializeCall(expr);
+        break;
+      }
+      case N_Conditional: {
+        expr = be_->materializeConditional(expr);
+        break;
+      }
+    }
+    assert(expr->value() != nullptr ||
+           expr->flavor() == N_Composite ||
+           expr->btype() == be_->void_type());
+    return std::make_pair(ContinueWalk, expr);
+  }
+
+  std::pair<VisitDisp, Bnode *> visitChildPre(Bnode *parent, Bnode *child) {
+      return std::make_pair(ContinueWalk, child);
+  }
+
+  std::pair<VisitDisp, Bnode *> visitChildPost(Bnode *parent, Bnode *child) {
+      return std::make_pair(ContinueWalk, child);
+  }
+   private:
+    Llvm_backend *be_;
+};
+
+Bexpression *Llvm_backend::materialize(Bexpression *expr)
+{
+  MaterializeVisitor vis(this);
+
+  // Repair any node sharing at this point-- the materializer
+  // assumes that any node it visits can be destroyed/replaced
+  // without impacting some other portion of the tree.
+  enforceTreeIntegrity(expr);
+
+  // Walk to materialize llvm values.
+  Bnode *newnode = update_walk_nodes(expr, vis);
+  return newnode->castToBexpression();
+}
+
+Bexpression *Llvm_backend::lateConvert(Btype *type,
+                                       Bexpression *expr,
+                                       Location loc)
+{
+  return materialize(convert_expression(type, expr, loc));
 }
 
 // Record PARAM_VARS as the variables to use for the parameters of FUNCTION.
