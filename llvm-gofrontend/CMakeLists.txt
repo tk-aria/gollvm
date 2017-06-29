@@ -39,6 +39,7 @@ go-llvm-dibuildhelper.cpp
 go-llvm-genblocks.cpp
 go-llvm-irbuilders.cpp
 go-llvm-linemap.cpp
+go-llvm-materialize.cpp
 go-llvm-tree-integrity.cpp
 go-llvm-typemanager.cpp
 go-llvm.cpp
