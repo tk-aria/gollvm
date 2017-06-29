@@ -160,17 +160,11 @@ Bexpression *Llvm_backend::materializeConversion(Bexpression *convExpr)
     }
   }
 
-  // Compare types for equality using Btype::equivalent, since we need to
-  // pick up on differences in the Btype that are not present in the
-  // LLVM type (for example, uint32 vs int32), and since we want to
-  // screen out cases where there are different LLVM types as a result
-  // the use of opaque structs.
-  if (expr->btype()->equivalent(*type)) {
-     if (toType == valType)
-       return expr;
-     else
-       return nbuilder_.mkConversion(type, expr->value(), expr, location);
-  }
+  // If the we're converting between two different Btypes that have the
+  // same underlying LLVM type, then we can create a new Bexpression
+  // for the conversion but not do anything else.
+  if (toType == valType)
+    return nbuilder_.mkConversion(type, expr->value(), expr, location);
 
   LIRBuilder builder(context_, llvm::ConstantFolder());
 

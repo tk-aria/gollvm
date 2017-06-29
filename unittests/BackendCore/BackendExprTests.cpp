@@ -307,7 +307,7 @@ TEST(BackendExprTests, TestFloatConversionExpressions) {
   }
 
   const char *exp = R"RAW_RESULT(
-%p1.ld.0 = load double, double* %p1.addr
+  %p1.ld.0 = load double, double* %p1.addr
   %fptrunc.0 = fptrunc double %p1.ld.0 to float
   store float %fptrunc.0, float* %p0.addr
   %p0.ld.0 = load float, float* %p0.addr
@@ -363,8 +363,8 @@ TEST(BackendExprTests, TestFloatConversionExpressions) {
   %zext.0 = zext i32 %p4.ld.3 to i64
   store i64 %zext.0, i64* %p3.addr
   %p3.ld.3 = load i64, i64* %p3.addr
-  %trunc.3 = trunc i64 %p3.ld.3 to i32
-  store i32 %trunc.3, i32* %p4.addr
+  %trunc.1 = trunc i64 %p3.ld.3 to i32
+  store i32 %trunc.1, i32* %p4.addr
   %p5.ld.0 = load i64, i64* %p5.addr
   %uitof.2 = uitofp i64 %p5.ld.0 to float
   store float %uitof.2, float* %p0.addr
@@ -378,8 +378,8 @@ TEST(BackendExprTests, TestFloatConversionExpressions) {
   %ftoui.3 = fptoui double %p1.ld.4 to i64
   store i64 %ftoui.3, i64* %p5.addr
   %p5.ld.2 = load i64, i64* %p5.addr
-  %trunc.4 = trunc i64 %p5.ld.2 to i32
-  store i32 %trunc.4, i32* %p2.addr
+  %trunc.2 = trunc i64 %p5.ld.2 to i32
+  store i32 %trunc.2, i32* %p2.addr
   %p2.ld.4 = load i32, i32* %p2.addr
   %sext.1 = sext i32 %p2.ld.4 to i64
   store i64 %sext.1, i64* %p5.addr
@@ -388,8 +388,8 @@ TEST(BackendExprTests, TestFloatConversionExpressions) {
   %p3.ld.4 = load i64, i64* %p3.addr
   store i64 %p3.ld.4, i64* %p5.addr
   %p5.ld.4 = load i64, i64* %p5.addr
-  %trunc.7 = trunc i64 %p5.ld.4 to i32
-  store i32 %trunc.7, i32* %p4.addr
+  %trunc.3 = trunc i64 %p5.ld.4 to i32
+  store i32 %trunc.3, i32* %p4.addr
   %p4.ld.4 = load i32, i32* %p4.addr
   %zext.1 = zext i32 %p4.ld.4 to i64
   store i64 %zext.1, i64* %p5.addr
