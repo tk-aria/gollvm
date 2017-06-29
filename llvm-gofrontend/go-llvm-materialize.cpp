@@ -1522,6 +1522,67 @@ Llvm_backend::convertForAssignment(Btype *srcBType,
   return srcVal;
 }
 
+// Helper visitor class for expression folding; removes redundant
+// nodes in preparation for materialization.
+
+class FoldVisitor {
+ public:
+  FoldVisitor(Llvm_backend *be, Bnode *topNode)
+      : be_(be), topNode_(topNode) { }
+
+  Bnode *doFold(Bnode *node) {
+    Bexpression *expr = node->castToBexpression();
+    if (!expr)
+      return node;
+    if (expr && expr->value())
+      return node;
+
+    // Fold addr(deref(X)) => X
+    if (node->flavor() == N_Address) {
+      std::vector<Bexpression *> akids = expr->getChildExprs();
+      if (akids[0]->flavor() == N_Deref) {
+        Bexpression *deref = akids[0];
+
+        // Extract children and delete first the addr node, then the
+        // deref node. Order is important; if we delete the deref first
+        // then the integrity visitor will wind up trying to access the
+        // deleted deref.
+
+        be_->nodeBuilder().extractChildenAndDestroy(expr);
+        std::vector<Bexpression *> dkids =
+            be_->nodeBuilder().extractChildenAndDestroy(deref);
+
+        // Return result
+        expr = dkids[0];
+      }
+    }
+    return expr;
+  }
+
+  std::pair<VisitDisp, Bnode *> visitChildPost(Bnode *parent, Bnode *child) {
+    Bnode *folded = doFold(child);
+    return std::make_pair(ContinueWalk, folded);
+  }
+
+  std::pair<VisitDisp, Bnode *> visitNodePost(Bnode *node) {
+    if (node == topNode_)
+      node = doFold(node);
+    return std::make_pair(ContinueWalk, node);
+  }
+
+  // Boilerplate
+  std::pair<VisitDisp, Bnode *> visitNodePre(Bnode *node) {
+    return std::make_pair(ContinueWalk, node);
+  }
+  std::pair<VisitDisp, Bnode *> visitChildPre(Bnode *parent, Bnode *child) {
+      return std::make_pair(ContinueWalk, child);
+  }
+
+ private:
+  Llvm_backend *be_;
+  Bnode *topNode_;
+};
+
 class MaterializeVisitor {
  public:
   MaterializeVisitor(Llvm_backend *be) : be_(be) { }
@@ -1621,16 +1682,21 @@ class MaterializeVisitor {
 
 Bexpression *Llvm_backend::materialize(Bexpression *expr)
 {
-  MaterializeVisitor vis(this);
-
   // Repair any node sharing at this point-- the materializer
   // assumes that any node it visits can be destroyed/replaced
   // without impacting some other portion of the tree.
   enforceTreeIntegrity(expr);
 
+  // Perform some basic folding operations. This is easier to do
+  // here so as not to worry about sharing.
+  FoldVisitor fvis(this, expr);
+  Bnode *folded = update_walk_nodes(expr, fvis);
+  expr = folded->castToBexpression();
+
   // Walk to materialize llvm values.
-  Bnode *newnode = update_walk_nodes(expr, vis);
-  return newnode->castToBexpression();
+  MaterializeVisitor mvis(this);
+  Bnode *materialized = update_walk_nodes(expr, mvis);
+  return materialized->castToBexpression();
 }
 
 Bexpression *Llvm_backend::lateConvert(Btype *type,
