@@ -34,6 +34,9 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrity1) {
   Bstatement *es = be->expression_statement(func, badd1);
   h.addStmt(es);
 
+  // Grab pointer to the add expr above, post-materialization.
+  badd1 = es->children()[0]->castToBexpression();
+
   // Create "4"
   Bexpression *b4 = mkInt64Const(be, 4);
   Bstatement *es2 = be->expression_statement(func, b4);
