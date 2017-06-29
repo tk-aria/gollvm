@@ -39,7 +39,8 @@ void IntegrityVisitor::dump(llvm::Instruction *inst) {
 bool IntegrityVisitor::shouldBeTracked(Bnode *child)
 {
   Bexpression *expr = child->castToBexpression();
-  if (expr && be_->moduleScopeValue(expr->value(), expr->btype()))
+  if (expr && expr->value() &&
+      be_->moduleScopeValue(expr->value(), expr->btype()))
     return false;
   return true;
 }

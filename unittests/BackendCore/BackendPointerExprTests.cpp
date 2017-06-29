@@ -451,4 +451,37 @@ TEST(BackEndPointerExprTests, CreatePointerOffsetExprs) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
+TEST(BackEndPointerExprTests, TestAddrDerefFold) {
+
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
+  Bfunction *func = h.func();
+  Location loc;
+
+  Bvariable *p3 = func->getNthParamVar(2);
+  Btype *bi64t = be->integer_type(false, 64);
+  Bvariable *xv = h.mkLocal("x", bi64t);
+
+  // p3 = addr(deref(addr(deref(addr(x))))))
+  Bexpression *vexr = be->var_expression(xv, VE_rvalue, loc);
+  Bexpression *ad1 = be->address_expression(vexr, loc);
+  Bexpression *der1 = be->indirect_expression(bi64t, ad1, false, loc);
+  Bexpression *ad2 = be->address_expression(der1, loc);
+  Bexpression *der2 = be->indirect_expression(bi64t, ad2, false, loc);
+  Bexpression *ad3 = be->address_expression(der2, loc);
+  Bexpression *vexl = be->var_expression(p3, VE_lvalue, loc);
+  h.mkAssign(vexl, ad3);
+
+  const char *exp = R"RAW_RESULT(
+  store i64 0, i64* %x
+  store i64* %x, i64** %param3.addr
+  )RAW_RESULT";
+
+  bool isOK = h.expectBlock(exp);
+  EXPECT_TRUE(isOK && "Block does not have expected contents");
+
+  bool broken = h.finish(PreserveDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+}
+
 }
