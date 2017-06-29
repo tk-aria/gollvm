@@ -1224,7 +1224,7 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
     }
 
     // This now corresponds to the case of passing the contents of
-    // a small structure via two pieces / pararms.
+    // a small structure via two pieces / params.
     assert(paramInfo.abiTypes().size() == 2);
     assert(paramInfo.attr() == AttrNone);
     assert(ctx == VE_lvalue);
@@ -1235,7 +1235,13 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
 
     // If the value we're passing is a composite constant, we have to
     // spill it to memory here in order for the casts below to work.
-    if (resarg->isConstant()) {
+    // Note that the spill is not needed if the value corresponds to a
+    // delated load of a composite variable (in which case it will
+    // already be an address). For example, if resarg corresponds to
+    // an anonymous constant value like [2]float64{10.0,10.0} then we
+    // need to spill, whereas if we're dealing with a reference to a
+    // named global constant, there is no need to spill.
+    if (resarg->isConstant() && val->getType() == resarg->btype()->type()) {
       llvm::Constant *cval = llvm::cast<llvm::Constant>(val);
       Bvariable *cv = genVarForConstant(cval, resarg->btype());
       val = cv->value();
