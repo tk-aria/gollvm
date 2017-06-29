@@ -1,0 +1,176 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "845d2929_a41cdcf7",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-06-29T14:40:09Z",
+      "side": 1,
+      "message": "materializeIndirect",
+      "range": {
+        "startLine": 18,
+        "startChar": 31,
+        "endLine": 18,
+        "endChar": 42
+      },
+      "revId": "a072272f70d2985fe2438303ee9d16f424a54b95",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ca034158_ac17600c",
+        "filename": "llvm-gofrontend/go-llvm-bnode.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 148,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-06-29T14:40:09Z",
+      "side": 1,
+      "message": "maybe just write what they are here?",
+      "range": {
+        "startLine": 148,
+        "startChar": 46,
+        "endLine": 148,
+        "endChar": 72
+      },
+      "revId": "a072272f70d2985fe2438303ee9d16f424a54b95",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "51c98425_080a2e03",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 567,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-06-29T14:40:09Z",
+      "side": 1,
+      "message": "Do we want to assert the number of children?",
+      "revId": "a072272f70d2985fe2438303ee9d16f424a54b95",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "bb41f1df_d6da903b",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1172,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-06-29T14:40:09Z",
+      "side": 1,
+      "message": "minor: this can now be simplified as elementTypeByIndex(bcomplex-\u003ebtype(), 0).",
+      "range": {
+        "startLine": 1170,
+        "startChar": 2,
+        "endLine": 1172,
+        "endChar": 40
+      },
+      "revId": "a072272f70d2985fe2438303ee9d16f424a54b95",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a4d46c5e_3d9f912c",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1188,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-06-29T14:40:09Z",
+      "side": 1,
+      "message": "duplicate",
+      "range": {
+        "startLine": 1184,
+        "startChar": 0,
+        "endLine": 1188,
+        "endChar": 29
+      },
+      "revId": "a072272f70d2985fe2438303ee9d16f424a54b95",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "25db33c5_63944554",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1834,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-06-29T14:40:09Z",
+      "side": 1,
+      "message": "materializeBinary?",
+      "range": {
+        "startLine": 1834,
+        "startChar": 38,
+        "endLine": 1834,
+        "endChar": 47
+      },
+      "revId": "a072272f70d2985fe2438303ee9d16f424a54b95",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a5b48f28_e21c6283",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3675,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-06-29T14:40:09Z",
+      "side": 1,
+      "message": "So compound expression is materialized eagerly. Is there a reason for this? Maybe it will be clear with the var context follow-up CL.",
+      "revId": "a072272f70d2985fe2438303ee9d16f424a54b95",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4e662263_7103d79d",
+        "filename": "unittests/BackendCore/BackendNodeTests.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 152,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-06-29T14:40:09Z",
+      "side": 1,
+      "message": "matadd?",
+      "range": {
+        "startLine": 152,
+        "startChar": 12,
+        "endLine": 152,
+        "endChar": 15
+      },
+      "revId": "a072272f70d2985fe2438303ee9d16f424a54b95",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
