@@ -193,7 +193,7 @@ void EightByteInfo::addLeafTypes(Btype *bt,
   if (bat) {
     Btype *et = bat->elemType();
     for (unsigned elidx = 0; elidx < bat->nelSize(); ++elidx) {
-      unsigned eloff = elidx * tm()->llvmTypeAllocSize(et->type());
+      unsigned eloff = elidx * tm()->typeSize(et);
       addLeafTypes(et, offset + eloff, leaves);
     }
     return;
@@ -204,7 +204,7 @@ void EightByteInfo::addLeafTypes(Btype *bt,
     unsigned bits = bct->bits() / 2;
     for (unsigned fidx = 0; fidx < 2; ++fidx) {
       Btype *leaf = tm()->floatType(bits);
-      unsigned foff = tm()->llvmTypeFieldOffset(llst, fidx);
+      unsigned foff = tm()->typeFieldOffset(bct, fidx);
       leaves->push_back(std::make_pair(leaf, foff));
     }
     return;
@@ -241,7 +241,7 @@ void EightByteInfo::addLeafTypes(Btype *bt,
 
 void EightByteInfo::explodeStruct(Btype *bst)
 {
-  assert(tm()->llvmTypeAllocSize(bst->type()) <= 16);
+  assert(tm()->typeSize(bst) <= 16);
 
   std::vector<typAndOffset> leafTypes;
   addLeafTypes(bst, 0, &leafTypes);
@@ -285,10 +285,10 @@ void EightByteInfo::explodeStruct(Btype *bst)
 
 void EightByteInfo::explodeArray(BArrayType *bat)
 {
-  assert(tm()->llvmTypeAllocSize(bat->type()) <= 16);
+  assert(tm()->typeSize(bat) <= 16);
   EightByteRegion *cur8 = nullptr;
   unsigned curOffset = 0;
-  unsigned elSize = tm()->llvmTypeSize(bat->elemType()->type());
+  unsigned elSize = tm()->typeSize(bat->elemType());
   for (unsigned elidx = 0; elidx < bat->nelSize(); ++elidx) {
     unsigned offset = elidx * elSize;
     if (cur8 == nullptr || (offset >= 8 && curOffset < 8)) {
@@ -304,13 +304,13 @@ void EightByteInfo::explodeArray(BArrayType *bat)
 
 void EightByteInfo::incorporateScalar(Btype *bt)
 {
-  assert(tm()->llvmTypeAllocSize(bt->type()) <= 8);
+  assert(tm()->typeSize(bt) <= 8);
   EightByteRegion ebr;
   ebr.types.push_back(bt->type());
   ebr.offsets.push_back(0u);
   ebr.abiDirectType = bt->type();
   BIntegerType *bit = bt->castToBIntegerType();
-  if (bit && tm()->llvmTypeSize(bit->type()) < 4)
+  if (bit && tm()->typeSize(bit) < 4)
     ebr.attr = (bit->isUnsigned() ? AttrZext : AttrSext);
   ebrs_.push_back(ebr);
 }
