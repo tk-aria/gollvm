@@ -123,6 +123,13 @@ bool Bexpression::isConstant()
   switch (flavor()) {
   case N_Var:
     return false;
+  case N_Deref:
+    return false;
+  case N_Conversion: {
+    std::vector<Bexpression*> kids = getChildExprs();
+    assert(kids.size() == 1);
+    return kids[0]->isConstant();
+  }
   case N_StructField: {
     std::vector<Bexpression*> kids = getChildExprs();
     assert(kids.size() == 1);
