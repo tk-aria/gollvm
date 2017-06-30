@@ -583,11 +583,15 @@ TypeManager::functionType(const Btyped_identifier &receiver,
     paramTypes.push_back(receiver.btype);
   }
 
-  // Vett the parameters and results
+  // Vett the parameters and results. As with structure fields, convert
+  // parameters of raw function type to pointer-to-function type.
   for (auto p : parameters) {
     if (p.btype == errorType_)
       return errorType_;
-    paramTypes.push_back(p.btype);
+    Btype *ptype = p.btype;
+    if (ptype->type()->isFunctionTy())
+      ptype = pointerType(ptype);
+    paramTypes.push_back(ptype);
   }
   std::vector<Btype *> resultTypes;
   for (auto r : results) {
