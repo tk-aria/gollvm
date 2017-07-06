@@ -845,7 +845,7 @@ Bexpression *Llvm_backend::materializeComposite(Bexpression *comExpr)
 {
   Location location = comExpr->location();
   Btype *btype = comExpr->btype();
-  const std::vector<unsigned long> *indexes = comExpr->getIndices();
+  const std::vector<unsigned long> *indexes = nbuilder_.getIndices(comExpr);
   std::vector<Bexpression *> vals =
       nbuilder_.extractChildenAndDestroy(comExpr);
 
