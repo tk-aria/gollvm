@@ -877,7 +877,6 @@ Bexpression *Llvm_backend::var_expression(Bvariable *var,
 
   Bexpression *varexp = nbuilder_.mkVar(var, location);
   varexp->setTag(var->name().c_str());
-  varexp->setVarExprPending(in_lvalue_pos == VE_lvalue, 0);
   return varexp;
 }
 
@@ -1158,6 +1157,10 @@ Bexpression *Llvm_backend::convert_expression(Btype *type,
     toType = type->type();
   }
 
+  // Complex -> complex conversion
+  if (type->castToBComplexType())
+    return makeComplexConvertExpr(type, expr, location);
+
   Bexpression *rval = nbuilder_.mkConversion(type, nullptr, expr, location);
   return rval;
 }
@@ -1204,7 +1207,7 @@ Bexpression *Llvm_backend::compound_expression(Bstatement *bstat,
   if (bstat == errorStatement() || bexpr == errorExpression())
     return errorExpression();
 
-  Bexpression *rval = nbuilder_.mkCompound(bstat, bexpr, location);
+  Bexpression *rval = nbuilder_.mkCompound(bstat, bexpr, nullptr, location);
   return rval;
 }
 
@@ -1260,6 +1263,14 @@ Bexpression *Llvm_backend::binary_expression(Operator op, Bexpression *left,
                                              Location location) {
   if (left == errorExpression() || right == errorExpression())
     return errorExpression();
+
+  Btype *bltype = left->btype();
+  Btype *brtype = right->btype();
+  BComplexType *blctype = bltype->castToBComplexType();
+  BComplexType *brctype = brtype->castToBComplexType();
+  assert((blctype == nullptr) == (brctype == nullptr));
+  if (blctype)
+    return makeComplexBinaryExpr(op, left, right, location);
 
   // Arbitrarily select the left child type as the type for the binop.
   // This may be revised later during materializeBinary.
@@ -1445,7 +1456,7 @@ Bstatement *Llvm_backend::assignment_statement(Bfunction *bfunction,
   if (lhs == errorExpression() || rhs == errorExpression() ||
       bfunction == errorFunction_.get())
     return errorStatement();
-  lhs = materialize(lhs);
+  lhs = materialize(lhs, VE_lvalue);
   rhs = materialize(rhs);
   Bexpression *lhs2 = resolveVarContext(lhs, VE_lvalue);
   Bexpression *rhs2 = rhs;
