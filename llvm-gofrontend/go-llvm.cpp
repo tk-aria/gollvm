@@ -376,12 +376,18 @@ Bfunction *Llvm_backend::lookup_builtin(const std::string &name) {
 
   // Materialize a Bfunction for the builtin
   if (be->flavor() == BuiltinEntry::IntrinsicBuiltin) {
-    llvm::SmallVector<llvm::Type *, 8> ltypes;
-    for (auto &t : be->types())
-      ltypes.push_back(t->type());
-    llvm::Function *fcn =
-        llvm::Intrinsic::getDeclaration(module_, be->intrinsicId(), ltypes);
+    llvm::Function *fcn;
+    llvm::Intrinsic::ID id = be->intrinsicId();
+    if (!llvm::Intrinsic::isOverloaded(id))
+      fcn = llvm::Intrinsic::getDeclaration(module_, id);
+    else {
+      llvm::SmallVector<llvm::Type *, 8> ltypes;
+      for (auto &t : be->types())
+        ltypes.push_back(t->type());
+      fcn = llvm::Intrinsic::getDeclaration(module_, id, ltypes);
+    }
     assert(fcn != nullptr);
+    assert(fcn->isIntrinsic() && fcn->getIntrinsicID() == id);
     bf = defineBuiltinFcn(be->name(), fcn);
   } else {
     assert(be->flavor() == BuiltinEntry::LibcallBuiltin);
