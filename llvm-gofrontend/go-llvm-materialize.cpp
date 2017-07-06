@@ -121,10 +121,6 @@ Bexpression *Llvm_backend::materializeConversion(Bexpression *convExpr)
   assert(iexprs.size() == 1);
   Bexpression *expr = iexprs[0];
 
-  // Complex -> complex conversion
-  if (type->castToBComplexType())
-    return makeComplexConvertExpr(type, expr, location);
-
   // For composite-init-pending values, materialize a variable now.
   if (expr->compositeInitPending()) {
     assert(!expr->varExprPending());
@@ -256,46 +252,6 @@ Bexpression *Llvm_backend::materializeConversion(Bexpression *convExpr)
   return expr;
 }
 
-Bexpression *Llvm_backend::makeComplexConvertExpr(Btype *type,
-                                                  Bexpression *expr,
-                                                  Location location) {
-  if (expr->btype()->type() == type->type())
-    return expr;
-
-  BComplexType *bct = type->castToBComplexType();
-  assert(bct);
-  assert(expr->btype()->castToBComplexType());
-  Btype *bft = floatType(bct->bits()/2);
-
-  // We need to avoid sharing between real part and imag part of the operand.
-  // Create temp variables and assign operand to the temp variable first.
-  // TODO: maybe not make temp var if the operand is already a var or constant?
-  auto p = makeTempVar(expr, location);
-  Bvariable *var = p.first;
-  Bstatement *einit = p.second;
-
-  Bexpression *vex = nbuilder_.mkVar(var, location);
-  vex->setVarExprPending(false, 0);
-  Bexpression *vexr = real_part_expression(vex, location);
-  Bexpression *vexi = imag_part_expression(vex, location);
-
-  // Make the conversion
-  Bexpression *valr = convert_expression(bft, vexr, location);
-  Bexpression *vali = convert_expression(bft, vexi, location);
-  Bexpression *val = complex_expression(valr, vali, location);
-
-  // Wrap result and the init statements in a compound expression.
-  // Currently we can't resolve composite storage for compound
-  // expression, so we resolve the inner complex expression
-  // here with another temp variable.
-  auto p2 = makeTempVar(val, location);
-  Bvariable *rvar = p2.first;
-  Bstatement *rinit = p2.second;
-  Bexpression *rvex = nbuilder_.mkVar(rvar, location);
-  Bstatement *init = statement_list(std::vector<Bstatement*>{einit, rinit});
-  return nbuilder_.mkCompound(init, rvex, location);
-}
-
 llvm::Value *Llvm_backend::makePointerOffsetGEP(llvm::PointerType *llpt,
                                                 llvm::Value *idxval,
                                                 llvm::Value *sptr)
@@ -386,7 +342,10 @@ Bexpression *Llvm_backend::materializeCompound(Bexpression *comExpr)
 
   // Compound expressions can be used to produce lvalues, so we don't
   // want to call resolve() on bexpr here.
-  Bexpression *rval = nbuilder_.mkCompound(bstat, bexpr, location);
+  Bexpression *rval = nbuilder_.mkCompound(bstat, bexpr, bexpr->value(),
+                                           location);
+  if (bexpr->varExprPending())
+    rval->setVarExprPending(bexpr->varContext());
   return rval;
 }
 
@@ -455,7 +414,8 @@ Bexpression *Llvm_backend::materializeConditional(Bexpression *condExpr)
   Bexpression *rval = (tempv ?
                        var_expression(tempv, VE_rvalue, location) :
                        nbuilder_.mkVoidValue(void_type()));
-  Bexpression *result = compound_expression(ifStmt, rval, location);
+  Bexpression *result =
+      materialize(compound_expression(ifStmt, rval, location));
   return result;
 }
 
@@ -628,11 +588,6 @@ Bexpression *Llvm_backend::materializeBinary(Bexpression *binExpr)
 
   Btype *bltype = left->btype();
   Btype *brtype = right->btype();
-  BComplexType *blctype = bltype->castToBComplexType();
-  BComplexType *brctype = brtype->castToBComplexType();
-  assert((blctype == nullptr) == (brctype == nullptr));
-  if (blctype)
-    return makeComplexBinaryExpr(op, left, right, location);
 
   left = resolveVarContext(left);
   right = resolveVarContext(right);
@@ -772,73 +727,6 @@ Bexpression *Llvm_backend::materializeBinary(Bexpression *binExpr)
   }
 
   return nbuilder_.mkBinaryOp(op, bltype, val, left, right, location);
-}
-
-Bexpression *Llvm_backend::makeComplexBinaryExpr(Operator op, Bexpression *left,
-                                                 Bexpression *right,
-                                                 Location location) {
-  // We need to avoid sharing between real part and imag part of the operand.
-  // Create temp variables and assign operands to the temp vars first.
-  // TODO: maybe not make temp var if the operand is already a var or constant?
-  auto p = makeTempVar(left, location), p2 = makeTempVar(right, location);
-  Bvariable *lvar = p.first, *rvar = p2.first;
-  Bstatement *linit = p.second, *rinit = p2.second;
-
-  Bexpression *lvex = nbuilder_.mkVar(lvar, location);
-  lvex->setVarExprPending(false, 0);
-  Bexpression *rvex = nbuilder_.mkVar(rvar, location);
-  rvex->setVarExprPending(false, 0);
-  Bexpression *lr = real_part_expression(lvex, location);
-  Bexpression *li = imag_part_expression(lvex, location);
-  Bexpression *rr = real_part_expression(rvex, location);
-  Bexpression *ri = imag_part_expression(rvex, location);
-  Bexpression *val;
-
-  switch (op) {
-  case OPERATOR_PLUS:
-  case OPERATOR_MINUS: {
-    Bexpression *valr = binary_expression(op, lr, rr, location);
-    Bexpression *vali = binary_expression(op, li, ri, location);
-    val = complex_expression(valr, vali, location);
-    break;
-  }
-  case OPERATOR_MULT: {
-    // (a+bi)*(c+di) = (ac-bd) + (ad+bc)i
-    Bexpression *ac = binary_expression(OPERATOR_MULT, lr, rr, location);
-    Bexpression *bd = binary_expression(OPERATOR_MULT, li, ri, location);
-    Bexpression *ad = binary_expression(OPERATOR_MULT, lr, ri, location);
-    Bexpression *bc = binary_expression(OPERATOR_MULT, li, rr, location);
-    Bexpression *valr = binary_expression(OPERATOR_MINUS, ac, bd, location);
-    Bexpression *vali = binary_expression(OPERATOR_PLUS, ad, bc, location);
-    val = complex_expression(valr, vali, location);
-    break;
-  }
-  case OPERATOR_EQEQ:
-  case OPERATOR_NOTEQ: {
-    Bexpression *cmpr = binary_expression(op, lr, rr, location);
-    Bexpression *cmpi = binary_expression(op, li, ri, location);
-    if (op == OPERATOR_EQEQ)
-      val = binary_expression(OPERATOR_ANDAND, cmpr, cmpi, location);
-    else
-      val = binary_expression(OPERATOR_OROR, cmpr, cmpi, location);
-    Bstatement *init = statement_list(std::vector<Bstatement*>{linit, rinit});
-    return materialize(compound_expression(init, val, location));
-  }
-  default:
-    std::cerr << "Op " << op << " unhandled\n";
-    assert(false);
-  }
-
-  // Wrap result and the init statements in a compound expression.
-  // Currently we can't resolve composite storage for compound
-  // expression, so we resolve the inner complex expression
-  // here with another temp variable.
-  auto p3 = makeTempVar(val, location);
-  Bvariable *vvar = p3.first;
-  Bstatement *vinit = p3.second;
-  Bexpression *vvex = nbuilder_.mkVar(vvar, location);
-  Bstatement *init = statement_list(std::vector<Bstatement*>{linit, rinit, vinit});
-  return compound_expression(init, vvex, location);
 }
 
 Bexpression *Llvm_backend::materializeComposite(Bexpression *comExpr)
@@ -1522,6 +1410,185 @@ Llvm_backend::convertForAssignment(Btype *srcBType,
   return srcVal;
 }
 
+// Walk the specified expression and invoke setVarExprPending on
+// each var expression, with correct lvalue/rvalue tag depending on
+// context.
+
+class VarContextVisitor {
+ public:
+  VarContextVisitor(Bexpression *top,
+                    Varexpr_context lvalueContext,
+                    bool dumpDiffs)
+      : dumpDiffs_(dumpDiffs)
+  {
+    if (lvalueContext == VE_lvalue && isMem(top))
+      setLvalue(top);
+  }
+
+  std::pair< std::pair<VisitDisp, VisitChildDisp>, Bnode *>
+  visitChildPre(Bnode *parent, Bnode *child) {
+
+    Bexpression *eparent = parent->castToBexpression();
+    assert(eparent != nullptr);
+
+    // Don't descend into stmts or non-var nodes with values.
+    Bexpression *echild = child->castToBexpression();
+    if (child->isStmt() || (echild->value() != nullptr &&
+                            echild->flavor() != N_Var))
+      return std::make_pair(std::make_pair(ContinueWalk, SkipChild), child);
+
+    // Propagate lvalue property down from parent to child through a memory
+    // operation such as a fieldref or arrayindex if applicable. For example,
+    // for the tree build from go code "x.f1[y]" such as
+    //
+    //             array_index
+    //             /      \.
+    //        field      var(y)
+    //        /
+    //      var(x)
+    //
+    // If the top node (array_index) is in a left-hand-side position,
+    // then we want to flag "field" and "var(x)" nodes as being in an
+    // LHS context also, but not the "var(y)" node (it is not being
+    // assigned).
+    assert(echild != nullptr);
+    if (isLvalue(eparent) && isMem(echild)) {
+      Bexpression *cmem = memArg(eparent);
+      assert(cmem != nullptr);
+      if (cmem == echild)
+        setLvalue(echild);
+    }
+    return std::make_pair(std::make_pair(ContinueWalk, VisitChild), child);
+  }
+
+  // Apply "var pending" tags to var exprs bottom up, once downward propagation
+  // of lvalue context is complete.
+  std::pair<VisitDisp, Bnode *> visitNodePost(Bnode *node)
+  {
+    Bexpression *expr = node->castToBexpression();
+    if (expr == nullptr || (expr->value() && expr->flavor() != N_Var))
+      return std::make_pair(ContinueWalk, expr);
+
+    if (expr->flavor() == N_Var)
+      setVarExprPending(expr, isLvalue(expr), 0);
+
+    // Debugging only. This is intended to provide a way to compare the
+    // tags applied by the frontend vs the tags this visitor generates.
+    if (dumpDiffs_)
+      dumpDiff(expr);
+
+    auto it = varcontext_.find(expr);
+    if (it != varcontext_.end()) {
+      VarContext vc(it->second);
+      bool lvalue = vc.lvalue();
+      if (expr->varExprPending()) {
+        assert(vc.equal(expr->varContext()));
+      } else {
+        expr->setVarExprPending(lvalue, 0);
+      }
+    }
+
+    return std::make_pair(ContinueWalk, expr);
+  }
+
+  // boilerplate
+  std::pair<VisitDisp, Bnode *> visitNodePre(Bnode *node) {
+    return std::make_pair(ContinueWalk, node);
+  }
+
+  // boilerplate
+  std::pair<VisitDisp, Bnode *> visitChildPost(Bnode *parent, Bnode *child) {
+      return std::make_pair(ContinueWalk, child);
+  }
+
+ private:
+
+  // Debugging only.
+  void dumpDiff(Bexpression *expr)
+  {
+    if (expr->value() && expr->flavor() != N_Var)
+      return;
+
+    VarContext oldvc;
+    if (expr->varExprPending())
+      oldvc = expr->varContext();
+
+    VarContext newvc;
+    auto nit = varcontext_.find(expr);
+    if (nit != varcontext_.end())
+      newvc = nit->second;
+
+    if (newvc.equal(oldvc))
+      return;
+
+    std::cerr << "Expr " << expr->id()
+              << " " << expr->flavstr() << " ";
+    if (oldvc.pending()) {
+      std::cerr << "old VC(" << (oldvc.pending() ? "true" : "false")
+                << "," << (oldvc.lvalue() ? "lval" : "rval")
+                << "," << oldvc.addrLevel() << ") ";
+    }
+    if (newvc.pending()) {
+      std::cerr << "new VC(" << (newvc.pending() ? "true" : "false")
+                << "," << (newvc.lvalue() ? "lval" : "rval")
+                << "," << newvc.addrLevel() << ") ";
+    }
+    std::cerr << "\n";
+    expr->dump();
+    std::cerr << "\n";
+  }
+
+  Bexpression *memArg(Bexpression *expr) {
+    const std::vector<Bnode *> &kids = expr->children();
+    switch(expr->flavor()) {
+      case N_StructField:
+      case N_ArrayIndex:
+      case N_Address:
+      case N_Deref:
+      case N_Conversion:
+      case N_PointerOffset:
+        return kids[0]->castToBexpression();
+      default:
+        return nullptr;
+    }
+  }
+
+  bool isMem(Bexpression *expr) {
+    switch(expr->flavor()) {
+      case N_Var:
+      case N_StructField:
+      case N_Address:
+      case N_Deref:
+      case N_Conversion:
+      case N_ArrayIndex:
+      case N_PointerOffset:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  void setLvalue(Bexpression *expr) {
+    assert(lvalue_.find(expr) == lvalue_.end());
+    lvalue_.insert(expr);
+  }
+
+  bool isLvalue(Bexpression *expr) {
+    return lvalue_.find(expr) != lvalue_.end();
+  }
+
+  void setVarExprPending(Bexpression *expr, bool lvalue, unsigned addrLevel) {
+    assert(expr);
+    VarContext vc(lvalue, addrLevel);
+    varcontext_[expr] = vc;
+  }
+
+ private:
+  std::set<Bnode *> lvalue_;
+  std::map<Bexpression *, VarContext> varcontext_;
+  bool dumpDiffs_;
+};
+
 // Helper visitor class for expression folding; removes redundant
 // nodes in preparation for materialization.
 
@@ -1589,7 +1656,7 @@ class MaterializeVisitor {
   std::pair<VisitDisp, Bnode *> visitNodePost(Bnode *node) {
     Bexpression *expr = node->castToBexpression();
     if (expr && expr->value())
-        return std::make_pair(ContinueWalk, node);
+      return std::make_pair(ContinueWalk, node);
     switch(node->flavor()) {
       case N_EmptyStmt:
       case N_LabelStmt:
@@ -1677,18 +1744,35 @@ class MaterializeVisitor {
   }
 
   std::pair<VisitDisp, Bnode *> visitChildPost(Bnode *parent, Bnode *child) {
-      return std::make_pair(ContinueWalk, child);
+    return std::make_pair(ContinueWalk, child);
   }
-   private:
-    Llvm_backend *be_;
+ private:
+  Llvm_backend *be_;
 };
 
-Bexpression *Llvm_backend::materialize(Bexpression *expr)
+Bexpression *Llvm_backend::materialize(Bexpression *expr,
+                                       Varexpr_context lvalueContext)
+
 {
   // Repair any node sharing at this point-- the materializer
   // assumes that any node it visits can be destroyed/replaced
   // without impacting some other portion of the tree.
   enforceTreeIntegrity(expr);
+
+  // TODO:
+  // - don't really need a treewalk in the non-LHS case to apply
+  //   can context tags; it would be simpler to only do the walk
+  //   in the LHS case (and just apply var context tags when
+  //   var expression is initially created)
+  // - an extension of the above: pass in the LHS/RHS context
+  //   and propagate recursively during the materialize() walk,
+  //   instead of having a separate tree-walk here.
+
+  // Locate and tag var expressions within the tree, selecting LHS or
+  // RHS context as appropriate. Needs to be done after the call above
+  // so as to insure that there are no share var expressions.
+  VarContextVisitor vcvis(expr, lvalueContext, false);
+  update_walk_nodes(expr, vcvis);
 
   // Perform some basic folding operations. This is easier to do
   // here so as not to worry about sharing.

@@ -654,8 +654,10 @@ public:
 
  public:
 
-  // Exposed for unit testing.
-  Bexpression *materialize(Bexpression *expr);
+  // Performs a bottom-up walk to materialize LLVM values for each
+  // node in the expression tree. Made public for unit testing.
+  Bexpression *materialize(Bexpression *expr,
+                           Varexpr_context lvalueContext=VE_rvalue);
 
   // Helper routines to materialize llvm::Value's for expression nodes,
   // invoked by routine above. Public primarily because we need to call
