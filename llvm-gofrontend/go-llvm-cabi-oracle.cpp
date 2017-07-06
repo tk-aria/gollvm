@@ -200,7 +200,6 @@ void EightByteInfo::addLeafTypes(Btype *bt,
   }
   BComplexType *bct = bt->castToBComplexType();
   if (bct) {
-    llvm::StructType *llst = llvm::cast<llvm::StructType>(bct->type());
     unsigned bits = bct->bits() / 2;
     for (unsigned fidx = 0; fidx < 2; ++fidx) {
       Btype *leaf = tm()->floatType(bits);
