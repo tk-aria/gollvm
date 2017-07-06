@@ -149,8 +149,9 @@ class Bnode {
   // and conditionals).
   Bfunction *getFunction() const;
 
-  // Return vector of indices for composite, or NULL if no indexing
-  const std::vector<unsigned long> *getIndices() const;
+  // Return index to BnodeBuilder's vector of indices for composite,
+  // or -1 if no indexing.
+  int getIndices() const;
 
   template<class Visitor> friend class SimpleNodeWalker;
   template<class Visitor> friend class UpdatingNodeWalker;
@@ -180,7 +181,7 @@ class Bnode {
     Bvariable *var;
     Bfunction *func; // filled in only for fcn constants, calls, conditionals
     SwitchDescriptor *swcases;
-    std::vector<unsigned long> *indices; // for composite expressions
+    int indices; // for composite expressions, index to BnodeBuilder's indexvecs_
     Blabel *label;
     Operator op;
     unsigned fieldIndex;
@@ -321,6 +322,9 @@ class BnodeBuilder {
 
   // Clone an expression subtree.
   Bexpression *cloneSubtree(Bexpression *expr);
+
+  // Get the indices of a composite expression.
+  const std::vector<unsigned long> *getIndices(Bexpression *expr) const;
 
   // Inform the builder that we're about to extract all of the
   // children of the specified node and incorporate them into a new

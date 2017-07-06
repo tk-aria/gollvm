@@ -330,7 +330,7 @@ Bfunction *Bnode::getFunction() const
   return u.func;
 }
 
-const std::vector<unsigned long> *Bnode::getIndices() const
+int Bnode::getIndices() const
 {
   assert(flavor() == N_Composite);
   return u.indices;
@@ -599,7 +599,7 @@ BnodeBuilder::mkIndexedComposite(Btype *btype,
   for (auto &inst : instructions.instructions())
     rval->appendInstruction(inst);
   indexvecs_.push_back(indices);
-  rval->u.indices = &indexvecs_.back();
+  rval->u.indices = indexvecs_.size() - 1;
   return archive(rval);
 }
 
@@ -617,7 +617,7 @@ BnodeBuilder::mkComposite(Btype *btype,
       new Bexpression(N_Composite, kids, value, btype, loc);
   for (auto &inst : instructions.instructions())
     rval->appendInstruction(inst);
-  rval->u.indices = nullptr;
+  rval->u.indices = -1;
   return archive(rval);
 }
 
@@ -939,4 +939,13 @@ BnodeBuilder::extractChildNodesAndDestroy(Bnode *node)
   assert(expr); // statements not yet supported, could be if needed
   freeExpr(expr);
   return orphans;
+}
+
+const std::vector<unsigned long> *BnodeBuilder::getIndices(Bexpression *expr) const
+{
+  int i = expr->getIndices();
+  if (i < 0)
+    return nullptr;
+  assert((unsigned)i < indexvecs_.size());
+  return &indexvecs_[i];
 }
