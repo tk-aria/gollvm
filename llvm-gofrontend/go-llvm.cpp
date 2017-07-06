@@ -877,7 +877,6 @@ Bexpression *Llvm_backend::var_expression(Bvariable *var,
 
   Bexpression *varexp = nbuilder_.mkVar(var, location);
   varexp->setTag(var->name().c_str());
-  varexp->setVarExprPending(in_lvalue_pos == VE_lvalue, 0);
   return varexp;
 }
 
@@ -1139,6 +1138,46 @@ Bexpression *Llvm_backend::complex_expression(Bexpression *breal,
   return rval;
 }
 
+Bexpression *Llvm_backend::makeComplexConvertExpr(Btype *type,
+                                                  Bexpression *expr,
+                                                  Location location) {
+  if (expr->btype()->type() == type->type())
+    return expr;
+
+  BComplexType *bct = type->castToBComplexType();
+  assert(bct);
+  assert(expr->btype()->castToBComplexType());
+  Btype *bft = floatType(bct->bits()/2);
+
+  // We need to avoid sharing between real part and imag part of the operand.
+  // Create temp variables and assign operand to the temp variable first.
+  // TODO: maybe not make temp var if the operand is already a var or constant?
+  auto p = makeTempVar(expr, location);
+  Bvariable *var = p.first;
+  Bstatement *einit = p.second;
+
+  Bexpression *vex = nbuilder_.mkVar(var, location);
+  vex->setVarExprPending(false, 0);
+  Bexpression *vexr = real_part_expression(vex, location);
+  Bexpression *vexi = imag_part_expression(vex, location);
+
+  // Make the conversion
+  Bexpression *valr = convert_expression(bft, vexr, location);
+  Bexpression *vali = convert_expression(bft, vexi, location);
+  Bexpression *val = complex_expression(valr, vali, location);
+
+  // Wrap result and the init statements in a compound expression.
+  // Currently we can't resolve composite storage for compound
+  // expression, so we resolve the inner complex expression
+  // here with another temp variable.
+  auto p2 = makeTempVar(val, location);
+  Bvariable *rvar = p2.first;
+  Bstatement *rinit = p2.second;
+  Bexpression *rvex = nbuilder_.mkVar(rvar, location);
+  Bstatement *init = statement_list(std::vector<Bstatement*>{einit, rinit});
+  return nbuilder_.mkCompound(init, rvex, nullptr, location);
+}
+
 // An expression that converts an expression to a different type.
 
 Bexpression *Llvm_backend::convert_expression(Btype *type,
@@ -1157,6 +1196,10 @@ Bexpression *Llvm_backend::convert_expression(Btype *type,
     type = pointer_type(type);
     toType = type->type();
   }
+
+  // Complex -> complex conversion
+  if (type->castToBComplexType())
+    return makeComplexConvertExpr(type, expr, location);
 
   Bexpression *rval = nbuilder_.mkConversion(type, nullptr, expr, location);
   return rval;
@@ -1204,7 +1247,7 @@ Bexpression *Llvm_backend::compound_expression(Bstatement *bstat,
   if (bstat == errorStatement() || bexpr == errorExpression())
     return errorExpression();
 
-  Bexpression *rval = nbuilder_.mkCompound(bstat, bexpr, location);
+  Bexpression *rval = nbuilder_.mkCompound(bstat, bexpr, nullptr, location);
   return rval;
 }
 
@@ -1253,6 +1296,73 @@ Bexpression *Llvm_backend::unary_expression(Operator op,
   return rval;
 }
 
+Bexpression *Llvm_backend::makeComplexBinaryExpr(Operator op, Bexpression *left,
+                                                 Bexpression *right,
+                                                 Location location) {
+  // We need to avoid sharing between real part and imag part of the operand.
+  // Create temp variables and assign operands to the temp vars first.
+  // TODO: maybe not make temp var if the operand is already a var or constant?
+  auto p = makeTempVar(left, location), p2 = makeTempVar(right, location);
+  Bvariable *lvar = p.first, *rvar = p2.first;
+  Bstatement *linit = p.second, *rinit = p2.second;
+
+  Bexpression *lvex = nbuilder_.mkVar(lvar, location);
+  lvex->setVarExprPending(false, 0);
+  Bexpression *rvex = nbuilder_.mkVar(rvar, location);
+  rvex->setVarExprPending(false, 0);
+  Bexpression *lr = real_part_expression(lvex, location);
+  Bexpression *li = imag_part_expression(lvex, location);
+  Bexpression *rr = real_part_expression(rvex, location);
+  Bexpression *ri = imag_part_expression(rvex, location);
+  Bexpression *val;
+
+  switch (op) {
+  case OPERATOR_PLUS:
+  case OPERATOR_MINUS: {
+    Bexpression *valr = binary_expression(op, lr, rr, location);
+    Bexpression *vali = binary_expression(op, li, ri, location);
+    val = complex_expression(valr, vali, location);
+    break;
+  }
+  case OPERATOR_MULT: {
+    // (a+bi)*(c+di) = (ac-bd) + (ad+bc)i
+    Bexpression *ac = binary_expression(OPERATOR_MULT, lr, rr, location);
+    Bexpression *bd = binary_expression(OPERATOR_MULT, li, ri, location);
+    Bexpression *ad = binary_expression(OPERATOR_MULT, lr, ri, location);
+    Bexpression *bc = binary_expression(OPERATOR_MULT, li, rr, location);
+    Bexpression *valr = binary_expression(OPERATOR_MINUS, ac, bd, location);
+    Bexpression *vali = binary_expression(OPERATOR_PLUS, ad, bc, location);
+    val = complex_expression(valr, vali, location);
+    break;
+  }
+  case OPERATOR_EQEQ:
+  case OPERATOR_NOTEQ: {
+    Bexpression *cmpr = binary_expression(op, lr, rr, location);
+    Bexpression *cmpi = binary_expression(op, li, ri, location);
+    if (op == OPERATOR_EQEQ)
+      val = binary_expression(OPERATOR_ANDAND, cmpr, cmpi, location);
+    else
+      val = binary_expression(OPERATOR_OROR, cmpr, cmpi, location);
+    Bstatement *init = statement_list(std::vector<Bstatement*>{linit, rinit});
+    return materialize(compound_expression(init, val, location));
+  }
+  default:
+    std::cerr << "Op " << op << " unhandled\n";
+    assert(false);
+  }
+
+  // Wrap result and the init statements in a compound expression.
+  // Currently we can't resolve composite storage for compound
+  // expression, so we resolve the inner complex expression
+  // here with another temp variable.
+  auto p3 = makeTempVar(val, location);
+  Bvariable *vvar = p3.first;
+  Bstatement *vinit = p3.second;
+  Bexpression *vvex = nbuilder_.mkVar(vvar, location);
+  Bstatement *init = statement_list(std::vector<Bstatement*>{linit, rinit, vinit});
+  return compound_expression(init, vvex, location);
+}
+
 // Return an expression for the binary operation LEFT OP RIGHT.
 
 Bexpression *Llvm_backend::binary_expression(Operator op, Bexpression *left,
@@ -1260,6 +1370,14 @@ Bexpression *Llvm_backend::binary_expression(Operator op, Bexpression *left,
                                              Location location) {
   if (left == errorExpression() || right == errorExpression())
     return errorExpression();
+
+  Btype *bltype = left->btype();
+  Btype *brtype = right->btype();
+  BComplexType *blctype = bltype->castToBComplexType();
+  BComplexType *brctype = brtype->castToBComplexType();
+  assert((blctype == nullptr) == (brctype == nullptr));
+  if (blctype)
+    return makeComplexBinaryExpr(op, left, right, location);
 
   // Arbitrarily select the left child type as the type for the binop.
   // This may be revised later during materializeBinary.
@@ -1445,7 +1563,7 @@ Bstatement *Llvm_backend::assignment_statement(Bfunction *bfunction,
   if (lhs == errorExpression() || rhs == errorExpression() ||
       bfunction == errorFunction_.get())
     return errorStatement();
-  lhs = materialize(lhs);
+  lhs = materialize(lhs, VE_lvalue);
   rhs = materialize(rhs);
   Bexpression *lhs2 = resolveVarContext(lhs, VE_lvalue);
   Bexpression *rhs2 = rhs;

@@ -536,12 +536,14 @@ TEST(BackendExprTests, MakeVarExpressions) {
 
   // Same here.
   Bexpression *ve3 = be->var_expression(loc1, VE_lvalue, loc);
+  Bexpression *ve3r = be->var_expression(loc1, VE_rvalue, loc);
   EXPECT_EQ(repr(ve3->value()), "%loc1 = alloca i64");
-  h.mkExprStmt(ve3);
+  h.mkAssign(ve3, ve3r);
   Bexpression *ve4 = be->var_expression(loc1, VE_lvalue, loc);
+  Bexpression *ve4r = be->var_expression(loc1, VE_rvalue, loc);
   EXPECT_EQ(repr(ve4->value()), "%loc1 = alloca i64");
   EXPECT_NE(ve3, ve4);
-  h.mkExprStmt(ve4);
+  h.mkAssign(ve4, ve4r);
 
   bool broken = h.finish(PreserveDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");

@@ -253,7 +253,7 @@ class BnodeBuilder {
   Bexpression *mkBinaryOp(Operator op, Btype *typ, llvm::Value *val,
                           Bexpression *left, Bexpression *right,
                           Binstructions &instructions, Location loc);
-  Bexpression *mkCompound(Bstatement *st, Bexpression *expr,
+  Bexpression *mkCompound(Bstatement *st, Bexpression *expr, llvm::Value *val,
                           Location loc);
   Bexpression *mkStructField(Btype *type, llvm::Value *value,
                              Bexpression *structval, unsigned fieldIndex,

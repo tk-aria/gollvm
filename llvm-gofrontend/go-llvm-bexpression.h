@@ -86,8 +86,7 @@ class VarContext {
 
   bool pending() const { return pending_; }
   unsigned addrLevel() const { return addrLevel_; }
-  unsigned lvalue() const { return lvalue_; }
-  void incrementAddrLevel() { addrLevel_ += 1; }
+  bool lvalue() const { return lvalue_; }
   void setPending(bool lvalue, unsigned addrLevel) {
     assert(!pending_);
     pending_ = true;
@@ -95,6 +94,11 @@ class VarContext {
     addrLevel_ = addrLevel;
   }
   void reset() { assert(pending_); pending_ = false; }
+  bool equal(const VarContext &other) const {
+    return (pending_ == other.pending_ &&
+            addrLevel_ == other.addrLevel_ &&
+            lvalue_ == other.lvalue_);
+  }
 
  private:
   unsigned addrLevel_;

@@ -544,8 +544,6 @@ Bexpression *BnodeBuilder::mkUnaryOp(Operator op, Btype *typ, llvm::Value *val,
       new Bexpression(N_UnaryOp, kids, val, typ, loc);
   rval->u.op = op;
   appendInstIfNeeded(rval, val);
-  if (src->varExprPending())
-    rval->setVarExprPending(src->varContext());
   return archive(rval);
 }
 
@@ -556,8 +554,6 @@ Bexpression *BnodeBuilder::mkConversion(Btype *typ, llvm::Value *val,
   Bexpression *rval =
       new Bexpression(N_Conversion, kids, val, typ, loc);
   appendInstIfNeeded(rval, val);
-  if (src->varExprPending())
-    rval->setVarExprPending(src->varContext());
   return archive(rval);
 }
 
@@ -646,8 +642,6 @@ Bexpression *BnodeBuilder::mkStructField(Btype *typ,
       new Bexpression(N_StructField, kids, val, typ, loc);
   appendInstIfNeeded(rval, val);
   rval->u.fieldIndex = fieldIndex;
-  if (structval->varExprPending())
-    rval->setVarExprPending(structval->varContext());
   return archive(rval);
 }
 
@@ -661,8 +655,6 @@ Bexpression *BnodeBuilder::mkArrayIndex(Btype *typ,
   Bexpression *rval =
       new Bexpression(N_ArrayIndex, kids, val, typ, loc);
   appendInstIfNeeded(rval, val);
-  if (arval->varExprPending())
-    rval->setVarExprPending(arval->varContext());
   return archive(rval);
 }
 
@@ -681,14 +673,13 @@ Bexpression *BnodeBuilder::mkPointerOffset(Btype *typ,
 
 Bexpression *BnodeBuilder::mkCompound(Bstatement *st,
                                       Bexpression *expr,
+                                      llvm::Value *val,
                                       Location loc)
 {
   std::vector<Bnode *> kids = { st, expr };
   Bexpression *rval =
-      new Bexpression(N_Compound, kids, expr->value(), expr->btype(), loc);
+      new Bexpression(N_Compound, kids, val, expr->btype(), loc);
   rval->setTag(expr->tag());
-  if (expr->varExprPending())
-    rval->setVarExprPending(expr->varContext());
   return archive(rval);
 }
 
