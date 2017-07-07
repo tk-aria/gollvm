@@ -84,8 +84,36 @@ enum NodeFlavor {
   N_LastStmt=N_SwitchStmt
 };
 
+// For use by callbacks invoked by UpdatingNodeWalker.  A return value
+// of StopWalk will terminate the walk immediately after the callback
+// in question; a ContineWalk return means that the visitor will continue
+// on normally.
+
 enum VisitDisp {
   ContinueWalk, StopWalk
+};
+
+// Used by the visitChildPre callback invoked by UpdatingNodeWalker,
+// to allow specific subtrees to be skipped. A return value of
+// VisitChild tells the walker to go ahead and visit all of the nodes
+// in the child subtree; a value of SkipChild means that none of the
+// nodes in the child subtree will be visited. Example (from go code:
+// x.f[v]+10):
+//
+//                      +
+//                     / \
+//          array_index  10
+//          /        \
+//         field     var v
+//         /
+//       var x
+//
+// Suppose the visitChildPre(array_index, field) returns SkipChild --
+// in this case no other callbacks will be invoked for the "field" or
+// the "var x" nodes, but all other nodes will be walked (ex: "var v").
+
+enum VisitChildDisp {
+  VisitChild, SkipChild
 };
 
 enum VisitOrder {
@@ -161,6 +189,10 @@ class Bnode {
   // TODO: hide this once GenBlocksVisitor is working
   const std::vector<Bnode *> &children() const { return kids_; }
 
+  bool isStmt() const {
+    return (flavor() >= N_FirstStmt && flavor() <= N_LastStmt);
+  }
+
  protected:
   Bnode(NodeFlavor flavor, const std::vector<Bnode *> &kids, Location loc);
   Bnode(const Bnode &src);
@@ -169,11 +201,9 @@ class Bnode {
   // mainly for unit testing, not for general use.
   void removeAllChildren();
 
+
  private:
   void replaceChild(unsigned idx, Bnode *newchild);
-  bool isStmt() const {
-    return (flavor() >= N_FirstStmt && flavor() <= N_LastStmt);
-  }
 
  private:
   std::vector<Bnode *> kids_;
@@ -420,23 +450,31 @@ public:
     for (unsigned idx = 0; idx < children.size(); ++idx) {
       Bnode *child = children[idx];
 
-      // pre-child hook
-      auto pairPre = visitor_.visitChildPre(node, child);
-      if (pairPre.second != child) {
-        node->replaceChild(idx, pairPre.second);
-        child = pairPre.second;
+      // pre-child hook. Return value here is
+      // std::pair< std::pair<VisitDisp, VisitChildDisp>, Bnode *>
+
+      auto res = visitor_.visitChildPre(node, child);
+      Bnode *newChild = res.second;
+      std::pair<VisitDisp, VisitChildDisp> disp = res.first;
+      enum VisitDisp walkDisp = disp.first;
+      enum VisitChildDisp childDisp = disp.second;
+      if (newChild != child) {
+        node->replaceChild(idx, newChild);
+        child = newChild;
       }
-      if (pairPre.first == StopWalk)
+      if (walkDisp == StopWalk)
         return std::make_pair(StopWalk, node);
 
-      // walk child
-      auto pairChild = walk(child);
-      if (pairChild.second != child) {
-        node->replaceChild(idx, pairChild.second);
-        child = pairChild.second;
+      // walk child (unless we've been told to skip it)
+      if (childDisp != SkipChild) {
+        auto pairChild = walk(child);
+        if (pairChild.second != child) {
+          node->replaceChild(idx, pairChild.second);
+          child = pairChild.second;
+        }
+        if (pairChild.first == StopWalk)
+          return std::make_pair(StopWalk, node);
       }
-      if (pairChild.first == StopWalk)
-        return std::make_pair(StopWalk, node);
 
       // post-child hook
       auto pairPost = visitor_.visitChildPost(node, child);
