@@ -1557,12 +1557,19 @@ class FoldVisitor {
     return std::make_pair(ContinueWalk, expr);
   }
 
+  // If child is a statement (ex: compound expr) or if child
+  // already has an LLVM value, then prune walk at this node.
+  std::pair< std::pair<VisitDisp, VisitChildDisp>, Bnode *>
+  visitChildPre(Bnode *parent, Bnode *child) {
+    Bexpression *echild = child->castToBexpression();
+    if (child->isStmt() || echild->value() != nullptr)
+      return std::make_pair(std::make_pair(ContinueWalk, SkipChild), child);
+    return std::make_pair(std::make_pair(ContinueWalk, VisitChild), child);
+  }
+
   // Boilerplate
   std::pair<VisitDisp, Bnode *> visitNodePre(Bnode *node) {
     return std::make_pair(ContinueWalk, node);
-  }
-  std::pair<VisitDisp, Bnode *> visitChildPre(Bnode *parent, Bnode *child) {
-      return std::make_pair(ContinueWalk, child);
   }
   std::pair<VisitDisp, Bnode *> visitChildPost(Bnode *parent, Bnode *child) {
     return std::make_pair(ContinueWalk, child);
@@ -1658,8 +1665,15 @@ class MaterializeVisitor {
     return std::make_pair(ContinueWalk, expr);
   }
 
-  std::pair<VisitDisp, Bnode *> visitChildPre(Bnode *parent, Bnode *child) {
-      return std::make_pair(ContinueWalk, child);
+  // If child is a statement (ex: compound expr), then no need to
+  // visit subtree (should already be materialized). Similarly if
+  // child already has an LLVM value, then prune walk at this node
+  std::pair< std::pair<VisitDisp, VisitChildDisp>, Bnode *>
+  visitChildPre(Bnode *parent, Bnode *child) {
+    Bexpression *echild = child->castToBexpression();
+    if (child->isStmt() || echild->value() != nullptr)
+      return std::make_pair(std::make_pair(ContinueWalk, SkipChild), child);
+    return std::make_pair(std::make_pair(ContinueWalk, VisitChild), child);
   }
 
   std::pair<VisitDisp, Bnode *> visitChildPost(Bnode *parent, Bnode *child) {

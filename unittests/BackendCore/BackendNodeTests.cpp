@@ -34,10 +34,11 @@ class SimpleVisitor {
     return std::make_pair(disp, node);
   }
 
-  std::pair<VisitDisp, Bnode *> visitChildPre(Bnode *parent, Bnode *child) {
+  std::pair< std::pair<VisitDisp, VisitChildDisp>, Bnode *>
+  visitChildPre(Bnode *parent, Bnode *child) {
     ss_ << "pre child " << child->flavstr() << " " << id(parent) << " " << id(child) << "\n";
     VisitDisp disp = (stopAt_ == id(child) ? StopWalk : ContinueWalk);
-    return std::make_pair(disp, child);
+    return std::make_pair(std::make_pair(disp, VisitChild), child);
   }
   std::pair<VisitDisp, Bnode *> visitChildPost(Bnode *parent, Bnode *child) {
     ss_ << "post child " << child->flavstr() << " " << id(parent) << " " << id(child) << "\n";
