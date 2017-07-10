@@ -149,12 +149,6 @@ class Bnode {
   void osdump(llvm::raw_ostream &os, unsigned ilevel = 0,
               Llvm_linemap *linemap = nullptr, bool terse = false);
 
-  // Delete some or all or this Bnode and its component
-  // pieces. Deallocates just the Bnode, its contained instructions,
-  // or both (depending on setting of 'which'). This is used mainly in
-  // unit testing.
-  static void destroy(Bnode *node, WhichDel which = DelWrappers);
-
   // Cast to Bexpression. Returns NULL if not correct flavor.
   Bexpression *castToBexpression() const;
 
@@ -197,10 +191,6 @@ class Bnode {
   Bnode(NodeFlavor flavor, const std::vector<Bnode *> &kids, Location loc);
   Bnode(const Bnode &src);
   SwitchDescriptor *getSwitchCases();
-
-  // mainly for unit testing, not for general use.
-  void removeAllChildren();
-
 
  private:
   void replaceChild(unsigned idx, Bnode *newchild);
@@ -347,8 +337,15 @@ class BnodeBuilder {
   // var is not an unadopted temp, then NULL is returned.
   Bvariable *adoptTemporaryVariable(llvm::AllocaInst *alloca);
 
-  // Free up this expr (it is garbage). Does not free up children.
-  void freeExpr(Bexpression *expr);
+  // Free up this expr or stmt (it is garbage). Does not free up children.
+  void freeNode(Bnode *node);
+
+  // Delete some or all or this Bnode and its children/contents.
+  // Here 'which' can be set to DelInstructions (deletes only the
+  // LLVM instructions found in the subtree), DelWrappers (deletes
+  // Bnodes but not instructions), or DelBoth (gets rid of nodes and
+  // instructions).
+  void destroy(Bnode *node, WhichDel which = DelWrappers);
 
   // Clone an expression subtree.
   Bexpression *cloneSubtree(Bexpression *expr);
@@ -381,6 +378,7 @@ class BnodeBuilder {
   Bexpression *cloneSub(Bexpression *expr,
                         std::map<llvm::Value *, llvm::Value *> &vm);
   void checkTreeInteg(Bnode *node);
+  void destroyRec(Bnode *node, WhichDel which, std::set<Bnode *> &visited);
 
  private:
   std::unique_ptr<Bstatement> errorStatement_;

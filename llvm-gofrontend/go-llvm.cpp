@@ -450,7 +450,7 @@ Bexpression *Llvm_backend::makeGlobalExpression(Bexpression *expr,
   valbtype vbt(std::make_pair(val, btype));
   auto it = valueExprmap_.find(vbt);
   if (it != valueExprmap_.end()) {
-    nbuilder_.freeExpr(expr);
+    nbuilder_.freeNode(expr);
     return it->second;
   }
   valueExprmap_[vbt] = expr;
@@ -2494,7 +2494,7 @@ llvm::BasicBlock *GenBlocks::genReturn(Bstatement *rst,
       // Steal this return.
       cachedReturn_ = rst;
     } else {
-      Bnode::destroy(re, DelInstructions);
+      be_->nodeBuilder().destroy(re, DelInstructions);
     }
     llvm::BranchInst::Create(finallyBlock_, curblock);
   } else {
