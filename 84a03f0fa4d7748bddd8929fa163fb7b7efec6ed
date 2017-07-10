@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "56af6fa7_24b14c9d",
+        "filename": "llvm-gofrontend/go-llvm-bstatement.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 191,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-07-10T15:25:20Z",
+      "side": 0,
+      "message": "Also delete the declaration in the header file.",
+      "revId": "84a03f0fa4d7748bddd8929fa163fb7b7efec6ed",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
