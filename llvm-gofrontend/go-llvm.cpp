@@ -925,22 +925,20 @@ Bexpression *Llvm_backend::integer_constant_expression(Btype *btype,
   assert(btype->type()->isIntegerTy());
 
   // Force mpz_val into either into uint64_t or int64_t depending on
-  // whether btype was declared as signed or unsigned.
-  //
-  // Q: better to use APInt here?
+  // whether btype was declared as signed or unsigned. 
 
   Bexpression *rval;
   BIntegerType *bit = btype->castToBIntegerType();
   if (bit->isUnsigned()) {
     uint64_t val = checked_convert_mpz_to_int<uint64_t>(mpz_val);
-    assert(llvm::ConstantInt::isValueValidForType(btype->type(), val));
-    llvm::Constant *lval = llvm::ConstantInt::get(btype->type(), val);
+    llvm::APInt apiv(bit->bits(), val);
+    llvm::Constant *lval = llvm::ConstantInt::get(btype->type(), apiv);
     Bexpression *bconst = nbuilder_.mkConst(btype, lval);
     return makeGlobalExpression(bconst, lval, btype, Location());
   } else {
     int64_t val = checked_convert_mpz_to_int<int64_t>(mpz_val);
-    assert(llvm::ConstantInt::isValueValidForType(btype->type(), val));
-    llvm::Constant *lval = llvm::ConstantInt::getSigned(btype->type(), val);
+    llvm::APInt apiv(bit->bits(), val, true);
+    llvm::Constant *lval = llvm::ConstantInt::get(btype->type(), apiv);
     Bexpression *bconst = nbuilder_.mkConst(btype, lval);
     return makeGlobalExpression(bconst, lval, btype, Location());
   }

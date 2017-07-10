@@ -65,6 +65,20 @@ TEST(BackendExprTests, MakeIntConstExpr) {
     EXPECT_EQ(beval->value(), llvm::ConstantInt::get(bu64t->type(), val));
     mpz_clear(mpz_val);
   }
+
+  // Frontend will occasionally create create a signed -1 value with
+  // mpz_init_set_si and then hand this value off to to the bridge
+  // with a smaller unsigned type. Verify that this case works
+  // correctly.
+  mpz_t mpz_val;
+  memset(&mpz_val, '0', sizeof(mpz_val));
+  mpz_init_set_si(mpz_val, int64_t(-1));
+  Btype *bu32t = be->integer_type(true, 32);
+  Bexpression *beval = be->integer_constant_expression(bu32t, mpz_val);
+  ASSERT_TRUE(beval != nullptr);
+  uint32_t um1 = uint32_t(-1);
+  EXPECT_EQ(beval->value(), llvm::ConstantInt::get(bu32t->type(), um1));
+  mpz_clear(mpz_val);
 }
 
 TEST(BackendExprTests, MakeFloatConstExpr) {
