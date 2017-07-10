@@ -2335,17 +2335,25 @@ GenBlocks::postProcessInst(llvm::Instruction *inst,
 llvm::BasicBlock *GenBlocks::walkExpr(llvm::BasicBlock *curblock,
                                       Bexpression *expr)
 {
+  if (!curblock) {
+    // Delete dead instructions before visiting the children,
+    // as they may use values defined in the children. Uses
+    // need to be deleted before deleting definition.
+    for (auto originst : expr->instructions())
+      originst->dropAllReferences();
+    for (auto originst : expr->instructions())
+      originst->deleteValue();
+  }
+
   // Visit children first
   const std::vector<Bnode *> &kids = expr->children();
   for (auto &child : kids)
     curblock = walk(child, curblock);
 
   // Now visit instructions for this expr
+  if (!curblock)
+    return curblock;
   for (auto originst : expr->instructions()) {
-    if (!curblock) {
-      originst->deleteValue();
-      continue;
-    }
     auto pair = postProcessInst(originst, curblock);
     auto inst = pair.first;
     if (dibuildhelper_)
