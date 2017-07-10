@@ -934,8 +934,8 @@ Bexpression *Llvm_backend::integer_constant_expression(Btype *btype,
   BIntegerType *bit = btype->castToBIntegerType();
   if (bit->isUnsigned()) {
     uint64_t val = checked_convert_mpz_to_int<uint64_t>(mpz_val);
-    assert(llvm::ConstantInt::isValueValidForType(btype->type(), val));
-    llvm::Constant *lval = llvm::ConstantInt::get(btype->type(), val);
+    llvm::APInt apiv(bit->bits(), val);
+    llvm::Constant *lval = llvm::ConstantInt::get(btype->type(), apiv);
     Bexpression *bconst = nbuilder_.mkConst(btype, lval);
     return makeGlobalExpression(bconst, lval, btype, Location());
   } else {
