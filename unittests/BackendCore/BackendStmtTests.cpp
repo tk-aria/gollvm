@@ -122,6 +122,52 @@ TEST(BackendStmtTests, TestReturnStmt) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
+TEST(BackendStmtTests, TestReturnStmt2) {
+  // Test that dead code after the return statement is handled
+  // correctly.
+
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
+  Bfunction *func = h.func();
+  Location loc;
+
+  // var x int64 = 10
+  Btype *bi64t = be->integer_type(false, 64);
+  Bvariable *x = h.mkLocal("x", bi64t, mkInt64Const(be, 10));
+
+  // return x
+  Bexpression *ve1 = be->var_expression(x, VE_rvalue, loc);
+  h.mkReturn(ve1);
+
+  // some dead code
+  // return x+20
+  Bexpression *ve2 = be->var_expression(x, VE_rvalue, loc);
+  Bexpression *addexpr = be->binary_expression(OPERATOR_PLUS, ve2, mkInt64Const(be, 20), loc);
+  h.mkReturn(addexpr);
+
+  const char *exp = R"RAW_RESULT(
+    define i64 @foo(i8* nest %nest.0, i32 %param1, i32 %param2, i64* %param3) #0 {
+    entry:
+      %param1.addr = alloca i32
+      %param2.addr = alloca i32
+      %param3.addr = alloca i64*
+      %x = alloca i64
+      store i32 %param1, i32* %param1.addr
+      store i32 %param2, i32* %param2.addr
+      store i64* %param3, i64** %param3.addr
+      store i64 10, i64* %x
+      %x.ld.0 = load i64, i64* %x
+      ret i64 %x.ld.0
+    }
+  )RAW_RESULT";
+
+  bool broken = h.finish(StripDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+
+  bool isOK = h.expectValue(func->function(), exp);
+  EXPECT_TRUE(isOK && "Function does not have expected contents");
+}
+
 TEST(BackendStmtTests, TestLabelGotoStmts) {
 
   FcnTestHarness h("foo");
