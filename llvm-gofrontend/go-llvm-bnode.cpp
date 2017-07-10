@@ -1,4 +1,4 @@
-//===-- bnode.cpp - implementation of 'Bnode' class ---=======================//
+//===-- go-llvm-bnode.cpp - implementation of 'Bnode' class ---------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -267,8 +267,19 @@ void Bnode::osdump(llvm::raw_ostream &os, unsigned ilevel,
     kid->osdump(os, ilevel + 2, linemap, terse);
 }
 
-void Bnode::destroy(Bnode *node, WhichDel which)
+void BnodeBuilder::destroy(Bnode *node, WhichDel which)
 {
+  std::set<Bnode *> visited;
+  destroyRec(node, which, visited);
+}
+
+void BnodeBuilder::destroyRec(Bnode *node,
+                              WhichDel which,
+                              std::set<Bnode *> &visited)
+{
+  if (visited.find(node) != visited.end())
+    return;
+  visited.insert(node);
   if (which != DelWrappers) {
     Bexpression *expr = node->castToBexpression();
     if (expr) {
@@ -279,9 +290,9 @@ void Bnode::destroy(Bnode *node, WhichDel which)
     }
   }
   for (auto &kid : node->kids_)
-    destroy(kid, which);
+    destroyRec(kid, which, visited);
   if (which != DelInstructions)
-    delete node;
+    freeNode(node);
 }
 
 SwitchDescriptor *Bnode::getSwitchCases()
@@ -289,12 +300,6 @@ SwitchDescriptor *Bnode::getSwitchCases()
   assert(flavor() == N_SwitchStmt);
   assert(u.swcases);
   return u.swcases;
-}
-
-// only for unit testing, not for general use.
-void Bnode::removeAllChildren()
-{
-  kids_.clear();
 }
 
 Blabel *Bnode::label() const
@@ -369,13 +374,22 @@ void BnodeBuilder::freeStmts()
   swcases_.clear();
 }
 
-void BnodeBuilder::freeExpr(Bexpression *expr)
+void BnodeBuilder::freeNode(Bnode *node)
 {
-  assert(expr);
-  earchive_[expr->id()] = nullptr;
-  if (expr->id() == earchive_.size()-1)
-    earchive_.pop_back();
-  delete expr;
+  assert(node);
+  Bexpression *expr = node->castToBexpression();
+  if (expr) {
+    earchive_[expr->id()] = nullptr;
+    if (expr->id() == earchive_.size()-1)
+      earchive_.pop_back();
+    delete expr;
+  } else {
+    Bstatement *stmt = node->castToBstatement();
+    sarchive_[stmt->id()] = nullptr;
+    if (stmt->id() == sarchive_.size()-1)
+      sarchive_.pop_back();
+    delete stmt;
+  }
 }
 
 void BnodeBuilder::checkTreeInteg(Bnode *node)
@@ -672,9 +686,9 @@ Bexpression *BnodeBuilder::mkCompound(Bstatement *st,
   std::vector<Bnode *> kids = { st, expr };
   Bexpression *rval =
       new Bexpression(N_Compound, kids, expr->value(), expr->btype(), loc);
+  rval->setTag(expr->tag());
   if (expr->varExprPending())
     rval->setVarExprPending(expr->varContext());
-  rval->setTag(expr->tag());
   return archive(rval);
 }
 
@@ -937,7 +951,7 @@ BnodeBuilder::extractChildNodesAndDestroy(Bnode *node)
   integrityVisitor_->deletePending(node);
   Bexpression *expr = node->castToBexpression();
   assert(expr); // statements not yet supported, could be if needed
-  freeExpr(expr);
+  freeNode(expr);
   return orphans;
 }
 

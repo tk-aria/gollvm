@@ -72,9 +72,10 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrity2) {
   Bfunction *func = mkFunci32o64(be.get(), "foo");
   Btype *bi64t = be->integer_type(false, 64);
   Bvariable *loc1 = be->local_variable(func, "loc1", bi64t, true, loc);
+  Bvariable *loc2 = be->local_variable(func, "loc2", bi64t, true, loc);
 
   // Create "loc1" varexpr, then supply to more than one statement
-  Bexpression *ve = be->var_expression(loc1, VE_lvalue, loc);
+  Bexpression *ve = be->var_expression(loc1, VE_rvalue, loc);
   Bstatement *es1 = be->expression_statement(func, ve);
   Bblock *block = mkBlockFromStmt(be.get(), func, es1);
   Bstatement *es2 = be->expression_statement(func, ve);
@@ -86,7 +87,9 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrity2) {
   EXPECT_FALSE(result.first);
   EXPECT_TRUE(containstokens(result.second, "expr has multiple parents"));
 
-  Bexpression *ve3= be->var_expression(loc1, VE_lvalue, loc);
+  be->nodeBuilder().destroy(block, DelBoth);
+
+  Bexpression *ve3 = be->var_expression(loc2, VE_rvalue, loc);
   Bstatement *es3 = be->expression_statement(func, ve3);
   Bblock *block2 = mkBlockFromStmt(be.get(), func, es3);
 
