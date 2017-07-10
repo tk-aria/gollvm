@@ -159,9 +159,6 @@ class Bblock : public Bstatement {
   // the backend temporary_variable() method-- allow for this here.
   void addTemporaryVariable(Bvariable *var);
 
-  // Exposed for unit testing the tree integrity checker. Not for general use.
-  void clearStatements();
-
  private:
   friend class BnodeBuilder;
   Bblock(Bfunction *func,

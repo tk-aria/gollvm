@@ -187,8 +187,3 @@ void Bblock::addTemporaryVariable(Bvariable *var)
 {
   vars_.push_back(var);
 }
-
-void Bblock::clearStatements()
-{
-  removeAllChildren();
-}
