@@ -1,0 +1,78 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5f6726f2_67fad15b",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-07-11T12:45:53Z",
+      "side": 1,
+      "message": "Wrap these two lines.",
+      "range": {
+        "startLine": 16,
+        "startChar": 0,
+        "endLine": 17,
+        "endChar": 229
+      },
+      "revId": "0ce82e11c4ab5a1e395374149107cb6b1554c1ec",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ad3f9e98_127da71e",
+        "filename": "llvm-gofrontend/go-llvm-materialize.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 255,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-07-11T12:45:53Z",
+      "side": 1,
+      "message": "It is probably better to move this function and makeComplexBinaryExpr back out of this file, as they are no longer for materialization. Could be a separate CL.",
+      "revId": "0ce82e11c4ab5a1e395374149107cb6b1554c1ec",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ac9d25fb_831a4cfb",
+        "filename": "llvm-gofrontend/go-llvm-materialize.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1650,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-07-11T12:45:53Z",
+      "side": 1,
+      "message": "minor: consider using a switch statement, so we don\u0027t need to repeat expr-\u003eflavor().",
+      "revId": "0ce82e11c4ab5a1e395374149107cb6b1554c1ec",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b22efc77_67caac0d",
+        "filename": "llvm-gofrontend/go-llvm-materialize.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1865,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-07-11T12:45:53Z",
+      "side": 1,
+      "message": "If the context is not lvalue, the visitor does nothing. Do we still need it?",
+      "revId": "0ce82e11c4ab5a1e395374149107cb6b1554c1ec",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
