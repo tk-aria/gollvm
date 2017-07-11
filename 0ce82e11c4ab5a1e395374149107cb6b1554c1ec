@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "f3da97cf_767fb0a4",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-07-11T14:11:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5f6726f2_67fad15b",
+      "range": {
+        "startLine": 16,
+        "startChar": 0,
+        "endLine": 17,
+        "endChar": 229
+      },
+      "revId": "0ce82e11c4ab5a1e395374149107cb6b1554c1ec",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "ad3f9e98_127da71e",
         "filename": "llvm-gofrontend/go-llvm-materialize.cpp",
         "patchSetId": 1
@@ -36,6 +60,24 @@
       "writtenOn": "2017-07-11T12:45:53Z",
       "side": 1,
       "message": "It is probably better to move this function and makeComplexBinaryExpr back out of this file, as they are no longer for materialization. Could be a separate CL.",
+      "revId": "0ce82e11c4ab5a1e395374149107cb6b1554c1ec",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f42df099_203f26a0",
+        "filename": "llvm-gofrontend/go-llvm-materialize.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 255,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-07-11T14:11:48Z",
+      "side": 1,
+      "message": "I agree. I will work that into the patch.",
+      "parentUuid": "ad3f9e98_127da71e",
       "revId": "0ce82e11c4ab5a1e395374149107cb6b1554c1ec",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
@@ -59,6 +101,24 @@
     },
     {
       "key": {
+        "uuid": "0212de15_68dc4ee9",
+        "filename": "llvm-gofrontend/go-llvm-materialize.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1650,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-07-11T14:11:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ac9d25fb_831a4cfb",
+      "revId": "0ce82e11c4ab5a1e395374149107cb6b1554c1ec",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "b22efc77_67caac0d",
         "filename": "llvm-gofrontend/go-llvm-materialize.cpp",
         "patchSetId": 1
@@ -70,6 +130,24 @@
       "writtenOn": "2017-07-11T12:45:53Z",
       "side": 1,
       "message": "If the context is not lvalue, the visitor does nothing. Do we still need it?",
+      "revId": "0ce82e11c4ab5a1e395374149107cb6b1554c1ec",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cd7a3829_c781816a",
+        "filename": "llvm-gofrontend/go-llvm-materialize.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1865,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-07-11T14:11:48Z",
+      "side": 1,
+      "message": "It\u0027s a good point -- it would be one less tree walk in the non-LHS case.\n\nIn the original version of code I had also arranged for the VarContextVisitor to propagate the context tags upwards, but decided it was clearer to keep this logic in the materialize* functions. \n\nI will add a TODO and see if I can remove the non-LHS walk in a follow-on patch.",
+      "parentUuid": "b22efc77_67caac0d",
       "revId": "0ce82e11c4ab5a1e395374149107cb6b1554c1ec",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
