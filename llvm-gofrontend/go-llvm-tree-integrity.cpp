@@ -92,6 +92,20 @@ void IntegrityVisitor::unsetParent(Bnode *child, Bnode *parent, unsigned slot)
     nparent_.erase(it);
 }
 
+void IntegrityVisitor::unsetParent(llvm::Instruction *inst,
+                                   Bexpression *exprParent,
+                                   unsigned slot)
+{
+  auto it = iparent_.find(inst);
+  if (it == iparent_.end())
+    return;
+  parslot pps = it->second;
+  Bnode *prevParent = pps.first;
+  unsigned prevSlot = pps.second;
+  if (prevParent == exprParent || prevSlot == slot)
+    iparent_.erase(it);
+}
+
 void IntegrityVisitor::setParent(Bnode *child, Bnode *parent, unsigned slot)
 {
   if (! shouldBeTracked(child))

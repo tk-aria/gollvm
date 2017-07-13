@@ -2456,13 +2456,8 @@ llvm::BasicBlock *GenBlocks::walkExpr(llvm::BasicBlock *curblock,
   // Delete dead instructions before visiting the children,
   // as they may use values defined in the children. Uses
   // need to be deleted before deleting definition.
-  if (!curblock) {
-    for (auto originst : expr->instructions())
-      originst->dropAllReferences();
-    for (auto originst : expr->instructions())
-      originst->deleteValue();
-    expr->clear();
-  }
+  if (!curblock)
+    be_->nodeBuilder().destroy(expr, DelInstructions, false);
 
   // Visit children first
   const std::vector<Bnode *> &kids = expr->children();
@@ -2470,13 +2465,8 @@ llvm::BasicBlock *GenBlocks::walkExpr(llvm::BasicBlock *curblock,
     curblock = walk(child, curblock);
 
   // In case it becomes dead after visiting some child...
-  if (!curblock) {
-    for (auto originst : expr->instructions())
-      originst->dropAllReferences();
-    for (auto originst : expr->instructions())
-      originst->deleteValue();
-    expr->clear();
-  }
+  if (!curblock)
+    be_->nodeBuilder().destroy(expr, DelInstructions, false);
 
   // Now visit instructions for this expr
   // TODO: currently the control flow won't change from

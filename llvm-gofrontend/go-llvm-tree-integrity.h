@@ -94,6 +94,11 @@ class IntegrityVisitor {
   // relationship (used when node child is deleted or repurposed).
   void unsetParent(Bnode *child, Bnode *parent, unsigned slot);
 
+  // Same as above, for instruction.
+  void unsetParent(llvm::Instruction *inst,
+                   Bexpression *exprParent,
+                   unsigned slot);
+
   // Tell the IntegrityVisitor we're about to delete the specified
   // node, so please remove any outstanding references to it.
   void deletePending(Bnode *node);

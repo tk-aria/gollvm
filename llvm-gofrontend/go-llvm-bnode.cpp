@@ -267,14 +267,15 @@ void Bnode::osdump(llvm::raw_ostream &os, unsigned ilevel,
     kid->osdump(os, ilevel + 2, linemap, terse);
 }
 
-void BnodeBuilder::destroy(Bnode *node, WhichDel which)
+void BnodeBuilder::destroy(Bnode *node, WhichDel which, bool recursive)
 {
   std::set<Bnode *> visited;
-  destroyRec(node, which, visited);
+  destroyRec(node, which, recursive, visited);
 }
 
 void BnodeBuilder::destroyRec(Bnode *node,
                               WhichDel which,
+                              bool recursive,
                               std::set<Bnode *> &visited)
 {
   if (visited.find(node) != visited.end())
@@ -283,14 +284,19 @@ void BnodeBuilder::destroyRec(Bnode *node,
   if (which != DelWrappers) {
     Bexpression *expr = node->castToBexpression();
     if (expr) {
-      for (auto inst : expr->instructions())
+      unsigned idx = 0;
+      for (auto inst : expr->instructions()) {
+        integrityVisitor_->unsetParent(inst, expr, idx);
         inst->dropAllReferences();
+      }
       for (auto inst : expr->instructions())
         inst->deleteValue();
+      expr->clear();
     }
   }
-  for (auto &kid : node->kids_)
-    destroyRec(kid, which, visited);
+  if (recursive)
+    for (auto &kid : node->kids_)
+      destroyRec(kid, which, true, visited);
   if (which != DelInstructions)
     freeNode(node);
 }
