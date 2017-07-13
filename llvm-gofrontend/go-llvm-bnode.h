@@ -345,7 +345,8 @@ class BnodeBuilder {
   // LLVM instructions found in the subtree), DelWrappers (deletes
   // Bnodes but not instructions), or DelBoth (gets rid of nodes and
   // instructions).
-  void destroy(Bnode *node, WhichDel which = DelWrappers);
+  // If recursive is true, also delete its children recursively.
+  void destroy(Bnode *node, WhichDel which = DelWrappers, bool recursive = true);
 
   // Clone an expression subtree.
   Bexpression *cloneSubtree(Bexpression *expr);
@@ -378,7 +379,8 @@ class BnodeBuilder {
   Bexpression *cloneSub(Bexpression *expr,
                         std::map<llvm::Value *, llvm::Value *> &vm);
   void checkTreeInteg(Bnode *node);
-  void destroyRec(Bnode *node, WhichDel which, std::set<Bnode *> &visited);
+  void destroyRec(Bnode *node, WhichDel which, bool recursive,
+                  std::set<Bnode *> &visited);
 
  private:
   std::unique_ptr<Bstatement> errorStatement_;
