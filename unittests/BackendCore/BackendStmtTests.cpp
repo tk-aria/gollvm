@@ -340,12 +340,16 @@ TEST(BackendStmtTests, TestSwitchStmt) {
   Bstatement *cs1 = be->compound_statement(as1, goto1);
 
   // second case
-  // loc1 = 987 * loc1
+  // loc1 = loc1 < 987 ? loc1 : 987 * loc1
   Bexpression *ve2 = be->var_expression(loc1, VE_lvalue, loc);
   Bexpression *ve2r = be->var_expression(loc1, VE_rvalue, loc);
+  Bexpression *ve2r2 = be->var_expression(loc1, VE_rvalue, loc);
+  Bexpression *ve2r3 = be->var_expression(loc1, VE_rvalue, loc);
   Bexpression *c987 = mkInt64Const(be, 987);
   Bexpression *mul = be->binary_expression(OPERATOR_MULT, c987, ve2r, loc);
-  Bstatement *as2 = be->assignment_statement(func, ve2, mul, loc);
+  Bexpression *cmp = be->binary_expression(OPERATOR_LE, ve2r2, c987, loc);
+  Bexpression *condex = be->conditional_expression(func, bi64t, cmp, ve2r3, mul, loc);
+  Bstatement *as2 = be->assignment_statement(func, ve2, condex, loc);
   // implicit fallthrough
 
   // third case
@@ -385,34 +389,57 @@ TEST(BackendStmtTests, TestSwitchStmt) {
      %param2.addr = alloca i32
      %param3.addr = alloca i64*
      %loc1 = alloca i64
+     %tmpv.0 = alloca i64
      store i32 %param1, i32* %param1.addr
      store i32 %param2, i32* %param2.addr
      store i64* %param3, i64** %param3.addr
      store i64 0, i64* %loc1
-     %loc1.ld.2 = load i64, i64* %loc1
-     switch i64 %loc1.ld.2, label %default.0 [
+     %loc1.ld.4 = load i64, i64* %loc1
+     switch i64 %loc1.ld.4, label %default.0 [
        i64 1, label %case.0
        i64 2, label %case.0
        i64 3, label %case.1
        i64 4, label %case.1
      ]
-   case.0:                               ; preds = %entry, %entry
+
+   case.0:                                           ; preds = %entry, %entry
      %loc1.ld.0 = load i64, i64* %loc1
      %div.0 = sdiv i64 %loc1.ld.0, 123
      store i64 %div.0, i64* %loc1
      br label %label.0
-   case.1:                               ; preds = %entry, %entry
+
+   case.1:                                           ; preds = %entry, %entry
      %loc1.ld.1 = load i64, i64* %loc1
-     %mul.0 = mul i64 987, %loc1.ld.1
-     store i64 %mul.0, i64* %loc1
-     br label %default.0
-   default.0:                            ; preds = %entry, %case.1
+     %icmp.0 = icmp sle i64 %loc1.ld.1, 987
+     %zext.0 = zext i1 %icmp.0 to i8
+     %trunc.0 = trunc i8 %zext.0 to i1
+     br i1 %trunc.0, label %then.0, label %else.0
+
+   default.0:                                        ; preds = %entry, %fallthrough.0
      store i64 456, i64* %loc1
      br label %label.0
-   epilog.0:                             ; No predecessors!
+
+   epilog.0:                                         ; No predecessors!
      br label %label.0
-   label.0:                              ; preds = %epilog.0, %default.0, %case.0
+
+   label.0:                                          ; preds = %epilog.0, %default.0, %case.0
      ret i64 10101
+
+   then.0:                                           ; preds = %case.1
+     %loc1.ld.3 = load i64, i64* %loc1
+     store i64 %loc1.ld.3, i64* %tmpv.0
+     br label %fallthrough.0
+
+   fallthrough.0:                                    ; preds = %else.0, %then.0
+     %tmpv.0.ld.0 = load i64, i64* %tmpv.0
+     store i64 %tmpv.0.ld.0, i64* %loc1
+     br label %default.0
+
+   else.0:                                           ; preds = %case.1
+     %loc1.ld.2 = load i64, i64* %loc1
+     %mul.0 = mul i64 987, %loc1.ld.2
+     store i64 %mul.0, i64* %tmpv.0
+     br label %fallthrough.0
    }
   )RAW_RESULT";
 
