@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "0b439f72_0a2484ba",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 931,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-07-13T13:32:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "65b01a38_b69a36db",
+      "revId": "7307ce03381ce58eaadc92073b6319be572a65b7",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "212f3b01_d45604a4",
         "filename": "llvm-gofrontend/go-llvm.cpp",
         "patchSetId": 1
@@ -30,6 +48,24 @@
       "writtenOn": "2017-07-11T23:27:23Z",
       "side": 1,
       "message": "Do the same here? (with isSigned\u003dtrue)",
+      "revId": "7307ce03381ce58eaadc92073b6319be572a65b7",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "88ed6ebf_241ffa86",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 942,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-07-13T13:32:44Z",
+      "side": 1,
+      "message": "Yes, I think it\u0027s worth changing this as well. Although at the moment I haven\u0027t been able to come up with a test that triggers this assert.",
+      "parentUuid": "212f3b01_d45604a4",
       "revId": "7307ce03381ce58eaadc92073b6319be572a65b7",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
