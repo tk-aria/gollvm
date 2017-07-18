@@ -74,6 +74,8 @@ class TypeManager {
   Btype *circularPointerType(Btype *, bool);
   bool isCircularPointerType(Btype *);
   bool isCircularPointerType(llvm::Type *);
+  bool isCircularFunctionType(Btype *);
+  bool isCircularFunctionType(llvm::Type *);
   int64_t typeSize(Btype *);
   int64_t typeAlignment(Btype *);
   int64_t typeFieldAlignment(Btype *);
@@ -320,7 +322,7 @@ class TypeManager {
   // types A, B, and C.
   std::unordered_map<Btype *, std::set<Btype *> > placeholderRefs_;
 
-  // Set of circular types. These are pointers to opaque types that
+  // Set of circular pointer types. These are pointers to opaque types that
   // are returned by the ::circular_pointer_type() method.
   std::unordered_set<llvm::Type *> circularPointerTypes_;
 
@@ -336,6 +338,17 @@ class TypeManager {
   // Temporary; filled in only during processing of the loop.
   typedef std::pair<Btype *, Btype *> btpair;
   std::vector<btpair> circularPointerLoop_;
+
+  // Set of top-level circular function types.
+  std::unordered_set<Btype *> circularFunctionPlaceholderTypes_;
+
+  // This set holds the marker types returned for the self-referential
+  // elements within a circular function type, also any resolved LLVM
+  // function types created from placeholders.
+  std::unordered_set<llvm::Type *> circularFunctionTypes_;
+
+  // Stack used to help with creation of circular function types.
+  std::vector<Btype *> circularFunctionStack_;
 
   // Name generation helper
   NameGen *nametags_;
