@@ -311,7 +311,7 @@ Btype *Llvm_backend::circular_pointer_type(Btype *placeholder, bool isf) {
 }
 
 bool Llvm_backend::is_circular_pointer_type(Btype *btype) {
-  return isCircularPointerType(btype);
+  return isCircularPointerType(btype) || isCircularFunctionType(btype);
 }
 
 int64_t Llvm_backend::type_size(Btype *btype) {

@@ -539,6 +539,14 @@ Btype *TypeManager::placeholderPointerType(const std::string &name,
   llvm::PointerType *pto = llvm::PointerType::get(opaque, addressSpace_);
   ppt->setType(pto);
   placeholders_.insert(ppt);
+
+  if (traceLevel() > 1) {
+    std::cerr << "\n^ placeholder pointer type "
+              << ((void*)ppt) << " [llvm type "
+              << ((void*) pto) << "]\n";
+    ppt->dump();
+  }
+
   return ppt;
 }
 
@@ -659,8 +667,59 @@ TypeManager::functionType(const Btyped_identifier &receiver,
 
   assert(!isPlace || !followsCabi);
 
-  // Install in cache and return
+  if (traceLevel() > 1) {
+    std::cerr << "\n^ function type "
+              << ((void*)rval) << " [llvm type "
+              << ((void*) llft) << "]\n";
+    rval->dump();
+  }
+
+  // Install in cache
   anonTypes_.insert(rval);
+
+  // Handling for circular function types. The recipe used by the front
+  // end is something along the lines of
+  //
+  //     ph = backend()->placeholder_pointer_type(...)
+  //     cpt = backend()->circular_pointer_type(ph, true)
+  //     ft = <create function type involving cpt>
+  //     backend()->set_placeholder_pointer_type(ph, cpt)
+  //
+  // In the sequence above, the placeholder type ("ph") gets pushed
+  // onto the stack below during the call to circular_pointer_type(),
+  // then when the function type is created here in this routine, we
+  // pop the stack and retarget the placeholder to the new function.
+  //
+  if (circularFunctionStack_.size()) {
+    Btype *marker = circularFunctionStack_.back();
+    circularFunctionStack_.pop_back();
+    Btype *pht = circularFunctionStack_.back();
+    circularFunctionStack_.pop_back();
+
+    if (traceLevel() > 1) {
+      std::cerr << "\n^ finalizing placeholder pointer type "
+              << ((void*)pht) << " [llvm type "
+                << ((void*)pht->type()) << "]"
+                << " to point to circular function type "
+                       << ((void*) rval) << " [llvm type "
+                       << ((void*)llft) << "]\n";
+    }
+    Btype *pft = pointerType(rval);
+
+    // This placeholder type most likely has been redirected already,
+    // so re-insert it in the placeholder set (this is somewhat
+    // hacky).  The rationale for calling the general-purpose routine
+    // (setPlaceholderPointerType) here instead of just mutating the
+    // target of the pointer type is that there may be unresolved
+    // placeholders elsewhere in the function type (so we want to use
+    // the more general routine so as to get placeholder reference
+    // tracking).
+    placeholders_.insert(pht);
+    setPlaceholderPointerType(pht, pft);
+    placeholders_.insert(marker);
+    setPlaceholderPointerType(marker, pft);
+  }
+
   return rval;
 }
 
@@ -957,6 +1016,10 @@ bool TypeManager::setPlaceholderPointerType(Btype *placeholder,
     std::cerr << "redir: "; to_type->dump();
   }
 
+  auto it = circularFunctionTypes_.find(placeholder->type());
+  if (it != circularFunctionTypes_.end())
+    circularFunctionTypes_.insert(to_type->type());
+
   // Update the target type for the pointer
   BPointerType *bpt = placeholder->castToBPointerType();
   bpt->setToType(to_type);
@@ -975,7 +1038,7 @@ bool TypeManager::setPlaceholderPointerType(Btype *placeholder,
     postProcessResolvedPlaceholder(placeholder);
   }
 
-  // Circular type handling
+  // Circular pointer type handling
 
   unsigned nct = circularPointerLoop_.size();
   if (nct != 0) {
@@ -1008,7 +1071,8 @@ bool TypeManager::setPlaceholderPointerType(Btype *placeholder,
       }
       circularPointerLoop_.clear();
     } else {
-      circularPointerLoop_.push_back(std::make_pair(placeholder, to_type));
+      if (! isCircularFunctionType(placeholder))
+        circularPointerLoop_.push_back(std::make_pair(placeholder, to_type));
     }
   }
 
@@ -1018,7 +1082,8 @@ bool TypeManager::setPlaceholderPointerType(Btype *placeholder,
 // Set the real values for a placeholder function type.
 
 bool TypeManager::setPlaceholderFunctionType(Btype *placeholder,
-                                              Btype *ft) {
+                                             Btype *ft)
+{
   return setPlaceholderPointerType(placeholder, ft);
 }
 
@@ -1170,13 +1235,30 @@ Btype *TypeManager::circularPointerType(Btype *placeholder, bool isfunc) {
   if (it != circularPointerTypeMap_.end())
     return it->second;
 
-  llvm::Type *opaque = makeOpaqueLlvmType("CPT");
-  llvm::Type *circ_ptr_typ = llvm::PointerType::get(opaque, addressSpace_);
-  Btype *rval = makeAuxType(circ_ptr_typ);
-  circularPointerTypes_.insert(circ_ptr_typ);
+  // Create a marker type.
+  Btype *rval = new BPointerType("", placeholder->location());
+  llvm::Type *opaque = makeOpaqueLlvmType(isfunc ? "CFT" : "CPT");
+  llvm::Type *circ_typ = llvm::PointerType::get(opaque, addressSpace_);
+  placeholders_.insert(rval);
+  rval->setType(circ_typ);
+  rval->setPlaceholder(false);
   circularPointerTypeMap_[placeholder] = rval;
-  assert(circularPointerLoop_.size() == 0);
-  circularPointerLoop_.push_back(std::make_pair(placeholder, rval));
+
+  if (isfunc) {
+    // Push marker and placeholder onto a stack so that we can
+    // update them when the appropriate function type is created.
+    circularFunctionPlaceholderTypes_.insert(placeholder);
+    circularFunctionTypes_.insert(rval->type());
+    circularFunctionStack_.push_back(placeholder);
+    circularFunctionStack_.push_back(rval);
+  } else {
+    // Set up to start tracking the types that will make up the
+    // loop involved in the cycle.
+    circularPointerTypes_.insert(circ_typ);
+    circularPointerTypeMap_[placeholder] = rval;
+    assert(circularPointerLoop_.size() == 0);
+    circularPointerLoop_.push_back(std::make_pair(placeholder, rval));
+  }
 
   if (traceLevel() > 1) {
     std::cerr << "\n^ circular_pointer_type "
@@ -1191,7 +1273,23 @@ Btype *TypeManager::circularPointerType(Btype *placeholder, bool isfunc) {
   return rval;
 }
 
-// Return whether we might be looking at a circular type.
+// Return whether we might be looking at a circular function type.
+
+bool TypeManager::isCircularFunctionType(Btype *btype) {
+  assert(btype);
+  auto it = circularFunctionPlaceholderTypes_.find(btype);
+  if (it != circularFunctionPlaceholderTypes_.end())
+    return true;
+  return isCircularFunctionType(btype->type());
+}
+
+bool TypeManager::isCircularFunctionType(llvm::Type *typ) {
+  assert(typ);
+  auto it = circularFunctionTypes_.find(typ);
+  return it != circularFunctionTypes_.end();
+}
+
+// Return whether we might be looking at a circular pointer type.
 
 bool TypeManager::isCircularPointerType(Btype *btype) {
   assert(btype);
@@ -1530,6 +1628,8 @@ TypeManager::typToStringRec(Btype *typ, std::map<Btype *, std::string> &smap)
   assert(typ != nullptr);
   if (namedTypes_.find(typ) != namedTypes_.end())
     return typ->name();
+  if (! typ->name().empty())
+    return typ->name();
 
   auto rnit = revNames_.find(typ);
   if (rnit != revNames_.end())
@@ -1546,11 +1646,8 @@ TypeManager::typToStringRec(Btype *typ, std::map<Btype *, std::string> &smap)
         ss << "void";
         break;
       }
-      // This is a hack, but it takes care of things like circular pointers, etc
-      std::string s;
-      llvm::raw_string_ostream os(s);
-      typ->type()->print(os);
-      ss << os.str();
+      std::cerr << "unhandled aux type: "; typ->dump();
+      assert(false);
       break;
     }
     case Btype::ComplexT: {
@@ -1572,8 +1669,20 @@ TypeManager::typToStringRec(Btype *typ, std::map<Btype *, std::string> &smap)
     }
     case Btype::PointerT: {
       BPointerType *bpt = typ->castToBPointerType();
+
       // all placeholders should be resolved at this point
       assert(!bpt->isPlaceholder());
+
+      // handle circular pointer types
+      auto cpit = circularPointerTypes_.find(typ->type());
+      if (cpit != circularPointerTypes_.end()) {
+        std::string s;
+        llvm::raw_string_ostream os(s);
+        typ->type()->print(os);
+        ss << os.str();
+        break;
+      }
+
       assert(bpt->toType() != nullptr);
       ss << "*" << typToStringRec(bpt->toType(), smap);
       break;
@@ -1629,6 +1738,9 @@ llvm::DIType *TypeManager::buildCircularPointerDIType(Btype *typ,
     typ = rnit->second;
 
   std::unordered_map<Btype *, llvm::DIType*> &typeCache = helper.typeCache();
+  auto tcit = typeCache.find(typ);
+  if (tcit != typeCache.end() && tcit->second != nullptr)
+    return tcit->second;
 
   // Create replaceable placeholder
   llvm::DIBuilder &dibuilder = helper.dibuilder();
@@ -1643,7 +1755,9 @@ llvm::DIType *TypeManager::buildCircularPointerDIType(Btype *typ,
 
   // Convert what it points to
   Btype *toType = circularTypeLoadConversion(typ);
-  llvm::DIType *toDIType = buildDIType(toType, helper);
+  if (!toType)
+    toType = typ->castToBPointerType()->toType();
+  llvm::DIType *toDIType = buildCircularPointerDIType(toType, helper);
 
   // Now create final pointer type.
   uint64_t bits = datalayout_->getPointerSizeInBits();
@@ -1719,6 +1833,12 @@ llvm::DIType *TypeManager::buildStructDIType(BStructType *bst,
   return dist;
 }
 
+// DIBuilder has limited support for creating general self-referential
+// types, e.g. there is no "::createReplaceableFunctionType" method,
+// for example, so for the time being we pretend that the
+// self-referential elements of circular function types are just
+// pointer-to-void.
+
 llvm::DIType *TypeManager::buildDIType(Btype *typ, DIBuildHelper &helper)
 {
   llvm::DIBuilder &dibuilder = helper.dibuilder();
@@ -1726,9 +1846,22 @@ llvm::DIType *TypeManager::buildDIType(Btype *typ, DIBuildHelper &helper)
   std::unordered_map<Btype *, llvm::DIType*> &typeCache =
       helper.typeCache();
   auto tcit = typeCache.find(typ);
-  if (tcit != typeCache.end())
+  if (tcit != typeCache.end()) {
+    BPointerType *bpt = typ->castToBPointerType();
+    if (bpt) {
+      auto it = typeCache.find(bpt);
+      if (it != typeCache.end() && it->second == nullptr)
+        return buildDIType(pointerType(voidType()), helper);
+    }
+    assert(tcit->second != nullptr);
     return tcit->second;
+  }
 
+  // this indicates that we're currently working on creating a
+  // DIType for this BType.
+  typeCache[typ] = nullptr;
+
+  llvm::DIType *rval = nullptr;
   switch(typ->flavor()) {
     case Btype::AuxT: {
       // FIXME: at the moment Aux types are only created for types
@@ -1737,16 +1870,15 @@ llvm::DIType *TypeManager::buildDIType(Btype *typ, DIBuildHelper &helper)
       // should be no need include such things in the debug meta data.
       // If it turns out that we do need to emit meta-data for an aux
       // type, more special-case code will need to be added here.
-      if (typ->type() == llvmVoidType_)
-        return dibuilder.createBasicType("void", 0, 0);
+      if (typ->type() == llvmVoidType_) {
+        rval = dibuilder.createBasicType("void", 0, 0);
+        break;
+      }
       auto it = revNames_.find(typ);
-      if (it != revNames_.end())
-        return buildDIType(it->second, helper);
-
-      // Special case for circular pointer types
-      auto cpit = circularPointerTypes_.find(typ->type());
-      if (cpit != circularPointerTypes_.end())
-        return buildCircularPointerDIType(typ, helper);
+      if (it != revNames_.end()) {
+        rval = buildDIType(it->second, helper);
+        break;
+      }
 
       std::cerr << "unhandled aux type: "; typ->dump();
       assert(false);
@@ -1755,14 +1887,16 @@ llvm::DIType *TypeManager::buildDIType(Btype *typ, DIBuildHelper &helper)
     case Btype::ComplexT: {
       BComplexType *bct = typ->castToBComplexType();
       std::string tstr = typToString(typ);
-      return dibuilder.createBasicType(tstr, bct->bits(),
+      rval = dibuilder.createBasicType(tstr, bct->bits(),
                                        llvm::dwarf::DW_ATE_complex_float);
+      break;
     }
     case Btype::FloatT: {
       BFloatType *bft = typ->castToBFloatType();
       std::string tstr = typToString(typ);
-      return dibuilder.createBasicType(tstr, bft->bits(),
+      rval = dibuilder.createBasicType(tstr, bft->bits(),
                                        llvm::dwarf::DW_ATE_float);
+      break;
     }
     case Btype::IntegerT: {
       const BIntegerType *bit = typ->castToBIntegerType();
@@ -1771,16 +1905,25 @@ llvm::DIType *TypeManager::buildDIType(Btype *typ, DIBuildHelper &helper)
            llvm::dwarf::DW_ATE_unsigned :
            llvm::dwarf::DW_ATE_signed);
       std::string tstr = typToString(typ);
-      return dibuilder.createBasicType(tstr, bit->bits(), encoding);
+      rval = dibuilder.createBasicType(tstr, bit->bits(), encoding);
+      break;
     }
     case Btype::PointerT: {
       const BPointerType *bpt = typ->castToBPointerType();
       // all placeholders should be resolved at this point
       assert(!bpt->isPlaceholder());
+
+      // Special case for circular pointer types
+      auto cpit = circularPointerTypes_.find(typ->type());
+      if (cpit != circularPointerTypes_.end()) {
+        rval = buildCircularPointerDIType(typ, helper);
+        break;
+      }
       assert(bpt->toType() != nullptr);
       llvm::DIType *toDI = buildDIType(bpt->toType(), helper);
       uint64_t bits = datalayout_->getPointerSizeInBits();
-      return dibuilder.createPointerType(toDI, bits);
+      rval = dibuilder.createPointerType(toDI, bits);
+      break;
     }
     case Btype::ArrayT: {
       const BArrayType *bat = typ->castToBArrayType();
@@ -1791,11 +1934,13 @@ llvm::DIType *TypeManager::buildDIType(Btype *typ, DIBuildHelper &helper)
       llvm::SmallVector<llvm::Metadata *, 1> subscripts;
       subscripts.push_back(dibuilder.getOrCreateSubrange(0, arSize));
       llvm::DINodeArray subsAr = dibuilder.getOrCreateArray(subscripts);
-      return dibuilder.createArrayType(arSize, arAlign, elemDI, subsAr);
+      rval = dibuilder.createArrayType(arSize, arAlign, elemDI, subsAr);
+      break;
     }
     case Btype::StructT: {
       BStructType *bst = typ->castToBStructType();
-      return buildStructDIType(bst, helper);
+      rval = buildStructDIType(bst, helper);
+      break;
     }
     case Btype::FunctionT: {
       const BFunctionType *bft = typ->castToBFunctionType();
@@ -1806,9 +1951,12 @@ llvm::DIType *TypeManager::buildDIType(Btype *typ, DIBuildHelper &helper)
       for (auto &pt : bft->paramTypes())
         ptypes.push_back(buildDIType(pt, helper));
       auto paramTypes = dibuilder.getOrCreateTypeArray(ptypes);
-      return dibuilder.createSubroutineType(paramTypes);
+      rval = dibuilder.createSubroutineType(paramTypes);
+      break;
     }
   }
-  assert(false && "should not reach here");
-  return nullptr;
+
+  assert(rval != nullptr);
+  typeCache[typ] = rval;
+  return rval;
 }

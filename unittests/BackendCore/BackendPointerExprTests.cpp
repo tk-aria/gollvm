@@ -484,4 +484,61 @@ TEST(BackEndPointerExprTests, TestAddrDerefFold) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
+TEST(BackEndPointerExprTests, TestCircularFunctionTypes)
+{
+  // Make sure we can handle circular function types, especially
+  // those in which the cycle extends across multiple types. Example:
+  //
+  // type gf1 func(int, int, gf1, gf2) int
+  // type gf2 func(int, int, gf2, gf1) int
+  //
+
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
+  Location loc;
+
+  be->setTraceLevel(2);
+
+  // Create circular pointer types
+  Btype *bi64t = be->integer_type(false, 64);
+  Btype *pht1 = be->placeholder_pointer_type("ph1", loc, false);
+  Btype *pht2 = be->placeholder_pointer_type("ph2", loc, false);
+  Btype *cft1 = be->circular_pointer_type(pht1, true);
+  Btype *cft2 = be->circular_pointer_type(pht2, true);
+  BFunctionType *befty2 = mkFuncTyp(be,
+                                    L_PARM, bi64t,
+                                    L_PARM, bi64t,
+                                    L_PARM, cft2,
+                                    L_PARM, cft1,
+                                    L_RES, bi64t,
+                                    L_END);
+  Btype *pbefty2 = be->pointer_type(befty2);
+  be->set_placeholder_pointer_type(pht2, cft2);
+  BFunctionType *befty1 = mkFuncTyp(be,
+                                    L_PARM, bi64t,
+                                    L_PARM, bi64t,
+                                    L_PARM, cft1,
+                                    L_PARM, cft2,
+                                    L_RES, bi64t,
+                                    L_END);
+  Btype *pbefty1 = be->pointer_type(befty1);
+  be->set_placeholder_pointer_type(pht1, cft1);
+
+  // Local vars
+  h.mkLocal("x", pbefty1);
+  h.mkLocal("y", pbefty2);
+
+  const char *exp = R"RAW_RESULT(
+   store i64 (i8*, i64, i64, %CFT.0*, i64 (i8*, i64, i64, %CFT.1*, %CFT.0*)*)* null, i64 (i8*, i64, i64, %CFT.0*, i64 (i8*, i64, i64, %CFT.1*, %CFT.0*)*)** %x
+   store i64 (i8*, i64, i64, %CFT.1*, %CFT.0*)* null, i64 (i8*, i64, i64, %CFT.1*, %CFT.0*)** %y
+
+    )RAW_RESULT";
+
+  bool isOK = h.expectBlock(exp);
+  EXPECT_TRUE(isOK && "Block does not have expected contents");
+
+  bool broken = h.finish(PreserveDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+}
+
 }
