@@ -1096,9 +1096,12 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
       // Passing a single 8-byte-or-less argument.
 
       // Apply any necessary pointer type conversions.
-      Btype *paramTyp = paramTypes[idx];
-      if (val->getType()->isPointerTy() && ctx == VE_rvalue)
-        val = convertForAssignment(resarg, paramTyp->type());
+      if (val->getType()->isPointerTy() && ctx == VE_rvalue) {
+        llvm::FunctionType *llft =
+            llvm::cast<llvm::FunctionType>(state.calleeFcnType->type());
+        llvm::Type *paramTyp = llft->getParamType(paramInfo.sigOffset());
+        val = convertForAssignment(resarg, paramTyp);
+      }
 
       // Apply any necessary sign-extensions or zero-extensions.
       if (paramInfo.abiType()->isIntegerTy()) {
@@ -1317,9 +1320,10 @@ Llvm_backend::convertForAssignment(Btype *srcBType,
     return bitcast;
   }
 
-  // Case 2: handle circular function pointer types.
-  bool dstCircPtr = isCircularPointerType(dstToType);
-  if (srcPtrToFD && dstCircPtr) {
+  // Case 2: handle circular function types.
+  bool dstCircFunc = isCircularFunctionType(dstToType);
+  bool srcFuncPtr = isPtrToFuncType(srcType);
+  if ((srcPtrToFD || srcFuncPtr) && dstCircFunc) {
     std::string tag(namegen("cast"));
     llvm::Value *bitcast = builder->CreateBitCast(srcVal, dstToType, tag);
     return bitcast;
@@ -1329,7 +1333,6 @@ Llvm_backend::convertForAssignment(Btype *srcBType,
   // sometimes take a function pointer and assign it to "void *" without
   // an explicit conversion).
   bool dstPtrToVoid = isPtrToVoidType(dstToType);
-  bool srcFuncPtr = isPtrToFuncType(srcType);
   if (dstPtrToVoid && srcFuncPtr) {
     std::string tag(namegen("cast"));
     llvm::Value *bitcast = builder->CreateBitCast(srcVal, dstToType, tag);

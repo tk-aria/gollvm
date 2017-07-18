@@ -81,12 +81,9 @@ class DIBuildHelper {
   Llvm_linemap *linemap() { return linemap_; }
   TypeManager *typemanager() { return typemanager_; }
 
-  // Type cache, to deal with cycles
+  // Type cache, to deal with cycles.
   std::unordered_map<Btype *, llvm::DIType*> &typeCache() {
     return typeCache_;
-  }
-  std::unordered_map<llvm::DIType *, llvm::DIType*> &typeReplacements() {
-    return typeReplacements_;
   }
 
  private:
@@ -97,7 +94,6 @@ class DIBuildHelper {
   std::unique_ptr<llvm::DIBuilder> dibuilder_;
   std::vector<llvm::DIScope*> diScopeStack_;
   std::unordered_map<Btype *, llvm::DIType*> typeCache_;
-  std::unordered_map<llvm::DIType *, llvm::DIType*> typeReplacements_;
   std::vector<std::pair<Bvariable *, bool> > globalsToProcess_;
 
   // The following items are specific to the current function we're visiting.
