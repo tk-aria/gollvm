@@ -1516,6 +1516,15 @@ Bstatement *Llvm_backend::makeInitStatement(Bfunction *bfunction,
                                             Bexpression *init)
 {
   if (init) {
+    if (traceLevel() > 1) {
+      std::cerr << "\n^ init statement " << ((void*)var)
+                << " = " << ((void*)init) << "\n";
+      std::cerr << "\nLHS:\n";
+      var->dump();
+      std::cerr << "\nRHS:\n";
+      init->dump();
+    }
+
     init = materialize(init);
     if (init->compositeInitPending()) {
       init = resolveCompositeInit(init, var->value());
@@ -1561,6 +1570,16 @@ Bstatement *Llvm_backend::assignment_statement(Bfunction *bfunction,
   if (lhs == errorExpression() || rhs == errorExpression() ||
       bfunction == errorFunction_.get())
     return errorStatement();
+
+  if (traceLevel() > 1) {
+    std::cerr << "\n^ assignment statement " << ((void*)lhs)
+              << " = " << ((void*)rhs) << "\n";
+    std::cerr << "\nLHS:\n";
+    lhs->dump();
+    std::cerr << "\nRHS:\n";
+    rhs->dump();
+  }
+
   lhs = materialize(lhs, VE_lvalue);
   rhs = materialize(rhs);
   Bexpression *lhs2 = resolveVarContext(lhs, VE_lvalue);
