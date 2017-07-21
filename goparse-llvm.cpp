@@ -366,10 +366,15 @@ int main(int argc, char **argv)
   if (TraceLevel)
     std::cerr << "linemap stats:" << linemap->statistics() << "\n";
 
+  // Delete back end at this point. In the case that there were errors,
+  // this will help clean up any unreachable llvm Instructions (which would
+  // otherwise trigger asserts); in the non-error case it will help to
+  // free up memory used by backend prior to kicking off the pass manager.
+  backend.reset(nullptr);
+
   // Early exit at this point if we've seen errors
   if (go_be_saw_errors())
     return 1;
-
 
   // On to the back end for this module...
   llvm::Module *M = module.get();

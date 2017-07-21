@@ -355,13 +355,31 @@ BnodeBuilder::BnodeBuilder(Llvm_backend *be)
 {
 }
 
+// A note on the llvm::Instruction deletions below: ordinarily, the
+// expectation would be that any expressions encountered in the
+// earchive_ loop below would already have had their instructions
+// transferred to some basic block. If errors were encountered during
+// the compilation, however there may be unparented expressions whose
+// instructions are left dangling.  If so, we want to delete them here
+// so as to avoid asserts in the llvmContext destructor.
+
 BnodeBuilder::~BnodeBuilder()
 {
   freeStmts();
+  std::vector<llvm::Instruction *> todel;
   for (auto &expr : earchive_) {
-    if (expr)
+    if (expr) {
+      for (auto inst : expr->instructions()) {
+        if (inst->getParent() == nullptr) {
+          inst->dropAllReferences();
+          todel.push_back(inst);
+        }
+      }
       delete expr;
+    }
   }
+  for (auto inst : todel)
+    inst->deleteValue();
   for (auto ivpair : tempvars_) {
     delete ivpair.first;
     delete ivpair.second;
