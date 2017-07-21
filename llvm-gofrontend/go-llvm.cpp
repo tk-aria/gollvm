@@ -2479,6 +2479,7 @@ llvm::BasicBlock *GenBlocks::walkExpr(llvm::BasicBlock *curblock,
     curblock->getInstList().push_back(inst);
     curblock = pair.second;
   }
+  expr->clear();
   return curblock;
 }
 
