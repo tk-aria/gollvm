@@ -495,6 +495,9 @@ public:
   void fixupEpilogBlock(Bfunction *bfunction, llvm::BasicBlock *epilog);
 
   // Load-generation helper.
+  // If resultTyp is null, this load is for resolving a pending
+  // var expression, and the result type will be the same type
+  // as space.
   Bexpression *genLoad(Bexpression *space,
                        Btype *resultTyp,
                        Location loc,

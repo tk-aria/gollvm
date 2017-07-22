@@ -104,11 +104,6 @@ Bexpression *Llvm_backend::materializeAddress(Bexpression *addrExpr)
   const VarContext &vc = bexpr->varContext();
   rval->setVarExprPending(vc.lvalue(), vc.addrLevel() + 1);
 
-  // Handle circular types
-  Btype *ctypconv = circularTypeAddrConversion(bexpr->btype());
-  if (ctypconv != nullptr)
-    return genCircularConversion(ctypconv, rval, location);
-
   return rval;
 }
 
@@ -580,6 +575,27 @@ Llvm_backend::convertForBinary(Operator op,
       conv = builder.CreateTrunc(rightVal, leftType, namegen("trunc"));
     rval.second = conv;
     return rval;
+  }
+
+  // Case 4: circular pointer type (ex: type T *T; var p, q T; p == &q)
+  if (leftType->isPointerTy() && rightType->isPointerTy()) {
+    BPointerType *lbpt = left->btype()->castToBPointerType();
+    Btype *lctypconv = circularTypeAddrConversion(lbpt->toType());
+    if (lctypconv != nullptr) {
+      std::string tag(namegen("cast"));
+      BexprLIRBuilder builder(context_, left);
+      llvm::Value *bitcast = builder.CreateBitCast(leftVal, lctypconv->type(), tag);
+      rval.first = bitcast;
+    }
+
+    BPointerType *rbpt = right->btype()->castToBPointerType();
+    Btype *rctypconv = circularTypeAddrConversion(rbpt->toType());
+    if (rctypconv != nullptr) {
+      std::string tag(namegen("cast"));
+      BexprLIRBuilder builder(context_, right);
+      llvm::Value *bitcast = builder.CreateBitCast(rightVal, rctypconv->type(), tag);
+      rval.second = bitcast;
+    }
   }
 
   return rval;
@@ -1417,6 +1433,17 @@ Llvm_backend::convertForAssignment(Btype *srcBType,
     std::string tag(namegen("cast"));
     llvm::Value *bitcast = builder->CreateBitCast(srcVal, dstToType, tag);
     return bitcast;
+  }
+
+  // Case 10: circular pointer type (ex: type T *T; var p T; p = &p)
+  BPointerType *srcbpt = srcBType->castToBPointerType();
+  if (srcbpt) {
+    Btype *ctypconv = circularTypeAddrConversion(srcbpt->toType());
+    if (ctypconv != nullptr && ctypconv->type() == dstToType) {
+      std::string tag(namegen("cast"));
+      llvm::Value *bitcast = builder->CreateBitCast(srcVal, dstToType, tag);
+      return bitcast;
+    }
   }
 
   return srcVal;
