@@ -289,9 +289,9 @@ TEST(BackEndPointerExprTests, CircularPointerExpressions1) {
   store i8 0, i8* %b2
   store i8 0, i8* %b3
   %cpv1.ld.0 = load %CPT.0*, %CPT.0** %cpv1
-  %cpv2.ld.0 = load %CPT.0*, %CPT.0** %cpv2
-  %cast.2 = bitcast %CPT.0* %cpv2.ld.0 to %CPT.0**
-  %.ld.0 = load %CPT.0*, %CPT.0** %cast.2
+  %cast.2 = bitcast %CPT.0** %cpv2 to %CPT.0***
+  %cpv2.ld.0 = load %CPT.0**, %CPT.0*** %cast.2
+  %.ld.0 = load %CPT.0*, %CPT.0** %cpv2.ld.0
   %icmp.0 = icmp eq %CPT.0* %cpv1.ld.0, %.ld.0
   %zext.0 = zext i1 %icmp.0 to i8
   store i8 %zext.0, i8* %b1
@@ -301,13 +301,13 @@ TEST(BackEndPointerExprTests, CircularPointerExpressions1) {
   %zext.1 = zext i1 %icmp.1 to i8
   store i8 %zext.1, i8* %b2
   %cpv1.ld.1 = load %CPT.0*, %CPT.0** %cpv1
-  %cpv2.ld.2 = load %CPT.0*, %CPT.0** %cpv2
-  %cast.4 = bitcast %CPT.0* %cpv2.ld.2 to %CPT.0**
-  %deref.ld.0 = load %CPT.0*, %CPT.0** %cast.4
-  %cast.5 = bitcast %CPT.0* %deref.ld.0 to %CPT.0**
-  %deref.ld.1 = load %CPT.0*, %CPT.0** %cast.5
-  %cast.6 = bitcast %CPT.0* %deref.ld.1 to %CPT.0**
-  %.ld.1 = load %CPT.0*, %CPT.0** %cast.6
+  %cast.5 = bitcast %CPT.0** %cpv2 to %CPT.0***
+  %cpv2.ld.2 = load %CPT.0**, %CPT.0*** %cast.5
+  %cast.6 = bitcast %CPT.0** %cpv2.ld.2 to %CPT.0***
+  %deref.ld.0 = load %CPT.0**, %CPT.0*** %cast.6
+  %cast.7 = bitcast %CPT.0** %deref.ld.0 to %CPT.0***
+  %deref.ld.1 = load %CPT.0**, %CPT.0*** %cast.7
+  %.ld.1 = load %CPT.0*, %CPT.0** %deref.ld.1
   %icmp.2 = icmp eq %CPT.0* %cpv1.ld.1, %.ld.1
   %zext.2 = zext i1 %icmp.2 to i8
   store i8 %zext.2, i8* %b3
@@ -330,6 +330,8 @@ TEST(BackEndPointerExprTests, CircularPointerExpressions2) {
   //  func foo() {
   //     var x p
   //     var y q
+  //     x = &y
+  //     y = &x
   //     b1 := (x == *y)
 
   FcnTestHarness h("foo");
@@ -383,12 +385,10 @@ TEST(BackEndPointerExprTests, CircularPointerExpressions2) {
   store %CPT.0* %cast.0, %CPT.0** %x
   store %CPT.0** %x, %CPT.0*** %y
   store i8 0, i8* %b1
-  %cast.1 = bitcast %CPT.0** %x to %CPT.0****
-  %x.ld.0 = load %CPT.0***, %CPT.0**** %cast.1
+  %x.ld.0 = load %CPT.0*, %CPT.0** %x
   %y.ld.0 = load %CPT.0**, %CPT.0*** %y
-  %cast.2 = bitcast %CPT.0** %y.ld.0 to %CPT.0****
-  %.ld.0 = load %CPT.0***, %CPT.0**** %cast.2
-  %icmp.0 = icmp eq %CPT.0*** %x.ld.0, %.ld.0
+  %.ld.0 = load %CPT.0*, %CPT.0** %y.ld.0
+  %icmp.0 = icmp eq %CPT.0* %x.ld.0, %.ld.0
   %zext.0 = zext i1 %icmp.0 to i8
   store i8 %zext.0, i8* %b1
     )RAW_RESULT";

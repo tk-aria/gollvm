@@ -486,14 +486,14 @@ Bexpression *Llvm_backend::genCircularConversion(Btype *toType,
 {
   llvm::Value *val = expr->value();
   llvm::Type *llToType = toType->type();
-  if (val->getType() == llToType)
-    return expr;
   if (expr->varExprPending()) {
     llvm::Type *pet = llvm::PointerType::get(expr->btype()->type(),
                                              addressSpace_);
     if (val->getType() == pet)
       llToType = llvm::PointerType::get(llToType, addressSpace_);
   }
+  if (val->getType() == llToType)
+    return expr;
 
   std::string tag(namegen("cast"));
   LIRBuilder builder(context_, llvm::ConstantFolder());
@@ -512,11 +512,19 @@ Bexpression *Llvm_backend::genLoad(Bexpression *expr,
   // since the LLVM type system can't accurately model Go circular
   // pointer types.
   Bexpression *space = expr;
-  Btype *loadResultType = btype;
-  Btype *tctyp = circularTypeLoadConversion(expr->btype());
-  if (tctyp != nullptr) {
-    space = genCircularConversion(pointer_type(tctyp), expr, loc);
-    loadResultType = tctyp;
+  Btype *loadResultType;
+  if (btype) {
+    loadResultType = btype;
+    Btype *tctyp = circularTypeLoadConversion(expr->btype());
+    if (tctyp != nullptr) {
+      space = genCircularConversion(pointer_type(tctyp), expr, loc);
+      loadResultType = tctyp;
+    }
+  } else {
+    // Here we are resolving a pending var expression. The LLVM
+    // value should already be pointer to the expression type.
+    // No need to check circular pointer type.
+    loadResultType = expr->btype();
   }
 
   llvm::PointerType *llpt =
@@ -616,8 +624,7 @@ Bexpression *Llvm_backend::resolveVarContext(Bexpression *expr,
       expr->resetVarExprContext();
       return expr;
     }
-    Btype *btype = expr->btype();
-    Bexpression *rval = genLoad(expr, btype, expr->location(), expr->tag());
+    Bexpression *rval = genLoad(expr, nullptr, expr->location(), expr->tag());
     return rval;
   }
   return expr;
