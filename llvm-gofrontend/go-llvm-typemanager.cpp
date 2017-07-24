@@ -1922,6 +1922,15 @@ llvm::DIType *TypeManager::buildDIType(Btype *typ, DIBuildHelper &helper)
         break;
       }
       assert(bpt->toType() != nullptr);
+
+      // For some circular function types we need to check for
+      // cycles here (in addition to the check above).
+      // FIXME: look into more robust handling of circular
+      // types in debug generation.
+      auto it = typeCache.find(bpt->toType());
+      if (it != typeCache.end() && it->second == nullptr)
+        return buildDIType(pointerType(voidType()), helper);
+
       llvm::DIType *toDI = buildDIType(bpt->toType(), helper);
       uint64_t bits = datalayout_->getPointerSizeInBits();
       rval = dibuilder.createPointerType(toDI, bits);
