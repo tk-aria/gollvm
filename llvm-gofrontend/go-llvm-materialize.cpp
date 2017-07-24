@@ -158,6 +158,7 @@ Bexpression *Llvm_backend::materializeConversion(Bexpression *convExpr)
     return nbuilder_.mkConversion(type, expr->value(), expr, location);
 
   LIRBuilder builder(context_, llvm::ConstantFolder());
+  Bexpression *rval = nullptr;
 
   // Pointer type to pointer-sized-integer type. Comes up when
   // converting function pointer to function descriptor (during
@@ -167,7 +168,7 @@ Bexpression *Llvm_backend::materializeConversion(Bexpression *convExpr)
   if (valType->isPointerTy() && toType == llvmIntegerType()) {
     std::string tname(namegen("pticast"));
     llvm::Value *pticast = builder.CreatePtrToInt(val, toType, tname);
-    return nbuilder_.mkConversion(type, pticast, expr, location);
+    rval = nbuilder_.mkConversion(type, pticast, expr, location);
   }
 
   // Pointer-sized-integer type pointer type. This comes up
@@ -175,7 +176,7 @@ Bexpression *Llvm_backend::materializeConversion(Bexpression *convExpr)
   if (toType->isPointerTy() && valType == llvmIntegerType()) {
     std::string tname(namegen("itpcast"));
     llvm::Value *itpcast = builder.CreateIntToPtr(val, toType, tname);
-    return nbuilder_.mkConversion(type, itpcast, expr, location);
+    rval = nbuilder_.mkConversion(type, itpcast, expr, location);
   }
 
   // For pointer conversions (ex: *int32 => *int64) create an
@@ -183,7 +184,7 @@ Bexpression *Llvm_backend::materializeConversion(Bexpression *convExpr)
   if (valType->isPointerTy() && toType->isPointerTy()) {
     std::string tag(namegen("cast"));
     llvm::Value *bitcast = builder.CreateBitCast(val, toType, tag);
-    return nbuilder_.mkConversion(type, bitcast, expr, location);
+    rval = nbuilder_.mkConversion(type, bitcast, expr, location);
   }
 
   // Integer-to-integer conversions
@@ -204,7 +205,7 @@ Bexpression *Llvm_backend::materializeConversion(Bexpression *convExpr)
     } else {
       conv = builder.CreateTrunc(val, toType, namegen("trunc"));
     }
-    return nbuilder_.mkConversion(type, conv, expr, location);
+    rval = nbuilder_.mkConversion(type, conv, expr, location);
   }
 
   // Float -> float conversions
@@ -216,7 +217,7 @@ Bexpression *Llvm_backend::materializeConversion(Bexpression *convExpr)
       conv = builder.CreateFPExt(val, toType, namegen("fpext"));
     else
       assert(0 && "unexpected float type");
-    return nbuilder_.mkConversion(type, conv, expr, location);
+    rval =  nbuilder_.mkConversion(type, conv, expr, location);
   }
 
   // Float -> integer conversions
@@ -226,7 +227,7 @@ Bexpression *Llvm_backend::materializeConversion(Bexpression *convExpr)
       conv = builder.CreateFPToUI(val, toType, namegen("ftoui"));
     else
       conv = builder.CreateFPToSI(val, toType, namegen("ftosi"));
-    return nbuilder_.mkConversion(type, conv, expr, location);
+    rval = nbuilder_.mkConversion(type, conv, expr, location);
   }
 
   // Integer -> float conversions
@@ -236,15 +237,19 @@ Bexpression *Llvm_backend::materializeConversion(Bexpression *convExpr)
       conv = builder.CreateUIToFP(val, toType, namegen("uitof"));
     else
       conv = builder.CreateSIToFP(val, toType, namegen("sitof"));
-    return nbuilder_.mkConversion(type, conv, expr, location);
+    rval = nbuilder_.mkConversion(type, conv, expr, location);
   }
 
-  // This case not handled yet. In particular code needs to be
-  // written to handle signed/unsigned, conversions between scalars
-  // of various sizes and types.
-  assert(false && "this flavor of conversion not yet handled");
+  if (!rval)
+    // This case not handled.
+    assert(false && "this flavor of conversion not handled");
 
-  return expr;
+  // Propagate pending var context if we didn't resolve it here.
+  // This may happen for composite values.
+  if (expr->varExprPending())
+    rval->setVarExprPending(expr->varContext());
+
+  return rval;
 }
 
 llvm::Value *Llvm_backend::makePointerOffsetGEP(llvm::PointerType *llpt,
