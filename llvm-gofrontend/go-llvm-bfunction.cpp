@@ -422,20 +422,6 @@ void Bfunction::genProlog(llvm::BasicBlock *entry)
 void Bfunction::fixupProlog(llvm::BasicBlock *entry,
                             const std::vector<llvm::AllocaInst *> &temps)
 {
-  // Make sure that each parameter variable has an initializer (this is
-  // needed for debug generation. In the case of by-reference vars,
-  // we can simply use the first inst in the fcn as the position where
-  // the parameter's value is available.
-  const std::vector<Btype *> &paramTypes = fcnType()->paramTypes();
-  unsigned nParms = paramTypes.size();
-  for (unsigned pidx = 0; pidx < nParms; ++pidx) {
-    Bvariable *v = getNthParamVar(pidx);
-    if (v->initializer() == nullptr) {
-      assert(! entry->empty());
-      v->setInitializer(&entry->front());
-    }
-  }
-
   // If there are any "new" temporaries discovered during the control
   // flow generation walk, incorporate them into the entry block. At this
   // stage in the game the entry block is already fully populated, including
