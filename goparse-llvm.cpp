@@ -89,6 +89,13 @@ static cl::opt<bool>
 MinusCOption("c",  cl::desc("Dummy -c arg."), cl::init(false));
 static cl::opt<bool>
 MinusVOption("v",  cl::desc("Dummy -v arg."), cl::init(false));
+static cl::list<std::string>
+DebugPrefixMap("fdebug-prefix-map",
+               cl::desc("Dummy"));
+static cl::opt<bool>
+DebugNoRecordSwitches("gno-record-gcc-switches",
+                      cl::desc("Dummy"),
+                      cl::init(false));
 
 static cl::opt<bool>
 NoBackend("nobackend",
