@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "f6a7f7c9_96dd3e75",
+        "filename": "llvm-gofrontend/go-llvm-materialize.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 161,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-07-25T15:08:08Z",
+      "side": 1,
+      "message": "Good catch. I always forgot it after writing Go code...",
+      "parentUuid": "4ec00f13_8bdae332",
+      "revId": "1bf2d9a9b00d39ed6b86007f1d4785b152a45ac9",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "f409c54f_5d1545cb",
         "filename": "llvm-gofrontend/go-llvm-materialize.cpp",
         "patchSetId": 1
@@ -39,6 +57,30 @@
       "revId": "1bf2d9a9b00d39ed6b86007f1d4785b152a45ac9",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c41c535c_97f77728",
+        "filename": "llvm-gofrontend/go-llvm-materialize.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 246,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-07-25T15:08:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f409c54f_5d1545cb",
+      "range": {
+        "startLine": 244,
+        "startChar": 33,
+        "endLine": 246,
+        "endChar": 34
+      },
+      "revId": "1bf2d9a9b00d39ed6b86007f1d4785b152a45ac9",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
