@@ -48,6 +48,35 @@ TEST(BackendDebugEmit, TestSimpleDecl) {
   EXPECT_TRUE(isOK && "Function does not have expected contents");
 }
 
+TEST(BackendDebugEmit, TestSimpleDecl2) {
+  // Test that parameters of empty function are handled correctly.
+  FcnTestHarness h;
+  Llvm_backend *be = h.be();
+  Btype *bi64t = be->integer_type(false, 64);
+  Btype *bst = mkBackendStruct(be, bi64t, "f1",
+                                   bi64t, "f2",
+                                   bi64t, "f3",
+                                   nullptr); // large struct, pass by reference
+  BFunctionType *befty = mkFuncTyp(be, L_PARM, bst, L_END);
+  Bfunction *func = h.mkFunction("foo", befty);
+
+  // function with no code
+
+  bool broken = h.finish(PreserveDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+
+  const char *exp = R"RAW_RESULT(
+    define void @foo(i8* nest %nest.0, { i64, i64, i64 }* byval %p0) #0 {
+    entry:
+      call void @llvm.dbg.declare(metadata { i64, i64, i64 }* %p0, metadata !3, metadata !15), !dbg !16
+      ret void
+    }
+  )RAW_RESULT";
+
+  bool isOK = h.expectValue(func->function(), exp);
+  EXPECT_TRUE(isOK && "Function does not have expected contents");
+}
+
 // This test is designed to make sure that debug meta-data generation
 // handles corner clases like vars with zero size (empty struct).
 

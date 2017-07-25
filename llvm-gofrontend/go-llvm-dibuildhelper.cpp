@@ -149,6 +149,12 @@ void DIBuildHelper::insertVarDecl(Bvariable *var,
   if (var->initializer()) {
     assert(var->initializerInstruction()->getParent());
     insertionPoint = var->initializerInstruction();
+  } else if (var->flavor() == ParamVar) {
+    // parameters passing by reference may have no initializers.
+    // declare them at function entry.
+    assert(entryBlock_);
+    entryBlock_->getInstList().push_front(decl);
+    return;
   } else {
     // locals with no initializer should only be zero-sized vars.
     // make them available immediately after their alloca.
