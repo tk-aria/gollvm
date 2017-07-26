@@ -297,7 +297,7 @@ void EightByteInfo::explodeArray(BArrayType *bat)
     // note that elem type here may be composite
     cur8->types.push_back(bat->elemType()->type());
     cur8->offsets.push_back(offset);
-    curOffset += offset;
+    curOffset = offset;
   }
 }
 
