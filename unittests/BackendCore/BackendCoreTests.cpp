@@ -190,6 +190,9 @@ TEST(BackendCoreTests, PlaceholderTypes) {
   Btype *phst1 = be->placeholder_struct_type("ph", loc);
   ASSERT_TRUE(phpt1 != nullptr);
 
+  // Named version of above
+  Btype *nt = be->named_type("named_ph", phst1, loc);
+
   // Replace placeholder struct type
   std::vector<Backend::Btyped_identifier> fields = {
       Backend::Btyped_identifier("f1", be->integer_type(false, 64), Location()),
@@ -198,6 +201,8 @@ TEST(BackendCoreTests, PlaceholderTypes) {
   be->set_placeholder_struct_type(phst1, fields);
   Type *i64t = IntegerType::get(C, 64);
   EXPECT_TRUE(llvmTypesEquiv(phst1->type(),
+                             mkTwoFieldLLvmStruct(C, i64t, i64t)));
+  EXPECT_TRUE(llvmTypesEquiv(nt->type(),
                              mkTwoFieldLLvmStruct(C, i64t, i64t)));
 
   // Placeholder array type

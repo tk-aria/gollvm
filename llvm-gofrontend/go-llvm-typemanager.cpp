@@ -833,7 +833,7 @@ void TypeManager::postProcessResolvedPointerPlaceholder(BPointerType *bpt,
 }
 
 void TypeManager::postProcessResolvedStructPlaceholder(BStructType *bst,
-                                                        Btype *btype)
+                                                       Btype *btype)
 {
   assert(bst);
   assert(bst->isPlaceholder());
@@ -854,13 +854,21 @@ void TypeManager::postProcessResolvedStructPlaceholder(BStructType *bst,
   }
   if (! hasPl) {
 
-    // No need to unhash the type -- we can simple update it in place.
-    llvm::SmallVector<llvm::Type *, 64> elems(fields.size());
-    for (unsigned i = 0; i < fields.size(); ++i)
-      elems[i] = fields[i].btype->type();
-    llvm::StructType *llst = llvm::cast<llvm::StructType>(bst->type());
-    llst->setBody(elems);
     bst->setPlaceholder(false);
+
+    // If 'bst' corresponds to a named type that was cloned from an
+    // anonymous type that (at the time) was a placeholder, then
+    // it's possible that the LLVM type in question has already been
+    // updated (if the anon type was processed first).
+    llvm::StructType *llst = llvm::cast<llvm::StructType>(bst->type());
+    if (llst->isOpaque()) {
+
+      // No need to unhash the type -- we can simply update it in place.
+      llvm::SmallVector<llvm::Type *, 64> elems(fields.size());
+      for (unsigned i = 0; i < fields.size(); ++i)
+        elems[i] = fields[i].btype->type();
+      llst->setBody(elems);
+    }
 
     if (traceLevel() > 1) {
       std::cerr << "\n^ resolving placeholder struct type "
