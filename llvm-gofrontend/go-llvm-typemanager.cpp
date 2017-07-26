@@ -1569,6 +1569,14 @@ bool TypeManager::fcnPointerCompatible(llvm::Type *left,
                                        llvm::Type *right,
                                        std::set<llvm::Type *> &visited)
 {
+  // Allow for pointer-to-fp and func-desc matching
+  bool leftFPD = isPtrToFuncType(left) || isPtrToVoidType(left) ||
+                 isPtrToFuncDescriptorType(left);
+  bool rightFPD = isPtrToFuncType(right) || isPtrToVoidType(right) ||
+                  isPtrToFuncDescriptorType(right);
+  if (leftFPD && rightFPD)
+    return true;
+
   bool visleft = (visited.find(left) != visited.end());
   bool visright = (visited.find(right) != visited.end());
   if (visleft != visright)
@@ -1577,14 +1585,6 @@ bool TypeManager::fcnPointerCompatible(llvm::Type *left,
     return true;
   visited.insert(left);
   visited.insert(right);
-
-  // Allow for pointer-to-fp and func-desc matching
-  bool leftFPD = isPtrToFuncType(left) || isPtrToVoidType(left) ||
-                 isPtrToFuncDescriptorType(left);
-  bool rightFPD = isPtrToFuncType(right) || isPtrToVoidType(right) ||
-                  isPtrToFuncDescriptorType(right);
-  if (leftFPD && rightFPD)
-    return true;
 
   // Compare type ID, children, etc.
   if (left->getTypeID() != right->getTypeID())
