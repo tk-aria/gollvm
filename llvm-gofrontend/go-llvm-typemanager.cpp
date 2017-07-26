@@ -846,7 +846,8 @@ void TypeManager::postProcessResolvedStructPlaceholder(BStructType *bst,
       if (traceLevel() > 1) {
         std::cerr << "\n^ resolving field " << i << " of "
                   << "placeholder struct type "
-                  << ((void*)bst) << " to concrete field type\n";
+                  << ((void*)bst) << " to concrete field type "
+                  << ((void*)btype) << "\n";
       }
     } else if (fields[i].btype->isUnresolvedPlaceholder()) {
       hasPl = true;
@@ -1184,8 +1185,8 @@ bool TypeManager::setPlaceholderArrayType(Btype *placeholder,
 // Return a named version of a type.
 
 Btype *TypeManager::namedType(const std::string &name,
-                               Btype *btype,
-                               Location location)
+                              Btype *btype,
+                              Location location)
 {
   // TODO: add support for debug metadata
 
@@ -1912,8 +1913,12 @@ llvm::DIType *TypeManager::buildDIType(Btype *typ, DIBuildHelper &helper)
     }
     case Btype::PointerT: {
       const BPointerType *bpt = typ->castToBPointerType();
-      // all placeholders should be resolved at this point
-      assert(!bpt->isPlaceholder());
+
+      // If this type is still an unresolved placeholder, treat
+      // this as an indication that we don't need accurate debug
+      // info for this type.
+      if (bpt->isPlaceholder())
+        return buildDIType(pointerType(voidType()), helper);
 
       // Special case for circular pointer types
       auto cpit = circularPointerTypes_.find(typ->type());
@@ -1922,6 +1927,11 @@ llvm::DIType *TypeManager::buildDIType(Btype *typ, DIBuildHelper &helper)
         break;
       }
       assert(bpt->toType() != nullptr);
+
+      // Similarly, if we're pointing to something unresolved, be
+      // conservative.
+      if (bpt->toType()->isPlaceholder())
+        return buildDIType(pointerType(voidType()), helper);
 
       // For some circular function types we need to check for
       // cycles here (in addition to the check above).
