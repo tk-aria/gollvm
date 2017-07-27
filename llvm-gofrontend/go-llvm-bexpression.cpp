@@ -95,12 +95,6 @@ const std::vector<Bexpression *> Bexpression::getChildExprs() const
   return rval;
 }
 
-void Bexpression::setStoreValue(llvm::Value *val)
-{
-  assert(value_ == nullptr);
-  setValue(val);
-}
-
 void Bexpression::setValue(llvm::Value *val)
 {
   assert(val);

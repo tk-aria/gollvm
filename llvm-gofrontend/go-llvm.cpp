@@ -2500,6 +2500,8 @@ llvm::BasicBlock *GenBlocks::walkExpr(llvm::BasicBlock *curblock,
   for (auto originst : expr->instructions()) {
     auto pair = postProcessInst(originst, curblock);
     auto inst = pair.first;
+    if (expr->value() == originst)
+      expr->setValue(inst);
     if (dibuildhelper_)
       dibuildhelper_->processExprInst(expr, inst);
     curblock->getInstList().push_back(inst);
