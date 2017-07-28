@@ -82,7 +82,7 @@ Bexpression *Llvm_backend::materializeAddress(Bexpression *addrExpr)
   if (llvm::isa<llvm::ConstantArray>(bexpr->value()))
     return bexpr;
   if (bexpr->value()->getType() == stringType()->type() &&
-      llvm::isa<llvm::Constant>(bexpr->value()))
+      bexpr->isConstant())
     return bexpr;
 
   // If the value we're trying to take the address of is a composite
