@@ -1132,10 +1132,11 @@ Bexpression *Llvm_backend::complex_expression(Bexpression *breal,
   if (breal == errorExpression() || bimag == errorExpression())
     return errorExpression();
 
-  assert(breal->btype() == bimag->btype());
-  BFloatType *bet = breal->btype()->castToBFloatType();
-  assert(bet);
-  Btype *bct = complexType(bet->bits()*2);
+  BFloatType *brft = breal->btype()->castToBFloatType();
+  BFloatType *bift = bimag->btype()->castToBFloatType();
+  assert(brft && bift);
+  assert(brft->bits() == bift->bits());
+  Btype *bct = complexType(brft->bits()*2);
   std::vector<Bexpression *> vals = { breal, bimag };
   Binstructions noInstructions;
   Bexpression *rval = nbuilder_.mkComposite(bct, nullptr, vals,
