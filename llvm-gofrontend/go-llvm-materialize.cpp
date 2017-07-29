@@ -151,14 +151,19 @@ Bexpression *Llvm_backend::materializeConversion(Bexpression *convExpr)
     }
   }
 
+  Bexpression *rval = nullptr;
+
   // If the we're converting between two different Btypes that have the
   // same underlying LLVM type, then we can create a new Bexpression
   // for the conversion but not do anything else.
-  if (toType == valType)
-    return nbuilder_.mkConversion(type, expr->value(), expr, location);
+  if (toType == valType) {
+    rval = nbuilder_.mkConversion(type, expr->value(), expr, location);
+    if (expr->varExprPending())
+      rval->setVarExprPending(expr->varContext());
+    return rval;
+  }
 
   LIRBuilder builder(context_, llvm::ConstantFolder());
-  Bexpression *rval = nullptr;
 
   // Pointer type to pointer-sized-integer type. Comes up when
   // converting function pointer to function descriptor (during
