@@ -2937,7 +2937,7 @@ bool Llvm_backend::function_set_body(Bfunction *function,
 
   // debugging
   if (traceLevel() > 1) {
-    std::cerr << "Statement tree dump:\n";
+    std::cerr << "\nStatement tree dump:\n";
     code_stmt->dump();
   }
 
