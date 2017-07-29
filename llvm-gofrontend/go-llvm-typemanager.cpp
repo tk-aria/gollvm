@@ -1571,7 +1571,12 @@ bool TypeManager::isPtrToArrayOf(llvm::Type *typ, llvm::Type *arElmTyp)
   if (! elt->isArrayTy())
     return false;
   llvm::ArrayType *llat = llvm::cast<llvm::ArrayType>(elt);
-  return llat->getTypeAtIndex(0u) == arElmTyp;
+  llvm::Type *aelt = llat->getTypeAtIndex(0u);
+  if (aelt == arElmTyp)
+    return true;
+  if (isCircularFunctionType(aelt) && isCircularFunctionType(arElmTyp))
+    return true; // TODO: check they are same circular function type?
+  return false;
 }
 
 bool TypeManager::fcnPointerCompatible(llvm::Type *left,
