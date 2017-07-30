@@ -353,18 +353,23 @@ TEST(BackendStmtTests, TestSwitchStmt) {
   // implicit fallthrough
 
   // third case
+  Bstatement *st3 = nullptr; // case has only a fallthough statement
+
+  // fourth case
   // loc1 = 456
-  Bexpression *ve3 = be->var_expression(loc1, VE_lvalue, loc);
+  Bexpression *ve4 = be->var_expression(loc1, VE_lvalue, loc);
   Bexpression *c456 = mkInt64Const(be, 456);
-  Bstatement *as3 = be->assignment_statement(func, ve3, c456, loc);
-  Bstatement *goto3 = be->goto_statement(brklab, loc);
-  Bstatement *cs3 = be->compound_statement(as3, goto3);
+  Bstatement *as4 = be->assignment_statement(func, ve4, c456, loc);
+  Bstatement *goto4 = be->goto_statement(brklab, loc);
+  Bstatement *cs4 = be->compound_statement(as4, goto4);
 
   // Set up switch statements
-  std::vector<Bstatement*> statements = {cs1, as2, cs3};
+  std::vector<Bstatement*> statements = {cs1, as2, st3, cs4};
   std::vector<std::vector<Bexpression*> > cases = {
     { mkInt64Const(be, 1), mkInt64Const(be, 2) },
-    { mkInt64Const(be, 3), mkInt64Const(be, 4) } };
+    { mkInt64Const(be, 3), mkInt64Const(be, 4) },
+    { mkInt64Const(be, 5)},
+  };
   cases.push_back(std::vector<Bexpression*>()); // default
 
   // switch
@@ -400,6 +405,7 @@ TEST(BackendStmtTests, TestSwitchStmt) {
        i64 2, label %case.0
        i64 3, label %case.1
        i64 4, label %case.1
+       i64 5, label %case.2
      ]
 
    case.0:                                           ; preds = %entry, %entry
@@ -415,7 +421,10 @@ TEST(BackendStmtTests, TestSwitchStmt) {
      %trunc.0 = trunc i8 %zext.0 to i1
      br i1 %trunc.0, label %then.0, label %else.0
 
-   default.0:                                        ; preds = %entry, %fallthrough.0
+   case.2:                                           ; preds = %entry, %fallthrough.0
+     br label %default.0
+
+   default.0:                                        ; preds = %entry, %case.2
      store i64 456, i64* %loc1
      br label %label.0
 
@@ -433,7 +442,7 @@ TEST(BackendStmtTests, TestSwitchStmt) {
    fallthrough.0:                                    ; preds = %else.0, %then.0
      %tmpv.0.ld.0 = load i64, i64* %tmpv.0
      store i64 %tmpv.0.ld.0, i64* %loc1
-     br label %default.0
+     br label %case.2
 
    else.0:                                           ; preds = %case.1
      %loc1.ld.2 = load i64, i64* %loc1
