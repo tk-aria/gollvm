@@ -869,8 +869,13 @@ Bstatement *BnodeBuilder::mkSwitchStmt(Bfunction *func,
   for (auto &vvec : vals)
     for (auto &v : vvec)
       kids.push_back(v);
+
   for (auto &st : stmts)
-    kids.push_back(st);
+    // For cases that has only a fallthrough statement, the FE passes a null
+    // block. Having a null node in the tree may cause various problems.
+    // Make an empty block instead.
+    kids.push_back(st ? st : mkBlock(func, {}, loc));
+
   SwitchDescriptor *d = new SwitchDescriptor(vals);
   swcases_.push_back(d);
   Bstatement *rval = new Bstatement(N_SwitchStmt, func, kids, loc);
