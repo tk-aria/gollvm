@@ -1449,7 +1449,8 @@ uint64_t TypeManager::llvmTypeSize(llvm::Type *t)
 int64_t TypeManager::typeAlignment(Btype *btype) {
   if (btype == errorType_)
     return 1;
-  unsigned uval = datalayout_->getPrefTypeAlignment(btype->type());
+  llvm::Type *toget = getPlaceholderProxyIfNeeded(btype);
+  unsigned uval = datalayout_->getPrefTypeAlignment(toget);
   return static_cast<int64_t>(uval);
 }
 
@@ -1461,8 +1462,13 @@ int64_t TypeManager::typeAlignment(Btype *btype) {
 // otherwise.
 
 int64_t TypeManager::typeFieldAlignment(Btype *btype) {
+  if (btype == errorType_)
+    return -1;
+
+  llvm::Type *toget = getPlaceholderProxyIfNeeded(btype);
+
   // Corner cases.
-  if (!btype->type()->isSized() || btype == errorType_)
+  if (!toget->isSized())
     return -1;
 
   // Create a new anonymous struct with two fields: first field is a
@@ -1472,11 +1478,11 @@ int64_t TypeManager::typeFieldAlignment(Btype *btype) {
 
   llvm::SmallVector<llvm::Type *, 2> elems(2);
   elems[0] = llvm::Type::getInt1Ty(context_);
-  elems[1] = btype->type();
+  elems[1] = toget;
   llvm::StructType *dummyst = llvm::StructType::get(context_, elems);
   const llvm::StructLayout *sl = datalayout_->getStructLayout(dummyst);
   uint64_t uoff = sl->getElementOffset(1);
-  unsigned talign = datalayout_->getPrefTypeAlignment(btype->type());
+  unsigned talign = datalayout_->getPrefTypeAlignment(toget);
   int64_t rval = (uoff < talign ? uoff : talign);
   return rval;
 }
