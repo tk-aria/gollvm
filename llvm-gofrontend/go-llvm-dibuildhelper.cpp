@@ -144,6 +144,11 @@ void DIBuildHelper::insertVarDecl(Bvariable *var,
   llvm::DIExpression *expr = dibuilder().createExpression();
   llvm::DILocation *vloc = debugLocFromLocation(var->location());
   llvm::Instruction *insertionPoint = nullptr;
+
+  // Don't emit declaration for dead variable.
+  if(var->initializer() && !var->initializerInstruction()->getParent())
+    return;
+
   llvm::Instruction *decl =
       dibuilder().insertDeclare(var->value(), dilv, expr, vloc, insertionPoint);
   if (var->initializer()) {
