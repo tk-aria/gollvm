@@ -2498,16 +2498,21 @@ llvm::BasicBlock *GenBlocks::walkExpr(llvm::BasicBlock *curblock,
   // live to dead in this loop. Handle it, especially
   // deallocate part of the instruction list, if it
   // becomes necessary.
+  bool changed = false;
+  std::vector<llvm::Instruction*> newinsts;
   for (auto originst : expr->instructions()) {
     auto pair = postProcessInst(originst, curblock);
     auto inst = pair.first;
-    if (expr->value() == originst)
-      expr->setValue(inst);
+    if (inst != originst)
+      changed = true;
     if (dibuildhelper_)
       dibuildhelper_->processExprInst(expr, inst);
     curblock->getInstList().push_back(inst);
     curblock = pair.second;
+    newinsts.push_back(inst);
   }
+  if (changed)
+    be_->nodeBuilder().updateInstructions(expr, newinsts);
   expr->clear();
   return curblock;
 }
