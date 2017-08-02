@@ -183,7 +183,6 @@ class Bexpression : public Bnode, public Binstructions {
   void resetVarExprContext();
   bool compositeInitPending() const;
   const std::vector<Bexpression *> getChildExprs() const;
-  void setValue(llvm::Value *val);
 
   // Return context disposition based on expression type.
   // Composite values need to be referred to by address,
@@ -207,6 +206,7 @@ class Bexpression : public Bnode, public Binstructions {
   Bexpression(NodeFlavor fl, const std::vector<Bnode *> &kids,
               llvm::Value *val, Btype *typ, Location loc);
   Bexpression(const Bexpression &src);
+  void setValue(llvm::Value *val);
 
   llvm::Value *value_;
   Btype *btype_;

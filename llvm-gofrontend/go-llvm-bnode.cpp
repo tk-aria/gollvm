@@ -294,6 +294,7 @@ void BnodeBuilder::destroyRec(Bnode *node,
       for (auto inst : expr->instructions()) {
         integrityVisitor_->unsetParent(inst, expr, idx);
         inst->dropAllReferences();
+        idx++;
       }
       for (auto inst : expr->instructions())
         inst->deleteValue();
@@ -988,4 +989,18 @@ const std::vector<unsigned long> *BnodeBuilder::getIndices(Bexpression *expr) co
     return nullptr;
   assert((unsigned)i < indexvecs_.size());
   return &indexvecs_[i];
+}
+
+void BnodeBuilder::updateInstructions(Bexpression *expr,
+                                      std::vector<llvm::Instruction*> newinsts)
+{
+  assert(expr->instructions().size() == newinsts.size());
+  unsigned idx = 0;
+  for (auto originst : expr->instructions()) {
+    integrityVisitor_->unsetParent(originst, expr, idx);
+    integrityVisitor_->setParent(newinsts[idx], expr, idx);
+    if (expr->value() == originst)
+      expr->setValue(newinsts[idx]);
+    idx++;
+  }
 }
