@@ -165,6 +165,8 @@ def docmdlines(cmd, nf=None):
   args = shlex.split(cmd)
   mypipe = subprocess.Popen(args, stdout=subprocess.PIPE)
   encoding = locale.getdefaultlocale()[1]
+  if encoding is None:
+    encoding = 'UTF-8'
   pout, perr = mypipe.communicate()
   if mypipe.returncode != 0:
     if perr:

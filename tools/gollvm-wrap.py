@@ -74,7 +74,7 @@ def form_golibargs(driver):
   line = lines[0]
   rdir = os.path.dirname(line)
   u.verbose(1, "libdir is %s" % rdir)
-  return ["-L", rdir]
+  return rdir
 
 
 def perform():
@@ -158,10 +158,9 @@ def perform():
   nargs.append(asmfile)
 
   golibargs = form_golibargs(sys.argv[0])
-  nargs += golibargs
-  if largs:
-    nargs.append("-L")
-    nargs.append(":".join(largs))
+  largs.append(golibargs)
+  nargs.append("-L")
+  nargs.append(":".join(largs))
   if iargs:
     nargs.append("-I")
     nargs.append(":".join(iargs))
