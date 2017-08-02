@@ -23,6 +23,7 @@
 
 namespace llvm {
 class AllocaInst;
+class Instruction;
 class Value;
 class raw_ostream;
 }
@@ -364,6 +365,12 @@ class BnodeBuilder {
   // to support dealing with Bnodes that have a mix of statement/expr
   // children).
   std::vector<Bnode *> extractChildNodesAndDestroy(Bnode *node);
+
+  // Update the instructions of an expression node, mostly for updating
+  // references in the integrety checker. Used when the instructions
+  // are post-processed.
+  void updateInstructions(Bexpression *expr,
+                          std::vector<llvm::Instruction*> newinsts);
 
   // Get/set whether the tree integrity checker is enabled. It makes sense
   // to turn off the integrity checker during tree cloning operations

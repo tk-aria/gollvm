@@ -989,3 +989,16 @@ const std::vector<unsigned long> *BnodeBuilder::getIndices(Bexpression *expr) co
   assert((unsigned)i < indexvecs_.size());
   return &indexvecs_[i];
 }
+
+void BnodeBuilder::updateInstructions(Bexpression *expr,
+                                      std::vector<llvm::Instruction*> newinsts)
+{
+  assert(expr->instructions().size() == newinsts.size());
+  unsigned idx = 0;
+  for (auto originst : expr->instructions()) {
+    integrityVisitor_->unsetParent(originst, expr, idx);
+    integrityVisitor_->setParent(newinsts[idx], expr, idx);
+    if (expr->value() == originst)
+      expr->setValue(newinsts[idx]);
+  }
+}
