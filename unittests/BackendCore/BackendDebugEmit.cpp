@@ -159,6 +159,32 @@ TEST(BackendDebugEmit, MoreComplexVarDecls) {
     std::cerr << fdump;
 }
 
+TEST(BackendDebugEmit, TestDeadLocalVar) {
+  // Test that dead local variable doesn't cause problem.
+  FcnTestHarness h;
+  Llvm_backend *be = h.be();
+  BFunctionType *befty = mkFuncTyp(be, L_END);
+  Bfunction *func = h.mkFunction("foo", befty);
+
+  h.mkReturn(std::vector<Bexpression*>{});
+  Btype *bu32t = be->integer_type(true, 32);
+  h.mkLocal("x", bu32t);
+
+  const char *exp = R"RAW_RESULT(
+    define void @foo(i8* nest %nest.0) #0 {
+    entry:
+      %x = alloca i32
+      ret void
+    }
+  )RAW_RESULT";
+
+  bool broken = h.finish(PreserveDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+
+  bool isOK = h.expectValue(func->function(), exp);
+  EXPECT_TRUE(isOK && "Function does not have expected contents");
+}
+
 TEST(BackendVarTests, TestGlobalVarDebugEmit) {
   FcnTestHarness h("foo");
   Llvm_backend *be = h.be();
