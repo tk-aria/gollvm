@@ -2218,17 +2218,20 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
 {
   if (fntype == errorType())
     return errorFunction_.get();
+  BFunctionType *ft = fntype->castToBFunctionType();
+  assert(ft);
+  llvm::FunctionType *fty = llvm::cast<llvm::FunctionType>(ft->type());
 
   // If this is a declaration, then look to see if we already have an existing
   // function with the same name, and reuse that if need be. Check to make
   // sure that the function types agree if we see a hit in the cache.
   std::string fns(!asm_name.empty() ? asm_name : name);
-  llvm::FunctionType *fty = llvm::cast<llvm::FunctionType>(fntype->type());
   if (is_declaration) {
-    auto it = fcnNameMap_.find(fns);
-    if (it != fcnNameMap_.end()) {
+    assert(ft);
+    fcnNameAndType candidate(std::make_pair(ft, fns));
+    auto it = fcnDeclMap_.find(candidate);
+    if (it != fcnDeclMap_.end()) {
       Bfunction *found = it->second;
-      assert(found->fcnType()->type() == fty);
       return found;
     }
   }
@@ -2264,8 +2267,10 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
   // per-function basis (only a translation-unit-wide default).
   assert(!in_unique_section || is_declaration);
 
-  if (is_declaration)
-    fcnNameMap_[fns] = bfunc;
+  if (is_declaration) {
+    fcnNameAndType candidate(std::make_pair(ft, fns));
+    fcnDeclMap_[candidate] = bfunc;
+  }
   functions_.push_back(bfunc);
   return bfunc;
 }
