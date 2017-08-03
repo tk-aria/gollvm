@@ -262,4 +262,33 @@ TEST(BackendFcnTests, MakeMultipleDeclarations) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
+TEST(BackendFcnTests, TestIntrinsicCall) {
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
+  Location loc;
+
+  // var x uint64
+  Btype *bu64t = be->integer_type(true, 64);
+  Bvariable *x = h.mkLocal("x", bu64t);
+
+  // __builtin_ctzll(x);
+  Bfunction *bfcn = be->lookup_builtin("__builtin_ctzll");
+  //Bexpression *fnexpr = be->function_code_expression(bfcn, loc);
+  Bexpression *ve = be->var_expression(x, VE_rvalue, loc);
+  Bexpression *call = h.mkCallExpr(be, bfcn, ve, nullptr);
+  h.mkExprStmt(call);
+
+  const char *exp = R"RAW_RESULT(
+    store i64 0, i64* %x
+    %x.ld.0 = load i64, i64* %x
+    %call.0 = call i64 @llvm.cttz.i64(i64 %x.ld.0, i1 true)
+  )RAW_RESULT";
+
+  bool isOK = h.expectBlock(exp);
+  EXPECT_TRUE(isOK && "Block does not have expected contents");
+
+  bool broken = h.finish(StripDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+}
+
 }

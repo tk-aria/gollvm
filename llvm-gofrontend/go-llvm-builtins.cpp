@@ -90,8 +90,8 @@ void BuiltinTable::defineIntrinsicBuiltins() {
   unsigned bitsInPtr = tman_->datalayout()->getPointerSizeInBits();
   Btype *uintPtrType = tman_->integerType(true, bitsInPtr);
   Btype *sizeType = uintPtrType;
-  Btype *uint64Type = tman_->integerType(true, 32);
-  Btype *int64Type = tman_->integerType(false, 32);
+  Btype *uint64Type = tman_->integerType(true, 64);
+  Btype *int64Type = tman_->integerType(false, 64);
 
   defineIntrinsicBuiltin("__builtin_trap", nullptr, llvm::Intrinsic::trap,
                          nullptr);

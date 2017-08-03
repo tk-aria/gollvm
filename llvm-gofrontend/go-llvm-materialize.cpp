@@ -1272,6 +1272,23 @@ Bexpression *Llvm_backend::materializeCall(Bexpression *callExpr)
   assert(fn_expr->btype()->type()->isPointerTy());
   BFunctionType *calleeFcnTyp = unpackFunctionType(fn_expr->btype());
   Btype *rbtype = calleeFcnTyp->resultType();
+  llvm::Value *fnval = fn_expr->value();
+
+  // Some intrinsic functions need additional args. Add them.
+  // TODO: currently this is specific to llvm.cttz, generalize
+  // if needed.
+  if (llvm::isa<llvm::Function>(fnval)) {
+    llvm::Function *fcn = llvm::cast<llvm::Function>(fnval);
+    if (fcn->getIntrinsicID() == llvm::Intrinsic::cttz) {
+      // @llvm.cttz.i32  (i32 <src>, i1 <is_zero_undef>)
+      // Add the <is_zero_undef> arg.
+      // GCC's __builtin_ctz results undefined for 0 input.
+      llvm::Value *con = llvm::ConstantInt::getTrue(context_);
+      Btype *bt = makeAuxType(llvmBoolType());
+      Bexpression *conexpr = nbuilder_.mkConst(bt, con);
+      fn_args.push_back(conexpr);
+    }
+  }
 
   // State object to help with marshalling of call arguments, etc.
   GenCallState state(context_, caller, calleeFcnTyp, typeManager());
@@ -1298,7 +1315,7 @@ Bexpression *Llvm_backend::materializeCall(Bexpression *callExpr)
   bool isvoid = llft->getReturnType()->isVoidTy();
   std::string callname(isvoid ? "" : namegen("call"));
   llvm::CallInst *call =
-      state.builder.CreateCall(llft, fn_expr->value(),
+      state.builder.CreateCall(llft, fnval,
                                state.llargs, callname);
   genCallAttributes(state, call);
 
