@@ -1468,8 +1468,8 @@ Llvm_backend::call_expression(Bfunction *caller,
       chain_expr == errorExpression())
     return errorExpression();
 
-  Btype *rbtype = functionReturnType(fn_expr->btype());
-  assert(fn_expr->btype()->type()->isPointerTy());
+  BFunctionType *ft = unpackFunctionType(fn_expr->btype());
+  Btype *rbtype = ft->resultType();
   Binstructions noInstructions;
   if (!chain_expr)
     chain_expr = nbuilder_.mkVoidValue(void_type());

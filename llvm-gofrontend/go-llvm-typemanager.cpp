@@ -778,7 +778,12 @@ Btype *TypeManager::placeholderArrayType(const std::string &name,
   return pat;
 }
 
-Btype *TypeManager::functionReturnType(Btype *typ)
+// Here "typ" is assumed to be the Btype of the "function" expression
+// feeding into a call, which can either be raw pointer-to-function or
+// pointer-to-function-descriptor. This helper picks out and returns
+// the underlying BFunctionType in either of those two cases
+
+BFunctionType *TypeManager::unpackFunctionType(Btype *typ)
 {
   assert(typ);
   assert(typ != errorType_);
@@ -786,8 +791,16 @@ Btype *TypeManager::functionReturnType(Btype *typ)
   if (pt)
     typ = pt->toType();
   BFunctionType *ft = typ->castToBFunctionType();
+  if (ft)
+    return ft;
+  BStructType *st = typ->castToBStructType();
+  assert(st);
+  Btype *sft = st->fieldType(0);
+  pt = sft->castToBPointerType();
+  assert(pt);
+  ft = pt->toType()->castToBFunctionType();
   assert(ft);
-  return ft->resultType();
+  return ft;
 }
 
 Btype *TypeManager::elementTypeByIndex(Btype *btype, unsigned fieldIndex)

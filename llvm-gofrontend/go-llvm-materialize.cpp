@@ -1066,7 +1066,6 @@ void
 Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
                                   GenCallState &state)
 {
-  const std::vector<Btype *> &paramTypes = state.calleeFcnType->paramTypes();
   for (unsigned idx = 0; idx < fn_args.size(); ++idx) {
     const CABIParamInfo &paramInfo = state.oracle.paramInfo(idx);
 
@@ -1271,13 +1270,10 @@ Bexpression *Llvm_backend::materializeCall(Bexpression *callExpr)
   // Resolve fcn. Expect pointer-to-function type here.
   fn_expr = resolveVarContext(fn_expr);
   assert(fn_expr->btype()->type()->isPointerTy());
-  Btype *rbtype = functionReturnType(fn_expr->btype());
+  BFunctionType *calleeFcnTyp = unpackFunctionType(fn_expr->btype());
+  Btype *rbtype = calleeFcnTyp->resultType();
 
-  // Collect function type and param types
-  BPointerType *bpft = fn_expr->btype()->castToBPointerType();
-  BFunctionType *calleeFcnTyp = bpft->toType()->castToBFunctionType();
-  assert(calleeFcnTyp);
-
+  // State object to help with marshalling of call arguments, etc.
   GenCallState state(context_, caller, calleeFcnTyp, typeManager());
 
   // Static chain expression if applicable
