@@ -777,11 +777,15 @@ public:
   // without creating what it is we're looking for.
   std::unordered_map<std::string, Bvariable *> immutableStructRefs_;
 
-  // A map from function asm name to Bfunction, used to cache declarations
-  // of external functions (for example, well-known functions in the
-  // runtime). Only declarations will be placed in this map-- if a function
-  // is being defined, it will only be added to the functions_ list below.
-  std::unordered_map<std::string, Bfunction*> fcnNameMap_;
+  typedef std::pair<BFunctionType *, std::string> fcnNameAndType;
+  typedef pairvalmap<BFunctionType *, std::string, Bfunction*> fcnDeclMapTyp;
+
+  // This maps from <name, type> pairs to Bfunction object; it is used
+  // to cache declarations of external functions (for example,
+  // well-known functions in the runtime). Only declarations will be
+  // placed in this map-- if a function is being defined, it will only
+  // be added to the functions_ list below.
+  fcnDeclMapTyp fcnDeclMap_;
 
   // Currently we don't do any commoning of Bfunction objects created
   // by the frontend, so here we keep track of all returned Bfunctions

@@ -229,13 +229,14 @@ TEST(BackendFcnTests, MakeMultipleDeclarations) {
   Llvm_backend *be = h.be();
   Location loc;
 
-  // If a function of a given name is declared more than once,
+  // If a function of a given name/type is declared more than once,
   // we expect to get back the original decl on the second time.
   // For definitions, a new function will be created each time (although
   // this could certainly be changed if needed);
   Btype *bi32t = be->integer_type(false, 32);
   Btype *bi64t = be->integer_type(false, 64);
   BFunctionType *befty1 = mkFuncTyp(be, L_RES, bi32t, L_PARM, bi64t, L_END);
+  BFunctionType *befty2 = mkFuncTyp(be, L_RES, bi64t, L_PARM, bi64t, L_END);
   bool is_visible = false;
   bool is_declaration = true;
   bool is_inl = true;
@@ -250,8 +251,12 @@ TEST(BackendFcnTests, MakeMultipleDeclarations) {
   Bfunction *bf3 =
       be->function(befty1, "_foo", "bar", is_visible, !is_declaration,
                          is_inl, is_splitstack, in_unique_section, loc);
+  Bfunction *bf4 =
+      be->function(befty2, "_foo", "bar", is_visible, is_declaration,
+                         is_inl, is_splitstack, in_unique_section, loc);
   EXPECT_EQ(bf1, bf2);
   EXPECT_NE(bf1, bf3);
+  EXPECT_NE(bf2, bf4);
 
   bool broken = h.finish(PreserveDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
