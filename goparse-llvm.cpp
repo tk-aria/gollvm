@@ -118,6 +118,11 @@ CheckDivideOverflow("fgo-check-divide-overflow",
                     cl::init(true));
 
 static cl::opt<bool>
+CompilingRuntime("fgo-compiling-runtime",
+                 cl::desc("Compiling the runtime package."),
+                 cl::init(false));
+
+static cl::opt<bool>
 DumpAst("fgo-dump-ast",
         cl::desc("Dump Go frontend internal AST structure."),
         cl::init(false));
@@ -217,7 +222,7 @@ static Llvm_backend *init_gogo(TargetMachine *Target,
   args.c_header = NULL; // FIXME: not yet supported
   args.check_divide_by_zero = CheckDivideZero;
   args.check_divide_overflow = CheckDivideOverflow;
-  args.compiling_runtime = false; // FIXME: not yet supported
+  args.compiling_runtime = CompilingRuntime;
   args.debug_escape_level = EscapeDebugLevel;
   args.linemap = linemap;
   Llvm_backend *backend = new Llvm_backend(Context, module, linemap);
