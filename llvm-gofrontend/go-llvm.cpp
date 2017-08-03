@@ -1293,15 +1293,25 @@ Bexpression *Llvm_backend::unary_expression(Operator op,
 
   Btype *bt = expr->btype();
 
-  // FIXME: for floating point zero expr should be -0.0
-  if (op == OPERATOR_MINUS)
-    return binary_expression(OPERATOR_MINUS, zero_expression(bt),
-                             expr, location);
+  if (op == OPERATOR_MINUS) {
+    // Special handling for unary minus applied to fp type.
+    BFloatType *ft = bt->castToBFloatType();
+    Bexpression *zerexp = (ft ? minusZeroExpr(ft) : zero_expression(bt));
+    return binary_expression(OPERATOR_MINUS, zerexp, expr, location);
+  }
 
   Bexpression *rval = nbuilder_.mkUnaryOp(op, bt, nullptr, expr, location);
   return rval;
 }
 
+Bexpression *Llvm_backend::minusZeroExpr(BFloatType *typ)
+{
+  assert(typ);
+  llvm::Constant *nzcon = llvm::ConstantFP::getNegativeZero(typ->type());
+  Bexpression *bconst = nbuilder_.mkConst(typ, nzcon);
+  return makeGlobalExpression(bconst, nzcon, typ, Location());
+}
+  
 Bexpression *Llvm_backend::makeComplexBinaryExpr(Operator op, Bexpression *left,
                                                  Bexpression *right,
                                                  Location location) {

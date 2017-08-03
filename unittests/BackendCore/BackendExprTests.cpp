@@ -1595,6 +1595,13 @@ TEST(BackendExprTests, TestUnaryExpression) {
   Bexpression *vez = be->var_expression(zv, VE_rvalue, loc);
   h.mkLocal("w", bi64t, be->unary_expression(OPERATOR_XOR, vez, loc));
 
+  // var q float64
+  // var r i64 = -z
+  Btype *bf64t = be->float_type(64);
+  Bvariable *qv = h.mkLocal("q", bf64t);
+  Bexpression *veq = be->var_expression(qv, VE_rvalue, loc);
+  h.mkLocal("r", bf64t, be->unary_expression(OPERATOR_MINUS, veq, loc));
+
   const char *exp = R"RAW_RESULT(
       store i8 0, i8* %x
       %x.ld.0 = load i8, i8* %x
@@ -1610,10 +1617,13 @@ TEST(BackendExprTests, TestUnaryExpression) {
       %z.ld.0 = load i64, i64* %z
       %xor.1 = xor i64 %z.ld.0, -1
       store i64 %xor.1, i64* %w
+      store double 0.000000e+00, double* %q
+      %q.ld.0 = load double, double* %q
+      %fsub.0 = fsub double -0.000000e+00, %q.ld.0
+      store double %fsub.0, double* %r
     )RAW_RESULT";
 
-  // Note that this
-  bool isOK = h.expectBlock(exp);
+    bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
 
   bool broken = h.finish(StripDebugInfo);
