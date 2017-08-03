@@ -166,8 +166,9 @@ class TypeManager {
   // Returns field type from composite (struct/array) type and index.
   Btype *elementTypeByIndex(Btype *type, unsigned element_index);
 
-  // Returns function result type from pointer-to-function type.
-  Btype *functionReturnType(Btype *functionType);
+  // Returns function type from pointer-to-function type or
+  // pointer-to-function-descriptor type.
+  BFunctionType *unpackFunctionType(Btype *fcnExprType);
 
   // When making a change to a Btype (for example,modifying its underlying
   // type or setting/resetting its placeholder flag) we need to
