@@ -655,6 +655,9 @@ public:
   // hence no delayed value creation).
   Bexpression *lateConvert(Btype *type, Bexpression *expr, Location);
 
+  // Manufacture a floating point constant corresponding to -0.0
+  Bexpression *minusZeroExpr(BFloatType *typ);
+
  public:
 
   // Performs a bottom-up walk to materialize LLVM values for each
