@@ -291,9 +291,10 @@ int main(int argc, char **argv)
 
   TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
   Options.DisableIntegratedAS = true;
+  Optional<llvm::CodeModel::Model> CM = None;
   std::unique_ptr<TargetMachine> Target(
       TheTarget->createTargetMachine(TheTriple.getTriple(), CPUStr, FeaturesStr,
-                                     Options, getRelocModel(), CMModel, OLvl));
+                                     Options, getRelocModel(), CM, OLvl));
   assert(Target && "Could not allocate target machine!");
 
   // FIXME: this hard-wires on the equivalent of -ffunction-sections
