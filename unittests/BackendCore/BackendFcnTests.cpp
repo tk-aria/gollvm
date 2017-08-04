@@ -291,4 +291,79 @@ TEST(BackendFcnTests, TestIntrinsicCall) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
+TEST(BackendFcnTests, TestCallMemBuiltins) {
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
+  Location loc;
+
+  // Test calls to memmove, memcpy, memcmp
+
+  // var x, y uint64
+  Btype *bu64t = be->integer_type(true, 64);
+  Bvariable *x = h.mkLocal("x", bu64t);
+  Bvariable *y = h.mkLocal("y", bu64t, mkUint64Const(be, 10101));
+
+  // memcmp(&x,&y,sizeof(x))
+  {
+  Bfunction *bmemcmp = be->lookup_builtin("memcmp");
+  Bexpression *vex = be->var_expression(x, VE_rvalue, loc);
+  Bexpression *vey = be->var_expression(y, VE_rvalue, loc);
+  Bexpression *call =
+      h.mkCallExpr(be, bmemcmp,
+                   be->address_expression(vex, loc),
+                   be->address_expression(vey, loc),
+                   mkUint64Const(be, be->type_size(bu64t)),
+                   nullptr);
+  h.mkExprStmt(call);
+  }
+
+  // memmove(&x,&y,sizeof(x))
+  {
+  Bfunction *bmemmove = be->lookup_builtin("memmove");
+  Bexpression *vex = be->var_expression(x, VE_rvalue, loc);
+  Bexpression *vey = be->var_expression(y, VE_rvalue, loc);
+  Bexpression *call =
+      h.mkCallExpr(be, bmemmove,
+                   be->address_expression(vex, loc),
+                   be->address_expression(vey, loc),
+                   mkUint64Const(be, be->type_size(bu64t)),
+                   nullptr);
+  h.mkExprStmt(call);
+  }
+
+  // memcpy(&y,&x,sizeof(y))
+  {
+  Bfunction *bmemmove = be->lookup_builtin("memcpy");
+  Bexpression *vey = be->var_expression(y, VE_rvalue, loc);
+  Bexpression *vex = be->var_expression(x, VE_rvalue, loc);
+  Bexpression *call =
+      h.mkCallExpr(be, bmemmove,
+                   be->address_expression(vey, loc),
+                   be->address_expression(vex, loc),
+                   mkUint64Const(be, be->type_size(bu64t)),
+                   nullptr);
+  h.mkExprStmt(call);
+  }
+
+  const char *exp = R"RAW_RESULT(
+  store i64 0, i64* %x
+  store i64 10101, i64* %y
+  %cast.0 = bitcast i64* %x to i8*
+  %cast.1 = bitcast i64* %y to i8*
+  %call.0 = call i32 @memcmp(i8* %cast.0, i8* %cast.1, i64 8)
+  %cast.2 = bitcast i64* %x to i8*
+  %cast.3 = bitcast i64* %y to i8*
+  call void @llvm.memmove.p0i8.p0i8.i64(i8* %cast.2, i8* %cast.3, i64 8, i32 1, i1 false)
+  %cast.4 = bitcast i64* %y to i8*
+  %cast.5 = bitcast i64* %x to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.4, i8* %cast.5, i64 8, i32 1, i1 false)
+  )RAW_RESULT";
+
+  bool isOK = h.expectBlock(exp);
+  EXPECT_TRUE(isOK && "Block does not have expected contents");
+
+  bool broken = h.finish(StripDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+}
+
 }

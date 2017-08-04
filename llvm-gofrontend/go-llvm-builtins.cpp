@@ -93,6 +93,12 @@ void BuiltinTable::defineIntrinsicBuiltins() {
   Btype *uint64Type = tman_->integerType(true, 64);
   Btype *int64Type = tman_->integerType(false, 64);
 
+  // A note on the types below:
+  // - for intrinsic builtins, return type is implicitly defined
+  //   by the intrinsic itself; param types can be overloaded
+  // - for libcall builtins, return type appears as the first
+  //   entry in the param type list
+
   defineIntrinsicBuiltin("__builtin_trap", nullptr, llvm::Intrinsic::trap,
                          nullptr);
 
@@ -106,20 +112,18 @@ void BuiltinTable::defineIntrinsicBuiltins() {
   defineIntrinsicBuiltin("__builtin_expect", nullptr, llvm::Intrinsic::expect,
                          int64Type, int64Type, nullptr);
 
-  defineLibcallBuiltin("__builtin_memcmp", "memcmp",
+  defineLibcallBuiltin("memcmp", "__builtin_memcmp",
                        llvm::LibFunc::LibFunc_memcmp,
                        uint32Type, ptrType, ptrType,
                        sizeType, nullptr);
 
-  defineLibcallBuiltin("__builtin_memcpy", "memcpy",
-                       llvm::LibFunc::LibFunc_memcpy,
-                       ptrType, ptrType, ptrType,
-                       sizeType, uint32Type, oneBitIntegerType, nullptr);
+  defineIntrinsicBuiltin("__builtin_memcpy", "memcpy",
+                         llvm::Intrinsic::memcpy,
+                         ptrType, ptrType, sizeType, nullptr);
 
-  defineLibcallBuiltin("__builtin_memmove", "memmove",
-                       llvm::LibFunc::LibFunc_memmove,
-                       ptrType, ptrType, ptrType,
-                       sizeType, nullptr);
+  defineIntrinsicBuiltin("__builtin_memmove", "memmove",
+                         llvm::Intrinsic::memmove,
+                         ptrType, ptrType, sizeType, nullptr);
 
   // go runtime refers to this intrinsic as "ctz", however the LLVM
   // equivalent is named "cttz".
@@ -226,12 +230,12 @@ void BuiltinTable::defineTrigBuiltins() {
 
     sprintf(bbuf, "__builtin_%s", d.name);
     BuiltinEntryTypeVec *sig = signatures[d.nargs];
-    defineLibcallBuiltin(bbuf, d.name, *sig, d.lf);
+    defineLibcallBuiltin(d.name, bbuf, *sig, d.lf);
     if (addLongDouble_) {
       sprintf(lbuf, "%sl", d.name);
       sprintf(bbuf, "__builtin_%s", lbuf);
       BuiltinEntryTypeVec *lsig = lsignatures[d.nargs];
-      defineLibcallBuiltin(bbuf, lbuf, *lsig, d.lf);
+      defineLibcallBuiltin(lbuf, bbuf, *lsig, d.lf);
     }
   }
 }
