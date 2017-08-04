@@ -50,8 +50,8 @@ void BuiltinTable::registerIntrinsicBuiltin(const char *name,
     tab_[std::string(libname)] = idx;
 }
 
-void BuiltinTable::registerLibCallBuiltin(const char *name,
-                                          const char *libname,
+void BuiltinTable::registerLibCallBuiltin(const char *libname,
+                                          const char *name,
                                           llvm::LibFunc libfunc,
                                           const BuiltinEntryTypeVec &paramTypes)
 {
@@ -93,6 +93,12 @@ void BuiltinTable::defineIntrinsicBuiltins() {
   Btype *uint64Type = tman_->integerType(true, 64);
   Btype *int64Type = tman_->integerType(false, 64);
 
+  // A note on the types below:
+  // - for intrinsic builtins, return type is implicitly defined
+  //   by the intrinsic itself; param types can be overloaded
+  // - for libcall builtins, return type appears as the first
+  //   entry in the param type list
+
   defineIntrinsicBuiltin("__builtin_trap", nullptr, llvm::Intrinsic::trap,
                          nullptr);
 
@@ -111,15 +117,13 @@ void BuiltinTable::defineIntrinsicBuiltins() {
                        uint32Type, ptrType, ptrType,
                        sizeType, nullptr);
 
-  defineLibcallBuiltin("__builtin_memcpy", "memcpy",
-                       llvm::LibFunc::LibFunc_memcpy,
-                       ptrType, ptrType, ptrType,
-                       sizeType, uint32Type, oneBitIntegerType, nullptr);
+  defineIntrinsicBuiltin("__builtin_memcpy", "memcpy",
+                         llvm::Intrinsic::memcpy,
+                         ptrType, ptrType, sizeType, nullptr);
 
-  defineLibcallBuiltin("__builtin_memmove", "memmove",
-                       llvm::LibFunc::LibFunc_memmove,
-                       ptrType, ptrType, ptrType,
-                       sizeType, nullptr);
+  defineIntrinsicBuiltin("__builtin_memmove", "memmove",
+                         llvm::Intrinsic::memmove,
+                         ptrType, ptrType, sizeType, nullptr);
 
   // go runtime refers to this intrinsic as "ctz", however the LLVM
   // equivalent is named "cttz".
@@ -243,7 +247,7 @@ void BuiltinTable::defineSyncFetchAndAddBuiltins() {
     sprintf(nbuf, "__sync_fetch_and_add_%u", sz);
     Btype *it = tman_->integerType(true,  sz << 3);
     Btype *pit = tman_->pointerType(it);
-    defineLibcallBuiltin(nbuf, nullptr,  // name, libname
+    defineLibcallBuiltin(nullptr, nbuf,  // libname, name
                          BuiltinEntry::NotInTargetLib, // Libfunc ID
                          tman_->voidType(),  // result type
                          pit, it,        // param types
@@ -251,8 +255,8 @@ void BuiltinTable::defineSyncFetchAndAddBuiltins() {
   }
 }
 
-void BuiltinTable::defineLibcallBuiltin(const char *name,
-                                        const char *libname,
+void BuiltinTable::defineLibcallBuiltin(const char *libname,
+                                        const char *name,
                                         unsigned libfunc, ...)
 {
   va_list ap;
@@ -266,19 +270,20 @@ void BuiltinTable::defineLibcallBuiltin(const char *name,
     parmType = va_arg(ap, Btype *);
   }
   llvm::LibFunc lf = static_cast<llvm::LibFunc>(libfunc);
-  registerLibCallBuiltin(name, libname, lf, types);
+  registerLibCallBuiltin(libname, name, lf, types);
 }
 
-void BuiltinTable::defineLibcallBuiltin(const char *name,
-                                        const char *libname,
+void BuiltinTable::defineLibcallBuiltin(const char *libname,
+                                        const char *name,
                                         BuiltinEntryTypeVec &types,
                                         unsigned libfunc)
 {
   llvm::LibFunc lf = static_cast<llvm::LibFunc>(libfunc);
-  registerLibCallBuiltin(name, libname, lf, types);
+  registerLibCallBuiltin(libname, name, lf, types);
 }
 
-void BuiltinTable::defineIntrinsicBuiltin(const char *name, const char *libname,
+void BuiltinTable::defineIntrinsicBuiltin(const char *name,
+                                          const char *libname,
                                           unsigned intrinsicID, ...) {
   va_list ap;
   BuiltinEntryTypeVec overloadTypes;

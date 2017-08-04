@@ -1275,18 +1275,44 @@ Bexpression *Llvm_backend::materializeCall(Bexpression *callExpr)
   llvm::Value *fnval = fn_expr->value();
 
   // Some intrinsic functions need additional args. Add them.
-  // TODO: currently this is specific to llvm.cttz, generalize
-  // if needed.
+  // TODO: currently this is specific to llvm.cttz, llvm.memmove, and
+  // llvm.memcpy; if the list expands too much more it might make
+  // sense to incorporate a description of the extra args into the
+  // builtin table entry.
   if (llvm::isa<llvm::Function>(fnval)) {
     llvm::Function *fcn = llvm::cast<llvm::Function>(fnval);
-    if (fcn->getIntrinsicID() == llvm::Intrinsic::cttz) {
-      // @llvm.cttz.i32  (i32 <src>, i1 <is_zero_undef>)
-      // Add the <is_zero_undef> arg.
-      // GCC's __builtin_ctz results undefined for 0 input.
-      llvm::Value *con = llvm::ConstantInt::getTrue(context_);
-      Btype *bt = makeAuxType(llvmBoolType());
-      Bexpression *conexpr = nbuilder_.mkConst(bt, con);
-      fn_args.push_back(conexpr);
+    switch (fcn->getIntrinsicID()) {
+      case llvm::Intrinsic::cttz: {
+        // @llvm.cttz.i32  (i32 <src>, i1 <is_zero_undef>)
+        // Add the <is_zero_undef> arg.
+        // GCC's __builtin_ctz results undefined for 0 input.
+        llvm::Value *con = llvm::ConstantInt::getTrue(context_);
+        Btype *bt = makeAuxType(llvmBoolType());
+        Bexpression *conexpr = nbuilder_.mkConst(bt, con);
+        fn_args.push_back(conexpr);
+        break;
+      }
+      case llvm::Intrinsic::memmove:
+      case llvm::Intrinsic::memcpy: {
+        // memmove/memcpy take additional alignment/volatile args
+
+        // alignment => 1
+        // TODO: incorporate more-accurate alignment info where possible.
+        Btype *buint32t = integerType(true, 32);
+        llvm::Constant *c1 = llvm::ConstantInt::get(llvmInt32Type(), 1);
+        Bexpression *alignexpr = nbuilder_.mkConst(buint32t, c1);
+        fn_args.push_back(alignexpr);
+
+        // volatile => false
+        llvm::Value *fcon = llvm::ConstantInt::getFalse(context_);
+        Btype *bt = makeAuxType(llvmBoolType());
+        Bexpression *volexpr = nbuilder_.mkConst(bt, fcon);
+        fn_args.push_back(volexpr);
+        break;
+      }
+      default: {
+        // at the moment no other instrinsics need special handling
+      }
     }
   }
 
