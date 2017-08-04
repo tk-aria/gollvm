@@ -100,10 +100,10 @@ class BuiltinTable {
   void defineIntrinsicBuiltins();
   void defineTrigBuiltins();
 
-  void defineLibcallBuiltin(const char *name, const char *libname,
+  void defineLibcallBuiltin(const char *libname, const char *name,
                             unsigned libfuncID, ...);
 
-  void defineLibcallBuiltin(const char *name, const char *libname,
+  void defineLibcallBuiltin(const char *libname, const char *name,
                             BuiltinEntryTypeVec &types,
                             unsigned libfuncID);
 
