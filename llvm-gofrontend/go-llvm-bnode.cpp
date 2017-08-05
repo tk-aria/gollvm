@@ -297,7 +297,7 @@ void BnodeBuilder::destroyRec(Bnode *node,
         idx++;
       }
       for (auto inst : expr->instructions())
-        inst->deleteValue();
+        recordDeadInstruction(inst);
       expr->clear();
     }
   }
@@ -306,6 +306,12 @@ void BnodeBuilder::destroyRec(Bnode *node,
       destroyRec(kid, which, true, visited);
   if (which != DelInstructions)
     freeNode(node);
+}
+
+void BnodeBuilder::recordDeadInstruction(llvm::Instruction *inst)
+{
+  assert(!inst->getParent());
+  deadInstructions_.push_back(inst);
 }
 
 SwitchDescriptor *Bnode::getSwitchCases()
@@ -386,6 +392,8 @@ BnodeBuilder::~BnodeBuilder()
     }
   }
   for (auto inst : todel)
+    inst->deleteValue();
+  for (auto inst : deadInstructions_)
     inst->deleteValue();
   for (auto ivpair : tempvars_) {
     delete ivpair.first;
@@ -997,10 +1005,13 @@ void BnodeBuilder::updateInstructions(Bexpression *expr,
   assert(expr->instructions().size() == newinsts.size());
   unsigned idx = 0;
   for (auto originst : expr->instructions()) {
-    integrityVisitor_->unsetParent(originst, expr, idx);
-    integrityVisitor_->setParent(newinsts[idx], expr, idx);
-    if (expr->value() == originst)
-      expr->setValue(newinsts[idx]);
+    llvm::Instruction *newinst = newinsts[idx];
+    if (originst != newinst) {
+      integrityVisitor_->unsetParent(originst, expr, idx);
+      integrityVisitor_->setParent(newinst, expr, idx);
+      if (expr->value() == originst)
+        expr->setValue(newinst);
+    }
     idx++;
   }
 }

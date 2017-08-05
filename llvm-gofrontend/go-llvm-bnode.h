@@ -388,6 +388,7 @@ class BnodeBuilder {
   void checkTreeInteg(Bnode *node);
   void destroyRec(Bnode *node, WhichDel which, bool recursive,
                   std::set<Bnode *> &visited);
+  void recordDeadInstruction(llvm::Instruction *inst);
 
  private:
   std::unique_ptr<Bstatement> errorStatement_;
@@ -398,6 +399,7 @@ class BnodeBuilder {
   std::unordered_map<llvm::AllocaInst*, Bvariable*> tempvars_;
   std::unique_ptr<IntegrityVisitor> integrityVisitor_;
   bool checkIntegrity_;
+  std::vector<llvm::Instruction*> deadInstructions_;
 };
 
 // This class helps automate walking of a Bnode subtree; it invokes
