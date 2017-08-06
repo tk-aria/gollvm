@@ -1,0 +1,61 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "44bbc755_732856c8",
+        "filename": "llvm-gofrontend/go-llvm-builtins.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 115,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-08-06T03:11:33Z",
+      "side": 1,
+      "message": "Instead of swapping name and libname here, maybe swap them where we create the declaration? Then it is consistent with intrinsics. Also it looks to me that it makes more sense that the declaration of libcall uses libname.",
+      "revId": "fa1ff3a382b1ff6385a9742fa5fddd777e5ac8ca",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0af31b3d_b1b994f5",
+        "filename": "llvm-gofrontend/go-llvm-materialize.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1292,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-08-06T03:11:33Z",
+      "side": 1,
+      "message": "Maybe use a switch statement.",
+      "revId": "fa1ff3a382b1ff6385a9742fa5fddd777e5ac8ca",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5242feb9_5fc1fcfb",
+        "filename": "unittests/BackendCore/BackendFcnTests.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 336,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-08-06T03:11:33Z",
+      "side": 1,
+      "message": "bmemcpy",
+      "range": {
+        "startLine": 336,
+        "startChar": 13,
+        "endLine": 336,
+        "endChar": 21
+      },
+      "revId": "fa1ff3a382b1ff6385a9742fa5fddd777e5ac8ca",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
