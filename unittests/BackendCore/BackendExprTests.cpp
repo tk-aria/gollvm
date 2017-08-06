@@ -641,7 +641,7 @@ TEST(BackendExprTests, TestCompareOps) {
       %fcmp.0 = fcmp oeq double 9.000000e+00, %z.ld.0
       %zext.12 = zext i1 %fcmp.0 to i8
       %z.ld.1 = load double, double* %z
-      %fcmp.1 = fcmp one double 9.000000e+00, %z.ld.1
+      %fcmp.1 = fcmp une double 9.000000e+00, %z.ld.1
       %zext.13 = zext i1 %fcmp.1 to i8
       %z.ld.2 = load double, double* %z
       %fcmp.2 = fcmp olt double 9.000000e+00, %z.ld.2
@@ -1176,13 +1176,13 @@ TEST(BackendExprTests, TestComplexOps) {
     %.real.ld.8 = load double, double* %field.26
     %field.27 = getelementptr inbounds { double, double }, { double, double }* %tmp.12, i32 0, i32 0
     %.real.ld.9 = load double, double* %field.27
-    %fcmp.2 = fcmp one double %.real.ld.8, %.real.ld.9
+    %fcmp.2 = fcmp une double %.real.ld.8, %.real.ld.9
     %zext.2 = zext i1 %fcmp.2 to i8
     %field.28 = getelementptr inbounds { double, double }, { double, double }* %tmp.11, i32 0, i32 1
     %.imag.ld.8 = load double, double* %field.28
     %field.29 = getelementptr inbounds { double, double }, { double, double }* %tmp.12, i32 0, i32 1
     %.imag.ld.9 = load double, double* %field.29
-    %fcmp.3 = fcmp one double %.imag.ld.8, %.imag.ld.9
+    %fcmp.3 = fcmp une double %.imag.ld.8, %.imag.ld.9
     %zext.3 = zext i1 %fcmp.3 to i8
     %ior.0 = or i8 %zext.2, %zext.3
     store i8 %ior.0, i8* %b

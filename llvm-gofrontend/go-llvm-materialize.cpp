@@ -498,7 +498,7 @@ static llvm::CmpInst::Predicate compare_op_to_pred(Operator op,
     case OPERATOR_EQEQ:
       return llvm::CmpInst::Predicate::FCMP_OEQ;
     case OPERATOR_NOTEQ:
-      return llvm::CmpInst::Predicate::FCMP_ONE;
+      return llvm::CmpInst::Predicate::FCMP_UNE;
     case OPERATOR_LT:
       return llvm::CmpInst::Predicate::FCMP_OLT;
     case OPERATOR_LE:
