@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7f77c2b2_152dba16",
+        "filename": "llvm-gofrontend/go-llvm-materialize.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 501,
+      "author": {
+        "id": 8805
+      },
+      "writtenOn": "2017-08-07T22:34:47Z",
+      "side": 1,
+      "message": "llvm::CmpInst Class Reference, there\u0027s the two type\nFCMP_ONE \u003d 6\nFCMP_UNE \u003d 14",
+      "revId": "a112c3164051e8fb362cef913105674b275c9e22",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
