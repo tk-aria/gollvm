@@ -2025,8 +2025,9 @@ Bvariable *Llvm_backend::implicit_variable(const std::string &name,
   assert(!(is_hidden && is_common));
 
   llvm::GlobalValue::LinkageTypes linkage =
-      (is_hidden ? llvm::GlobalValue::InternalLinkage
-       : llvm::GlobalValue::ExternalLinkage);
+      (is_hidden ? llvm::GlobalValue::InternalLinkage :
+       (is_common ? llvm::GlobalValue::WeakAnyLinkage
+        : llvm::GlobalValue::ExternalLinkage));
 
   ModVarComdat inComdat = (is_common ? MV_InComdat : MV_NotInComdat);
   ModVarSec inUniqSec = MV_DefaultSection;
@@ -2086,8 +2087,9 @@ Bvariable *Llvm_backend::immutable_struct(const std::string &name,
   assert(!(is_hidden && is_common));
 
   llvm::GlobalValue::LinkageTypes linkage =
-      (is_hidden ? llvm::GlobalValue::InternalLinkage
-       : llvm::GlobalValue::ExternalLinkage);
+      (is_hidden ? llvm::GlobalValue::InternalLinkage :
+       (is_common ? llvm::GlobalValue::WeakAnyLinkage
+        : llvm::GlobalValue::ExternalLinkage));
 
   ModVarSec inUniqueSec = MV_DefaultSection;
   ModVarComdat inComdat = (is_common ? MV_InComdat : MV_NotInComdat);

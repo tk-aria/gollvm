@@ -168,12 +168,11 @@ TEST(BackendVarTests, MakeTemporaryVar) {
 }
 
 TEST(BackendVarTests, MakeImmutableStruct) {
-  LLVMContext C;
-
-  std::unique_ptr<Backend> be(go_get_backend(C));
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
 
   Btype *bi32t = be->integer_type(false, 32);
-  Btype *bst = mkTwoFieldStruct(be.get(), bi32t, bi32t);
+  Btype *bst = mkTwoFieldStruct(be, bi32t, bi32t);
 
   const bool is_common[2] = {true, false};
   const bool is_hidden[2] = {true, false};
@@ -203,11 +202,8 @@ TEST(BackendVarTests, MakeImmutableStruct) {
       be->immutable_struct("", "", false, false, be->error_type(), Location());
   EXPECT_TRUE(gerr == be->error_variable());
 
-  // debugging
-  if (!gerr) {
-    Module *m = gvar->getParent();
-    m->dump();
-  }
+  bool broken = h.finish(PreserveDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
 TEST(BackendVarTests, MakeImplicitVariable) {
@@ -298,13 +294,29 @@ TEST(BackendVarTests, ImmutableStructSetInit) {
   be->immutable_struct_set_init(ims, "", false, false,
                                 desct, loc, scon);
 
-  const char *exp = R"RAW_RESULT(
-    @desc = internal constant { i64 } { i64 ptrtoint
-    (i64 (i8*, i32, i32, i64*)* @foo to i64) }
-  )RAW_RESULT";
+  {
+    const char *exp = R"RAW_RESULT(
+      @desc = internal constant { i64 } { i64 ptrtoint
+      (i64 (i8*, i32, i32, i64*)* @foo to i64) }
+    )RAW_RESULT";
 
-  bool isOK = h.expectValue(ims->value(), exp);
-  EXPECT_TRUE(isOK && "Value does not have expected contents");
+    bool isOK = h.expectValue(ims->value(), exp);
+    EXPECT_TRUE(isOK && "Value does not have expected contents");
+  }
+
+  Bvariable *ims2 = be->immutable_struct("xyz", "abc",
+                                        false, true, desct, loc);
+  be->immutable_struct_set_init(ims2, "", false, true,
+                                desct, loc, be->zero_expression(desct));
+
+  {
+    const char *exp = R"RAW_RESULT(
+      @abc = weak constant { i64 } zeroinitializer, comdat
+    )RAW_RESULT";
+
+    bool isOK = h.expectValue(ims2->value(), exp);
+    EXPECT_TRUE(isOK && "Value does not have expected contents");
+  }
 
   // check that these don't crash
   be->immutable_struct_set_init(be->error_variable(), "", false, false,
@@ -358,7 +370,7 @@ TEST(BackendVarTests, ImplicitVariableSetInit) {
                                  isHidden, isConst, isCommon, nullptr);
 
   const char *exp2 = R"RAW_RESULT(
-    @v2 = constant { i32, i32 } zeroinitializer, comdat, align 8
+    @v2 = weak constant { i32, i32 } zeroinitializer, comdat, align 8
     )RAW_RESULT";
 
   bool isOK2 = h.expectValue(ims2->value(), exp2);
