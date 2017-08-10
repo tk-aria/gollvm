@@ -484,6 +484,61 @@ TEST(BackEndPointerExprTests, TestAddrDerefFold) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
+TEST(BackEndPointerExprTests, TestDerefPointerConstantLHS)
+{
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
+  Bfunction *func = h.func();
+  Location loc;
+
+  // *(*int32)(unsafe.Pointer(uintptr(0x10101))) = 0
+  {
+    Bexpression *val10101 = mkUint64Const(be, uint64_t(0x10101));
+    Btype *buipt = be->uintPtrType();
+    Bexpression *con1 = be->convert_expression(buipt, val10101, loc);
+    Btype *bpvt = be->pointer_type(be->void_type());
+    Bexpression *con2 = be->convert_expression(bpvt, con1, loc);
+    Btype *bi32t = be->integer_type(false, 32);
+    Btype *bpi32t = be->pointer_type(bi32t);
+    Bexpression *con3 = be->convert_expression(bpi32t, con2, loc);
+    bool knValid = false;
+    Bexpression *der = be->indirect_expression(bi32t, con3, knValid, loc);
+    Bexpression *val0 = mkInt32Const(be, int32_t(0));
+    h.mkAssign(der, val0);
+  }
+
+  // type xyz struct { x, y int64 }
+  // (*xyz)(unsafe.Pointer(uintptr(0x8765))).y = 2
+  {
+    Btype *bi64t = be->integer_type(false, 64);
+    Btype *xyz = mkBackendStruct(be, bi64t, "x", bi64t, "y", nullptr);
+    Btype *pxyz =  be->pointer_type(xyz);
+    Bexpression *val8765 = mkUint64Const(be, uint64_t(0x8765));
+    Btype *buipt = be->uintPtrType();
+    Bexpression *con1 = be->convert_expression(buipt, val8765, loc);
+    Btype *bpvt = be->pointer_type(be->void_type());
+    Bexpression *con2 = be->convert_expression(bpvt, con1, loc);
+    Bexpression *con3 = be->convert_expression(pxyz, con2, loc);
+    bool knValid = false;
+    Bexpression *der = be->indirect_expression(xyz, con3, knValid, loc);
+    Bexpression *fex = be->struct_field_expression(der, 1, loc);
+    Bexpression *val2 = mkInt64Const(be, int64_t(2));
+    h.mkAssign(fex, val2);
+  }
+
+  const char *exp = R"RAW_RESULT(
+    store i32 0, i32* inttoptr (i64 65793 to i32*)
+    store i64 2, i64* getelementptr inbounds ({ i64, i64 }, { i64, i64 }*
+      inttoptr (i64 34661 to { i64, i64 }*), i32 0, i32 1)
+  )RAW_RESULT";
+
+  bool isOK = h.expectBlock(exp);
+  EXPECT_TRUE(isOK && "Block does not have expected contents");
+
+  bool broken = h.finish(PreserveDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+}
+
 TEST(BackEndPointerExprTests, TestCircularFunctionTypes)
 {
   // Make sure we can handle circular function types, especially

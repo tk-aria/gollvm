@@ -30,7 +30,7 @@
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
 
-Bexpression *Llvm_backend::materializeIndirect(Bexpression *indExpr)
+Bexpression *Llvm_backend::materializeIndirect(Bexpression *indExpr, bool isLHS)
 {
   Location location = indExpr->location();
   Btype *btype = indExpr->btype();
@@ -38,6 +38,17 @@ Bexpression *Llvm_backend::materializeIndirect(Bexpression *indExpr)
       nbuilder_.extractChildenAndDestroy(indExpr);
   assert(iexprs.size() == 1);
   Bexpression *expr = iexprs[0];
+
+  // Handle cases such as
+  //
+  //    *(*sometype)(unsafe.Pointer(uintptr(<constant>))) = ...
+  //
+  // where we have a LHS expression intended to cause a crash or fault.
+  if (isLHS && !expr->varExprPending()) {
+    Bexpression *rval = nbuilder_.mkDeref(btype, expr->value(), expr,
+                                          location);
+    return rval;
+  }
 
   const VarContext *vc = nullptr;
   if (expr->varExprPending()) {
@@ -1736,7 +1747,10 @@ class FoldVisitor {
 
 class MaterializeVisitor {
  public:
-  MaterializeVisitor(Llvm_backend *be) : be_(be) { }
+  MaterializeVisitor(Llvm_backend *be,
+                     Bexpression *topNode,
+                     Varexpr_context ctx)
+      : be_(be), topNode_(topNode), ctx_(ctx) { }
 
   std::pair<VisitDisp, Bnode *> visitNodePre(Bnode *node) {
     return std::make_pair(ContinueWalk, node);
@@ -1770,7 +1784,8 @@ class MaterializeVisitor {
         break;
       }
       case N_Deref: {
-        expr = be_->materializeIndirect(expr);
+        bool isLHS = (expr == topNode_ && ctx_ == VE_lvalue);
+        expr = be_->materializeIndirect(expr, isLHS);
         break;
       }
       case N_Address: {
@@ -1836,6 +1851,8 @@ class MaterializeVisitor {
   }
  private:
   Llvm_backend *be_;
+  Bexpression *topNode_;
+  Varexpr_context ctx_;
 };
 
 Bexpression *Llvm_backend::materialize(Bexpression *expr,
@@ -1869,7 +1886,7 @@ Bexpression *Llvm_backend::materialize(Bexpression *expr,
   expr = folded->castToBexpression();
 
   // Walk to materialize llvm values.
-  MaterializeVisitor mvis(this);
+  MaterializeVisitor mvis(this, expr, lvalueContext);
   Bnode *materialized = update_walk_nodes(expr, mvis);
   return materialized->castToBexpression();
 }

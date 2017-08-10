@@ -669,7 +669,7 @@ public:
   // invoked by routine above. Public primarily because we need to call
   // them from MaterializeVisitor (could be privatized if the materializer
   // was added as a friend).
-  Bexpression *materializeIndirect(Bexpression *indExpr);
+  Bexpression *materializeIndirect(Bexpression *indExpr, bool isLHS);
   Bexpression *materializeAddress(Bexpression *addrExpr);
   Bexpression *materializeConversion(Bexpression *convExpr);
   Bexpression *materializeStructField(Bexpression *fieldExpr);
