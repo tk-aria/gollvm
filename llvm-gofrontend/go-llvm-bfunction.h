@@ -27,6 +27,7 @@ namespace llvm {
 class AllocaInst;
 class Argument;
 class BasicBlock;
+class Constant;
 class Function;
 class Instruction;
 class Value;
@@ -36,15 +37,23 @@ class TypeManager;
 class CABIOracle;
 class CABIParamInfo;
 
-// Class Bfunction wraps llvm::Function
+// Class Bfunction encapsulates a reference to some llvm::Function.
+// This can represent either a declaration of some external function,
+// or a definition of some function within the current translation unit.
+//
+// For function declarations, the llvm::Value for this object will
+// either be an llvm::Function or it may be a bitcast (type conversion)
+// of a function.
 
 class Bfunction : public NameGen {
 public:
-  Bfunction(llvm::Function *f, BFunctionType *fcnType, const std::string &name,
-            const std::string &asmName, Location location, TypeManager *tm);
+  Bfunction(llvm::Constant *fcnValue, BFunctionType *fcnType,
+            const std::string &name, const std::string &asmName,
+            Location location, TypeManager *tm);
   ~Bfunction();
 
-  llvm::Function *function() const { return function_; }
+  llvm::Constant *fcnValue() const { return fcnValue_; }
+  llvm::Function *function() const;
   BFunctionType *fcnType() const { return fcnType_; }
   const std::string &name() const { return name_; }
   const std::string &asmName() const { return asmName_; }
@@ -128,8 +137,8 @@ public:
 
  private:
 
-  // Perform ABI-related setup for this function. Invoked by ctor.
-  void abiSetup();
+  // Perform ABI-related setup for this function.
+  void lazyAbiSetup();
 
   // Generate code to spill a direct-passed var to a spill slot.
   unsigned genArgSpill(Bvariable *paramVar,
@@ -153,8 +162,8 @@ public:
   // BFunctionType for this function.
   BFunctionType *fcnType_;
 
-  // LLVM function for this Bfunction
-  llvm::Function *function_;
+  // Function value for this Bfunction (either llvm::Function or bitcast)
+  llvm::Constant *fcnValue_;
 
   // C ABI oracle for the function
   std::unique_ptr<CABIOracle> abiOracle_;
@@ -214,6 +223,7 @@ public:
   Location location_;
   SplitStackDisposition splitStack_;
   bool prologGenerated_;
+  bool abiSetupComplete_;
 };
 
 #endif // LLVMGOFRONTEND_GO_LLVM_BFUNCTION_H

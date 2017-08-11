@@ -366,4 +366,64 @@ TEST(BackendFcnTests, TestCallMemBuiltins) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
+TEST(BackendFcnTests, TestMultipleExternalFcnsWithSameName) {
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
+  Location loc;
+
+  // Declare two external functions, each with the same name (syscall)
+  // but with different types.
+
+  // syscall(int64) int64
+  Btype *bi64t = be->integer_type(false, 64);
+  BFunctionType *btf1 = mkFuncTyp(be,
+                                  L_PARM, bi64t,
+                                  L_RES, bi64t,
+                                  L_END);
+
+  // syscall(int32) int32
+  Btype *bi32t = be->integer_type(false, 32);
+  BFunctionType *btf2 = mkFuncTyp(be,
+                                  L_PARM, bi32t,
+                                  L_RES, bi32t,
+                                  L_END);
+
+  // Now manufacture Bfunctions
+  bool visible = true;
+  bool is_declaration = true;
+  bool is_inl = true;
+  bool split_stack = false;
+  bool unique_sec = false;
+  Bfunction *bf1 = be->function(btf1, "syscall", "syscall", visible,
+                                is_declaration, is_inl,
+                                split_stack, unique_sec, loc);
+  Bfunction *bf2 = be->function(btf2, "syscall", "syscall", visible,
+                                is_declaration, is_inl,
+                                split_stack, unique_sec, loc);
+
+  // Create calls to the functions
+
+  // x := syscall64(64)
+  Bexpression *call64 = h.mkCallExpr(be, bf1, mkInt64Const(be, 64), nullptr);
+  h.mkLocal("x", bi64t, call64);
+
+  // y := syscall32(32)
+  Bexpression *call32 = h.mkCallExpr(be, bf2, mkInt32Const(be, 32), nullptr);
+  h.mkLocal("y", bi32t, call32);
+
+  const char *exp = R"RAW_RESULT(
+     %call.0 = call i64 @syscall(i8* nest undef, i64 64)
+     store i64 %call.0, i64* %x
+     %call.1 = call i32 bitcast (i64 (i8*, i64)*
+           @syscall to i32 (i8*, i32)*)(i8* nest undef, i32 32)
+     store i32 %call.1, i32* %y
+  )RAW_RESULT";
+
+  bool isOK = h.expectBlock(exp);
+  EXPECT_TRUE(isOK && "Block does not have expected contents");
+
+  bool broken = h.finish(StripDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+}
+
 }
