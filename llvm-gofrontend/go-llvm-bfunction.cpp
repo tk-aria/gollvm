@@ -27,22 +27,22 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Value.h"
 
-Bfunction::Bfunction(llvm::Function *f,
+Bfunction::Bfunction(llvm::Constant *fcnValue,
                      BFunctionType *fcnType,
                      const std::string &name,
                      const std::string &asmName,
                      Location location,
                      TypeManager *tm)
 
-    : fcnType_(fcnType), function_(f),
+    : fcnType_(fcnType), fcnValue_(fcnValue),
       abiOracle_(new CABIOracle(fcnType, tm)),
       rtnValueMem_(nullptr), chainVal_(nullptr),
       paramsRegistered_(0), name_(name), asmName_(asmName),
       location_(location), splitStack_(YesSplit),
-      prologGenerated_(false)
+      prologGenerated_(false), abiSetupComplete_(false)
 {
-  if (fcnType->followsCabi())
-    abiSetup();
+  if (! fcnType->followsCabi())
+    abiSetupComplete_ = true;
 }
 
 Bfunction::~Bfunction()
@@ -56,6 +56,11 @@ Bfunction::~Bfunction()
   for (auto &kv : valueVarMap_)
     delete kv.second;
   assert(labelAddressPlaceholders_.empty());
+}
+
+llvm::Function *Bfunction::function() const
+{
+  return llvm::cast<llvm::Function>(fcnValue());
 }
 
 std::string Bfunction::namegen(const std::string &tag)
@@ -73,8 +78,12 @@ llvm::Instruction *Bfunction::addAlloca(llvm::Type *typ,
   return inst;
 }
 
-void Bfunction::abiSetup()
+void Bfunction::lazyAbiSetup()
 {
+  if (abiSetupComplete_)
+    return;
+  abiSetupComplete_ = true;
+
   // Populate argument list
   if (arguments_.empty())
     for (auto argit = function()->arg_begin(), argen = function()->arg_end(); argit != argen; ++argit)
@@ -143,6 +152,7 @@ Bvariable *Bfunction::parameterVariable(const std::string &name,
                                         bool is_address_taken,
                                         Location location)
 {
+  lazyAbiSetup();
   unsigned argIdx = paramsRegistered_++;
 
   // Create Bvariable and install in value->var map.
@@ -191,6 +201,7 @@ Bvariable *Bfunction::staticChainVariable(const std::string &name,
                                           Btype *btype,
                                           Location location)
 {
+  lazyAbiSetup();
   const CABIParamInfo &chainInfo = abiOracle_->chainInfo();
   assert(chainInfo.disp() == ParmDirect);
 
@@ -220,6 +231,7 @@ Bvariable *Bfunction::localVariable(const std::string &name,
                                      bool is_address_taken,
                                      Location location)
 {
+  lazyAbiSetup();
   llvm::Instruction *inst = addAlloca(btype->type(), name);
   Bvariable *bv =
       new Bvariable(btype, location, name, LocalVar, is_address_taken, inst);
@@ -309,6 +321,7 @@ unsigned Bfunction::genArgSpill(Bvariable *paramVar,
                                 Binstructions *spillInstructions,
                                 llvm::Value *sploc)
 {
+  lazyAbiSetup();
   assert(paramInfo.disp() == ParmDirect);
   BinstructionsLIRBuilder builder(function()->getContext(), spillInstructions);
   TypeManager *tm = abiOracle_->tm();
@@ -363,6 +376,7 @@ unsigned Bfunction::genArgSpill(Bvariable *paramVar,
 
 void Bfunction::genProlog(llvm::BasicBlock *entry)
 {
+  lazyAbiSetup();
   unsigned argIdx = (abiOracle_->returnInfo().disp() == ParmIndirect ? 1 : 0);
   Binstructions spills;
 
@@ -422,6 +436,7 @@ void Bfunction::genProlog(llvm::BasicBlock *entry)
 void Bfunction::fixupProlog(llvm::BasicBlock *entry,
                             const std::vector<llvm::AllocaInst *> &temps)
 {
+  lazyAbiSetup();
   // If there are any "new" temporaries discovered during the control
   // flow generation walk, incorporate them into the entry block. At this
   // stage in the game the entry block is already fully populated, including
@@ -436,6 +451,7 @@ llvm::Value *Bfunction::genReturnSequence(Bexpression *toRet,
                                           Binstructions *retInstrs,
                                           NameGen *inamegen)
 {
+  lazyAbiSetup();
   const CABIParamInfo &returnInfo = abiOracle_->returnInfo();
 
   // If we're returning an empty struct, or if the function has void
