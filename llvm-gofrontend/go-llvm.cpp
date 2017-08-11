@@ -1218,15 +1218,13 @@ Bexpression *Llvm_backend::function_code_expression(Bfunction *bfunc,
   if (bfunc == errorFunction_.get())
     return errorExpression();
 
-  assert(llvm::isa<llvm::Constant>(bfunc->function()));
-
   // Look up pointer-to-function type
   Btype *fpBtype = pointer_type(bfunc->fcnType());
 
   // Create an address-of-function expr
-  Bexpression *fexpr = nbuilder_.mkFcnAddress(fpBtype, bfunc->function(),
+  Bexpression *fexpr = nbuilder_.mkFcnAddress(fpBtype, bfunc->fcnValue(),
                                               bfunc, location);
-  return makeGlobalExpression(fexpr, bfunc->function(), fpBtype, location);
+  return makeGlobalExpression(fexpr, bfunc->fcnValue(), fpBtype, location);
 }
 
 // Return an expression for the field at INDEX in BSTRUCT.
@@ -2247,28 +2245,42 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
   }
 
   llvm::GlobalValue::LinkageTypes linkage = llvm::GlobalValue::ExternalLinkage;
-  llvm::Twine fn(fns);
-  llvm::Function *fcn = llvm::Function::Create(fty, linkage, fn, module_);
+  llvm::StringRef fn(fns);
+  llvm::Constant *fcnValue = nullptr;
+  if (! module_->getNamedValue(fn)) {
+    llvm::Twine fnt(fns);
+    llvm::Function *fcn = llvm::Function::Create(fty, linkage, fnt, module_);
 
-  fcn->addFnAttr("disable-tail-calls", "true");
+    fcn->addFnAttr("disable-tail-calls", "true");
 
-  // visibility
-  if (!is_visible)
-    fcn->setVisibility(llvm::GlobalValue::HiddenVisibility);
+    // visibility
+    if (!is_visible)
+      fcn->setVisibility(llvm::GlobalValue::HiddenVisibility);
 
-  // inline/noinline
-  if (!is_inlinable)
-    fcn->addFnAttr(llvm::Attribute::NoInline);
+    // inline/noinline
+    if (!is_inlinable)
+      fcn->addFnAttr(llvm::Attribute::NoInline);
+
+    // split-stack or nosplit
+    if (! disable_split_stack)
+      fcn->addFnAttr("split-stack");
+
+    fcnValue = fcn;
+  } else {
+
+    // A function of the same name has already been created in this
+    // module. Call a module helper to get a constant corresponding
+    // to the original fcn bit-casted to the new type.
+    fcnValue = module_->getOrInsertFunction(fn, fty);
+  }
 
   BFunctionType *fcnType = fntype->castToBFunctionType();
   assert(fcnType);
-  Bfunction *bfunc = new Bfunction(fcn, fcnType, name, asm_name, location,
+  Bfunction *bfunc = new Bfunction(fcnValue, fcnType, name, asm_name, location,
                                    typeManager());
 
   // split-stack or nosplit
-  if (! disable_split_stack)
-    fcn->addFnAttr("split-stack");
-  else
+  if (disable_split_stack)
     bfunc->setSplitStack(Bfunction::NoSplit);
 
   // TODO: unique section support. llvm::GlobalObject has support for

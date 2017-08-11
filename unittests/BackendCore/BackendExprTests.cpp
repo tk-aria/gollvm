@@ -417,7 +417,7 @@ TEST(BackendExprTests, TestFloatConversionExpressions) {
 }
 
 TEST(BackendExprTests, TestComplexConversionExpression) {
-  FcnTestHarness h("foo");
+  FcnTestHarness h;
   Llvm_backend *be = h.be();
   BFunctionType *befty = mkFuncTyp(be, L_END);
   Bfunction *func = h.mkFunction("foo", befty);
@@ -459,7 +459,7 @@ TEST(BackendExprTests, TestComplexConversionExpression) {
   h.mkAssign(xvex4, convex4);
 
   const char *exp = R"RAW_RESULT(
-  define void @foo.1(i8* nest %nest.1) #0 {
+  define void @foo(i8* nest %nest.0) #0 {
   entry:
     %tmp.3 = alloca { double, double }
     %tmp.2 = alloca { float, float }
