@@ -16,6 +16,24 @@
       "revId": "56abd4eceded4044ec6544e4d2d11a14b9c0a1dc",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8bf6a4b3_6cbdc974",
+        "filename": "unittests/BackendCore/BackendVarTests.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 327,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-08-14T12:28:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5fee3c72_717d926c",
+      "revId": "56abd4eceded4044ec6544e4d2d11a14b9c0a1dc",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
