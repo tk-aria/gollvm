@@ -1553,7 +1553,6 @@ class VarContextVisitor {
     assert(echild != nullptr);
     if (isLvalue(eparent) && isMem(echild)) {
       Bexpression *cmem = memArg(eparent);
-      assert(cmem != nullptr);
       if (cmem == echild)
         setLvalue(echild);
     }
@@ -1643,7 +1642,6 @@ class VarContextVisitor {
       case N_StructField:
       case N_ArrayIndex:
       case N_Address:
-      case N_Deref:
       case N_Conversion:
       case N_PointerOffset:
         return kids[0]->castToBexpression();
