@@ -258,19 +258,40 @@ TEST(BackendExprTests, TestMoreConversionExpressions) {
   Bfunction *func = h.func();
   Location loc;
 
-  // *(*uint32)parm3 = 5
   Btype *bi32t = be->integer_type(false, 32);
   Btype *bpi32t = be->pointer_type(bi32t);
-  Bvariable *p3 = func->getNthParamVar(2);
-  Bexpression *ve = be->var_expression(p3, VE_lvalue, loc);
-  Bexpression *conv = be->convert_expression(bpi32t, ve, loc);
-  Bexpression *dex = be->indirect_expression(bi32t, conv, false, loc);
-  h.mkAssign(dex, mkInt32Const(be, 5));
+
+  // *(*int32)parm3 = 5
+  {
+    Bvariable *p3 = func->getNthParamVar(2);
+    Bexpression *ve = be->var_expression(p3, VE_lvalue, loc);
+    Bexpression *conv = be->convert_expression(bpi32t, ve, loc);
+    Bexpression *dex = be->indirect_expression(bi32t, conv, false, loc);
+    h.mkAssign(dex, mkInt32Const(be, 5));
+  }
+
+  // var p float64
+  // *(*int32)(uintptr(p)) = 5
+  {
+    Btype *bf64t = be->float_type(64);
+    Btype *bu64t = be->integer_type(true, 64);
+    Bvariable *p = h.mkLocal("p", bf64t);
+    Bexpression *ve = be->var_expression(p, VE_rvalue, loc);
+    Bexpression *conv = be->convert_expression(bu64t, ve, loc);
+    Bexpression *conv2 = be->convert_expression(bpi32t, conv, loc);
+    Bexpression *dex = be->indirect_expression(bi32t, conv2, false, loc);
+    h.mkAssign(dex, mkInt32Const(be, 5));
+  }
 
   const char *exp = R"RAW_RESULT(
-      %cast.0 = bitcast i64** %param3.addr to i32**
-      %deref.ld.0 = load i32*, i32** %cast.0
-      store i32 5, i32* %deref.ld.0
+      %param3.ld.0 = load i64*, i64** %param3.addr
+      %cast.0 = bitcast i64* %param3.ld.0 to i32*
+      store i32 5, i32* %cast.0
+      store double 0.000000e+00, double* %p
+      %p.ld.0 = load double, double* %p
+      %ftoui.0 = fptoui double %p.ld.0 to i64
+      %itpcast.0 = inttoptr i64 %ftoui.0 to i32*
+      store i32 5, i32* %itpcast.0
     )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);
