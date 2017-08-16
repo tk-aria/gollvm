@@ -336,7 +336,7 @@ Operator Bnode::op() const
 
 Bvariable *Bnode::var() const
 {
-  assert(flavor() == N_Var);
+  assert(flavor() == N_Var || flavor() == N_ExcepStmt);
   return u.var;
 }
 
@@ -844,13 +844,16 @@ Bstatement *BnodeBuilder::mkExcepStmt(Bfunction *func,
                                       Bstatement *body,
                                       Bstatement *onexception,
                                       Bstatement *finally,
+                                      Bvariable *finTempVar,
                                       Location loc)
 {
   assert(body);
   assert(onexception);
   assert(finally);
+  assert(finTempVar);
   std::vector<Bnode *> kids = { body, onexception, finally };
   Bstatement *rval = new Bstatement(N_ExcepStmt, func, kids, loc);
+  rval->u.var = finTempVar;
   return archive(rval);
 }
 
@@ -892,8 +895,6 @@ Bstatement *BnodeBuilder::mkSwitchStmt(Bfunction *func,
   return archive(rval);
 
 }
-
-
 
 Bblock *BnodeBuilder::mkBlock(Bfunction *func,
                               const std::vector<Bvariable *> &vars,

@@ -310,6 +310,7 @@ class BnodeBuilder {
                           Bstatement *body,
                           Bstatement *onexception,
                           Bstatement *finally,
+                          Bvariable *finTempVar,
                           Location loc);
   Bstatement *mkSwitchStmt(Bfunction *func,
                            Bexpression *swvalue,

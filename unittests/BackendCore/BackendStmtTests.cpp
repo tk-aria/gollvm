@@ -522,10 +522,6 @@ entry:
   store i8 0, i8* %x
   br label %finish.0
 
-finish.0:                                         ; preds = %catch.0, %entry
-  invoke void @deferreturn(i8* nest undef, i8* %x)
-          to label %cont.0 unwind label %pad.0
-
 pad.0:                                            ; preds = %finish.0
   %ex.0 = landingpad { i8*, i32 }
           catch i8* null
@@ -534,6 +530,10 @@ pad.0:                                            ; preds = %finish.0
 catch.0:                                          ; preds = %pad.0
   call void @checkdefer(i8* nest undef, i8* %x)
   br label %finish.0
+
+finish.0:                                         ; preds = %catch.0, %entry
+  invoke void @deferreturn(i8* nest undef, i8* %x)
+          to label %cont.0 unwind label %pad.0
 
 cont.0:                                           ; preds = %finish.0
   ret void
@@ -614,19 +614,27 @@ TEST(BackendStmtTests, TestExceptionHandlingStmt) {
   const char *exp = R"RAW_RESULT(
 define void @baz(i8* nest %nest.0) #0 personality i32 (i32, i32, i64, i8*, i8*)* @__gccgo_personality_v0 {
 entry:
+  %ehtmp.0 = alloca { i8*, i32 }
   %x = alloca i64
+  %finvar.0 = alloca i8
   store i64 0, i64* %x
   %call.0 = invoke i64 @id(i8* nest undef, i64 99)
           to label %cont.0 unwind label %pad.0
+
+finok.0:                                          ; preds = %cont.2, %cont.1
+  store i8 1, i8* %finvar.0
+  br label %finally.0
+
+finally.0:                                        ; preds = %catchpad.0, %finok.0
+  call void @ohstopit(i8* nest undef)
+  %0 = load i8, i8* %finvar.0
+  %icmp.0 = icmp eq i8 %0, 1
+  br i1 %icmp.0, label %finret.0, label %finres.0
 
 pad.0:                                            ; preds = %cont.0, %entry
   %ex.0 = landingpad { i8*, i32 }
           catch i8* null
   br label %catch.0
-
-finally.0:                                        ; preds = %catchpad.0, %cont.2, %cont.1
-  call void @ohstopit(i8* nest undef)
-  ret void
 
 cont.0:                                           ; preds = %entry
   store i64 %call.0, i64* %x
@@ -635,19 +643,28 @@ cont.0:                                           ; preds = %entry
 
 cont.1:                                           ; preds = %cont.0
   store i64 123, i64* %x
+  br label %finok.0
+
+catchpad.0:                                       ; preds = %catch.0
+  %ex2.0 = landingpad { i8*, i32 }
+          cleanup
+  store { i8*, i32 } %ex2.0, { i8*, i32 }* %ehtmp.0
+  store i8 0, i8* %finvar.0
   br label %finally.0
 
 catch.0:                                          ; preds = %pad.0
   invoke void @plix(i8* nest undef)
           to label %cont.2 unwind label %catchpad.0
 
-catchpad.0:                                       ; preds = %catch.0
-  %ex2.0 = landingpad { i8*, i32 }
-          catch i8* null
-  br label %finally.0
-
 cont.2:                                           ; preds = %catch.0
-  br label %finally.0
+  br label %finok.0
+
+finres.0:                                         ; preds = %finally.0
+  %1 = load { i8*, i32 }, { i8*, i32 }* %ehtmp.0
+  resume { i8*, i32 } %1
+
+finret.0:                                         ; preds = %finally.0
+  ret void
 }
    )RAW_RESULT";
 
@@ -766,24 +783,30 @@ TEST(BackendStmtTests, TestExceptionHandlingStmtWithReturns) {
   const char *exp = R"RAW_RESULT(
 define i64 @baz(i8* nest %nest.0, i64 %p0) #0 personality i32 (i32, i32, i64, i8*, i8*)* @__gccgo_personality_v0 {
 entry:
+  %ehtmp.0 = alloca { i8*, i32 }
   %p0.addr = alloca i64
   %ret = alloca i64
+  %finvar.0 = alloca i8
   store i64 %p0, i64* %p0.addr
   store i64 0, i64* %ret
   %call.0 = invoke i64 @splat(i8* nest undef, i64 99)
           to label %cont.0 unwind label %pad.0
 
-pad.0:                                            ; preds = %entry
-  %ex.0 = landingpad { i8*, i32 }
-          catch i8* null
-  br label %catch.0
+finok.0:                                          ; preds = %cont.1, %fallthrough.0, %else.0, %then.0
+  store i8 1, i8* %finvar.0
+  br label %finally.0
 
-finally.0:                                        ; preds = %catchpad.0, %cont.1, %fallthrough.0, %else.0, %then.0
+finally.0:                                        ; preds = %catchpad.0, %finok.0
   %call.2 = call i64 @splat(i8* nest undef, i64 987)
   %icmp.1 = icmp eq i64 %call.2, 2
   %zext.1 = zext i1 %icmp.1 to i8
   %trunc.1 = trunc i8 %zext.1 to i1
   br i1 %trunc.1, label %then.1, label %else.1
+
+pad.0:                                            ; preds = %entry
+  %ex.0 = landingpad { i8*, i32 }
+          catch i8* null
+  br label %catch.0
 
 cont.0:                                           ; preds = %entry
   %icmp.0 = icmp eq i64 %call.0, 88
@@ -793,28 +816,30 @@ cont.0:                                           ; preds = %entry
 
 then.0:                                           ; preds = %cont.0
   store i64 22, i64* %ret
-  br label %finally.0
+  br label %finok.0
 
 fallthrough.0:                                    ; No predecessors!
-  br label %finally.0
+  br label %finok.0
 
 else.0:                                           ; preds = %cont.0
   %p0.ld.0 = load i64, i64* %p0.addr
   store i64 %p0.ld.0, i64* %ret
+  br label %finok.0
+
+catchpad.0:                                       ; preds = %catch.0
+  %ex2.0 = landingpad { i8*, i32 }
+          cleanup
+  store { i8*, i32 } %ex2.0, { i8*, i32 }* %ehtmp.0
+  store i8 0, i8* %finvar.0
   br label %finally.0
 
 catch.0:                                          ; preds = %pad.0
   %call.1 = invoke i64 @splat(i8* nest undef, i64 13)
           to label %cont.1 unwind label %catchpad.0
 
-catchpad.0:                                       ; preds = %catch.0
-  %ex2.0 = landingpad { i8*, i32 }
-          catch i8* null
-  br label %finally.0
-
 cont.1:                                           ; preds = %catch.0
   store i64 %call.1, i64* %ret
-  br label %finally.0
+  br label %finok.0
 
 then.1:                                           ; preds = %finally.0
   store i64 9, i64* %ret
@@ -822,11 +847,20 @@ then.1:                                           ; preds = %finally.0
   ret i64 %ret.ld.3
 
 fallthrough.1:                                    ; preds = %else.1
-  %ret.ld.1 = load i64, i64* %ret
-  ret i64 %ret.ld.1
+  %0 = load i8, i8* %finvar.0
+  %icmp.2 = icmp eq i8 %0, 1
+  br i1 %icmp.2, label %finret.0, label %finres.0
 
 else.1:                                           ; preds = %finally.0
   br label %fallthrough.1
+
+finres.0:                                         ; preds = %fallthrough.1
+  %1 = load { i8*, i32 }, { i8*, i32 }* %ehtmp.0
+  resume { i8*, i32 } %1
+
+finret.0:                                         ; preds = %fallthrough.1
+  %ret.ld.1 = load i64, i64* %ret
+  ret i64 %ret.ld.1
 }
    )RAW_RESULT";
 

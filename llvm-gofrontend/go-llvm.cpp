@@ -932,7 +932,7 @@ Bexpression *Llvm_backend::integer_constant_expression(Btype *btype,
   assert(btype->type()->isIntegerTy());
 
   // Force mpz_val into either into uint64_t or int64_t depending on
-  // whether btype was declared as signed or unsigned. 
+  // whether btype was declared as signed or unsigned.
 
   Bexpression *rval;
   BIntegerType *bit = btype->castToBIntegerType();
@@ -1687,9 +1687,14 @@ Bstatement *Llvm_backend::exception_handler_statement(Bstatement *bstat,
   assert(func == except_stmt->function());
   assert(!finally_stmt || func == finally_stmt->function());
 
+  std::string tname(namegen("finvar"));
+  Bvariable *tvar = func->localVariable(tname, boolType(),
+                                        false, location);
+  tvar->markAsTemporary();
   Bstatement *excepst = nbuilder_.mkExcepStmt(func, bstat,
                                               except_stmt,
-                                              finally_stmt, location);
+                                              finally_stmt, tvar,
+                                              location);
   return excepst;
 }
 
@@ -2370,6 +2375,11 @@ public:
   std::pair<llvm::Instruction*, llvm::BasicBlock *>
   postProcessInst(llvm::Instruction *inst,
                   llvm::BasicBlock *curblock);
+  llvm::Value *populateCatchPadBlock(llvm::BasicBlock *catchpadbb,
+                                     Bvariable *finvar);
+  llvm::BasicBlock *populateFinallyBlock(llvm::BasicBlock *finBB,
+                                         Bvariable *finvar,
+                                         llvm::Value *extmp);
   DIBuildHelper *dibuildhelper() const { return dibuildhelper_; }
   Llvm_linemap *linemap() { return be_->linemap(); }
 
@@ -2382,7 +2392,7 @@ public:
   std::vector<llvm::BasicBlock*> padBlockStack_;
   std::set<llvm::AllocaInst *> temporariesDiscovered_;
   std::vector<llvm::AllocaInst *> newTemporaries_;
-  llvm::BasicBlock* finallyBlock_;
+  llvm::BasicBlock *finallyBlock_;
   Bstatement *cachedReturn_;
   bool emitOrphanedCode_;
 };
@@ -2709,11 +2719,6 @@ llvm::BasicBlock *GenBlocks::genDefer(Bstatement *defst,
   Bexpression *defcallex = defst->getDeferStmtDeferCall();
   Bexpression *undcallex = defst->getDeferStmtUndeferCall();
 
-  // Finish bb (see the comments for Llvm_backend::function_defer_statement
-  // as to why we use this name).
-  llvm::BasicBlock *finbb =
-      llvm::BasicBlock::Create(context_, be_->namegen("finish"), func);
-
   // Landing pad to which control will be transferred if an exception
   // is thrown when executing "undcallex".
   llvm::BasicBlock *padbb =
@@ -2722,6 +2727,12 @@ llvm::BasicBlock *GenBlocks::genDefer(Bstatement *defst,
   // Catch BB will contain checkdefer (defercall) code.
   llvm::BasicBlock *catchbb =
       llvm::BasicBlock::Create(context_, be_->namegen("catch"), func);
+
+  // Finish bb (see the comments for Llvm_backend::function_defer_statement
+  // as to why we use this name).
+  llvm::BasicBlock *finbb =
+      llvm::BasicBlock::Create(context_, be_->namegen("finish"), func);
+
   if (curblock)
     llvm::BranchInst::Create(finbb, curblock);
   curblock = finbb;
@@ -2756,6 +2767,131 @@ llvm::BasicBlock *GenBlocks::genDefer(Bstatement *defst,
   return contbb;
 }
 
+// Populate the landing pad used to catch exceptions thrown from
+// the catch code from an exceptions handling statement (pad "P2"
+// in the diagram in the header comment for GenBlocks::genExcep).
+
+llvm::Value *GenBlocks::populateCatchPadBlock(llvm::BasicBlock *catchpadbb,
+                                              Bvariable *finvar)
+{
+  LIRBuilder builder(context_, llvm::ConstantFolder());
+  builder.SetInsertPoint(catchpadbb);
+
+  // Create landing pad instruction.
+  llvm::Type *eht = be_->landingPadExceptionType();
+  llvm::LandingPadInst *caughtResult =
+      builder.CreateLandingPad(eht, 0, be_->namegen("ex2"));
+  caughtResult->setCleanup(true);
+
+  // Q: do I need to worry about foreign exceptions here?
+
+  // Create temporary into which caught result will be stored
+  std::string tag(be_->namegen("ehtmp"));
+  llvm::AllocaInst *ai = new llvm::AllocaInst(eht, 0, tag);
+  temporariesDiscovered_.insert(ai);
+  newTemporaries_.push_back(ai);
+
+  // Store caught result into temporary.
+  builder.CreateStore(caughtResult, ai);
+
+  // Emit "finally = false" into catch pad BB following pad inst
+  builder.SetInsertPoint(catchpadbb);
+  llvm::Value *fval = be_->boolean_constant_expression(false)->value();
+  builder.CreateStore(fval, finvar->value());
+
+  return ai;
+}
+
+// At end of finally BB, emit:
+//
+//   if (finok)
+//     return
+//   else
+//     resume EXC
+//
+// where EXC is the exception that caused control to flow
+// into the catch pad bb.
+//
+// In addition, this routine creates the shared return statement
+// (if there is a cached return) and fixes up the finally stmt
+// resume block.
+
+llvm::BasicBlock *GenBlocks::populateFinallyBlock(llvm::BasicBlock *finBB,
+                                                  Bvariable *finvar,
+                                                  llvm::Value *extmp)
+{
+  LIRBuilder builder(context_, llvm::ConstantFolder());
+  builder.SetInsertPoint(finBB);
+  llvm::Function *func = function()->function();
+  llvm::BasicBlock *finResBB =
+      llvm::BasicBlock::Create(context_, be_->namegen("finres"), func);
+  llvm::BasicBlock *finRetBB =
+      llvm::BasicBlock::Create(context_, be_->namegen("finret"), func);
+  llvm::LoadInst *finvarload = builder.CreateLoad(finvar->value());
+  llvm::Value *tval = be_->boolean_constant_expression(true)->value();
+  llvm::Value *cmp = builder.CreateICmp(llvm::CmpInst::Predicate::ICMP_EQ,
+                                        finvarload, tval,
+                                        be_->namegen("icmp"));
+  builder.CreateCondBr(cmp, finRetBB, finResBB);
+
+  // Populate return block
+  if (cachedReturn_ != nullptr) {
+    llvm::BasicBlock *curblock = finRetBB;
+    Bexpression *re = cachedReturn_->getReturnStmtExpr();
+    llvm::BasicBlock *bb = walkExpr(curblock, re);
+    assert(curblock == bb);
+    cachedReturn_ = nullptr;
+  }
+
+  // Populate resume block
+  builder.SetInsertPoint(finResBB);
+  llvm::LoadInst *exload = builder.CreateLoad(extmp);
+  builder.CreateResume(exload);
+
+  return finRetBB;
+}
+
+// Create the needed control flow for an exception handler statement.
+// At a high level, we want something that looks like:
+//
+//    try { body }
+//    catch { exceptioncode }
+//    finally { finallycode }
+//
+// This means creating the following landing pads + control flow:
+//
+//    { /* begin body */
+//      <any calls are converted to invoke instructions,
+//       targeting landing pad P1>
+//      /* end body */
+//    }
+//    goto finok;
+//    pad P1:
+//      goto catch;
+//    catch: {
+//      /* begin exceptioncode */
+//      <any calls are converted to invoke inst,
+//       targeting landing pad P2>
+//      /* end exceptioncode */
+//    }
+//    goto finok;
+//    pad P2:
+//      store exception -> ehtmp
+//      finvar = false
+//      goto finally;
+//    finok:
+//      finvar = true
+//    finally:
+//    { /* begin finallycode */
+//      <calls here are left as is>
+//      /* end finallycode */
+//    }
+//    if (finvar)
+//      <normal return>
+//    else
+//      rethrow exception ehtmp
+//
+
 llvm::BasicBlock *GenBlocks::genExcep(Bstatement *excepst,
                                       llvm::BasicBlock *curblock)
 {
@@ -2772,26 +2908,52 @@ llvm::BasicBlock *GenBlocks::genExcep(Bstatement *excepst,
   assert(ifexception);
   Bstatement *finally = excepst->getExcepStmtFinally(); // may be null
 
-  // Create a landing pad block. This pad will be where control
-  // will arrive if an exception is thrown within the "body" code.
-  llvm::BasicBlock *padbb =
-      llvm::BasicBlock::Create(context_, be_->namegen("pad"), func);
+  // This temp will track what sort of action is needed at the end of
+  // of the "finally" clause.  For this variable, a value of 'true'
+  // signals a normal return, and a value of 'false' indicates that
+  // there was an additional exception thrown during execution of the
+  // "ifexception" code (as opposed to an exception thrown during
+  // execution of "body") that needs to be passed to unwind/resume
+  // after the "finally" code.
+  Bvariable *finvar = excepst->var();
+  assert(finvar);
+
+  // Create a "finok" BB; this block will set the "finally" variable
+  // to true and then jump to the finally block.
+  std::string fbbname(be_->namegen("finok"));
+  llvm::BasicBlock *finokBB =
+      llvm::BasicBlock::Create(context_, fbbname, func);
 
   // Create a "finally" BB, corresponding to where control will wind
   // up once both the body and (possibly) the exception clause are
   // complete. This will also be where we'll place any code in the
   // "finally" statement above.
   std::string cbbname(be_->namegen("finally"));
-  llvm::BasicBlock *contbb =
+  llvm::BasicBlock *contBB =
       llvm::BasicBlock::Create(context_, cbbname, func);
 
-  // Not expecting to see nested exception statements, assert if
-  // this crops up.
+  // Emit an assignment "finally = true" into the finok block,
+  // then a jump to the finally block.
+  {
+    LIRBuilder builder(context_, llvm::ConstantFolder());
+    builder.SetInsertPoint(finokBB);
+    llvm::Value *tval = be_->boolean_constant_expression(true)->value();
+    builder.CreateStore(tval, finvar->value());
+    llvm::BranchInst::Create(contBB, finokBB);
+  }
+
+  // Create a landing pad block. This pad will be where control
+  // will arrive if an exception is thrown within the "body" code.
+  llvm::BasicBlock *padbb =
+      llvm::BasicBlock::Create(context_, be_->namegen("pad"), func);
+
+  // Not expecting to see nested exception statements, assert if this
+  // crops up.
   assert(padBlockStack_.empty());
 
   // If there is a finally block, then record the block for purposes
   // of return handling.
-  finallyBlock_ = (finally ? contbb : nullptr);
+  finallyBlock_ = (finally ? finokBB : nullptr);
   assert(!cachedReturn_);
 
   // Push first pad block onto stack. The presence of a non-empty pad
@@ -2808,16 +2970,7 @@ llvm::BasicBlock *GenBlocks::genExcep(Bstatement *excepst,
   // If the body block ended without a return, then insert a jump
   // to the continue / or finally clause.
   if (curblock)
-    llvm::BranchInst::Create(contbb, curblock);
-
-  // Emit landing pad inst in pad block, followed by branch to catch bb.
-  llvm::LandingPadInst *padinst =
-      llvm::LandingPadInst::Create(be_->landingPadExceptionType(),
-                                   0, be_->namegen("ex"), padbb);
-  padinst->addClause(llvm::Constant::getNullValue(be_->llvmPtrType()));
-    llvm::BasicBlock *catchbb =
-      llvm::BasicBlock::Create(context_, be_->namegen("catch"), func);
-  llvm::BranchInst::Create(catchbb, padbb);
+    llvm::BranchInst::Create(finokBB, curblock);
 
   // Create second pad block. Here the idea is that if an exception
   // is thrown as a result of any call within the catch ("ifexception" code)
@@ -2825,33 +2978,46 @@ llvm::BasicBlock *GenBlocks::genExcep(Bstatement *excepst,
   llvm::BasicBlock *catchpadbb =
       llvm::BasicBlock::Create(context_, be_->namegen("catchpad"), func);
 
+  // Block containing catch code
+  llvm::BasicBlock *catchbb =
+      llvm::BasicBlock::Create(context_, be_->namegen("catch"), func);
+
+  // Emit landing pad inst in pad block, followed by branch to catch bb.
+  {
+    LIRBuilder builder(context_, llvm::ConstantFolder());
+    builder.SetInsertPoint(padbb);
+    llvm::LandingPadInst *padinst =
+        builder.CreateLandingPad(be_->landingPadExceptionType(),
+                                 0, be_->namegen("ex"));
+    padinst->addClause(llvm::Constant::getNullValue(be_->llvmPtrType()));
+    llvm::BranchInst::Create(catchbb, padbb);
+  }
+
   // Push second pad, walk exception stmt, then pop the pad.
   padBlockStack_.push_back(catchpadbb);
   auto bb = walk(ifexception, catchbb);
   if (bb)
-    llvm::BranchInst::Create(contbb, bb);
+    llvm::BranchInst::Create(finokBB, bb);
   padBlockStack_.pop_back();
 
   // Return handling now complete.
   finallyBlock_ = nullptr;
 
-  // Fix up second pad block, followed by branch to continue block.
-  llvm::LandingPadInst *padinst2 =
-      llvm::LandingPadInst::Create(be_->landingPadExceptionType(),
-                                   0, be_->namegen("ex2"), catchpadbb);
-  padinst2->addClause(llvm::Constant::getNullValue(be_->llvmPtrType()));
-  llvm::BranchInst::Create(contbb, catchpadbb);
+  // Create landing pad instruction in the second pad block. For this
+  // landing pad, we want to capture the exception object into a
+  // temporary, and set "finally = false" to indicate that an exception
+  // was thrown.
+  llvm::Value *extmp = populateCatchPadBlock(catchpadbb, finvar);
+  llvm::BranchInst::Create(contBB, catchpadbb);
 
   // Handle finally statement where applicable.
-  curblock = contbb;
+  curblock = contBB;
   if (finally != nullptr) {
     curblock = walk(finally, curblock);
-    if (cachedReturn_ != nullptr) {
-      Bexpression *re = cachedReturn_->getReturnStmtExpr();
-      llvm::BasicBlock *bb = walkExpr(curblock, re);
-      assert(curblock == bb);
-      cachedReturn_ = nullptr;
-    }
+
+    // Augment the end of the finally block with an if/jump to
+    // return or resume, and populate the return/resume blocks.
+    curblock = populateFinallyBlock(curblock, finvar, extmp);
   }
 
   return curblock;
