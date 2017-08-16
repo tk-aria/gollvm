@@ -199,7 +199,7 @@ class Bnode {
  private:
   std::vector<Bnode *> kids_;
   union {
-    Bvariable *var;
+    Bvariable *var;  // filled in only for Var and ExcepStmt nodes
     Bfunction *func; // filled in only for fcn constants, calls, conditionals
     SwitchDescriptor *swcases;
     int indices; // for composite expressions, index to BnodeBuilder's indexvecs_
@@ -310,6 +310,7 @@ class BnodeBuilder {
                           Bstatement *body,
                           Bstatement *onexception,
                           Bstatement *finally,
+                          Bvariable *finTempVar,
                           Location loc);
   Bstatement *mkSwitchStmt(Bfunction *func,
                            Bexpression *swvalue,
