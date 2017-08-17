@@ -428,10 +428,7 @@ TEST(BackendStmtTests, TestSwitchStmt) {
      store i64 456, i64* %loc1
      br label %label.0
 
-   epilog.0:                                         ; No predecessors!
-     br label %label.0
-
-   label.0:                                          ; preds = %epilog.0, %default.0, %case.0
+   label.0:                                          ; preds = %default.0, %case.0
      ret i64 10101
 
    then.0:                                           ; preds = %case.1
@@ -778,7 +775,7 @@ pad.0:                                            ; preds = %entry
           catch i8* null
   br label %catch.0
 
-finally.0:                                        ; preds = %catchpad.0, %cont.1, %fallthrough.0, %else.0, %then.0
+finally.0:                                        ; preds = %catchpad.0, %cont.1, %else.0, %then.0
   %call.2 = call i64 @splat(i8* nest undef, i64 987)
   %icmp.1 = icmp eq i64 %call.2, 2
   %zext.1 = zext i1 %icmp.1 to i8
@@ -793,9 +790,6 @@ cont.0:                                           ; preds = %entry
 
 then.0:                                           ; preds = %cont.0
   store i64 22, i64* %ret
-  br label %finally.0
-
-fallthrough.0:                                    ; No predecessors!
   br label %finally.0
 
 else.0:                                           ; preds = %cont.0

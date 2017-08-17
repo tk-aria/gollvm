@@ -235,6 +235,9 @@ class FcnTestHarness {
   // trouble here.
   bool expectModuleDumpContains(const std::string &expected);
 
+  // Skip the checking at finish time for orphan CFG blocks.
+  void allowOrphans() { findOrphanBBs_ = false; }
+
   //
   // Finish function:
   // - attach current block to function
@@ -261,6 +264,7 @@ class FcnTestHarness {
   bool finished_;
   bool returnAdded_;
   bool emitDumpFilesOnDiff_;
+  bool findOrphanBBs_;
 };
 
 } // end namespace goBackendUnitTests

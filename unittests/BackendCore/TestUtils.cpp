@@ -9,6 +9,7 @@
 
 #include "TestUtils.h"
 #include "llvm/IR/DebugInfo.h"
+#include "llvm/IR/CFG.h"
 
 namespace goBackendUnitTests {
 
@@ -475,6 +476,7 @@ FcnTestHarness::FcnTestHarness(const char *fcnName)
     , finished_(false)
     , returnAdded_(false)
     , emitDumpFilesOnDiff_(false)
+    , findOrphanBBs_(true)
 {
   // establish initial file so as to make verifier happy
   be_->linemap()->start_file("unit_testing.go", 1);
@@ -748,6 +750,26 @@ bool FcnTestHarness::finish(DebugDisposition whatToDoWithDebugInfo)
   if (whatToDoWithDebugInfo == StripDebugInfo)
     llvm::StripDebugInfo(be()->module());
 
+  // Look for non-entry blocks with no CFG preds, since they
+  // are nearly always an indication that something is wrong.
+  bool brokenBlock = false;
+  if (func_ && findOrphanBBs_) {
+    for (const llvm::BasicBlock &bb : *func_->function()) {
+      if (&bb == &func_->function()->getEntryBlock())
+        continue;
+      if (! bb.getParent()) {
+        std::cerr << "** block with no parent:\n";
+        bb.dump();
+        brokenBlock = true;
+      }
+      if (llvm::pred_begin(&bb) == llvm::pred_end(&bb)) {
+        std::cerr << "** block has no predecessors:\n";
+        bb.dump();
+        brokenBlock = true;
+      }
+    }
+  }
+
   // Verify module
   bool broken = llvm::verifyModule(be()->module(), &llvm::dbgs());
 
@@ -755,7 +777,7 @@ bool FcnTestHarness::finish(DebugDisposition whatToDoWithDebugInfo)
   finished_ = true;
   curBlock_ = entryBlock_;
 
-  return broken;
+  return broken || brokenBlock;
 }
 
 } // end namespace goBackEndUnitTests

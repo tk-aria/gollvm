@@ -25,6 +25,7 @@
 
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/CFG.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/DebugInfo.h"
@@ -932,7 +933,7 @@ Bexpression *Llvm_backend::integer_constant_expression(Btype *btype,
   assert(btype->type()->isIntegerTy());
 
   // Force mpz_val into either into uint64_t or int64_t depending on
-  // whether btype was declared as signed or unsigned. 
+  // whether btype was declared as signed or unsigned.
 
   Bexpression *rval;
   BIntegerType *bit = btype->castToBIntegerType();
@@ -2362,6 +2363,7 @@ public:
  private:
   llvm::BasicBlock *mkLLVMBlock(const std::string &name,
                             unsigned expl = Llvm_backend::ChooseVer);
+  llvm::BasicBlock *eraseBlockIfUnused(llvm::BasicBlock *bb);
   llvm::BasicBlock *getBlockForLabel(Blabel *lab);
   llvm::BasicBlock *walkExpr(llvm::BasicBlock *curblock, Bexpression *expr);
   std::pair<llvm::Instruction*, llvm::BasicBlock *>
@@ -2561,7 +2563,7 @@ llvm::BasicBlock *GenBlocks::genIf(Bstatement *ifst,
   // Create true block
   llvm::BasicBlock *tblock = mkLLVMBlock("then");
 
-  // Push fallthrough block
+  // Create fallthrough block
   llvm::BasicBlock *ft = mkLLVMBlock("fallthrough");
 
   // Create false block if present
@@ -2584,6 +2586,9 @@ llvm::BasicBlock *GenBlocks::genIf(Bstatement *ifst,
     if (fsucc && ! fsucc->getTerminator())
       llvm::BranchInst::Create(ft, fsucc);
   }
+
+  // Remove fallthrough block if it was never used
+  ft = eraseBlockIfUnused(ft);
 
   return ft;
 }
@@ -2650,7 +2655,24 @@ llvm::BasicBlock *GenBlocks::genSwitch(Bstatement *swst,
     }
   }
 
+  // Delete epilog if not needed
+  epilogBB = eraseBlockIfUnused(epilogBB);
+
   return epilogBB;
+}
+
+// If specified BB has no predecessors, remove it and return nullptr.
+// Returns unmodified BB if the block does have preds.
+
+llvm::BasicBlock *GenBlocks::eraseBlockIfUnused(llvm::BasicBlock *bb)
+{
+  if (llvm::pred_begin(bb) == llvm::pred_end(bb)) {
+    // Block should be empty in this case
+    assert(bb->begin() == bb->end());
+    bb->eraseFromParent();
+    return nullptr;
+  }
+  return bb;
 }
 
 // In most cases a return statement is handled in canonical way,
