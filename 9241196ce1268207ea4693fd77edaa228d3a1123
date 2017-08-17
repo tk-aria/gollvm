@@ -1,0 +1,95 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f7c8fe0f_ae889d85",
+        "filename": "llvm-gofrontend/go-llvm-bnode.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 202,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-08-17T18:46:42Z",
+      "side": 1,
+      "message": "Maybe comment here that this is used in Var expr and Except statement.",
+      "revId": "9241196ce1268207ea4693fd77edaa228d3a1123",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "232d4cb8_dbc27055",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2808,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-08-17T18:46:42Z",
+      "side": 1,
+      "message": "I\u0027m not quite follow. How does foreign exception make difference?",
+      "revId": "9241196ce1268207ea4693fd77edaa228d3a1123",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b6516fb7_c5d4b0ca",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2852,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-08-17T18:46:42Z",
+      "side": 1,
+      "message": "This value doesn\u0027t have a name?",
+      "revId": "9241196ce1268207ea4693fd77edaa228d3a1123",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "de991eca_930c474a",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2857,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-08-17T18:46:42Z",
+      "side": 1,
+      "message": "Can we directly use finvar\u0027s value for the branch condition? (I guess the backend can optimize it anyway so this probably doesn\u0027t matter).",
+      "range": {
+        "startLine": 2857,
+        "startChar": 23,
+        "endLine": 2857,
+        "endChar": 26
+      },
+      "revId": "9241196ce1268207ea4693fd77edaa228d3a1123",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5eb55f3b_bbb52613",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2870,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-08-17T18:46:42Z",
+      "side": 1,
+      "message": "Doesn\u0027t have a name?",
+      "revId": "9241196ce1268207ea4693fd77edaa228d3a1123",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
