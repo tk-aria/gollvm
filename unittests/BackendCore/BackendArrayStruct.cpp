@@ -787,11 +787,11 @@ TEST(BackendArrayStructTests, TestStructFieldAddressExpr) {
   const char *exp = R"RAW_RESULT(
     %cast.0 = bitcast { i32 }* %t1 to i8*
     %cast.1 = bitcast { i32 }* @const.0 to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.0, i8* %cast.1, i64 4, i32 8, i1 false)
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.0, i8* %cast.1, i64 4, i32 4, i1 false)
     %field.0 = getelementptr inbounds { i32 }, { i32 }* %t1, i32 0, i32 0
     store i32* %field.0, i32** %a1
     store i32* getelementptr inbounds ({ i32 }, { i32 }* @t2, i32 0, i32 0), i32** %a2
-  )RAW_RESULT";
+   )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");

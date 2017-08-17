@@ -1463,7 +1463,7 @@ int64_t TypeManager::typeAlignment(Btype *btype) {
   if (btype == errorType_)
     return 1;
   llvm::Type *toget = getPlaceholderProxyIfNeeded(btype);
-  unsigned uval = datalayout_->getPrefTypeAlignment(toget);
+  unsigned uval = datalayout_->getABITypeAlignment(toget);
   return static_cast<int64_t>(uval);
 }
 
@@ -1495,7 +1495,7 @@ int64_t TypeManager::typeFieldAlignment(Btype *btype) {
   llvm::StructType *dummyst = llvm::StructType::get(context_, elems);
   const llvm::StructLayout *sl = datalayout_->getStructLayout(dummyst);
   uint64_t uoff = sl->getElementOffset(1);
-  unsigned talign = datalayout_->getPrefTypeAlignment(toget);
+  unsigned talign = datalayout_->getABITypeAlignment(toget);
   int64_t rval = (uoff < talign ? uoff : talign);
   return rval;
 }
