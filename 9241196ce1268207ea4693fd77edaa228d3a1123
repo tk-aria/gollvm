@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "7317a030_468e951b",
+        "filename": "llvm-gofrontend/go-llvm-bnode.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 202,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-08-17T20:15:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f7c8fe0f_ae889d85",
+      "revId": "9241196ce1268207ea4693fd77edaa228d3a1123",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "232d4cb8_dbc27055",
         "filename": "llvm-gofrontend/go-llvm.cpp",
         "patchSetId": 2
@@ -30,6 +48,24 @@
       "writtenOn": "2017-08-17T18:46:42Z",
       "side": 1,
       "message": "I\u0027m not quite follow. How does foreign exception make difference?",
+      "revId": "9241196ce1268207ea4693fd77edaa228d3a1123",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "420a1ce0_24ffffbc",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2808,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-08-17T20:15:07Z",
+      "side": 1,
+      "message": "Sorry, left that in by accident. Initially I was concerned that I might need to do something special for foreign exceptions (as defined by http://refspecs.linuxfoundation.org/abi-eh-1.22.html) but I think at this point that things should work. I need to write a couple of test cases to be sure (e.g. throw C++ exception perhaps and from a function called by a defer).",
+      "parentUuid": "232d4cb8_dbc27055",
       "revId": "9241196ce1268207ea4693fd77edaa228d3a1123",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
@@ -50,6 +86,24 @@
       "revId": "9241196ce1268207ea4693fd77edaa228d3a1123",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f33b5c6c_6b34ee30",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2852,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-08-17T20:15:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b6516fb7_c5d4b0ca",
+      "revId": "9241196ce1268207ea4693fd77edaa228d3a1123",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     },
     {
       "key": {
@@ -76,6 +130,30 @@
     },
     {
       "key": {
+        "uuid": "5e837316_283404ac",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2857,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-08-17T20:15:07Z",
+      "side": 1,
+      "message": "The LLVM conditional branch consumes a 1-bit int as opposed to an 8-bit int, so I would have had to create a cast as opposed to using directly. And yes, hopefully the BE can optimize away this sort of thing.",
+      "parentUuid": "de991eca_930c474a",
+      "range": {
+        "startLine": 2857,
+        "startChar": 23,
+        "endLine": 2857,
+        "endChar": 26
+      },
+      "revId": "9241196ce1268207ea4693fd77edaa228d3a1123",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "5eb55f3b_bbb52613",
         "filename": "llvm-gofrontend/go-llvm.cpp",
         "patchSetId": 2
@@ -90,6 +168,24 @@
       "revId": "9241196ce1268207ea4693fd77edaa228d3a1123",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "885142fc_cb403d4d",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2870,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-08-17T20:15:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5eb55f3b_bbb52613",
+      "revId": "9241196ce1268207ea4693fd77edaa228d3a1123",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
