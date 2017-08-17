@@ -512,27 +512,27 @@ TEST(BackendCABIOracleTests, PassAndReturnComplex) {
   h.mkReturn(rvals);
 
   const char *exp = R"RAW_RESULT(
-    %cast.0 = bitcast { float, float }* %p0.addr to <2 x float>*
-    %ld.0 = load <2 x float>, <2 x float>* %cast.0
-    %field0.0 = getelementptr inbounds { double, double }, { double, double }* %p1.addr, i32 0, i32 0
-    %ld.1 = load double, double* %field0.0
-    %field1.0 = getelementptr inbounds { double, double }, { double, double }* %p1.addr, i32 0, i32 1
-    %ld.2 = load double, double* %field1.0
-    %call.0 = call <2 x float> @foo(i8* nest undef, <2 x float> %ld.0, double %ld.1, double %ld.2)
-    %cast.2 = bitcast { float, float }* %sret.actual.0 to <2 x float>*
-    store <2 x float> %call.0, <2 x float>* %cast.2
-    %cast.3 = bitcast { float, float }* %z to i8*
-    %cast.4 = bitcast { float, float }* %sret.actual.0 to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.3, i8* %cast.4, i64 8, i32 8, i1 false)
-    %ld.3 = load <2 x float>, <2 x float>* bitcast ({ float, float }* @const.0 to <2 x float>*)
-    %ld.4 = load double, double* getelementptr inbounds ({ double, double }, { double, double }* @const.1, i32 0, i32 0)
-    %ld.5 = load double, double* getelementptr inbounds ({ double, double }, { double, double }* @const.1, i32 0, i32 1)
-    %call.1 = call <2 x float> @foo(i8* nest undef, <2 x float> %ld.3, double %ld.4, double %ld.5)
-    %cast.7 = bitcast { float, float }* %sret.actual.1 to <2 x float>*
-    store <2 x float> %call.1, <2 x float>* %cast.7
-    %cast.8 = bitcast { float, float }* %sret.actual.1 to <2 x float>*
-    %ld.6 = load <2 x float>, <2 x float>* %cast.8
-    ret <2 x float> %ld.6
+%cast.0 = bitcast { float, float }* %p0.addr to <2 x float>*
+  %ld.0 = load <2 x float>, <2 x float>* %cast.0
+  %field0.0 = getelementptr inbounds { double, double }, { double, double }* %p1.addr, i32 0, i32 0
+  %ld.1 = load double, double* %field0.0
+  %field1.0 = getelementptr inbounds { double, double }, { double, double }* %p1.addr, i32 0, i32 1
+  %ld.2 = load double, double* %field1.0
+  %call.0 = call <2 x float> @foo(i8* nest undef, <2 x float> %ld.0, double %ld.1, double %ld.2)
+  %cast.2 = bitcast { float, float }* %sret.actual.0 to <2 x float>*
+  store <2 x float> %call.0, <2 x float>* %cast.2
+  %cast.3 = bitcast { float, float }* %z to i8*
+  %cast.4 = bitcast { float, float }* %sret.actual.0 to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.3, i8* %cast.4, i64 8, i32 4, i1 false)
+  %ld.3 = load <2 x float>, <2 x float>* bitcast ({ float, float }* @const.0 to <2 x float>*)
+  %ld.4 = load double, double* getelementptr inbounds ({ double, double }, { double, double }* @const.1, i32 0, i32 0)
+  %ld.5 = load double, double* getelementptr inbounds ({ double, double }, { double, double }* @const.1, i32 0, i32 1)
+  %call.1 = call <2 x float> @foo(i8* nest undef, <2 x float> %ld.3, double %ld.4, double %ld.5)
+  %cast.7 = bitcast { float, float }* %sret.actual.1 to <2 x float>*
+  store <2 x float> %call.1, <2 x float>* %cast.7
+  %cast.8 = bitcast { float, float }* %sret.actual.1 to <2 x float>*
+  %ld.6 = load <2 x float>, <2 x float>* %cast.8
+  ret <2 x float> %ld.6
   )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);

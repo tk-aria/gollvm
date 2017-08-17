@@ -1463,7 +1463,7 @@ int64_t TypeManager::typeAlignment(Btype *btype) {
   if (btype == errorType_)
     return 1;
   llvm::Type *toget = getPlaceholderProxyIfNeeded(btype);
-  unsigned uval = datalayout_->getPrefTypeAlignment(toget);
+  unsigned uval = datalayout_->getABITypeAlignment(toget);
   return static_cast<int64_t>(uval);
 }
 

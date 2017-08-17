@@ -282,8 +282,10 @@ TEST(BackendCoreTests, TypeUtils) {
   // Type size and alignment. Size and align are in bytes.
   std::unique_ptr<Backend> be(go_get_backend(C));
   Btype *i8t = be->integer_type(false, 8);
+  Btype *bs1f = mkBackendStruct(be.get(), i8t, "f1", nullptr);
   EXPECT_EQ(be->type_size(i8t), int64_t(1));
   EXPECT_EQ(be->type_alignment(i8t), 1);
+  EXPECT_EQ(be->type_alignment(bs1f), 1);
 
   // Slightly more complicated example
   Btype *u64 = be->integer_type(true, 64);
