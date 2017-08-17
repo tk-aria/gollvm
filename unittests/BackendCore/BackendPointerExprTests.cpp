@@ -488,7 +488,6 @@ TEST(BackEndPointerExprTests, TestDerefPointerConstantLHS)
 {
   FcnTestHarness h("foo");
   Llvm_backend *be = h.be();
-  Bfunction *func = h.func();
   Location loc;
 
   // *(*int32)(unsafe.Pointer(uintptr(0x10101))) = 0

@@ -85,7 +85,6 @@ void BuiltinTable::defineAllBuiltins() {
 void BuiltinTable::defineIntrinsicBuiltins() {
   Btype *boolType = tman_->boolType();
   Btype *ptrType = tman_->pointerType(boolType);
-  Btype *oneBitIntegerType = tman_->integerType(true, 1);
   Btype *uint32Type = tman_->integerType(true, 32);
   unsigned bitsInPtr = tman_->datalayout()->getPointerSizeInBits();
   Btype *uintPtrType = tman_->integerType(true, bitsInPtr);
