@@ -390,9 +390,7 @@ Bfunction *Llvm_backend::lookup_builtin(const std::string &name) {
     assert(fcn != nullptr);
     assert(fcn->isIntrinsic() && fcn->getIntrinsicID() == id);
     bf = defineBuiltinFcn(be->name(), fcn);
-  } else {
-    assert(be->flavor() == BuiltinEntry::LibcallBuiltin);
-
+  } else if (be->flavor() == BuiltinEntry::LibcallBuiltin) {
     // Create function type.
     Btyped_identifier receiver;
     std::vector<Btyped_identifier> params;
@@ -431,6 +429,26 @@ Bfunction *Llvm_backend::lookup_builtin(const std::string &name) {
       // an argument, that's going to be a show-stopper type problem.
       assert(TLI_->getLibFunc(*bf->function(), lf));
     }
+  } else {
+    assert(be->flavor() == BuiltinEntry::InlinedBuiltin);
+
+    // Create function type.
+    Btyped_identifier receiver;
+    std::vector<Btyped_identifier> params;
+    std::vector<Btyped_identifier> results;
+    Location bloc(linemap_->get_predeclared_location());
+    const BuiltinEntryTypeVec &types = be->types();
+    Btyped_identifier result("ret", types[0], bloc);
+    results.push_back(result);
+    for (unsigned idx = 1; idx < types.size(); ++idx)
+      params.push_back(Btyped_identifier("", types[idx], bloc));
+    bool followsCabi = false;
+    Btype *fcnType = functionType(receiver, params, results, nullptr,
+                                  followsCabi, bloc);
+
+    // Create function
+    bf = function(fcnType, be->name(), be->name(),
+                  true, false, false, false, false, bloc);
   }
   be->setBfunction(bf);
 

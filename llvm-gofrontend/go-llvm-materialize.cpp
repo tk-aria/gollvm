@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "go-llvm.h"
+#include "go-llvm-builtins.h"
 #include "go-c.h"
 #include "go-system.h"
 #include "go-llvm-cabi-oracle.h"
@@ -1321,6 +1322,15 @@ Bexpression *Llvm_backend::materializeCall(Bexpression *callExpr)
         fn_args.push_back(volexpr);
         break;
       }
+      case llvm::Intrinsic::prefetch: {
+        // prefetch takes an additional arg for cache type
+        // (0: instruction, 1: data).
+        Btype *buint32t = integerType(true, 32);
+        llvm::Constant *c1 = llvm::ConstantInt::get(llvmInt32Type(), 1);
+        Bexpression *conexpr = nbuilder_.mkConst(buint32t, c1);
+        fn_args.push_back(conexpr);
+        break;
+      }
       default: {
         // at the moment no other instrinsics need special handling
       }
@@ -1347,22 +1357,35 @@ Bexpression *Llvm_backend::materializeCall(Bexpression *callExpr)
   genCallMarshallArgs(fn_args, state);
 
   // Create the actual call instruction
-  llvm::FunctionType *llft =
-      llvm::cast<llvm::FunctionType>(calleeFcnTyp->type());
-  bool isvoid = llft->getReturnType()->isVoidTy();
-  std::string callname(isvoid ? "" : namegen("call"));
-  llvm::CallInst *call =
-      state.builder.CreateCall(llft, fnval,
-                               state.llargs, callname);
-  genCallAttributes(state, call);
+  llvm::CallInst *call = nullptr;
+  llvm::Value *callValue = nullptr;
+  if (llvm::isa<llvm::Function>(fnval)) {
+    llvm::Function *fcn = llvm::cast<llvm::Function>(fnval);
+    BuiltinEntry *be = builtinTable_->lookup(fcn->getName());
+    if (be) {
+      BuiltinExprMaker makerfn = be->exprMaker();
+      if (makerfn)
+        callValue = makerfn(state.llargs, &state.builder);
+    }
+  }
+  if (!callValue) {
+    llvm::FunctionType *llft =
+        llvm::cast<llvm::FunctionType>(calleeFcnTyp->type());
+    bool isvoid = llft->getReturnType()->isVoidTy();
+    std::string callname(isvoid ? "" : namegen("call"));
+    call = state.builder.CreateCall(llft, fnval,
+                                    state.llargs, callname);
+    genCallAttributes(state, call);
+    callValue = (state.sretTemp ? state.sretTemp : call);
+  }
 
-  llvm::Value *callValue = (state.sretTemp ? state.sretTemp : call);
   Bexpression *rval =
       nbuilder_.mkCall(rbtype, callValue, caller, fn_expr, chain_expr,
                        state.resolvedArgs, state.instructions, location);
   state.instructions.clear();
 
-  genCallEpilog(state, call, rval);
+  if (call)
+    genCallEpilog(state, call, rval);
 
   return rval;
 }
