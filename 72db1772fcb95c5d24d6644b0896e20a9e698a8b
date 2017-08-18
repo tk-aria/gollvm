@@ -16,6 +16,24 @@
       "revId": "72db1772fcb95c5d24d6644b0896e20a9e698a8b",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f2374e4e_a401d69d",
+        "filename": "unittests/BackendCore/BackendStmtTests.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 500,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-08-18T18:30:39Z",
+      "side": 1,
+      "message": "This just tells the testing harness not to fail the test if there is an unreachable block at the end of the test.",
+      "parentUuid": "6d81ff97_df36f2d4",
+      "revId": "72db1772fcb95c5d24d6644b0896e20a9e698a8b",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
