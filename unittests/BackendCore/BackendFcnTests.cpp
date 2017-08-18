@@ -426,4 +426,60 @@ TEST(BackendFcnTests, TestMultipleExternalFcnsWithSameName) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
+TEST(BackendFcnTests, TestDeclAndDefWithDifferentTypes) {
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
+  Location loc;
+
+  // Make two functions, one declaration and one definition,
+  // with the same name but with different types.
+
+  // bar() *struct{}
+  Btype *bs0t = mkBackendStruct(be, nullptr);
+  Btype *bps0t = be->pointer_type(bs0t);
+  BFunctionType *btf1 = mkFuncTyp(be,
+                                  L_RES, bps0t,
+                                  L_END);
+
+  // bar() *struct{ int32 x }
+  Btype *bi32t = be->integer_type(false, 32);
+  Btype *bs1t = mkBackendStruct(be, bi32t, "x", nullptr);
+  Btype *bps1t = be->pointer_type(bs1t);
+  BFunctionType *btf2 = mkFuncTyp(be,
+                                  L_RES, bps1t,
+                                  L_END);
+
+  // Now manufacture Bfunctions
+  bool visible = true;
+  bool is_inl = true;
+  bool split_stack = false;
+  bool unique_sec = false;
+  Bfunction *bf1 = be->function(btf1, "bar", "bar", visible,
+                                true, // is_declaration
+                                is_inl, split_stack, unique_sec, loc);
+  Bfunction *bf2 = be->function(btf2, "bar", "bar", visible,
+                                false, // is_declaration
+                                is_inl, split_stack, unique_sec, loc);
+
+  // Create calls to the functions
+  Bexpression *call1 = h.mkCallExpr(be, bf1, nullptr);
+  h.mkLocal("x", bps0t, call1);
+
+  Bexpression *call2 = h.mkCallExpr(be, bf2, nullptr);
+  h.mkLocal("y", bps1t, call2);
+
+  const char *exp = R"RAW_RESULT(
+    %call.0 = call {}* bitcast ({ i32 }* (i8*)* @bar to {}* (i8*)*)(i8* nest undef)
+    store {}* %call.0, {}** %x
+    %call.1 = call { i32 }* @bar(i8* nest undef)
+    store { i32 }* %call.1, { i32 }** %y
+  )RAW_RESULT";
+
+  bool isOK = h.expectBlock(exp);
+  EXPECT_TRUE(isOK && "Block does not have expected contents");
+
+  bool broken = h.finish(StripDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+}
+
 }

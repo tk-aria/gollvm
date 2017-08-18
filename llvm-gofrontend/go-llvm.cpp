@@ -2262,7 +2262,21 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
   llvm::GlobalValue::LinkageTypes linkage = llvm::GlobalValue::ExternalLinkage;
   llvm::StringRef fn(fns);
   llvm::Constant *fcnValue = nullptr;
-  if (! module_->getNamedValue(fn)) {
+  llvm::Value *declVal = module_->getNamedValue(fn);
+  if (!is_declaration || !declVal) {
+    llvm::Function *declFnVal = nullptr;
+    llvm::FunctionType *declFnTyp;
+    if (!is_declaration && declVal && llvm::isa<llvm::Function>(declVal)) {
+      declFnVal = llvm::cast<llvm::Function>(declVal);
+      declFnTyp = declFnVal->getFunctionType();
+      if (declFnTyp != fty)
+        // A function of the same name has already been created in this
+        // module with a different type. Remove this declaration. Its
+        // references will be replaced with a constant corresponding
+        // to the newly defined function bit-casted to the old type.
+        declFnVal->removeFromParent();
+    }
+
     llvm::Twine fnt(fns);
     llvm::Function *fcn = llvm::Function::Create(fty, linkage, fnt, module_);
 
@@ -2281,6 +2295,20 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
       fcn->addFnAttr("split-stack");
 
     fcnValue = fcn;
+
+    // Fix up references to declaration of old type.
+    if (declFnVal && declFnTyp != fty) {
+      llvm::Constant *newDeclVal = module_->getOrInsertFunction(fn, declFnTyp);
+      declFnVal->replaceAllUsesWith(newDeclVal);
+      declFnVal->deleteValue();
+      for (auto it = fcnDeclMap_.begin(); it != fcnDeclMap_.end(); it++) {
+        if (it->first.second.compare(fns) == 0) {
+          Bfunction *found = it->second;
+          if (found->fcnValue() == declFnVal)
+            found->setFcnValue(newDeclVal);
+        }
+      }
+    }
   } else {
 
     // A function of the same name has already been created in this
