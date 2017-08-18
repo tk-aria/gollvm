@@ -66,6 +66,23 @@ void BuiltinTable::registerLibCallBuiltin(const char *libname,
     tab_[std::string(libname)] = idx;
 }
 
+void BuiltinTable::registerExprBuiltin(const char *name,
+                                       const char *libname,
+                                       const BuiltinEntryTypeVec &paramTypes,
+                                       BuiltinExprMaker exprMaker)
+{
+  assert(lookup(name) == nullptr);
+  assert(libname == nullptr || lookup(libname) == nullptr);
+  unsigned idx = entries_.size();
+  entries_.push_back(BuiltinEntry(name,
+                                  libname ? libname : "",
+                                  paramTypes,
+                                  exprMaker));
+  tab_[std::string(name)] = idx;
+  if (libname)
+    tab_[std::string(libname)] = idx;
+}
+
 BuiltinEntry *BuiltinTable::lookup(const std::string &name)
 {
   auto it = tab_.find(name);
@@ -80,12 +97,14 @@ void BuiltinTable::defineAllBuiltins() {
   defineSyncFetchAndAddBuiltins();
   defineIntrinsicBuiltins();
   defineTrigBuiltins();
+  defineExprBuiltins();
 }
 
 void BuiltinTable::defineIntrinsicBuiltins() {
   Btype *boolType = tman_->boolType();
   Btype *ptrType = tman_->pointerType(boolType);
   Btype *uint32Type = tman_->integerType(true, 32);
+  Btype *int32Type = tman_->integerType(false, 32);
   unsigned bitsInPtr = tman_->datalayout()->getPointerSizeInBits();
   Btype *uintPtrType = tman_->integerType(true, bitsInPtr);
   Btype *sizeType = uintPtrType;
@@ -107,6 +126,9 @@ void BuiltinTable::defineIntrinsicBuiltins() {
   defineIntrinsicBuiltin("__builtin_frame_address", nullptr,
                          llvm::Intrinsic::frameaddress, ptrType,
                          uint32Type, nullptr);
+
+  defineIntrinsicBuiltin("__builtin_prefetch", nullptr, llvm::Intrinsic::prefetch,
+                         ptrType, int32Type, int32Type, nullptr);
 
   defineIntrinsicBuiltin("__builtin_expect", nullptr, llvm::Intrinsic::expect,
                          int64Type, int64Type, nullptr);
@@ -294,4 +316,30 @@ void BuiltinTable::defineIntrinsicBuiltin(const char *name,
   }
   llvm::Intrinsic::ID iid = static_cast<llvm::Intrinsic::ID>(intrinsicID);
   registerIntrinsicBuiltin(name, libname, iid, overloadTypes);
+}
+
+static llvm::Value *builtinExtractReturnAddrMaker(llvm::SmallVector<llvm::Value*, 16> args,
+                                                  BinstructionsLIRBuilder *builder)
+{
+  // __builtin_extract_return_addr(uintptr) uintptr
+  // extracts the actual encoded address from the address as returned
+  // by __builtin_return_address, for example, used on 31-bit S390 to
+  // mask out the top bit.
+  // On most architectures this is simply identity function.
+  // TODO: this is identity function fow now. When we get to the
+  // architectures that this matters, do the real thing.
+  assert(args.size() == 1);
+  return args[0];
+}
+
+void BuiltinTable::defineExprBuiltins()
+{
+  unsigned bitsInPtr = tman_->datalayout()->getPointerSizeInBits();
+  Btype *uintPtrType = tman_->integerType(true, bitsInPtr);
+
+  BuiltinEntryTypeVec typeVec(2);
+  typeVec[0] = uintPtrType;
+  typeVec[1] = uintPtrType;
+  registerExprBuiltin("__builtin_extract_return_addr", "",
+                      typeVec, builtinExtractReturnAddrMaker);
 }
