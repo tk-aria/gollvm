@@ -16,6 +16,8 @@
 
 #include <unordered_map>
 
+#include "go-llvm-irbuilders.h"
+
 #include "llvm/Analysis/TargetLibraryInfo.h"
 
 class Bfunction;
@@ -23,6 +25,9 @@ class Btype;
 class TypeManager;
 
 typedef std::vector<Btype*> BuiltinEntryTypeVec;
+
+typedef llvm::Value *(*BuiltinExprMaker)(llvm::SmallVector<llvm::Value*, 16> args,
+                                         BinstructionsLIRBuilder *builder);
 
 // An entry in a table of interesting builtin functions. A given entry
 // is either an intrinsic or a libcall builtin.
@@ -35,10 +40,15 @@ typedef std::vector<Btype*> BuiltinEntryTypeVec;
 // Libcall builtins can also be generic or target-dependent; they
 // are identified via enums defined in .../Analysis/TargetLibraryInfo.def).
 // These functions are not polymorphic.
+//
+// Inlined builtins are intrinsics handled by the bridge (instead
+// of LLVM). A call to it will turn into an inlined expresssion
+// (an LLVM Value and perhaps a sequence of instructions) at
+// materialization.
 
 class BuiltinEntry {
  public:
-  enum BuiltinFlavor { IntrinsicBuiltin, LibcallBuiltin };
+  enum BuiltinFlavor { IntrinsicBuiltin, LibcallBuiltin, InlinedBuiltin };
   static const auto NotInTargetLib = llvm::LibFunc::NumLibFuncs;
 
   BuiltinFlavor flavor() const { return flavor_; }
@@ -49,6 +59,7 @@ class BuiltinEntry {
   const BuiltinEntryTypeVec &types() const { return types_; }
   Bfunction *bfunction() const { return bfunction_; }
   void setBfunction(Bfunction *bfunc);
+  BuiltinExprMaker exprMaker() const { return exprMaker_; }
 
   BuiltinEntry(llvm::Intrinsic::ID intrinsicId,
                const std::string &name,
@@ -56,14 +67,21 @@ class BuiltinEntry {
                const BuiltinEntryTypeVec &ovltypes)
       : name_(name), libname_(libname), flavor_(IntrinsicBuiltin),
         intrinsicId_(intrinsicId), libfunc_(NotInTargetLib),
-        bfunction_(nullptr), types_(ovltypes) { }
+        bfunction_(nullptr), types_(ovltypes), exprMaker_(nullptr) { }
   BuiltinEntry(llvm::LibFunc libfunc,
                const std::string &name,
                const std::string &libname,
                const BuiltinEntryTypeVec &paramtypes)
       : name_(name), libname_(libname), flavor_(LibcallBuiltin),
         intrinsicId_(), libfunc_(libfunc), bfunction_(nullptr),
-        types_(paramtypes) { }
+        types_(paramtypes), exprMaker_(nullptr) { }
+  BuiltinEntry(const std::string &name,
+               const std::string &libname,
+               const BuiltinEntryTypeVec &paramtypes,
+               BuiltinExprMaker exprMaker)
+      : name_(name), libname_(libname), flavor_(InlinedBuiltin),
+        intrinsicId_(), libfunc_(NotInTargetLib), bfunction_(nullptr),
+        types_(paramtypes), exprMaker_(exprMaker) { }
   ~BuiltinEntry();
 
  private:
@@ -74,6 +92,7 @@ class BuiltinEntry {
   llvm::LibFunc libfunc_;
   Bfunction *bfunction_;
   BuiltinEntryTypeVec types_;
+  BuiltinExprMaker exprMaker_;
 };
 
 // This table contains entries for the builtin functions that may
@@ -99,6 +118,7 @@ class BuiltinTable {
   void defineSyncFetchAndAddBuiltins();
   void defineIntrinsicBuiltins();
   void defineTrigBuiltins();
+  void defineExprBuiltins();
 
   void defineLibcallBuiltin(const char *libname, const char *name,
                             unsigned libfuncID, ...);
@@ -118,6 +138,10 @@ class BuiltinTable {
                               const char *libname,
                               llvm::LibFunc libfunc,
                               const BuiltinEntryTypeVec &paramTypes);
+  void registerExprBuiltin(const char *name,
+                           const char *libname,
+                           const BuiltinEntryTypeVec &paramTypes,
+                           BuiltinExprMaker exprMaker);
 
  private:
   TypeManager *tman_;

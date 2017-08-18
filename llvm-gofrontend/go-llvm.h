@@ -60,6 +60,7 @@ class Value;
 class raw_ostream;
 }
 
+class BuiltinEntry;
 class BuiltinTable;
 class BlockLIRBuilder;
 class BinstructionsLIRBuilder;
@@ -398,9 +399,13 @@ public:
   Bexpression *errorExpression() const { return errorExpression_; }
   Bstatement *errorStatement() const { return errorStatement_; }
 
-  // create a Bfunction for a predefined builtin function with specified name
-  Bfunction *defineBuiltinFcn(const std::string &name,
-                              llvm::Function *fcn);
+  // create a Bfunction for an intrinsic function with specified name
+  Bfunction *createIntrinsicFcn(const std::string &name,
+                                llvm::Function *fcn);
+
+  // create a Bfunction for a predefined builtin function. Used for
+  // libcall builtins and inlined builtins.
+  Bfunction *createBuiltinFcn(BuiltinEntry *be);
 
   // Certain Bexpressions we want to cache (constants for example,
   // or lvalue references to global variables). This helper looks up
