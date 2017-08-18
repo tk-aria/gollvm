@@ -744,10 +744,8 @@ Bexpression *BnodeBuilder::mkCall(Btype *btype,
       found = true;
     rval->appendInstruction(inst);
   }
-  if (!found && val && !llvm::isa<llvm::AllocaInst>(val)) {
-    assert(llvm::isa<llvm::Instruction>(val));
-    rval->appendInstruction(llvm::cast<llvm::Instruction>(val));
-  }
+  if (!found && val && !llvm::isa<llvm::AllocaInst>(val))
+    appendInstIfNeeded(rval, val);
   rval->u.func = caller;
   return archive(rval);
 }
