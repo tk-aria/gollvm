@@ -53,6 +53,7 @@ public:
   ~Bfunction();
 
   llvm::Constant *fcnValue() const { return fcnValue_; }
+  void setFcnValue(llvm::Constant *fv) { fcnValue_ = fv; }
   llvm::Function *function() const;
   BFunctionType *fcnType() const { return fcnType_; }
   const std::string &name() const { return name_; }
