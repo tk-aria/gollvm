@@ -244,12 +244,11 @@ TEST(BackendStmtTests, TestLabelAddressExpression) {
   EXPECT_TRUE(isOK && "Function does not have expected contents");
 }
 
-TEST(BackendStmtTests, TestIfStmt) {
-  FcnTestHarness h("foo");
+static Bstatement *CreateIfStmt(FcnTestHarness &h)
+{
+  Location loc;
   Llvm_backend *be = h.be();
   Bfunction *func = h.func();
-
-  Location loc;
   Btype *bi64t = be->integer_type(false, 64);
   Bvariable *loc1 = h.mkLocal("loc1", bi64t);
 
@@ -263,17 +262,31 @@ TEST(BackendStmtTests, TestIfStmt) {
   Bexpression *c987 = mkInt64Const(be, 987);
   Bstatement *as2 = be->assignment_statement(func, ve2, c987, loc);
 
-  // loc1 = 456
-  Bexpression *ve3 = be->var_expression(loc1, VE_lvalue, loc);
-  Bexpression *c456 = mkInt64Const(be, 456);
-  Bstatement *as3 = be->assignment_statement(func, ve3, c456, loc);
-
   // if true b1 else b2
   Bexpression *trueval = be->boolean_constant_expression(true);
   Bstatement *ifst = h.mkIf(trueval, as1, as2, FcnTestHarness::NoAppend);
 
+  return ifst;
+}
+
+TEST(BackendStmtTests, TestIfStmt) {
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
+  Bfunction *func = h.func();
+
+  Location loc;
+  Bstatement *ifst = CreateIfStmt(h);
+
   // if true if
   Bexpression *tv2 = be->boolean_constant_expression(true);
+
+  // loc2 = 456
+  Btype *bi64t = be->integer_type(false, 64);
+  Bvariable *loc2 = h.mkLocal("loc2", bi64t);
+  Bexpression *ve3 = be->var_expression(loc2, VE_lvalue, loc);
+  Bexpression *c456 = mkInt64Const(be, 456);
+  Bstatement *as3 = be->assignment_statement(func, ve3, c456, loc);
+
   h.mkIf(tv2, ifst, as3);
 
   // return 10101
@@ -290,22 +303,24 @@ TEST(BackendStmtTests, TestIfStmt) {
       %param2.addr = alloca i32
       %param3.addr = alloca i64*
       %loc1 = alloca i64
+      %loc2 = alloca i64
       store i32 %param1, i32* %param1.addr
       store i32 %param2, i32* %param2.addr
       store i64* %param3, i64** %param3.addr
       store i64 0, i64* %loc1
+      store i64 0, i64* %loc2
       br i1 true, label %then.0, label %else.0
     then.0:                                           ; preds = %entry
       br i1 true, label %then.1, label %else.1
-    fallthrough.0:                 ; preds = %else.0, %fallthrough.1
+    fallthrough.0:                                    ; preds = %else.0, %fallthrough.1
       ret i64 10101
     else.0:                                           ; preds = %entry
-      store i64 456, i64* %loc1
+      store i64 456, i64* %loc2
       br label %fallthrough.0
     then.1:                                           ; preds = %then.0
       store i64 123, i64* %loc1
       br label %fallthrough.1
-    fallthrough.1:                             ; preds = %else.1, %then.1
+    fallthrough.1:                                    ; preds = %else.1, %then.1
       br label %fallthrough.0
     else.1:                                           ; preds = %then.0
       store i64 987, i64* %loc1
@@ -317,8 +332,10 @@ TEST(BackendStmtTests, TestIfStmt) {
   EXPECT_TRUE(isOK && "Function does not have expected contents");
 }
 
-TEST(BackendStmtTests, TestSwitchStmt) {
-  FcnTestHarness h("foo");
+// Create a switch statement and append to the test harness current block.
+
+static void CreateSwitchStmt(FcnTestHarness &h)
+{
   Llvm_backend *be = h.be();
   Bfunction *func = h.func();
 
@@ -348,7 +365,8 @@ TEST(BackendStmtTests, TestSwitchStmt) {
   Bexpression *c987 = mkInt64Const(be, 987);
   Bexpression *mul = be->binary_expression(OPERATOR_MULT, c987, ve2r, loc);
   Bexpression *cmp = be->binary_expression(OPERATOR_LE, ve2r2, c987, loc);
-  Bexpression *condex = be->conditional_expression(func, bi64t, cmp, ve2r3, mul, loc);
+  Bexpression *condex =
+      be->conditional_expression(func, bi64t, cmp, ve2r3, mul, loc);
   Bstatement *as2 = be->assignment_statement(func, ve2, condex, loc);
   // implicit fallthrough
 
@@ -379,6 +397,14 @@ TEST(BackendStmtTests, TestSwitchStmt) {
   // label definition
   Bstatement *labdef = be->label_definition_statement(brklab);
   h.addStmt(labdef);
+}
+
+TEST(BackendStmtTests, TestSwitchStmt) {
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
+  Bfunction *func = h.func();
+
+  CreateSwitchStmt(h);
 
   // return 10101
   h.mkReturn(mkInt64Const(be, 10101));
@@ -451,6 +477,30 @@ TEST(BackendStmtTests, TestSwitchStmt) {
 
   bool isOK = h.expectValue(func->function(), exp);
   EXPECT_TRUE(isOK && "Function does not have expected contents");
+}
+
+TEST(BackendStmtTests, TestStaticallyUnreachableStmts) {
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
+
+  // This test is designed to insure that there are no crashes,
+  // errors, or memory leaks when the function being compiled
+  // contains statically unreachable control flow.
+
+  // Create a return, which will make what comes next unreachable.
+  h.mkReturn(mkInt64Const(be, 10101));
+
+  // Statically unreachable if and switch stmts.
+  Bstatement *ifst = CreateIfStmt(h);
+  h.addStmt(ifst);
+  CreateSwitchStmt(h);
+
+  // Don't check for orphan blocks; we're only interested in making
+  // sure the compilation goes through.
+  h.allowOrphans();
+
+  bool broken = h.finish(PreserveDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
 static Bstatement *CreateDeferStmt(Llvm_backend *be,
