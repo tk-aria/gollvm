@@ -2396,7 +2396,6 @@ public:
   std::vector<llvm::AllocaInst *> newTemporaries_;
   llvm::BasicBlock *finallyBlock_;
   Bstatement *cachedReturn_;
-  bool emitOrphanedCode_;
 };
 
 GenBlocks::GenBlocks(llvm::LLVMContext &context,
@@ -2407,7 +2406,7 @@ GenBlocks::GenBlocks(llvm::LLVMContext &context,
                      llvm::BasicBlock *entryBlock)
     : context_(context), be_(be), function_(function),
       dibuildhelper_(dibuildhelper), finallyBlock_(nullptr),
-      cachedReturn_(nullptr), emitOrphanedCode_(false)
+      cachedReturn_(nullptr)
 {
   if (dibuildhelper_)
     dibuildhelper_->beginFunction(function, topNode, entryBlock);
@@ -2571,19 +2570,21 @@ llvm::BasicBlock *GenBlocks::genIf(Bstatement *ifst,
   curblock = walkExpr(curblock, cond);
 
   // Create true block
-  llvm::BasicBlock *tblock = mkLLVMBlock("then");
+  llvm::BasicBlock *tblock = curblock ? mkLLVMBlock("then") : nullptr;
 
   // Create fallthrough block
-  llvm::BasicBlock *ft = mkLLVMBlock("fallthrough");
+  llvm::BasicBlock *ft = curblock ? mkLLVMBlock("fallthrough") : nullptr;
 
   // Create false block if present
   llvm::BasicBlock *fblock = ft;
   if (falseStmt)
-    fblock = mkLLVMBlock("else");
+    fblock = curblock ? mkLLVMBlock("else") : nullptr;
 
   // Insert conditional branch into current block
-  llvm::Value *cval = cond->value();
-  llvm::BranchInst::Create(tblock, fblock, cval, curblock);
+  if (curblock) {
+    llvm::Value *cval = cond->value();
+    llvm::BranchInst::Create(tblock, fblock, cval, curblock);
+  }
 
   // Visit true block
   llvm::BasicBlock *tsucc = walk(trueStmt, tblock);
@@ -2625,7 +2626,7 @@ llvm::BasicBlock *GenBlocks::genSwitch(Bstatement *swst,
         swst->getSwitchStmtNthCase(idx);
     bool isDefault = (thiscase.size() == 0);
     std::string bname(isDefault ? "default" : "case");
-    blocks[idx] = mkLLVMBlock(bname);
+    blocks[idx] = curblock ? mkLLVMBlock(bname) : nullptr;
     if (isDefault) {
       assert(! defBB);
       defBB = blocks[idx];
@@ -2652,16 +2653,18 @@ llvm::BasicBlock *GenBlocks::genSwitch(Bstatement *swst,
   }
 
   // Create switch
-  builder.SetInsertPoint(curblock);
-  llvm::SwitchInst *swinst = builder.CreateSwitch(swval->value(), defBB);
+  if (curblock) {
+    builder.SetInsertPoint(curblock);
+    llvm::SwitchInst *swinst = builder.CreateSwitch(swval->value(), defBB);
 
-  // Connect values with blocks
-  for (unsigned idx = 0; idx < blocks.size(); ++idx) {
-    std::vector<Bexpression *> thiscase =
-        swst->getSwitchStmtNthCase(idx);
-    for (auto &exp : thiscase) {
-      llvm::ConstantInt *ci = llvm::cast<llvm::ConstantInt>(exp->value());
-      swinst->addCase(ci, blocks[idx]);
+    // Connect values with blocks
+    for (unsigned idx = 0; idx < blocks.size(); ++idx) {
+      std::vector<Bexpression *> thiscase =
+          swst->getSwitchStmtNthCase(idx);
+      for (auto &exp : thiscase) {
+        llvm::ConstantInt *ci = llvm::cast<llvm::ConstantInt>(exp->value());
+        swinst->addCase(ci, blocks[idx]);
+      }
     }
   }
 
@@ -2676,6 +2679,8 @@ llvm::BasicBlock *GenBlocks::genSwitch(Bstatement *swst,
 
 llvm::BasicBlock *GenBlocks::eraseBlockIfUnused(llvm::BasicBlock *bb)
 {
+  if (bb == nullptr)
+    return bb;
   if (llvm::pred_begin(bb) == llvm::pred_end(bb)) {
     // Block should be empty in this case
     assert(bb->begin() == bb->end());
@@ -3093,14 +3098,7 @@ llvm::BasicBlock *GenBlocks::walk(Bnode *node,
       llvm::BasicBlock *lbb = getBlockForLabel(stmt->getGotoStmtTargetLabel());
       if (curblock && ! curblock->getTerminator())
         llvm::BranchInst::Create(lbb, curblock);
-      if (emitOrphanedCode_) {
-        std::string n = be_->namegen("orphan");
-        llvm::BasicBlock *orphan =
-            llvm::BasicBlock::Create(context_, n, func, lbb);
-        curblock = orphan;
-      } else {
-        curblock = nullptr;
-      }
+      curblock = nullptr;
       break;
     }
     case N_LabelStmt: {
