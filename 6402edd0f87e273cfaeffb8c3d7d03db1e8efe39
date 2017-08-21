@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c049ac08_b33c29d2",
+        "filename": "llvm-gofrontend/go-llvm-builtins.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-08-21T14:16:54Z",
+      "side": 1,
+      "message": "Not sure about this name...",
+      "range": {
+        "startLine": 51,
+        "startChar": 57,
+        "endLine": 51,
+        "endChar": 71
+      },
+      "revId": "6402edd0f87e273cfaeffb8c3d7d03db1e8efe39",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
