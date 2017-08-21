@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "f8d91b7a_641fa6ef",
+        "filename": "llvm-gofrontend/go-llvm-builtins.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 329,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-08-21T16:27:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "66c30221_661f4ab1",
+      "range": {
+        "startLine": 329,
+        "startChar": 37,
+        "endLine": 329,
+        "endChar": 40
+      },
+      "revId": "6402edd0f87e273cfaeffb8c3d7d03db1e8efe39",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "c049ac08_b33c29d2",
         "filename": "llvm-gofrontend/go-llvm-builtins.h",
         "patchSetId": 2
@@ -92,6 +116,30 @@
       "revId": "6402edd0f87e273cfaeffb8c3d7d03db1e8efe39",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "53fa04b9_4499774e",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 447,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-08-21T16:27:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "81aebb36_1cc44ad8",
+      "range": {
+        "startLine": 435,
+        "startChar": 3,
+        "endLine": 447,
+        "endChar": 53
+      },
+      "revId": "6402edd0f87e273cfaeffb8c3d7d03db1e8efe39",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
