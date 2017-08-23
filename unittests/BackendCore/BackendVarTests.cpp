@@ -131,14 +131,6 @@ TEST(BackendVarTests, MakeGlobalVar) {
                           false,                           /* unique_section */
                           Location());
   EXPECT_TRUE(gerr == be->error_variable());
-
-  // debugging
-  if (!gerr) {
-    GlobalVariable *gv = cast<GlobalVariable>(g1val);
-    ASSERT_TRUE(gv != nullptr);
-    Module *m = gv->getParent();
-    m->dump();
-  }
 }
 
 TEST(BackendVarTests, MakeTemporaryVar) {

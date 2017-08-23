@@ -754,17 +754,19 @@ bool FcnTestHarness::finish(DebugDisposition whatToDoWithDebugInfo)
   // are nearly always an indication that something is wrong.
   bool brokenBlock = false;
   if (func_ && findOrphanBBs_) {
-    for (const llvm::BasicBlock &bb : *func_->function()) {
+    for (llvm::BasicBlock &bb : *func_->function()) {
       if (&bb == &func_->function()->getEntryBlock())
         continue;
       if (! bb.getParent()) {
         std::cerr << "** block with no parent:\n";
-        bb.dump();
+        llvm::Value *blockVal = &bb;
+        std::cerr << repr(blockVal);
         brokenBlock = true;
       }
       if (llvm::pred_begin(&bb) == llvm::pred_end(&bb)) {
         std::cerr << "** block has no predecessors:\n";
-        bb.dump();
+        llvm::Value *blockVal = &bb;
+        std::cerr << repr(blockVal);
         brokenBlock = true;
       }
     }
