@@ -143,7 +143,11 @@ Llvm_backend::verifyModule()
 void
 Llvm_backend::dumpModule()
 {
-  module().dump();
+  std::string s;
+  llvm::raw_string_ostream os(s);
+  module().print(os, nullptr,
+                 /*ShouldPreserveUseListOrder=*/false, /*IsForDebug=*/true);
+  std::cerr << os.str();
 }
 
 void Llvm_backend::dumpExpr(Bexpression *e)
@@ -3232,7 +3236,10 @@ bool Llvm_backend::function_set_body(Bfunction *function,
   // debugging
   if (traceLevel() > 0) {
     std::cerr << "LLVM function dump:\n";
-    function->function()->dump();
+    std::string s;
+    llvm::raw_string_ostream os(s);
+    function->function()->print(os);
+    std::cerr << os.str();
   }
 
   return true;
