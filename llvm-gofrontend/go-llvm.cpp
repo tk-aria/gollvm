@@ -2159,12 +2159,23 @@ Bvariable *Llvm_backend::immutable_struct_reference(const std::string &name,
     return existing;
   }
 
+  // A global with the same name already declared?
+  llvm::GlobalVariable *glob = module_->getGlobalVariable(gname);
+  if (glob) {
+    assert(glob->getType()->getElementType() == btype->type());
+    auto it = valueVarMap_.find(glob);
+    assert(it != valueVarMap_.end());
+    Bvariable *bv = it->second;
+    immutableStructRefs_[gname] = bv;
+    return bv;
+  }
+
   // Create new external global
   llvm::GlobalValue::LinkageTypes linkage = llvm::GlobalValue::ExternalLinkage;
   bool isConstant = true;
   llvm::Constant *init = nullptr;
-  llvm::GlobalVariable *glob = new llvm::GlobalVariable(
-      module(), btype->type(), isConstant, linkage, init, gname);
+  glob = new llvm::GlobalVariable(module(), btype->type(), isConstant,
+                                  linkage, init, gname);
   Bvariable *bv =
       new Bvariable(btype, location, name, GlobalVar, false, glob);
   assert(valueVarMap_.find(bv->value()) == valueVarMap_.end());

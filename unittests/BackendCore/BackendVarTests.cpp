@@ -191,7 +191,7 @@ TEST(BackendVarTests, MakeImmutableStruct) {
       EXPECT_TRUE(isa<GlobalVariable>(ival));
       if (first) {
         gvar = cast<GlobalVariable>(ival);
-        EXPECT_EQ(ival->getName(), "asmname");
+        EXPECT_EQ(gvar->getName(), "asmname");
         first = false;
       }
     }
@@ -233,7 +233,7 @@ TEST(BackendVarTests, MakeImplicitVariable) {
         EXPECT_TRUE(isa<GlobalVariable>(ival));
         if (first) {
           gvar = cast<GlobalVariable>(ival);
-          EXPECT_EQ(ival->getName(), "asmname");
+          EXPECT_EQ(gvar->getName(), "asmname");
           first = false;
         }
       }
@@ -323,6 +323,34 @@ TEST(BackendVarTests, ImmutableStructSetInit) {
                                 desct, loc, scon);
   be->immutable_struct_set_init(ims, "", false, false,
                                 desct, loc, be->error_expression());
+
+  bool broken = h.finish(PreserveDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+}
+
+TEST(BackendVarTests, MakeImmutableStructReferenceWithSameName) {
+
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
+
+  Location loc;
+  Btype *bi32t = be->integer_type(false, 32);
+  Btype *bst = mkTwoFieldStruct(be, bi32t, bi32t);
+
+  // Create an immutable_struct and an immutable_struct_reference
+  // with same name. They should refer to the same global variable.
+
+  bool hidden = false;
+  bool common = false;
+  Bvariable *ims =
+      be->immutable_struct("name", "asmname", hidden, common, bst, loc);
+  ASSERT_TRUE(ims != nullptr);
+
+  Bvariable *imsr =
+      be->immutable_struct_reference("name", "asmname", bst, loc);
+  ASSERT_TRUE(imsr != nullptr);
+  EXPECT_TRUE(isa<GlobalVariable>(imsr->value()));
+  EXPECT_TRUE(imsr->value() == ims->value());
 
   bool broken = h.finish(PreserveDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
