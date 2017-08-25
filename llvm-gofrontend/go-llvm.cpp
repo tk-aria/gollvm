@@ -2284,12 +2284,17 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
     if (!is_declaration && declVal && llvm::isa<llvm::Function>(declVal)) {
       declFnVal = llvm::cast<llvm::Function>(declVal);
       declFnTyp = declFnVal->getFunctionType();
-      if (declFnTyp != fty)
-        // A function of the same name has already been created in this
-        // module with a different type. Remove this declaration. Its
-        // references will be replaced with a constant corresponding
-        // to the newly defined function bit-casted to the old type.
-        declFnVal->removeFromParent();
+      if (declFnTyp == fty) {
+        // A function of the same name is already declared with the
+        // correct type.
+        fcnValue = declFnVal;
+        goto out;
+      }
+      // A function of the same name has already been created in this
+      // module with a different type. Remove this declaration. Its
+      // references will be replaced with a constant corresponding
+      // to the newly defined function bit-casted to the old type.
+      declFnVal->removeFromParent();
     }
 
     llvm::Twine fnt(fns);
@@ -2332,6 +2337,7 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
     fcnValue = module_->getOrInsertFunction(fn, fty);
   }
 
+out:
   BFunctionType *fcnType = fntype->castToBFunctionType();
   assert(fcnType);
   Bfunction *bfunc = new Bfunction(fcnValue, fcnType, name, asm_name, location,
