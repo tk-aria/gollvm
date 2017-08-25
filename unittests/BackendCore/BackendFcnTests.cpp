@@ -426,26 +426,33 @@ TEST(BackendFcnTests, TestMultipleExternalFcnsWithSameName) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendFcnTests, TestDeclAndDefWithDifferentTypes) {
+TEST(BackendFcnTests, TestDeclAndDefWithSameName) {
   FcnTestHarness h("foo");
   Llvm_backend *be = h.be();
   Location loc;
 
-  // Make two functions, one declaration and one definition,
-  // with the same name but with different types.
+  // Make two functions, one declaration and one definition
+  // with the same name.
 
-  // bar() *struct{}
+  // first with same type.
+  // bar() int32
+  Btype *bi32t = be->integer_type(false, 32);
+  BFunctionType *btf1 = mkFuncTyp(be,
+                                  L_RES, bi32t,
+                                  L_END);
+
+  // then with different types.
+  // baz() *struct{}
   Btype *bs0t = mkBackendStruct(be, nullptr);
   Btype *bps0t = be->pointer_type(bs0t);
-  BFunctionType *btf1 = mkFuncTyp(be,
+  BFunctionType *btf2 = mkFuncTyp(be,
                                   L_RES, bps0t,
                                   L_END);
 
-  // bar() *struct{ int32 x }
-  Btype *bi32t = be->integer_type(false, 32);
+  // baz() *struct{ int32 x }
   Btype *bs1t = mkBackendStruct(be, bi32t, "x", nullptr);
   Btype *bps1t = be->pointer_type(bs1t);
-  BFunctionType *btf2 = mkFuncTyp(be,
+  BFunctionType *btf3 = mkFuncTyp(be,
                                   L_RES, bps1t,
                                   L_END);
 
@@ -454,25 +461,45 @@ TEST(BackendFcnTests, TestDeclAndDefWithDifferentTypes) {
   bool is_inl = true;
   bool split_stack = false;
   bool unique_sec = false;
+
+  // bar() declaration and definition
   Bfunction *bf1 = be->function(btf1, "bar", "bar", visible,
                                 true, // is_declaration
                                 is_inl, split_stack, unique_sec, loc);
-  Bfunction *bf2 = be->function(btf2, "bar", "bar", visible,
+  Bfunction *bf2 = be->function(btf1, "bar", "bar", visible,
+                                false, // is_declaration
+                                is_inl, split_stack, unique_sec, loc);
+
+  // baz() declaration and definition
+  Bfunction *bf3 = be->function(btf2, "baz", "baz", visible,
+                                true, // is_declaration
+                                is_inl, split_stack, unique_sec, loc);
+  Bfunction *bf4 = be->function(btf3, "baz", "baz", visible,
                                 false, // is_declaration
                                 is_inl, split_stack, unique_sec, loc);
 
   // Create calls to the functions
   Bexpression *call1 = h.mkCallExpr(be, bf1, nullptr);
-  h.mkLocal("x", bps0t, call1);
+  h.mkLocal("a", bi32t, call1);
 
   Bexpression *call2 = h.mkCallExpr(be, bf2, nullptr);
-  h.mkLocal("y", bps1t, call2);
+  h.mkLocal("b", bi32t, call2);
+
+  Bexpression *call3 = h.mkCallExpr(be, bf3, nullptr);
+  h.mkLocal("x", bps0t, call3);
+
+  Bexpression *call4 = h.mkCallExpr(be, bf4, nullptr);
+  h.mkLocal("y", bps1t, call4);
 
   const char *exp = R"RAW_RESULT(
-    %call.0 = call {}* bitcast ({ i32 }* (i8*)* @bar to {}* (i8*)*)(i8* nest undef)
-    store {}* %call.0, {}** %x
-    %call.1 = call { i32 }* @bar(i8* nest undef)
-    store { i32 }* %call.1, { i32 }** %y
+    %call.0 = call i32 @bar(i8* nest undef)
+    store i32 %call.0, i32* %a
+    %call.1 = call i32 @bar(i8* nest undef)
+    store i32 %call.1, i32* %b
+    %call.2 = call {}* bitcast ({ i32 }* (i8*)* @baz to {}* (i8*)*)(i8* nest undef)
+    store {}* %call.2, {}** %x
+    %call.3 = call { i32 }* @baz(i8* nest undef)
+    store { i32 }* %call.3, { i32 }** %y
   )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);
