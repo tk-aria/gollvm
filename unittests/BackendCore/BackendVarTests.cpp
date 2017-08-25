@@ -433,4 +433,41 @@ TEST(BackendVarTests, GlobalVarSetInitToComposite) {
   be->global_variable_set_init(g1, scon);
 }
 
+TEST(BackendVarTests, GlobalVarsWithSameName) {
+
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
+
+  Location loc;
+  Btype *bi32t = be->integer_type(false, 32);
+  Btype *bst = mkBackendStruct(be, bi32t, "f", nullptr);
+
+  // Create two global variables with same name, one is
+  // a declaration (external), the other is a definition.
+  // They should refer to the same underlying global var.
+
+  // declare x as external int32;
+  bool hidden = false;
+  bool common = false;
+  bool external = true;
+  Bvariable *gvdecl =
+      be->global_variable("x", "x", bi32t, external,
+                          hidden, common, loc);
+  ASSERT_TRUE(gvdecl != nullptr);
+
+  // define x as non-external struct
+  external = false;
+  Bvariable *gv =
+      be->global_variable("x", "x", bst, external,
+                          hidden, common, loc);
+  ASSERT_TRUE(gv != nullptr);
+  EXPECT_TRUE(isa<GlobalVariable>(gv->value()));
+  EXPECT_EQ(repr(gv->value()), "@x = global { i32 } zeroinitializer");
+  EXPECT_EQ(repr(gvdecl->value()),
+      "i32* getelementptr inbounds ({ i32 }, { i32 }* @x, i32 0, i32 0)");
+
+  bool broken = h.finish(PreserveDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+}
+
 }
