@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "14729e29_caa65d49",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1934,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-08-25T18:18:42Z",
+      "side": 1,
+      "message": "Discussed offline -- there may be some fixup needed here for the debug meta-data in the case where you have an external decl followed by definition. I think better addressed in a follow-on CL however.",
+      "revId": "d87bbaaecb7c25af0222d12f57af03bae0cc826e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
