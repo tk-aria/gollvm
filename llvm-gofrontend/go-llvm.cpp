@@ -2456,7 +2456,7 @@ bool Llvm_backend::function_set_parameters(
 // FIXME: convert to use new Bnode walk paradigm.
 //
 class GenBlocks {
-public:
+ public:
   GenBlocks(llvm::LLVMContext &context, Llvm_backend *be,
             Bfunction *function, Bnode *topNode,
             DIBuildHelper *diBuildHelper, llvm::BasicBlock *entryBlock);
@@ -2493,6 +2493,15 @@ public:
   llvm::BasicBlock *populateFinallyBlock(llvm::BasicBlock *finBB,
                                          Bvariable *finvar,
                                          llvm::Value *extmp);
+  void walkReturn(llvm::BasicBlock *curblock, Bexpression *re);
+  void appendLifetimeIntrinsic(llvm::Value *alloca,
+                               llvm::Instruction *insertBefore,
+                               llvm::BasicBlock *curBlock,
+                               bool isStart);
+  void insertLifetimeMarkersForBlock(Bblock *block,
+                                     llvm::Instruction *insertBefore,
+                                     llvm::BasicBlock *llbb,
+                                     bool isStart);
   DIBuildHelper *dibuildhelper() const { return dibuildhelper_; }
   Llvm_linemap *linemap() { return be_->linemap(); }
 
@@ -2501,6 +2510,7 @@ public:
   Llvm_backend *be_;
   Bfunction *function_;
   DIBuildHelper *dibuildhelper_;
+  std::vector<Bblock *> blockStack_;
   std::map<LabelId, llvm::BasicBlock *> labelmap_;
   std::vector<llvm::BasicBlock*> padBlockStack_;
   std::set<llvm::AllocaInst *> temporariesDiscovered_;
@@ -2545,6 +2555,97 @@ llvm::BasicBlock *GenBlocks::getBlockForLabel(Blabel *lab) {
   llvm::BasicBlock *bb = mkLLVMBlock("label", lab->label());
   labelmap_[lab->label()] = bb;
   return bb;
+}
+
+void GenBlocks::appendLifetimeIntrinsic(llvm::Value *alloca,
+                                        llvm::Instruction *insertBefore,
+                                        llvm::BasicBlock *curBlock,
+                                        bool isStart)
+{
+  LIRBuilder builder(context_, llvm::ConstantFolder());
+  if (insertBefore)
+    builder.SetInsertPoint(insertBefore);
+  else
+    builder.SetInsertPoint(curBlock);
+
+  llvm::AllocaInst *ai = llvm::cast<llvm::AllocaInst>(alloca);
+
+  // expect array size of 1 given how we constructed it
+  assert(ai->getArraySize() == builder.getInt64(1) ||
+         ai->getArraySize() == builder.getInt32(1));
+
+  // grab type, compute type size
+  llvm::Type *ait = ai->getAllocatedType();
+  uint64_t typSiz = be_->llvmTypeSize(ait);
+  llvm::ConstantInt *allocaSize = builder.getInt64(typSiz);
+
+  if (isStart)
+    builder.CreateLifetimeStart(alloca, allocaSize);
+  else
+    builder.CreateLifetimeEnd(alloca, allocaSize);
+}
+
+// A couple of notes on lifetime markers:
+//
+// Markers are used to feed information on variable lifetimes from the
+// front end to the back end; they describe the range within which a
+// variable is being used. If two variables have disjoint lifetime
+// ranges, they can be allocated to the same stack slot. Example:
+//
+//     func foo(x int) {
+//       var k [10]int64
+//       if ... {
+//          var q [10]int64
+//          ...
+//       } else {
+//          var r [10]int64
+//          ...
+//       }
+//
+// Assuming that 'q' and 'r' are stack allocated, one can observe that
+// it is safe to have them share a single region on the stack, since
+// their lifetimes are disjoint. Conversely, 'q' and 'k' are not safe
+// to share a stack slot, since their lifetimes overlap.
+//
+// The front end helpfully informs the backend about lifetimes of
+// user-declared variables by calling out the specific vars declared within
+// a block when the block is created. Given a block, this routine below
+// walks through the block and inserts either lifetime "begin" markers
+// or lifetime "end" markers depending on which the caller requests.
+//
+// A couple of items to note:
+//
+// - the front end also manufactures compiler temporaries, however at the
+//   moment it doesn't try to associate temps with a given block (the code
+//   below doesn't address these sorts of variables)
+//
+// - if there are no lifetime intrinsics for a given stack-allocated
+//   variable, the back end will assume that it is live throughout the
+//   entire function (the BE will not attempt to retroactively discover
+//   the var lifetime)
+//
+// - the LLVM inliner will insert lifetime intrinsics for stack-allocated
+//   variables that don't already have lifetime intrinsics when inlining
+//   a function body (for example, if the variable 'k' in the function
+//   above had no lifetime markers, and 'foo' were inlined into another
+//   routine, the inliner will place markers for 'k' before/after the
+//   blob of IR corresponding to the function body.
+//
+// - the BE is designed to tolerate lifetime markers that are imprecise
+//   in the sense that they over-estimate var lifetimes. It is not set up
+//   to handle markers under-estimate lifetimes.
+//
+
+void GenBlocks::insertLifetimeMarkersForBlock(Bblock *block,
+                                              llvm::Instruction *insertBefore,
+                                              llvm::BasicBlock *llbb,
+                                              bool isStart)
+{
+  assert(llbb);
+  for (auto v : block->vars()) {
+    llvm::Value *ai = v->value();
+    appendLifetimeIntrinsic(ai, insertBefore, llbb, isStart);
+  }
 }
 
 // This helper routine takes a garden variety call instruction and
@@ -2801,6 +2902,19 @@ llvm::BasicBlock *GenBlocks::eraseBlockIfUnused(llvm::BasicBlock *bb)
   return bb;
 }
 
+void GenBlocks::walkReturn(llvm::BasicBlock *curblock, Bexpression *re)
+{
+  llvm::BasicBlock *bb = walkExpr(curblock, re);
+  assert(curblock == bb);
+  if (curblock) {
+    llvm::Instruction *term = curblock->getTerminator();
+    assert(term);
+    for (auto it = blockStack_.rbegin(); it != blockStack_.rend(); ++it)
+      insertLifetimeMarkersForBlock(*it, term, curblock, false);
+  }
+}
+
+
 // In most cases a return statement is handled in canonical way,
 // that is, any associated expressions are added to the current block
 // (including an llvm::ReturnInst) and the current block is closed out.
@@ -2837,9 +2951,9 @@ llvm::BasicBlock *GenBlocks::genReturn(Bstatement *rst,
     llvm::BranchInst::Create(finallyBlock_, curblock);
   } else {
     // Walk return expression
-    llvm::BasicBlock *bb = walkExpr(curblock, re);
-    assert(curblock == bb);
+    walkReturn(curblock, re);
   }
+
   // A return terminates the current block
   return nullptr;
 }
@@ -2975,9 +3089,9 @@ llvm::BasicBlock *GenBlocks::populateFinallyBlock(llvm::BasicBlock *finBB,
   if (cachedReturn_ != nullptr) {
     llvm::BasicBlock *curblock = finRetBB;
     Bexpression *re = cachedReturn_->getReturnStmtExpr();
-    llvm::BasicBlock *bb = walkExpr(curblock, re);
-    assert(curblock == bb);
+    walkReturn(curblock, re);
     cachedReturn_ = nullptr;
+    finRetBB = nullptr;
   }
 
   // Populate resume block
@@ -3176,12 +3290,18 @@ llvm::BasicBlock *GenBlocks::walk(Bnode *node,
     }
     case N_BlockStmt: {
       Bblock *bblock = stmt->castToBblock();
+      if (curblock)
+        insertLifetimeMarkersForBlock(bblock, nullptr, curblock, true);
+      blockStack_.push_back(bblock);
       if (dibuildhelper_)
         dibuildhelper_->beginLexicalBlock(bblock);
       for (auto &st : stmt->getChildStmts())
         curblock = walk(st, curblock);
       if (dibuildhelper_)
         dibuildhelper_->endLexicalBlock(bblock);
+      if (curblock)
+        insertLifetimeMarkersForBlock(bblock, nullptr, curblock, false);
+      blockStack_.pop_back();
       break;
     }
     case N_IfStmt: {
