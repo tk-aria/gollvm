@@ -470,4 +470,65 @@ TEST(BackendVarTests, GlobalVarsWithSameName) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
+TEST(BackendVarTests, TestVarLifetimeInsertion) {
+
+  FcnTestHarness h;
+  Llvm_backend *be = h.be();
+  BFunctionType *befty1 = mkFuncTyp(be, L_END);
+  Bfunction *func = h.mkFunction("foo", befty1);
+
+  Location loc;
+  Btype *bi32t = be->integer_type(false, 32);
+  Btype *bst = mkTwoFieldStruct(be, bi32t, bi32t);
+
+  // Block with two locals
+  Bvariable *x = be->local_variable(func, "x", bi32t, false, loc);
+  Bvariable *y = be->local_variable(func, "y", bst, false, loc);
+  const std::vector<Bvariable *> vars = { x, y };
+  Bblock *b1 = be->block(func, nullptr, vars, loc, loc);
+  Bstatement *is1 = be->init_statement(func, x, be->zero_expression(bi32t));
+  Bstatement *is2 = be->init_statement(func, y, be->zero_expression(bst));
+
+  // x := y.f1
+  Bexpression *ve1 = be->var_expression(x, VE_lvalue, loc);
+  Bexpression *ve2 = be->var_expression(y, VE_rvalue, loc);
+  Bexpression *fex = be->struct_field_expression(ve2, 1, loc);
+  Bstatement *as =
+      be->assignment_statement(func, ve1, fex, loc);
+  const std::vector<Bstatement *> slist = { is1, is2, as };
+  be->block_add_statements(b1, slist);
+  Bstatement *bs = be->block_statement(b1);
+  h.addStmt(bs);
+
+  bool broken = h.finish(StripDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+
+  const char *exp = R"RAW_RESULT(
+  define void @foo(i8* nest %nest.0) #0 {
+  entry:
+    %x = alloca i32
+    %y = alloca { i32, i32 }
+    %0 = bitcast i32* %x to i8*
+    call void @llvm.lifetime.start.p0i8(i64 4, i8* %0)
+    %1 = bitcast { i32, i32 }* %y to i8*
+    call void @llvm.lifetime.start.p0i8(i64 8, i8* %1)
+    store i32 0, i32* %x
+    %cast.0 = bitcast { i32, i32 }* %y to i8*
+    %cast.1 = bitcast { i32, i32 }* @const.0 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.0, i8* %cast.1, i64 8, i32 4, i1 false)
+    %field.0 = getelementptr inbounds { i32, i32 }, { i32, i32 }* %y, i32 0, i32 1
+    %y.field.ld.0 = load i32, i32* %field.0
+    store i32 %y.field.ld.0, i32* %x
+    %2 = bitcast i32* %x to i8*
+    call void @llvm.lifetime.end.p0i8(i64 4, i8* %2)
+    %3 = bitcast { i32, i32 }* %y to i8*
+    call void @llvm.lifetime.end.p0i8(i64 8, i8* %3)
+    ret void
+  }
+    )RAW_RESULT";
+
+  bool isOK2 = h.expectValue(func->function(), exp);
+  EXPECT_TRUE(isOK2 && "Value does not have expected contents");
+}
+
 }
