@@ -1294,7 +1294,7 @@ TEST(BackendExprTests, CreateStringConstantExpressions) {
   {
     Bexpression *sblah = be->string_constant_expression("blah");
     const char *exp = R"RAW_RESULT(
-    i8* getelementptr inbounds ([5 x i8], [5 x i8]* @0, i32 0, i32 0)
+    i8* getelementptr inbounds ([5 x i8], [5 x i8]* @const.0, i32 0, i32 0)
     )RAW_RESULT";
     bool isOK = h.expectValue(sblah->value(), exp);
     EXPECT_TRUE(isOK && "Value does not have expected contents");

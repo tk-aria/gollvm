@@ -39,6 +39,7 @@ public:
   Btype *btype() { return type_; }
   const std::string &name() { return name_; }
   llvm::Value *value() { return value_; }
+  void setValue(llvm::Value *v) { value_ = v; }
   bool addrtaken() { return addrtaken_; }
   WhichVar flavor() const { return which_; }
   bool isTemporary() const { return temporary_; }

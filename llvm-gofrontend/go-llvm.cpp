@@ -1073,9 +1073,10 @@ Bexpression *Llvm_backend::string_constant_expression(const std::string &val)
 
   // New string. Manufacture a module-scope var to hold the constant,
   // then install various maps.
+  std::string ctag(namegen("const"));
   Bvariable *svar =
       makeModuleVar(makeAuxType(scon->getType()),
-                    "", "", Location(), MV_Constant, MV_DefaultSection,
+                    ctag, "", Location(), MV_Constant, MV_DefaultSection,
                     MV_NotInComdat, MV_DefaultVisibility,
                     MV_NotExternallyInitialized, MV_SkipDebug,
                     llvm::GlobalValue::PrivateLinkage, scon, 1);
@@ -1874,11 +1875,43 @@ Llvm_backend::makeModuleVar(Btype *btype,
   llvm::Constant *init =
       (isExtInit == MV_ExternallyInitialized ? nullptr :
        llvm::Constant::getNullValue(btype->type()));
+  bool ishidden = isHiddenVisibility == MV_HiddenVisibility;
   std::string gname(asm_name.empty() ? name : asm_name);
-  llvm::GlobalVariable *glob = new llvm::GlobalVariable(
-      module(), btype->type(), isConstant == MV_Constant,
-      linkage, init, gname);
-  if (isHiddenVisibility == MV_HiddenVisibility)
+  llvm::GlobalVariable *glob = module_->getGlobalVariable(gname);
+  llvm::Value *old = nullptr;
+  if (glob && glob->hasHiddenVisibility() == ishidden) {
+    // A global variable with same name already exists.
+    if (glob->getType()->getElementType() == btype->type()) {
+      assert(glob->isConstant() == (isConstant == MV_Constant));
+      assert(glob->hasComdat() == (inComdat == MV_InComdat));
+      assert(glob->getLinkage() == linkage);
+
+      if (isExtInit == MV_NotExternallyInitialized) {
+        // A definition overrides a declaration for external var.
+        glob->setExternallyInitialized(false);
+        if (alignment)
+          glob->setAlignment(alignment);
+        if (initializer)
+          glob->setInitializer(initializer);
+      }
+
+      auto it = valueVarMap_.find(glob);
+      assert(it != valueVarMap_.end());
+      Bvariable *bv = it->second;
+      return bv;
+    } else {
+      // A declaration with different type is found.
+      // Remove this declaration. Its references will be replaced
+      // with a new definition bit-casted to the old type.
+      old = glob;
+      glob->removeFromParent();
+    }
+  }
+
+  glob = new llvm::GlobalVariable(module(), btype->type(),
+                                  isConstant == MV_Constant,
+                                  linkage, init, gname);
+  if (ishidden)
     glob->setVisibility(llvm::GlobalValue::HiddenVisibility);
   if (alignment)
     glob->setAlignment(alignment);
@@ -1902,6 +1935,21 @@ Llvm_backend::makeModuleVar(Btype *btype,
     bool exported = (isHiddenVisibility != MV_HiddenVisibility);
     dibuildhelper()->processGlobal(bv, exported);
   }
+
+  // Fix up old declaration if there is one
+  if (old) {
+    assert(llvm::isa<llvm::PointerType>(old->getType()));
+    llvm::Type *declTyp =
+        llvm::cast<llvm::PointerType>(old->getType())->getElementType();
+    llvm::Constant *newDecl = module_->getOrInsertGlobal(gname, declTyp);
+    old->replaceAllUsesWith(newDecl);
+    old->deleteValue();
+    Bvariable *declbv = valueVarMap_[old];
+    declbv->setValue(newDecl);
+    valueVarMap_.erase(old);
+    valueVarMap_[newDecl] = declbv;
+  }
+
   return bv;
 }
 
