@@ -1717,7 +1717,9 @@ Bstatement *Llvm_backend::if_statement(Bfunction *bfunction,
                                        Bexpression *condition,
                                        Bblock *then_block, Bblock *else_block,
                                        Location location) {
-  if (condition == errorExpression())
+  if (condition == errorExpression() || then_block->hasError())
+    return errorStatement();
+  if (else_block && else_block->hasError())
     return errorStatement();
   Btype *bt = makeAuxType(llvmBoolType());
   Bexpression *conv = convert_expression(bt, condition, location);
@@ -1827,8 +1829,11 @@ Bblock *Llvm_backend::block(Bfunction *function, Bblock *enclosing,
 void Llvm_backend::block_add_statements(Bblock *bblock,
                            const std::vector<Bstatement *> &statements) {
   for (auto st : statements)
-    if (st == errorStatement())
+    if (st == errorStatement()) {
+      if (bblock)
+        bblock->setError();
       return;
+  }
   assert(bblock);
   for (auto st : statements)
     nbuilder_.addStatementToBlock(bblock, st);
@@ -1838,6 +1843,8 @@ void Llvm_backend::block_add_statements(Bblock *bblock,
 
 Bstatement *Llvm_backend::block_statement(Bblock *bblock)
 {
+  if (bblock->hasError())
+    return errorStatement();
   return bblock; // class Bblock inherits from Bstatement
 }
 
