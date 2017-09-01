@@ -179,7 +179,7 @@ Bblock::Bblock(Bfunction *func,
                const std::vector<Bvariable *> &vars,
                Location loc)
     : Bstatement(N_BlockStmt, func, std::vector<Bnode *>(), loc)
-    , vars_(vars)
+    , vars_(vars), error_(false)
 {
 }
 

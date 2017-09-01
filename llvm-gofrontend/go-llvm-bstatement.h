@@ -159,6 +159,9 @@ class Bblock : public Bstatement {
   // the backend temporary_variable() method-- allow for this here.
   void addTemporaryVariable(Bvariable *var);
 
+  void setError() { error_ = true; }
+  bool hasError() { return error_; }
+
  private:
   friend class BnodeBuilder;
   Bblock(Bfunction *func,
@@ -167,6 +170,7 @@ class Bblock : public Bstatement {
 
  private:
   std::vector<Bvariable *> vars_;
+  bool error_;
 };
 
 #endif // LLVMGOFRONTEND_GO_LLVM_BSTATEMENT_H
