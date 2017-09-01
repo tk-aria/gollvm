@@ -120,6 +120,7 @@ def perform():
   outfile = None
   asmfile = None
   minus_s = False
+  minus_c = False
   for ii in range(1, len(sys.argv)):
     clarg = sys.argv[ii]
     if skipc != 0:
@@ -127,6 +128,9 @@ def perform():
       continue
     if clarg == "-S":
       minus_s = True
+      continue
+    if clarg == "-c":
+      minus_c = True
       continue
     if clarg == "-o":
       outfile = sys.argv[ii+1]
@@ -137,13 +141,54 @@ def perform():
       iarg = sys.argv[ii+1]
       iargs.append(iarg)
       continue
+    if clarg.startswith("-I"):
+      iarg = clarg[2:]
+      iargs.append(iarg)
+      continue
     if clarg == "-L":
       skipc = 1
       larg = sys.argv[ii+1]
       largs.append(larg)
       continue
+    if clarg.startswith("-L"):
+      larg = clarg[2:]
+      largs.append(larg)
+      continue
     if clarg == "-v":
       flag_trace_llinvoc = True
+
+    # redirect some gcc flags to the ones gollvm uses
+    if clarg == "-O":
+      clarg = "-O1"
+    if clarg == "-w":
+      clarg = "-no-warn"
+
+    # dummy flags that are not supported by gollvm
+    if clarg == "-lm":
+      continue # TODO: if the linker is invoked, pass this to the linker?
+    if clarg == "-fbounds-check":
+      continue
+    if clarg == "-finline-functions":
+      continue
+    if clarg == "-fno-diagnostics-show-caret":
+      continue
+    if clarg == "-fno-show-column":
+      continue
+    if clarg == "-fno-var-tracking-assignments":
+      continue
+    if clarg == "-fomit-frame-pointer":
+      continue
+    if clarg == "-funroll-loops":
+      continue
+    if clarg == "-gno-record-gcc-switches":
+      continue
+    if clarg == "-pedantic-errors":
+      continue
+    if clarg.startswith("-fdiagnostics-color"):
+      continue
+    if clarg.startswith("-fdebug-prefix-map"):
+      continue
+
     nargs.append(clarg)
 
   if not outfile:
@@ -157,8 +202,14 @@ def perform():
   nargs.append("-o")
   nargs.append(asmfile)
 
-  golibargs = form_golibargs(sys.argv[0])
-  largs.append(golibargs)
+  if minus_c:
+    objfile = "%s" % outfile
+  else:
+    objfile = "%s.o" % outfile
+
+  if not largs:
+    golibargs = form_golibargs(sys.argv[0])
+    largs.append(golibargs)
   nargs.append("-L")
   nargs.append(":".join(largs))
   if iargs:
@@ -179,12 +230,24 @@ def perform():
 
   # Invoke the assembler
   if not minus_s:
-    ascmd = "as %s -o %s" % (asmfile, outfile)
+    ascmd = "as %s -o %s" % (asmfile, objfile)
     u.verbose(1, "asm command is: %s" % ascmd)
     rc = u.docmdnf(ascmd)
     if rc != 0:
       u.verbose(1, "return code %d from %s" % (rc, ascmd))
       return 1
+
+    # Invoke the linker
+    # Right now we use the real gccgo as the linker
+    if not minus_c:
+      bd = os.path.dirname(sys.argv[0])
+      driver = "%s/gccgo.real" % bd
+      ldcmd = "%s %s -o %s" % (driver, objfile, outfile)
+      u.verbose(1, "link command is: %s" % ldcmd)
+      rc = u.docmdnf(ldcmd)
+      if rc != 0:
+        u.verbose(1, "return code %d from %s" % (rc, ldcmd))
+        return 1
 
   return 0
 
