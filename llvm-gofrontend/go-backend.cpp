@@ -52,8 +52,6 @@ saw_errors (void)
 void
 go_imported_unsafe (void)
 {
-  // FIXME
-  std::cerr << "FIXME: go_imported_unsafe not yet implemented\n";
 }
 
 static const char *
