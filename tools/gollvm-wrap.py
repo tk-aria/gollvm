@@ -172,8 +172,6 @@ def perform():
       continue
     if clarg == "-fno-diagnostics-show-caret":
       continue
-    if clarg == "-fno-show-column":
-      continue
     if clarg == "-fno-var-tracking-assignments":
       continue
     if clarg == "-fomit-frame-pointer":
