@@ -22,6 +22,30 @@
       "revId": "8d56190e10f1fa76ebc931ae9727babd26fe4ae5",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2f4df836_94ac4b3e",
+        "filename": "unittests/BackendCore/BackendVarTests.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 530,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-09-05T22:06:22Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d1590b5e_e1fa3e8c",
+      "range": {
+        "startLine": 530,
+        "startChar": 7,
+        "endLine": 530,
+        "endChar": 12
+      },
+      "revId": "8d56190e10f1fa76ebc931ae9727babd26fe4ae5",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
