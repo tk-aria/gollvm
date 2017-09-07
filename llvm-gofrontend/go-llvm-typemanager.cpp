@@ -1119,7 +1119,7 @@ TypeManager::setPlaceholderStructType(Btype *placeholder,
     return false;
   for (unsigned i = 0; i < rawfields.size(); ++i) {
     if (rawfields[i].btype == errorType_)
-      return errorType_;
+      return false;
   }
   std::vector<Btyped_identifier> fields = sanitizeFields(rawfields);
   assert(anonTypes_.find(placeholder) == anonTypes_.end());
