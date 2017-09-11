@@ -67,7 +67,7 @@ go_be_error_at(const Location location, const std::string& errmsg)
 {
   error_count += 1;
   emitLoc(location);
-  llvm::errs() << ": " << errmsg << '\n';
+  llvm::errs() << ": error: " << errmsg << '\n';
 }
 
 
@@ -76,7 +76,7 @@ go_be_warning_at(const Location location,
                  int opt, const std::string& warningmsg)
 {
   emitLoc(location);
-  llvm::errs() << ": " << warningmsg << '\n';
+  llvm::errs() << ": warning: " << warningmsg << '\n';
 }
 
 void
@@ -84,7 +84,7 @@ go_be_fatal_error(const Location location,
                   const std::string& fatalmsg)
 {
   emitLoc(location);
-  llvm::errs() << ": " << fatalmsg << '\n';
+  llvm::errs() << ": fatal error: " << fatalmsg << '\n';
   abort();
 }
 
@@ -93,7 +93,7 @@ go_be_inform(const Location location,
              const std::string& infomsg)
 {
   emitLoc(location);
-  llvm::errs() << ": " << infomsg << '\n';
+  llvm::errs() << ": note: " << infomsg << '\n';
 }
 
 void
