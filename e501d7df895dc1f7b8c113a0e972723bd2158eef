@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "17a552b4_ad1a6020",
+        "filename": "unittests/BackendCore/BackendNodeTests.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-09-11T22:19:29Z",
+      "side": 1,
+      "message": "This seems surprising -- why would you be seeing differences in the node visitor test for a change that only impacts nil pointer expressions?",
+      "revId": "e501d7df895dc1f7b8c113a0e972723bd2158eef",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
