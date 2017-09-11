@@ -539,8 +539,18 @@ Bexpression *Llvm_backend::genLoad(Bexpression *expr,
     loadResultType = expr->btype();
   }
 
+  llvm::Value *spaceVal = space->value();
+  if (spaceVal == nil_pointer_expression()->value()) {
+    llvm::Function *dummyFcn = errorFunction_->function();
+    BlockLIRBuilder builder(dummyFcn, this);
+    llvm::Type *spaceTyp = llvm::PointerType::get(loadResultType->type(), addressSpace_);
+    std::string tag(namegen("cast"));
+    spaceVal = builder.CreateBitCast(spaceVal, spaceTyp, tag);
+    space->appendInstructions(builder.instructions());
+  }
+
   llvm::PointerType *llpt =
-      llvm::cast<llvm::PointerType>(space->value()->getType());
+      llvm::cast<llvm::PointerType>(spaceVal->getType());
   llvm::Type *llrt = llpt->getElementType();
 
   // If this type meets our criteria (composite/aggregate whose
@@ -553,7 +563,7 @@ Bexpression *Llvm_backend::genLoad(Bexpression *expr,
     std::string ldname(tag);
     ldname += ".ld";
     ldname = namegen(ldname);
-    llvm::Instruction *loadInst = new llvm::LoadInst(space->value(), ldname);
+    llvm::Instruction *loadInst = new llvm::LoadInst(spaceVal, ldname);
     rval = nbuilder_.mkDeref(loadResultType, loadInst, space, loc);
     rval->appendInstruction(loadInst);
   } else {
@@ -562,7 +572,7 @@ Bexpression *Llvm_backend::genLoad(Bexpression *expr,
     // disconnect between the concrete Btype (for example, maybe
     // "{ int64, int64}") and the llvm::Type of the llvm::Value (which in
     // this case will be a pointer to struct, "{ int64, int64 }*").
-    rval = nbuilder_.mkDeref(loadResultType, space->value(), space, loc);
+    rval = nbuilder_.mkDeref(loadResultType, spaceVal, space, loc);
     rval->setVarExprPending(false, 0);
   }
   return rval;

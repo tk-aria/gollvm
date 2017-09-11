@@ -82,36 +82,36 @@ TEST(BackendNodeTests, VerifyVisitorBehavior) {
   EXPECT_EQ(res1, matsub);
 
   const char *exp = R"RAW_RESULT(
-    node - pre 17
-    pre child + 17 14
-    node + pre 14
-    pre child const 14 1
+    node - pre 18
+    pre child + 18 15
+    node + pre 15
+    pre child const 15 1
     node const pre 1
     node const post 1
-    post child const 14 1
-    pre child deref 14 13
-    node deref pre 13
-    pre child var 13 8
+    post child const 15 1
+    pre child deref 15 14
+    node deref pre 14
+    pre child var 14 8
     node var pre 8
     node var post 8
-    post child var 13 8
-    node deref post 13
-    post child deref 14 13
-    node + post 14
-    post child + 17 14
+    post child var 14 8
+    node deref post 14
+    post child deref 15 14
+    node + post 15
+    post child + 18 15
+    pre child deref 18 17
+    node deref pre 17
     pre child deref 17 16
     node deref pre 16
-    pre child deref 16 15
-    node deref pre 15
-    pre child var 15 10
+    pre child var 16 10
     node var pre 10
     node var post 10
-    post child var 15 10
-    node deref post 15
-    post child deref 16 15
+    post child var 16 10
     node deref post 16
     post child deref 17 16
-    node - post 17
+    node deref post 17
+    post child deref 18 17
+    node - post 18
     )RAW_RESULT";
 
   std::string reason;
