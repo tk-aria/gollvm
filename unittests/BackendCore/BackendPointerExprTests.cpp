@@ -197,6 +197,37 @@ TEST(BackEndPointerExprTests, CreateNilPointerExpression) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
+TEST(BackEndPointerExprTests, TestDerefNilPointer) {
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
+  Location loc;
+
+  Btype *bi32t = be->integer_type(false, 32);
+  Bexpression *npe = be->nil_pointer_expression();
+  Bexpression *deref = be->indirect_expression(bi32t, npe, false, loc);
+  h.mkLocal("x", bi32t, deref);
+
+  // Aggregate type
+  Btype *bst = mkTwoFieldStruct(be, bi32t, bi32t);
+  Bexpression *npe2 = be->nil_pointer_expression();
+  Bexpression *deref2 = be->indirect_expression(bst, npe2, false, loc);
+  h.mkLocal("y", bst, deref2);
+
+  const char *exp = R"RAW_RESULT(
+    %deref.ld.0 = load i32, i32* null
+    store i32 %deref.ld.0, i32* %x
+    %cast.2 = bitcast { i32, i32 }* %y to i8*
+    %cast.3 = bitcast { i32, i32 }* null to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.2, i8* %cast.3, i64 8, i32 4, i1 false)
+  )RAW_RESULT";
+
+  bool isOK = h.expectBlock(exp);
+  EXPECT_TRUE(isOK && "Block does not have expected contents");
+
+  bool broken = h.finish(PreserveDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+}
+
 TEST(BackEndPointerExprTests, CircularPointerExpressions1) {
 
   // This testpoint is intended to verify handling of expressions
