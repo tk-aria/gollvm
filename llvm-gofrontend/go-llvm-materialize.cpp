@@ -873,48 +873,63 @@ Llvm_backend::makeConstCompositeExpr(Btype *btype,
                                      const std::vector<Bexpression *> &vals,
                                      Location location)
 {
-  llvm::SmallVector<llvm::Constant *, 64> llvals(numElements);
-  unsigned long nvals = vals.size();
+  llvm::Value *scon;
 
-  if (indexes) {
-    std::set<unsigned long> touched;
-    unsigned long nindxs = indexes->size();
-    for (unsigned ii = 0; ii < nindxs; ++ii) {
-      auto idx = (*indexes)[ii];
-      if (numElements != nvals)
-        touched.insert(idx);
-      Bexpression *bex = vals[ii];
-      llvm::Constant *con = llvm::cast<llvm::Constant>(bex->value());
-      llvm::Type *elt = llct->getTypeAtIndex(ii);
-      if (elt != con->getType())
-        con = llvm::ConstantExpr::getBitCast(con, elt);
-      llvals[idx] = con;
+  // If all elements are zero, just create a zero value for the
+  // aggregate type. No need to create LLVM Value for each element.
+  bool allZero = true;
+  for (auto v : vals) {
+    llvm::Constant *con = llvm::cast<llvm::Constant>(v->value());
+    if (!con->isNullValue()) {
+      allZero = false;
+      break;
     }
-    if (numElements != nvals) {
-      for (unsigned long ii = 0; ii < numElements; ++ii) {
-        if (touched.find(ii) == touched.end()) {
-          llvm::Type *elt = llct->getTypeAtIndex(ii);
-          llvals[ii] = llvm::Constant::getNullValue(elt);
+  }
+  if (allZero)
+    scon = llvm::ConstantAggregateZero::get(llct);
+  else {
+    llvm::SmallVector<llvm::Constant *, 64> llvals(numElements);
+    unsigned long nvals = vals.size();
+
+    if (indexes) {
+      std::set<unsigned long> touched;
+      unsigned long nindxs = indexes->size();
+      for (unsigned ii = 0; ii < nindxs; ++ii) {
+        auto idx = (*indexes)[ii];
+        if (numElements != nvals)
+          touched.insert(idx);
+        Bexpression *bex = vals[ii];
+        llvm::Constant *con = llvm::cast<llvm::Constant>(bex->value());
+        llvm::Type *elt = llct->getTypeAtIndex(ii);
+        if (elt != con->getType())
+          con = llvm::ConstantExpr::getBitCast(con, elt);
+        llvals[idx] = con;
+      }
+      if (numElements != nvals) {
+        for (unsigned long ii = 0; ii < numElements; ++ii) {
+          if (touched.find(ii) == touched.end()) {
+            llvm::Type *elt = llct->getTypeAtIndex(ii);
+            llvals[ii] = llvm::Constant::getNullValue(elt);
+          }
         }
       }
+    } else {
+      for (unsigned long ii = 0; ii < numElements; ++ii) {
+        llvm::Constant *con = llvm::cast<llvm::Constant>(vals[ii]->value());
+        llvm::Type *elt = llct->getTypeAtIndex(ii);
+        if (elt != con->getType())
+          con = llvm::ConstantExpr::getBitCast(con, elt);
+        llvals[ii] = con;
+      }
     }
-  } else {
-    for (unsigned long ii = 0; ii < numElements; ++ii) {
-      llvm::Constant *con = llvm::cast<llvm::Constant>(vals[ii]->value());
-      llvm::Type *elt = llct->getTypeAtIndex(ii);
-      if (elt != con->getType())
-        con = llvm::ConstantExpr::getBitCast(con, elt);
-      llvals[ii] = con;
-    }
-   }
 
-  llvm::Value *scon;
-  if (llct->isStructTy()) {
-    llvm::StructType *llst = llvm::cast<llvm::StructType>(llct);
-    scon = llvm::ConstantStruct::get(llst, llvals);
-  } else {
-    llvm::ArrayType *llat = llvm::cast<llvm::ArrayType>(llct);
-    scon = llvm::ConstantArray::get(llat, llvals);
+    if (llct->isStructTy()) {
+      llvm::StructType *llst = llvm::cast<llvm::StructType>(llct);
+      scon = llvm::ConstantStruct::get(llst, llvals);
+    } else {
+      llvm::ArrayType *llat = llvm::cast<llvm::ArrayType>(llct);
+      scon = llvm::ConstantArray::get(llat, llvals);
+    }
   }
 
   Binstructions noInstructions;
