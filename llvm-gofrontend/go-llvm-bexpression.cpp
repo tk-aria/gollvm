@@ -108,6 +108,12 @@ bool Bexpression::isConstant()
   if (!llvm::isa<llvm::Constant>(value_))
     return false;
 
+  // Not a constant if there is a pending load
+  if (value_->getType()->isPointerTy() &&
+      value_->getType()->getPointerElementType() ==
+        btype()->type())
+    return false;
+
   // In some cases, even the underlying value is an
   // llvm::Constant, the expression may be not. For
   // example, a var expression for a global variable,
