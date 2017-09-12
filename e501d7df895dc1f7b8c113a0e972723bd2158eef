@@ -34,6 +34,24 @@
       "revId": "e501d7df895dc1f7b8c113a0e972723bd2158eef",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f7d2c9c5_f0109bad",
+        "filename": "unittests/BackendCore/BackendNodeTests.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-09-12T15:31:34Z",
+      "side": 1,
+      "message": "Ah, ok that becomes clear now. \nI wonder if it would make sense to precompute the nil pointer expression in the backend constructor? Anyhow, that could be added later if need be.",
+      "parentUuid": "24750ff1_b8b08875",
+      "revId": "e501d7df895dc1f7b8c113a0e972723bd2158eef",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
