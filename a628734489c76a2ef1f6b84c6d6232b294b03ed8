@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1c150636_662531ad",
+        "filename": "llvm-gofrontend/go-llvm-materialize.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 892,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-09-12T23:54:45Z",
+      "side": 1,
+      "message": "I\u0027m not a big fan of gotos -- if it\u0027s a relatively small function like this I think it would be nicer to just have regular if/guard.",
+      "revId": "a628734489c76a2ef1f6b84c6d6232b294b03ed8",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
