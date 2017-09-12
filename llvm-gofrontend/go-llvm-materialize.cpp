@@ -875,6 +875,22 @@ Llvm_backend::makeConstCompositeExpr(Btype *btype,
 {
   llvm::SmallVector<llvm::Constant *, 64> llvals(numElements);
   unsigned long nvals = vals.size();
+  llvm::Value *scon;
+
+  // If all elements are zero, just create a zero value for the
+  // aggregate type. No need to create LLVM Value for each element.
+  bool allZero = true;
+  for (auto v : vals) {
+    llvm::Constant *con = llvm::cast<llvm::Constant>(v->value());
+    if (!con->isNullValue()) {
+      allZero = false;
+      break;
+    }
+  }
+  if (allZero) {
+    scon = llvm::ConstantAggregateZero::get(llct);
+    goto createBexpr;
+  }
 
   if (indexes) {
     std::set<unsigned long> touched;
@@ -908,7 +924,6 @@ Llvm_backend::makeConstCompositeExpr(Btype *btype,
     }
    }
 
-  llvm::Value *scon;
   if (llct->isStructTy()) {
     llvm::StructType *llst = llvm::cast<llvm::StructType>(llct);
     scon = llvm::ConstantStruct::get(llst, llvals);
@@ -917,6 +932,7 @@ Llvm_backend::makeConstCompositeExpr(Btype *btype,
     scon = llvm::ConstantArray::get(llat, llvals);
   }
 
+createBexpr:
   Binstructions noInstructions;
   Bexpression *bcon = nbuilder_.mkComposite(btype, scon, vals,
                                             noInstructions, location);
