@@ -163,9 +163,24 @@ Bexpression *Llvm_backend::materializeConversion(Bexpression *convExpr)
     }
   }
 
+  // If we're converting an aggregate type to an equivalent one,
+  // the conversion will happen on the pointer. For constant
+  // composite value, we need to make a variable for it to take
+  // the address. And the result will be pointer, so it has a
+  // load pending.
+  bool pending = false;
+  if (expr->isConstant() && val->getType()->isAggregateType()) {
+    llvm::Constant *cval = llvm::cast<llvm::Constant>(val);
+    Bvariable *cv = genVarForConstant(cval, expr->btype());
+    val = cv->value();
+    valType = val->getType();
+    toType = llvm::PointerType::get(toType, addressSpace_);
+    pending = true;
+  }
+
   Bexpression *rval = nullptr;
 
-  // If the we're converting between two different Btypes that have the
+  // If we're converting between two different Btypes that have the
   // same underlying LLVM type, then we can create a new Bexpression
   // for the conversion but not do anything else.
   if (toType == valType) {
@@ -265,6 +280,8 @@ Bexpression *Llvm_backend::materializeConversion(Bexpression *convExpr)
   // This may happen for composite values.
   if (expr->varExprPending())
     rval->setVarExprPending(expr->varContext());
+  else if (pending)
+    rval->setVarExprPending(false, 0);
 
   return rval;
 }
