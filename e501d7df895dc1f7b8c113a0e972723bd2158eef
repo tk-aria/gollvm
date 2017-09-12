@@ -16,6 +16,24 @@
       "revId": "e501d7df895dc1f7b8c113a0e972723bd2158eef",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "24750ff1_b8b08875",
+        "filename": "unittests/BackendCore/BackendNodeTests.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-09-12T15:29:00Z",
+      "side": 1,
+      "message": "This surprised me as well. In fact this is from nil_pointer_expression (in genLoad) creating a new Bexpression, causing other Bexpressions\u0027 id changed by 1.",
+      "parentUuid": "17a552b4_ad1a6020",
+      "revId": "e501d7df895dc1f7b8c113a0e972723bd2158eef",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
