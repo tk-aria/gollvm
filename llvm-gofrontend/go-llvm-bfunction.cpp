@@ -39,7 +39,8 @@ Bfunction::Bfunction(llvm::Constant *fcnValue,
       rtnValueMem_(nullptr), chainVal_(nullptr),
       paramsRegistered_(0), name_(name), asmName_(asmName),
       location_(location), splitStack_(YesSplit),
-      prologGenerated_(false), abiSetupComplete_(false)
+      prologGenerated_(false), abiSetupComplete_(false),
+      errorSeen_(false)
 {
   if (! fcnType->followsCabi())
     abiSetupComplete_ = true;
@@ -305,8 +306,7 @@ std::vector<Bvariable*> Bfunction::getFunctionLocalVars()
 Bvariable *Bfunction::getBvarForValue(llvm::Value *val)
 {
   auto it = valueVarMap_.find(val);
-  assert(it != valueVarMap_.end());
-  return it->second;
+  return (it != valueVarMap_.end() ? it->second : nullptr);
 }
 
 Bvariable *Bfunction::getNthParamVar(unsigned argIdx)
@@ -402,6 +402,10 @@ void Bfunction::genProlog(llvm::BasicBlock *entry)
     if (paramInfo.disp() != ParmDirect)
       continue;
     Bvariable *v = getNthParamVar(pidx);
+    if (!v) {
+      assert(errorSeen());
+      continue;
+    }
     llvm::Value *sploc = llvm::cast<llvm::Instruction>(paramValues_[pidx]);
     argIdx += genArgSpill(v, paramInfo, &spills, sploc);
   }
@@ -425,6 +429,10 @@ void Bfunction::genProlog(llvm::BasicBlock *entry)
   if (! entry->empty()) {
     for (unsigned pidx = 0; pidx < nParms; ++pidx) {
       Bvariable *v = getNthParamVar(pidx);
+      if (!v) {
+        assert(errorSeen());
+        continue;
+      }
       if (v->initializer() == nullptr)
         v->setInitializer(&entry->front());
     }
