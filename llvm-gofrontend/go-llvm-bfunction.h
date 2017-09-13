@@ -136,6 +136,12 @@ public:
   // the ABI type).  Exposed for unit testing.
   Bvariable *getNthParamVar(unsigned idx);
 
+  // Get/set whether we've seen errors in this function. At the
+  // moment this is used mainly to flag situations where there were
+  // errors in the parameter declaration.
+  bool errorSeen() const { return errorSeen_; }
+  void setErrorSeen(bool val) { errorSeen_ = val; }
+
  private:
 
   // Perform ABI-related setup for this function.
@@ -219,12 +225,27 @@ public:
   std::string name_;
   std::string asmName_;
 
-  // Other bits of info about this function: location, split stack flag,
-  // flag to indicate that we finished generating prolog.
+  // Location for this function.
   Location location_;
+
+  // Whether this is a split-stack function.
   SplitStackDisposition splitStack_;
+
+  // Whether prolog generation was completed successfully or not for
+  // this function. May have been skipped due to errors or if we're
+  // running unit tests.
   bool prologGenerated_;
+
+  // Used to implement lazy ABI setup -- this avoids doing ABI setup on
+  // external function we don't call, or in cases where there are errors.
   bool abiSetupComplete_;
+
+  // Initially false; set to true in cases where we infer that an
+  // error has taken place.  If a function is declared with N
+  // parameters, but we only see N-2 parameter vars created, this is
+  // typically an indication that a syntax error was encountered by
+  // the FE somewhere along the line.
+  bool errorSeen_;
 };
 
 #endif // LLVMGOFRONTEND_GO_LLVM_BFUNCTION_H

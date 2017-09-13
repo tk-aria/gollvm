@@ -14,6 +14,7 @@
 
 #include "go-llvm.h"
 #include "go-llvm-builtins.h"
+#include "go-llvm-diagnostics.h"
 #include "backend.h"
 #include "go-c.h"
 #include "go-system.h"
@@ -2452,7 +2453,17 @@ Bstatement *Llvm_backend::function_defer_statement(Bfunction *function,
 bool Llvm_backend::function_set_parameters(
     Bfunction *function, const std::vector<Bvariable *> &param_vars)
 {
-  // At the moment this is a no-op.
+  if (function == errorFunction_.get())
+    return true;
+
+  // If the number of param vars doesn't match up with the number expected,
+  // we interpret that to mean that the FE encountered a syntax error
+  // while processing a parameter. Flag the function in this case so that
+  // we can avoid avoid asserting when doing prolog processing for
+  // the function.
+  if (function->fcnType()->paramTypes().size() != param_vars.size())
+    function->setErrorSeen(true);
+
   return true;
 }
 
@@ -3408,7 +3419,7 @@ bool Llvm_backend::function_set_body(Bfunction *function,
 
   // Avoid debug meta-generation if errors seen
   DIBuildHelper *dibh = nullptr;
-  if (createDebugMetaData_ && errorCount_ == 0)
+  if (createDebugMetaData_ && errorCount_ == 0 && !go_be_saw_errors())
     dibh = dibuildhelper();
 
   // Walk the code statements
