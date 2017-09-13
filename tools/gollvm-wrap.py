@@ -121,6 +121,7 @@ def perform():
   asmfile = None
   minus_s = False
   minus_c = False
+  ofiles = []
   for ii in range(1, len(sys.argv)):
     clarg = sys.argv[ii]
     if skipc != 0:
@@ -187,6 +188,12 @@ def perform():
     if clarg.startswith("-fdebug-prefix-map"):
       continue
 
+    # skip .o files in compilation, but record
+    # them for linker invocation.
+    if clarg.endswith(".o"):
+      ofiles.append(clarg)
+      continue
+
     nargs.append(clarg)
 
   if not outfile:
@@ -240,7 +247,8 @@ def perform():
     if not minus_c:
       bd = os.path.dirname(sys.argv[0])
       driver = "%s/gccgo.real" % bd
-      ldcmd = "%s %s -o %s" % (driver, objfile, outfile)
+      ldcmd = "%s %s -o %s " % (driver, objfile, outfile)
+      ldcmd += " ".join(ofiles) # pass extra .o files to the linker
       u.verbose(1, "link command is: %s" % ldcmd)
       rc = u.docmdnf(ldcmd)
       if rc != 0:
