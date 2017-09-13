@@ -2339,7 +2339,8 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
     }
   }
 
-  llvm::GlobalValue::LinkageTypes linkage = llvm::GlobalValue::ExternalLinkage;
+  llvm::GlobalValue::LinkageTypes linkage = is_visible ?
+      llvm::GlobalValue::ExternalLinkage : llvm::GlobalValue::InternalLinkage;
   llvm::StringRef fn(fns);
   llvm::Constant *fcnValue = nullptr;
   llvm::Value *declVal = module_->getNamedValue(fn);
@@ -2366,10 +2367,6 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
     llvm::Function *fcn = llvm::Function::Create(fty, linkage, fnt, module_);
 
     fcn->addFnAttr("disable-tail-calls", "true");
-
-    // visibility
-    if (!is_visible)
-      fcn->setVisibility(llvm::GlobalValue::HiddenVisibility);
 
     // inline/noinline
     if (!is_inlinable)
