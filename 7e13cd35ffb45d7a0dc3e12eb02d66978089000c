@@ -16,6 +16,24 @@
       "revId": "7e13cd35ffb45d7a0dc3e12eb02d66978089000c",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d330643c_1477fdc6",
+        "filename": "tools/gollvm-wrap.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 251,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-09-13T18:26:32Z",
+      "side": 1,
+      "message": "Done. I didn\u0027t know it. Thanks.\n\nIt needs to add a space before the .o args, so I just added it to the line above.",
+      "parentUuid": "052043e8_16b58d2c",
+      "revId": "7e13cd35ffb45d7a0dc3e12eb02d66978089000c",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
