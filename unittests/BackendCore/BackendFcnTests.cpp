@@ -101,7 +101,8 @@ TEST(BackendFcnTests, MakeFunction) {
         EXPECT_EQ(llfunc->getName(), ss.str());
         EXPECT_FALSE(llfunc->isVarArg());
         EXPECT_EQ(llfunc->hasFnAttribute(Attribute::NoInline), !inl);
-        EXPECT_EQ(llfunc->hasHiddenVisibility(), !vis);
+        EXPECT_EQ(llfunc->hasExternalLinkage(), vis);
+        EXPECT_EQ(llfunc->hasInternalLinkage(), !vis);
         EXPECT_EQ(befcn->splitStack() == Bfunction::YesSplit, !split);
       }
     }
@@ -237,7 +238,7 @@ TEST(BackendFcnTests, MakeMultipleDeclarations) {
   Btype *bi64t = be->integer_type(false, 64);
   BFunctionType *befty1 = mkFuncTyp(be, L_RES, bi32t, L_PARM, bi64t, L_END);
   BFunctionType *befty2 = mkFuncTyp(be, L_RES, bi64t, L_PARM, bi64t, L_END);
-  bool is_visible = false;
+  bool is_visible = true;
   bool is_declaration = true;
   bool is_inl = true;
   bool is_splitstack = true;
