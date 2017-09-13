@@ -283,6 +283,8 @@ int main(int argc, char **argv)
   case '3': OLvl = CodeGenOpt::Aggressive; break;
   }
 
+  go_no_warn = NoWarn;
+
   TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
   Options.DisableIntegratedAS = true;
   Optional<llvm::CodeModel::Model> CM = None;
