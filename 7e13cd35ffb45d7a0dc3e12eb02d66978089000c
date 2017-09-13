@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "052043e8_16b58d2c",
+        "filename": "tools/gollvm-wrap.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 251,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-09-13T15:57:33Z",
+      "side": 1,
+      "message": "Nit: this would be more idiomatic Python as\n\n  lcmd +\u003d \" \".join(ofiles)\n\nas opposed to the for loop.",
+      "revId": "7e13cd35ffb45d7a0dc3e12eb02d66978089000c",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
