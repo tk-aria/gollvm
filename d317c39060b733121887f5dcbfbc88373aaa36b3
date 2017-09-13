@@ -16,6 +16,24 @@
       "revId": "d317c39060b733121887f5dcbfbc88373aaa36b3",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2abad3c2_a20978b5",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2465,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-09-13T19:32:53Z",
+      "side": 1,
+      "message": "Sorry about that. Looks like the last bit of comment got eaten somehow. Will fix.",
+      "parentUuid": "9d932848_69d59efd",
+      "revId": "d317c39060b733121887f5dcbfbc88373aaa36b3",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
