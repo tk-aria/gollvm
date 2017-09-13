@@ -15,5 +15,6 @@
 #define GO_LLVM_DIAGNOSTICS_H
 
 extern bool go_be_saw_errors();
+extern bool go_no_warn;
 
 #endif // !defined(GO_LLVM_DIAGNOSTICS_H)

@@ -26,6 +26,8 @@ NoColumn("fno-show-column",
          llvm::cl::desc("Do not print column numbers in diagnostics."),
          llvm::cl::init(false));
 
+bool go_no_warn = false;
+
 static unsigned error_count = 0;
 
 bool go_be_saw_errors()
@@ -75,8 +77,10 @@ void
 go_be_warning_at(const Location location,
                  int opt, const std::string& warningmsg)
 {
-  emitLoc(location);
-  llvm::errs() << ": warning: " << warningmsg << '\n';
+  if (!go_no_warn) {
+    emitLoc(location);
+    llvm::errs() << ": warning: " << warningmsg << '\n';
+  }
 }
 
 void
