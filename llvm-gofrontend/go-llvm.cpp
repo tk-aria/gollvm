@@ -2076,8 +2076,10 @@ Bvariable *Llvm_backend::temporary_variable(Bfunction *function,
   std::string tname(namegen("tmpv"));
   Bvariable *tvar = local_variable(function, tname, btype,
                                    is_address_taken, location);
-  if (tvar == errorVariable_.get())
+  if (tvar == errorVariable_.get()) {
+    *pstatement = errorStatement();
     return tvar;
+  }
   tvar->markAsTemporary();
   Bstatement *is = init_statement(function, tvar, binit);
   *pstatement = is;
