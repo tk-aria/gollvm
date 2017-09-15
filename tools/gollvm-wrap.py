@@ -159,6 +159,8 @@ def perform():
       flag_trace_llinvoc = True
 
     # redirect some gcc flags to the ones gollvm uses
+    if clarg == "-fPIC":
+      clarg = "-relocation-model=pic"
     if clarg == "-O":
       clarg = "-O1"
     if clarg == "-w":
@@ -179,13 +181,21 @@ def perform():
       continue
     if clarg == "-funroll-loops":
       continue
+    if clarg == "-funsafe-math-optimizations":
+      continue
     if clarg == "-gno-record-gcc-switches":
+      continue
+    if clarg == "-mfancy-math-387":
+      continue
+    if clarg == "-minline-all-stringops":
       continue
     if clarg == "-pedantic-errors":
       continue
     if clarg.startswith("-fdiagnostics-color"):
       continue
     if clarg.startswith("-fdebug-prefix-map"):
+      continue
+    if clarg.startswith("-fgo-c-header"):
       continue
 
     # skip .o files in compilation, but record
