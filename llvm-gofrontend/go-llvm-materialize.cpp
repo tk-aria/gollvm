@@ -1443,7 +1443,7 @@ Llvm_backend::convertForAssignment(Btype *srcBType,
                                    llvm::Type *dstToType,
                                    BlockLIRBuilder *builder)
 {
-  llvm::Type *srcType = srcBType->type();
+  llvm::Type *srcType = srcVal->getType();
 
   if (dstToType == srcType)
     return srcVal;
