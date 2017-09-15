@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "dc8f3a49_089b432c",
+        "filename": "tools/gollvm-wrap.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 198,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-09-15T17:06:51Z",
+      "side": 1,
+      "message": "I think we will need to do some extra plumbing work for this one, to pass through to gofrontend, but I think that can wait until later...",
+      "revId": "b6e0110d4cede47bb921443a42fb52f70bf4c7af",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
