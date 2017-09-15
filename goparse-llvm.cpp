@@ -145,6 +145,11 @@ RelativeImportPath("fgo-relative-import-path",
                    cl::desc("Treat a relative import as relative to path."),
                    cl::init(""));
 
+static cl::opt<std::string>
+CHeader("fgo-c-header",
+        cl::desc("The C header file to write."),
+        cl::init(""));
+
 static cl::opt<int>
 EscapeDebugLevel("fgo-debug-escape",
                  cl::desc("Emit debugging information related to the "
@@ -212,7 +217,7 @@ static Llvm_backend *init_gogo(TargetMachine *Target,
   args.pkgpath = PackagePath.empty() ? NULL : PackagePath.c_str();
   args.prefix = PackagePrefix.empty() ? NULL : PackagePrefix.c_str();
   args.relative_import_path = RelativeImportPath.empty() ? NULL : RelativeImportPath.c_str();
-  args.c_header = NULL; // FIXME: not yet supported
+  args.c_header = CHeader.empty() ? NULL : CHeader.c_str();
   args.check_divide_by_zero = CheckDivideZero;
   args.check_divide_overflow = CheckDivideOverflow;
   args.compiling_runtime = CompilingRuntime;
