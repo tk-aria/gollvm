@@ -16,6 +16,24 @@
       "revId": "b6e0110d4cede47bb921443a42fb52f70bf4c7af",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d7c9fd48_9b4243c5",
+        "filename": "tools/gollvm-wrap.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 198,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-09-15T19:04:44Z",
+      "side": 1,
+      "message": "Good point. Done.",
+      "parentUuid": "dc8f3a49_089b432c",
+      "revId": "b6e0110d4cede47bb921443a42fb52f70bf4c7af",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
