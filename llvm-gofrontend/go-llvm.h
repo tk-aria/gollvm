@@ -420,7 +420,6 @@ public:
   enum ModVarConstant { MV_Constant, MV_NonConstant };
   enum ModVarSec { MV_UniqueSection, MV_DefaultSection };
   enum ModVarComdat { MV_InComdat, MV_NotInComdat };
-  enum ModVarVis { MV_HiddenVisibility, MV_DefaultVisibility };
   enum ModVarExtInit { MV_ExternallyInitialized, MV_NotExternallyInitialized };
   enum ModVarGenDebug { MV_GenDebug, MV_SkipDebug };
 
@@ -432,7 +431,6 @@ public:
                            ModVarConstant constant,
                            ModVarSec inUniqueSection,
                            ModVarComdat inComdat,
-                           ModVarVis isHiddenVisibility,
                            ModVarExtInit isExtInit,
                            ModVarGenDebug genDebug,
                            llvm::GlobalValue::LinkageTypes linkage,
