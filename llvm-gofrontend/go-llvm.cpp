@@ -663,7 +663,7 @@ Bvariable *Llvm_backend::genVarForConstant(llvm::Constant *conval,
   std::string ctag(namegen("const"));
   Bvariable *rv = makeModuleVar(type, ctag, "", Location(),
                                 MV_Constant, MV_DefaultSection,
-                                MV_NotInComdat, MV_DefaultVisibility,
+                                MV_NotInComdat,
                                 MV_NotExternallyInitialized, MV_SkipDebug,
                                 llvm::GlobalValue::PrivateLinkage,
                                 conval, 0);
@@ -1088,9 +1088,9 @@ Bexpression *Llvm_backend::string_constant_expression(const std::string &val)
   Bvariable *svar =
       makeModuleVar(makeAuxType(scon->getType()),
                     ctag, "", Location(), MV_Constant, MV_DefaultSection,
-                    MV_NotInComdat, MV_DefaultVisibility,
-                    MV_NotExternallyInitialized, MV_SkipDebug,
-                    llvm::GlobalValue::PrivateLinkage, scon, 1);
+                    MV_NotInComdat, MV_NotExternallyInitialized,
+                    MV_SkipDebug, llvm::GlobalValue::PrivateLinkage,
+                    scon, 1);
   llvm::Constant *varval = llvm::cast<llvm::Constant>(svar->value());
   llvm::Constant *bitcast =
       llvm::ConstantExpr::getBitCast(varval, stringType()->type());
@@ -1869,7 +1869,6 @@ Llvm_backend::makeModuleVar(Btype *btype,
                             ModVarConstant isConstant,
                             ModVarSec inUniqueSection,
                             ModVarComdat inComdat,
-                            ModVarVis isHiddenVisibility,
                             ModVarExtInit isExtInit,
                             ModVarGenDebug genDebug,
                             llvm::GlobalValue::LinkageTypes linkage,
@@ -1893,11 +1892,10 @@ Llvm_backend::makeModuleVar(Btype *btype,
   llvm::Constant *init =
       (isExtInit == MV_ExternallyInitialized ? nullptr :
        llvm::Constant::getNullValue(btype->type()));
-  bool ishidden = isHiddenVisibility == MV_HiddenVisibility;
   std::string gname(asm_name.empty() ? name : asm_name);
   llvm::GlobalVariable *glob = module_->getGlobalVariable(gname);
   llvm::Value *old = nullptr;
-  if (glob && glob->hasHiddenVisibility() == ishidden) {
+  if (glob && glob->getLinkage() == linkage) {
     // A global variable with same name already exists.
     if (glob->getType()->getElementType() == btype->type()) {
       assert(glob->isConstant() == (isConstant == MV_Constant));
@@ -1929,8 +1927,7 @@ Llvm_backend::makeModuleVar(Btype *btype,
   glob = new llvm::GlobalVariable(module(), btype->type(),
                                   isConstant == MV_Constant,
                                   linkage, init, gname);
-  if (ishidden)
-    glob->setVisibility(llvm::GlobalValue::HiddenVisibility);
+
   if (alignment)
     glob->setAlignment(alignment);
   if (initializer)
@@ -1950,7 +1947,7 @@ Llvm_backend::makeModuleVar(Btype *btype,
   assert(valueVarMap_.find(bv->value()) == valueVarMap_.end());
   valueVarMap_[bv->value()] = bv;
   if (genDebug == MV_GenDebug && dibuildhelper() && !errorCount_) {
-    bool exported = (isHiddenVisibility != MV_HiddenVisibility);
+    bool exported = (linkage == llvm::GlobalValue::ExternalLinkage);
     dibuildhelper()->processGlobal(bv, exported);
   }
 
@@ -1981,18 +1978,18 @@ Bvariable *Llvm_backend::global_variable(const std::string &var_name,
                                          bool in_unique_section,
                                          Location location)
 {
-  llvm::GlobalValue::LinkageTypes linkage = llvm::GlobalValue::ExternalLinkage;
+  llvm::GlobalValue::LinkageTypes linkage =
+      ( is_hidden ? llvm::GlobalValue::InternalLinkage :
+                    llvm::GlobalValue::ExternalLinkage);
 
   ModVarSec inUniqSec =
       (in_unique_section ? MV_UniqueSection : MV_DefaultSection);
-  ModVarVis varVis =
-      (is_hidden ? MV_HiddenVisibility : MV_DefaultVisibility);
   ModVarExtInit extInit =
       (is_external ? MV_ExternallyInitialized : MV_NotExternallyInitialized);
   Bvariable *gvar =
       makeModuleVar(btype, var_name, asm_name, location,
                     MV_NonConstant, inUniqSec, MV_NotInComdat,
-                    varVis, extInit, MV_GenDebug, linkage, nullptr);
+                    extInit, MV_GenDebug, linkage, nullptr);
   return gvar;
 }
 
@@ -2116,14 +2113,13 @@ Bvariable *Llvm_backend::implicit_variable(const std::string &name,
 
   ModVarComdat inComdat = (is_common ? MV_InComdat : MV_NotInComdat);
   ModVarSec inUniqSec = MV_DefaultSection;
-  ModVarVis varVis = MV_DefaultVisibility;
   ModVarConstant isConst = (is_constant ? MV_Constant : MV_NonConstant);
   ModVarExtInit extInit = MV_NotExternallyInitialized;
 
   Bvariable *gvar =
       makeModuleVar(btype, name, asm_name, Location(),
                     isConst, inUniqSec, inComdat,
-                    varVis, extInit, MV_SkipDebug, linkage,
+                    extInit, MV_SkipDebug, linkage,
                     nullptr, alignment);
   return gvar;
 }
@@ -2178,12 +2174,11 @@ Bvariable *Llvm_backend::immutable_struct(const std::string &name,
 
   ModVarSec inUniqueSec = MV_DefaultSection;
   ModVarComdat inComdat = (is_common ? MV_InComdat : MV_NotInComdat);
-  ModVarVis varVis = MV_DefaultVisibility;
   ModVarExtInit extInit = MV_NotExternallyInitialized;
   Bvariable *gvar =
       makeModuleVar(btype, name, asm_name, location,
                     MV_Constant, inUniqueSec, inComdat,
-                    varVis, extInit, MV_SkipDebug, linkage, nullptr);
+                    extInit, MV_SkipDebug, linkage, nullptr);
   return gvar;
 }
 
