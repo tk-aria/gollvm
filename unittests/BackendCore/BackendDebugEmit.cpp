@@ -36,7 +36,7 @@ TEST(BackendDebugEmit, TestSimpleDecl) {
         %x = alloca i32
         store i32 0, i32* %x
         call void @llvm.dbg.declare(metadata i32* %x, metadata !3,
-                                    metadata !11), !dbg !12
+                                    metadata !DIExpression()), !dbg !11
         ret void
       }
   )RAW_RESULT";
@@ -68,7 +68,8 @@ TEST(BackendDebugEmit, TestSimpleDecl2) {
   const char *exp = R"RAW_RESULT(
     define void @foo(i8* nest %nest.0, { i64, i64, i64 }* byval %p0) #0 {
     entry:
-      call void @llvm.dbg.declare(metadata { i64, i64, i64 }* %p0, metadata !3, metadata !15), !dbg !16
+      call void @llvm.dbg.declare(metadata { i64, i64, i64 }* %p0, metadata !3,
+                                  metadata !DIExpression()), !dbg !15
       ret void
     }
   )RAW_RESULT";
