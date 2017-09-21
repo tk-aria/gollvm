@@ -82,13 +82,13 @@ OutputFileName("o",
 
 // These are provided for compatibility purposes -- they are currently ignored.
 static cl::opt<bool>
-M64Option("m64",  cl::desc("Dummy -m64 arg."), cl::init(false));
+M64Option("m64",  cl::desc("Dummy -m64 arg."), cl::init(false), cl::ZeroOrMore);
 static cl::opt<bool>
-MinusGOption("g",  cl::desc("Dummy -g arg."), cl::init(false));
+MinusGOption("g",  cl::desc("Dummy -g arg."), cl::init(false), cl::ZeroOrMore);
 static cl::opt<bool>
-MinusCOption("c",  cl::desc("Dummy -c arg."), cl::init(false));
+MinusCOption("c",  cl::desc("Dummy -c arg."), cl::init(false), cl::ZeroOrMore);
 static cl::opt<bool>
-MinusVOption("v",  cl::desc("Dummy -v arg."), cl::init(false));
+MinusVOption("v",  cl::desc("Dummy -v arg."), cl::init(false), cl::ZeroOrMore);
 
 static cl::opt<bool>
 NoBackend("nobackend",
@@ -124,6 +124,11 @@ static cl::opt<bool>
 DumpIR("dump-ir",
         cl::desc("Dump LLVM IR for module at end of run."),
         cl::init(false));
+
+static cl::opt<bool>
+NoInline("fno-inline",
+         cl::desc("Disable inlining."),
+         cl::init(false));
 
 static cl::opt<bool>
 OptimizeAllocs("fgo-optimize-allocs",
@@ -326,6 +331,7 @@ int main(int argc, char **argv)
   std::unique_ptr<Llvm_backend> backend(init_gogo(Target.get(), Context,
                                                   module.get(), linemap.get()));
   backend->setTraceLevel(TraceLevel);
+  backend->setNoInline(NoInline);
 
   // Support -fgo-dump-ast
   if (DumpAst)

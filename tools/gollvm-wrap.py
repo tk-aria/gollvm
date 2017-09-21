@@ -90,14 +90,14 @@ def perform():
 
   # Perform a walk of the command line arguments looking for Go files.
   reg = re.compile(r"^\S+\.go$")
-  foundgo = False
+  gofile = None
   for clarg in sys.argv[1:]:
     m = reg.match(clarg)
     if m:
-      foundgo = True
+      gofile = clarg
       break
 
-  if not foundgo or flag_nollvm:
+  if not gofile or flag_nollvm:
     # No go files. Invoke real gccgo.
     bd = os.path.dirname(sys.argv[0])
     driver = "%s/gccgo.real" % bd
@@ -122,6 +122,7 @@ def perform():
   minus_s = False
   minus_c = False
   ofiles = []
+  ldflags = []
   for ii in range(1, len(sys.argv)):
     clarg = sys.argv[ii]
     if skipc != 0:
@@ -175,6 +176,8 @@ def perform():
       continue
     if clarg == "-fno-diagnostics-show-caret":
       continue
+    if clarg == "-fno-toplevel-reorder":
+      continue
     if clarg == "-fno-var-tracking-assignments":
       continue
     if clarg == "-fomit-frame-pointer":
@@ -202,11 +205,22 @@ def perform():
       ofiles.append(clarg)
       continue
 
+    if clarg == "-static":
+      ldflags.append(clarg)
+      continue
+    if clarg == "-static-libgo":
+      ldflags.append(clarg)
+      continue
+
     nargs.append(clarg)
 
   if not outfile:
-    u.error("fatal error: unable to find -o "
-            "option in clargs: %s" % " ".join(sys.argv))
+    if minus_s:
+      outfile = "%s.s" % gofile[:len(gofile)-3] # strip .go suffix
+    elif minus_c:
+      outfile = "%s.o" % gofile[:len(gofile)-3] # strip .go suffix
+    else:
+      outfile = "a.out"
 
   if minus_s:
     asmfile = "%s" % outfile
@@ -255,7 +269,8 @@ def perform():
     if not minus_c:
       bd = os.path.dirname(sys.argv[0])
       driver = "%s/gccgo.real" % bd
-      ldcmd = "%s %s -o %s " % (driver, objfile, outfile)
+      ldflags += ["-o", outfile]
+      ldcmd = "%s %s %s " % (driver, " ".join(ldflags), objfile)
       ldcmd += " ".join(ofiles) # pass extra .o files to the linker
       u.verbose(1, "link command is: %s" % ldcmd)
       rc = u.docmdnf(ldcmd)

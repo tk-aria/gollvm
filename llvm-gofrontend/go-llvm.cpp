@@ -52,6 +52,7 @@ Llvm_backend::Llvm_backend(llvm::LLVMContext &context,
     , linemap_(linemap)
     , addressSpace_(0)
     , traceLevel_(0)
+    , noInline_(false)
     , checkIntegrity_(true)
     , createDebugMetaData_(true)
     , exportDataStarted_(false)
@@ -2367,7 +2368,7 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
     fcn->addFnAttr("disable-tail-calls", "true");
 
     // inline/noinline
-    if (!is_inlinable)
+    if (!is_inlinable || noInline_)
       fcn->addFnAttr(llvm::Attribute::NoInline);
 
     // split-stack or nosplit
