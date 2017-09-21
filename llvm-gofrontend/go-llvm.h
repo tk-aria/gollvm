@@ -392,6 +392,9 @@ public:
   void setTraceLevel(unsigned level);
   unsigned traceLevel() const { return traceLevel_; }
 
+  // Disable inlining if set to true.
+  void setNoInline(bool b) { noInline_ = b; };
+
   // Personality function
   llvm::Function *personalityFunction();
 
@@ -718,6 +721,9 @@ public:
 
   // Debug trace level
   unsigned traceLevel_;
+
+  // Whether to disable inlining.
+  bool noInline_;
 
   // Whether to check for unexpected node sharing (e.g. same Bexpression
   // or statement pointed to by multiple parents).
