@@ -664,6 +664,9 @@ public:
   // Manufacture a floating point constant corresponding to -0.0
   Bexpression *minusZeroExpr(BFloatType *typ);
 
+  // Create integer constant 1 (for use with type creation)
+  Bexpression *makeIntegerOneExpr();
+
  public:
 
   // Performs a bottom-up walk to materialize LLVM values for each
