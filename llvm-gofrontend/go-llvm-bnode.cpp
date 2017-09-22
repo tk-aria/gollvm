@@ -486,13 +486,13 @@ Bexpression *BnodeBuilder::mkVoidValue(Btype *btype)
   return archive(new Bexpression(N_Const, kids, nullptr, btype, loc));
 }
 
-Bexpression *BnodeBuilder::mkVar(Bvariable *var, Location loc)
+Bexpression *BnodeBuilder::mkVar(Bvariable *var, llvm::Value *val, Location loc)
 {
   assert(var);
   Btype *vt = var->btype();
   std::vector<Bnode *> kids;
   Bexpression *rval =
-      new Bexpression(N_Var, kids, var->value(), vt, loc);
+      new Bexpression(N_Var, kids, val, vt, loc);
   rval->u.var = var;
   return archive(rval);
 }

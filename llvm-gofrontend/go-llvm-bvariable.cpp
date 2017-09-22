@@ -21,9 +21,21 @@ Bvariable::Bvariable(Btype *type, Location location,
                      const std::string &name, WhichVar which,
                      bool address_taken, llvm::Value *value)
     : name_(name), value_(value), initializer_(nullptr),
-      type_(type), location_(location), which_(which),
+      type_(type), underlyingType_(nullptr),
+      location_(location), which_(which),
       addrtaken_(address_taken), temporary_(false)
 {
+}
+
+Bvariable::Bvariable(Btype *zeroSizeType, Btype *underlyingNonZeroSizeType,
+                     Location location, const std::string &name, WhichVar which,
+                     bool address_taken, llvm::Value *value)
+    : name_(name), value_(value), initializer_(nullptr),
+      type_(zeroSizeType), underlyingType_(underlyingNonZeroSizeType),
+      location_(location), which_(which),
+      addrtaken_(address_taken), temporary_(false)
+{
+  assert(which == GlobalVar);
 }
 
 void Bvariable::setInitializer(llvm::Value *init)

@@ -221,6 +221,10 @@ class TypeManager {
   // Similar to the helper above, but for address operator.
   Btype *circularTypeAddrConversion(Btype *typ);
 
+  // Create a dummy type to stand in for a zero-sized type, so as
+  // to avoid creating variables that trigger linker bugs.
+  Btype *synthesizeNonZeroSizeType(Btype *zeroSizeType, Bexpression *one);
+
   // Initialization helper. This passes in a few bits of
   // info from the parent backend that are might not immediately
   // available at the start of the containing constructor.
