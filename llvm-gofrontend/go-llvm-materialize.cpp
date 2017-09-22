@@ -1422,6 +1422,32 @@ Bexpression *Llvm_backend::materializeCall(Bexpression *callExpr)
   return rval;
 }
 
+Bexpression *Llvm_backend::materializeVar(Bexpression *src)
+{
+  // We should only be arriving here in the zero-sized global case;
+  // in all other cases the value should have been pre-assigned.
+  assert(src->value() == nullptr);
+  Bvariable *var = src->var();
+  Btype *underlyingType = var->underlyingType();
+  assert(underlyingType != nullptr);
+
+  Location location = src->location();
+  // std::vector<Bexpression *> unused =
+    nbuilder_.extractChildenAndDestroy(src);
+
+  // Pretend that the underlying non-zero-sized global is in fact
+  // zero sized by inserting a bitcast.
+  LIRBuilder irbuilder(context_, llvm::ConstantFolder());
+  std::string tag(namegen("zeroSizeCast"));
+  llvm::Type *toType = llvm::PointerType::get(var->btype()->type(),
+                                              addressSpace_);
+  llvm::Value *bitcast =
+      irbuilder.CreateBitCast(var->value(), toType, tag);
+  Bexpression *varexp = nbuilder_.mkVar(var, bitcast, location);
+  varexp->setTag(var->name().c_str());
+  return varexp;
+}
+
 llvm::Value *
 Llvm_backend::convertForAssignment(Bexpression *src,
                                    llvm::Type *dstToType)
@@ -1827,9 +1853,12 @@ class MaterializeVisitor {
       }
       case N_Error:
       case N_Const:
-      case N_Var:
       case N_FcnAddress:
       case N_LabelAddress: {
+        break;
+      }
+      case N_Var: {
+        expr = be_->materializeVar(expr);
         break;
       }
       case N_Conversion: {

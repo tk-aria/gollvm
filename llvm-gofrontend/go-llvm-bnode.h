@@ -236,7 +236,7 @@ class BnodeBuilder {
   Bexpression *mkError(Btype *errortype);
   Bexpression *mkConst(Btype *btype, llvm::Value *val);
   Bexpression *mkVoidValue(Btype *voidType);
-  Bexpression *mkVar(Bvariable *var, Location loc);
+  Bexpression *mkVar(Bvariable *var, llvm::Value *val, Location loc);
   Bexpression *mkConversion(Btype *btype, llvm::Value *val,
                             Bexpression *src, Location loc);
   Bexpression *mkDeref(Btype *typ, llvm::Value *val,

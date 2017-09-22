@@ -683,7 +683,7 @@ llvm::Value *Llvm_backend::genStore(BlockLIRBuilder *builder,
   // (for example, the return value from a call to a function that
   // returns a struct with no fields). In this case just manufacture
   // an undef and return it.
-  if (srcVal->getType()->isVoidTy())
+  if (srcVal->getType()->isVoidTy() || typeSize(srcType) == 0)
     return llvm::UndefValue::get(srcVal->getType());
 
   // Decide whether we want a simple store instruction or a memcpy.
@@ -906,7 +906,15 @@ Bexpression *Llvm_backend::var_expression(Bvariable *var,
   if (var == errorVariable_.get())
     return errorExpression();
 
-  Bexpression *varexp = nbuilder_.mkVar(var, location);
+  // Special case for zero-sized globals. For these guys delay the
+  // llvm::Value assignment so as to allow the materialize() pass to
+  // insert a type conversion.
+  llvm::Value *varval = var->value();
+  Btype *underlyingType = var->underlyingType();
+  if (underlyingType != nullptr)
+    varval = nullptr;
+
+  Bexpression *varexp = nbuilder_.mkVar(var, varval, location);
   varexp->setTag(var->name().c_str());
   return varexp;
 }
@@ -974,6 +982,13 @@ Bexpression *Llvm_backend::integer_constant_expression(Btype *btype,
     return makeGlobalExpression(bconst, lval, btype, Location());
   }
   return rval;
+}
+
+Bexpression *Llvm_backend::makeIntegerOneExpr()
+{
+  llvm::Constant *one = llvm::ConstantInt::get(uintPtrType()->type(), 1);
+  Bexpression *bconst = nbuilder_.mkConst(uintPtrType(), one);
+  return makeGlobalExpression(bconst, one, uintPtrType(), Location());
 }
 
 // Return a typed value as a constant floating-point number.
@@ -1187,7 +1202,7 @@ Bexpression *Llvm_backend::makeComplexConvertExpr(Btype *type,
   Bvariable *var = p.first;
   Bstatement *einit = p.second;
 
-  Bexpression *vex = nbuilder_.mkVar(var, location);
+  Bexpression *vex = nbuilder_.mkVar(var, var->value(), location);
   vex->setVarExprPending(false, 0);
   Bexpression *vexr = real_part_expression(vex, location);
   Bexpression *vexi = imag_part_expression(vex, location);
@@ -1204,7 +1219,7 @@ Bexpression *Llvm_backend::makeComplexConvertExpr(Btype *type,
   auto p2 = makeTempVar(val, location);
   Bvariable *rvar = p2.first;
   Bstatement *rinit = p2.second;
-  Bexpression *rvex = nbuilder_.mkVar(rvar, location);
+  Bexpression *rvex = nbuilder_.mkVar(rvar, rvar->value(), location);
   Bstatement *init = statement_list(std::vector<Bstatement*>{einit, rinit});
   return nbuilder_.mkCompound(init, rvex, nullptr, location);
 }
@@ -1345,9 +1360,9 @@ Bexpression *Llvm_backend::makeComplexBinaryExpr(Operator op, Bexpression *left,
   Bvariable *lvar = p.first, *rvar = p2.first;
   Bstatement *linit = p.second, *rinit = p2.second;
 
-  Bexpression *lvex = nbuilder_.mkVar(lvar, location);
+  Bexpression *lvex = nbuilder_.mkVar(lvar, lvar->value(), location);
   lvex->setVarExprPending(false, 0);
-  Bexpression *rvex = nbuilder_.mkVar(rvar, location);
+  Bexpression *rvex = nbuilder_.mkVar(rvar, rvar->value(), location);
   rvex->setVarExprPending(false, 0);
   Bexpression *lr = real_part_expression(lvex, location);
   Bexpression *li = imag_part_expression(lvex, location);
@@ -1397,7 +1412,7 @@ Bexpression *Llvm_backend::makeComplexBinaryExpr(Operator op, Bexpression *left,
   auto p3 = makeTempVar(val, location);
   Bvariable *vvar = p3.first;
   Bstatement *vinit = p3.second;
-  Bexpression *vvex = nbuilder_.mkVar(vvar, location);
+  Bexpression *vvex = nbuilder_.mkVar(vvar, vvar->value(), location);
   Bstatement *init = statement_list(std::vector<Bstatement*>{linit, rinit, vinit});
   return compound_expression(init, vvex, location);
 }
@@ -1577,7 +1592,7 @@ Bstatement *Llvm_backend::makeInitStatement(Bfunction *bfunction,
   } else {
     init = zero_expression(var->btype());
   }
-  Bexpression *varexp = nbuilder_.mkVar(var, var->location());
+  Bexpression *varexp = nbuilder_.mkVar(var, var->value(), var->location());
   Bstatement *st = makeAssignment(bfunction, var->value(),
                                   varexp, init, Location());
   llvm::Value *ival = st->getExprStmtExpr()->value();
@@ -1879,10 +1894,12 @@ Llvm_backend::makeModuleVar(Btype *btype,
   if (btype == errorType())
     return errorVariable_.get();
 
-#if 0
-  // FIXME: add code to insure non-zero size
-  assert(datalayout().getTypeSizeInBits(btype->type()) != 0);
-#endif
+  // Special handling for zero-sized globals.
+  Btype *underlyingType = btype;
+  if (typeSize(btype) == 0) {
+    underlyingType = synthesizeNonZeroType(btype, makeIntegerOneExpr());
+    initializer = nullptr;
+  }
 
   // FIXME: at the moment the driver is enabling separate sections
   // for all variables, since there doesn't seem to be an easily
@@ -1892,7 +1909,7 @@ Llvm_backend::makeModuleVar(Btype *btype,
 
   llvm::Constant *init =
       (isExtInit == MV_ExternallyInitialized ? nullptr :
-       llvm::Constant::getNullValue(btype->type()));
+       llvm::Constant::getNullValue(underlyingType->type()));
   std::string gname(asm_name.empty() ? name : asm_name);
   llvm::GlobalVariable *glob = module_->getGlobalVariable(gname);
   llvm::Value *old = nullptr;
@@ -1925,7 +1942,7 @@ Llvm_backend::makeModuleVar(Btype *btype,
     }
   }
 
-  glob = new llvm::GlobalVariable(module(), btype->type(),
+  glob = new llvm::GlobalVariable(module(), underlyingType->type(),
                                   isConstant == MV_Constant,
                                   linkage, init, gname);
 
@@ -1944,7 +1961,10 @@ Llvm_backend::makeModuleVar(Btype *btype,
 
   bool addressTaken = true; // for now
   Bvariable *bv =
-      new Bvariable(btype, location, gname, GlobalVar, addressTaken, glob);
+      (underlyingType != btype ?
+       new Bvariable(btype, underlyingType,
+                     location, gname, GlobalVar, addressTaken, glob) :
+       new Bvariable(btype, location, gname, GlobalVar, addressTaken, glob));
   assert(valueVarMap_.find(bv->value()) == valueVarMap_.end());
   valueVarMap_[bv->value()] = bv;
   if (genDebug == MV_GenDebug && dibuildhelper() && !errorCount_) {
@@ -2010,6 +2030,10 @@ void Llvm_backend::global_variable_set_init(Bvariable *var, Bexpression *expr)
 
   assert(llvm::isa<llvm::Constant>(expr->value()));
   llvm::Constant *econ = llvm::cast<llvm::Constant>(expr->value());
+
+  // Special case for zero-sized globals...
+  if (typeSize(expr->btype()) == 0)
+    return;
 
   gvar->setInitializer(econ);
 }
