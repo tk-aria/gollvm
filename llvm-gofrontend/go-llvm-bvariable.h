@@ -30,13 +30,24 @@ enum WhichVar { ParamVar, GlobalVar, LocalVar, BlockVar, ErrorVar };
 
 class Bvariable {
 public:
+
+  // Constructor for regular/normal variables.
   Bvariable(Btype *type, Location location,
             const std::string &name, WhichVar which,
+            bool address_taken, llvm::Value *value);
+
+  // Constructor for zero-sized global variables. Here we have to play
+  // tricks by creating a variable definition with an underlying
+  // non-zero size, but then apply a conversion to the correct type
+  // for references to the var.
+  Bvariable(Btype *zeroSizeType, Btype *underlyingNonZeroSizeType,
+            Location location, const std::string &name, WhichVar which,
             bool address_taken, llvm::Value *value);
 
   // Common to all varieties of variables
   Location location() { return location_; }
   Btype *btype() { return type_; }
+  Btype *underlyingType() { return underlyingType_; }
   const std::string &name() { return name_; }
   llvm::Value *value() { return value_; }
   void setValue(llvm::Value *v) { value_ = v; }
@@ -71,6 +82,7 @@ private:
   llvm::Value *value_;
   llvm::Value *initializer_;
   Btype *type_;
+  Btype *underlyingType_;
   Location location_;
   WhichVar which_;
   bool addrtaken_;

@@ -531,4 +531,137 @@ TEST(BackendVarTests, TestVarLifetimeInsertion) {
   EXPECT_TRUE(isOK && "Value does not have expected contents");
 }
 
+TEST(BackendVarTests, ZeroSizedGlobals) {
+
+  FcnTestHarness h;
+  Llvm_backend *be = h.be();
+  BFunctionType *befty1 = mkFuncTyp(be, L_END);
+  Bfunction *func = h.mkFunction("foo", befty1);
+  Location loc;
+
+  // This test case is designed to exercise code in the bridge that
+  // handles zero-sized globals.  It turns out that these critters
+  // have to be handled carefully due to problems in the way that
+  // linkers handle them.
+
+  // empty struct type
+  Btype *best = mkBackendStruct(be, nullptr);
+
+  // a struct with two empty fields
+  Btype *bef2 = mkBackendStruct(be, best, "f1", best, "f2", nullptr);
+
+  // a zero-length array of the struct above
+  Bexpression *val0 = mkInt64Const(be, int64_t(0));
+  Btype *ats1 = be->array_type(bef2, val0);
+
+  // a zero-length array of some non-zero sized type
+  Btype *bi32t = be->integer_type(false, 32);
+  Btype *atint0 = be->array_type(bi32t, val0);
+
+  bool isExternal = false;
+  bool isHidden = false;
+  bool uniqueSection = false;
+
+  // define globals with the types above
+  Bvariable *gs1 =
+      be->global_variable("emptystruct", "", best,
+                          isExternal, isHidden, uniqueSection, loc);
+  Bvariable *gs2 =
+      be->global_variable("emptys2f", "", bef2,
+                          isExternal, isHidden, uniqueSection, loc);
+  Bvariable *ga1 =
+      be->global_variable("emptyar", "", ats1,
+                          isExternal, isHidden, uniqueSection, loc);
+  Bvariable *ga2 =
+      be->global_variable("emptyintar", "", atint0,
+                          isExternal, isHidden, uniqueSection, loc);
+
+  // Create initializers for these odd beasties.
+
+  // this first one doesn't look so bad...
+  be->global_variable_set_init(gs1, be->zero_expression(best));
+
+  // now we're getting weird, however:
+  std::vector<Bexpression *> vals;
+  vals.push_back(be->zero_expression(best));
+  vals.push_back(be->zero_expression(best));
+  Bexpression *emptycon = be->constructor_expression(bef2, vals, loc);
+  be->global_variable_set_init(gs2, emptycon);
+
+  // ... and some weird empty array initializers as well
+  const std::vector<unsigned long> ivals;
+  const std::vector<Bexpression *> exprs;
+  Bexpression *ear1 =
+      be->array_constructor_expression(ats1, ivals, exprs, loc);
+  be->global_variable_set_init(ga1, ear1);
+  Bexpression *ear2 =
+      be->array_constructor_expression(atint0, ivals, exprs, loc);
+  be->global_variable_set_init(ga2, ear2);
+
+  {
+    const char *exp = R"RAW_RESULT(
+      @emptystruct = global { i8 } zeroinitializer
+    )RAW_RESULT";
+    bool isOK = h.expectValue(gs1->value(), exp);
+    EXPECT_TRUE(isOK && "Value does not have expected contents");
+  }
+  {
+    const char *exp = R"RAW_RESULT(
+      @emptys2f = global { { i8 }, {} } zeroinitializer
+    )RAW_RESULT";
+    bool isOK = h.expectValue(gs2->value(), exp);
+    EXPECT_TRUE(isOK && "Value does not have expected contents");
+  }
+  {
+    const char *exp = R"RAW_RESULT(
+      @emptyar = global [1 x { { i8 }, {} }] zeroinitializer
+    )RAW_RESULT";
+    bool isOK = h.expectValue(ga1->value(), exp);
+    EXPECT_TRUE(isOK && "Value does not have expected contents");
+  }
+  {
+    const char *exp = R"RAW_RESULT(
+      @emptyintar = global [1 x i32] zeroinitializer
+    )RAW_RESULT";
+    bool isOK = h.expectValue(ga2->value(), exp);
+    EXPECT_TRUE(isOK && "Value does not have expected contents");
+  }
+
+  // OK, now that we have out empty globals set up, manufacture
+  // some accesses to them.
+
+  // emptys2f.f1 = emptystruct
+  Bexpression *vex1 = be->var_expression(gs2, VE_lvalue, loc);
+  Bexpression *fex1 = be->struct_field_expression(vex1, 0, loc);
+  Bexpression *vex2 = be->var_expression(gs1, VE_rvalue, loc);
+  h.mkAssign(fex1, vex2);
+
+  // localemptys2f = emptys2f
+  Bvariable *loc1 = h.mkLocal("localemptys2f", bef2);
+  Bexpression *vex3 = be->var_expression(loc1, VE_lvalue, loc);
+  Bexpression *vex4 = be->var_expression(gs2, VE_rvalue, loc);
+  h.mkAssign(vex3, vex4);
+
+  // localemptyintar = emptyintar
+  Bvariable *loc2 = h.mkLocal("localemptyintar", atint0);
+  Bexpression *vex5 = be->var_expression(loc2, VE_lvalue, loc);
+  Bexpression *vex6 = be->var_expression(ga2, VE_rvalue, loc);
+  h.mkAssign(vex5, vex6);
+
+  bool broken = h.finish(StripDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+
+  const char *exp = R"RAW_RESULT(
+    define void @foo(i8* nest %nest.0) #0 {
+    entry:
+      %localemptys2f = alloca { {}, {} }
+      %localemptyintar = alloca [0 x i32]
+      ret void
+    }
+    )RAW_RESULT";
+  bool isOK = h.expectValue(func->function(), exp);
+    EXPECT_TRUE(isOK && "Value does not have expected contents");
+
+}
+
 }

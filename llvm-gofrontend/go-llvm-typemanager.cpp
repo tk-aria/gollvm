@@ -1336,6 +1336,54 @@ Btype *TypeManager::circularTypeAddrConversion(Btype *typ) {
   return nullptr;
 }
 
+// Given a zero-sized type, create a similarly-structured type that
+// has non-zero size. This is hacky, and there aren't really any firm
+// rules here, but the general idea is to manufacture something that is
+// as close to the original type as possible. For example, if the original
+// type is a struct type with three fields A, B, and C, then we want the
+// synthesized type to also be a struct type with three similarly named
+// fields. For arrays we simply increase the number of elements from zero
+// to one -- this is a risky strategy in that someone could define a global
+// variable that looks like
+//
+//     type huge struct {
+//       x [1<<30]char
+//     }
+//     type emptyar [0]huge
+//
+// however this scenario does not seem especially likely (most global
+// zero-sized types are likely due to the use of interfaces).
+
+Btype *TypeManager::synthesizeNonZeroSizeType(Btype *typ, Bexpression *one)
+{
+  if (typeSize(typ) != 0)
+    return typ;
+  switch(typ->flavor()) {
+    case Btype::ArrayT: {
+      BArrayType *bat = typ->castToBArrayType();
+      Btype *elemtyp = synthesizeNonZeroSizeType(bat->elemType(), one);
+      return arrayType(elemtyp, one);
+    }
+    case Btype::StructT: {
+      BStructType *bst = typ->castToBStructType();
+      const std::vector<Backend::Btyped_identifier> &fields = bst->fields();
+      if (fields.size()) {
+        std::vector<Backend::Btyped_identifier> nzfields = fields;
+        nzfields[0].btype = synthesizeNonZeroSizeType(fields[0].btype, one);
+        return structType(nzfields);
+      }
+      std::vector<Backend::Btyped_identifier> dummyfields(1);
+      dummyfields[0].btype = boolType();
+      dummyfields[0].name = "dummy";
+      return structType(dummyfields);
+    }
+    default: {
+      assert(false);
+    }
+  }
+  return nullptr;
+}
+
 llvm::Type *TypeManager::landingPadExceptionType()
 {
   llvm::SmallVector<llvm::Type *, 2> elems(2);
