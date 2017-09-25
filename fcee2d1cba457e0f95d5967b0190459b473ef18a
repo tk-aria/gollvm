@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "577934b7_cc9ffe5d",
+        "filename": "llvm-gofrontend/go-llvm-typemanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1365,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-09-25T17:28:53Z",
+      "side": 1,
+      "message": "If the array is not zero length but with zero-sized element, like [5]struct{}, do we want to make an array of the original length, i.e. [5]struct{ uint8 }? Not sure if it matters.",
+      "revId": "fcee2d1cba457e0f95d5967b0190459b473ef18a",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a5c93ee4_c812cb33",
+        "filename": "llvm-gofrontend/go-llvm-typemanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1373,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-09-25T17:28:53Z",
+      "side": 1,
+      "message": "I think we don\u0027t need to rewrite all fields to nonzero sized. Only rewrite one is enough, right?\n\nThis is probably fine, as it is rare to have a struct with multiple zero-sized fields.",
+      "revId": "fcee2d1cba457e0f95d5967b0190459b473ef18a",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2330796e_bf360619",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 915,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-09-25T17:28:53Z",
+      "side": 1,
+      "message": "I wonder if we could just make the bitcast here? So we don\u0027t need to delay the value generation to materialization.",
+      "revId": "fcee2d1cba457e0f95d5967b0190459b473ef18a",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5f993fde_df2cf0b3",
+        "filename": "unittests/BackendCore/BackendVarTests.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 584,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-09-25T17:28:53Z",
+      "side": 1,
+      "message": "Does zero_expression handle those weird types?",
+      "revId": "fcee2d1cba457e0f95d5967b0190459b473ef18a",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3ca4d3f9_9d7c00fb",
+        "filename": "unittests/BackendCore/BackendVarTests.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 639,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-09-25T17:28:53Z",
+      "side": 1,
+      "message": "technically emptyar is of 0 length, so emptyar[0] shouldn\u0027t appear in the code, right?",
+      "revId": "fcee2d1cba457e0f95d5967b0190459b473ef18a",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
