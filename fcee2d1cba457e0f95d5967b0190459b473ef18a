@@ -107,6 +107,24 @@
     },
     {
       "key": {
+        "uuid": "5ac256cb_a8b9e3b7",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 915,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-09-25T20:51:47Z",
+      "side": 1,
+      "message": "I thought it is ok because bitcast of a global variable is an LLVM Constant. It\u0027s fine to just generate it later.",
+      "parentUuid": "81c1ac77_2032e866",
+      "revId": "fcee2d1cba457e0f95d5967b0190459b473ef18a",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "5f993fde_df2cf0b3",
         "filename": "unittests/BackendCore/BackendVarTests.cpp",
         "patchSetId": 1
