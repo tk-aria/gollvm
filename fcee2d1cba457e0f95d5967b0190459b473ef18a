@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "6dd15009_b0824400",
+        "filename": "llvm-gofrontend/go-llvm-typemanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1365,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-09-25T18:21:26Z",
+      "side": 1,
+      "message": "Hmm. I am not sure either. Let\u0027s try it this way and see how things go.",
+      "parentUuid": "577934b7_cc9ffe5d",
+      "revId": "fcee2d1cba457e0f95d5967b0190459b473ef18a",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "a5c93ee4_c812cb33",
         "filename": "llvm-gofrontend/go-llvm-typemanager.cpp",
         "patchSetId": 1
@@ -36,6 +54,24 @@
     },
     {
       "key": {
+        "uuid": "280919e5_35b042c2",
+        "filename": "llvm-gofrontend/go-llvm-typemanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1373,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-09-25T18:21:26Z",
+      "side": 1,
+      "message": "This is a good suggestion. I\u0027ll fix it up to incorporate.",
+      "parentUuid": "a5c93ee4_c812cb33",
+      "revId": "fcee2d1cba457e0f95d5967b0190459b473ef18a",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "2330796e_bf360619",
         "filename": "llvm-gofrontend/go-llvm.cpp",
         "patchSetId": 1
@@ -47,6 +83,24 @@
       "writtenOn": "2017-09-25T17:28:53Z",
       "side": 1,
       "message": "I wonder if we could just make the bitcast here? So we don\u0027t need to delay the value generation to materialization.",
+      "revId": "fcee2d1cba457e0f95d5967b0190459b473ef18a",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "81c1ac77_2032e866",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 915,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-09-25T18:21:26Z",
+      "side": 1,
+      "message": "I thought about that as well.  I think it is cleaner to do it this way, because of the possibility that a var expression can be shared. For regular vars, llvm::Value is just the global constant value or alloca(), which is ok to duplicate. For var exprs corresponding to zero-sized globals, if we generated the cast inst here, we\u0027d have to replicated it in unsharing (nothing wrong with that per se, but I\u0027d rather avoid it if possible).",
+      "parentUuid": "2330796e_bf360619",
       "revId": "fcee2d1cba457e0f95d5967b0190459b473ef18a",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
@@ -81,6 +135,24 @@
       "writtenOn": "2017-09-25T17:28:53Z",
       "side": 1,
       "message": "technically emptyar is of 0 length, so emptyar[0] shouldn\u0027t appear in the code, right?",
+      "revId": "fcee2d1cba457e0f95d5967b0190459b473ef18a",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4b83f555_29ad75b1",
+        "filename": "unittests/BackendCore/BackendVarTests.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 639,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-09-25T18:21:26Z",
+      "side": 1,
+      "message": "Oops, yes, you are right. I will fix that up.",
+      "parentUuid": "3ca4d3f9_9d7c00fb",
       "revId": "fcee2d1cba457e0f95d5967b0190459b473ef18a",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
