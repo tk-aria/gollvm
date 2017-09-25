@@ -379,10 +379,10 @@ int main(int argc, char **argv)
   go_parse_input_files(fns, nfiles, false, true);
   if (! NoBackend)
     go_write_globals();
-  if (! NoVerify && !go_be_saw_errors())
-    backend->verifyModule();
   if (DumpIR)
     backend->dumpModule();
+  if (! NoVerify && !go_be_saw_errors())
+    backend->verifyModule();
   if (TraceLevel)
     std::cerr << "linemap stats:" << linemap->statistics() << "\n";
 
