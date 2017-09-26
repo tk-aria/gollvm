@@ -125,6 +125,24 @@
     },
     {
       "key": {
+        "uuid": "9fccf7fd_69182053",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 915,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-09-26T00:12:34Z",
+      "side": 1,
+      "message": "You\u0027re right, that is a valid point. I\u0027ll switch it over to generate the cast early.",
+      "parentUuid": "5ac256cb_a8b9e3b7",
+      "revId": "fcee2d1cba457e0f95d5967b0190459b473ef18a",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "5f993fde_df2cf0b3",
         "filename": "unittests/BackendCore/BackendVarTests.cpp",
         "patchSetId": 1
