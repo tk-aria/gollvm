@@ -113,8 +113,14 @@ readExportDataFromArchive(llvm::object::Archive *archive,
     // found.
     llvm::Expected<std::unique_ptr<llvm::object::Binary>> childOrErr =
         child.getAsBinary();
-    if (!childOrErr)
-      return "archive member is not an object";
+    if (auto err = childOrErr.takeError()) {
+      // Ignore error if this is not recognized as an object file.
+      // This is also what gccgo does (go-backend.c:go_read_export_data).
+      // In particular, cgo archive may contain _cgo_flags as a member,
+      // which is not an object file.
+      consumeError(std::move(err));
+      return nullptr;
+    }
     llvm::object::ObjectFile *o =
         llvm::dyn_cast<llvm::object::ObjectFile>(&*childOrErr.get());
     if (o)
