@@ -1943,11 +1943,29 @@ Llvm_backend::makeModuleVar(Btype *btype,
       Bvariable *bv = it->second;
       return bv;
     } else {
-      // A declaration with different type is found.
-      // Remove this declaration. Its references will be replaced
-      // with a new definition bit-casted to the old type.
-      old = glob;
-      glob->removeFromParent();
+      if (isExtInit == MV_NotExternallyInitialized) {
+        // A declaration with different type is found.
+        // Remove this declaration. Its references will be replaced
+        // with a new definition bit-casted to the old type.
+        old = glob;
+        glob->removeFromParent();
+      } else {
+        // A definition with different type is found.
+        // Here we are creating an external declaration
+        // of a different type. We make a bitcast to the
+        // new type.
+        llvm::Constant *decl = module_->getOrInsertGlobal(gname, btype->type());
+        bool addressTaken = true; // for now
+        Bvariable *bv =
+            new Bvariable(btype, location, gname, GlobalVar, addressTaken, decl);
+        assert(valueVarMap_.find(bv->value()) == valueVarMap_.end());
+        valueVarMap_[bv->value()] = bv;
+        if (genDebug == MV_GenDebug && dibuildhelper() && !errorCount_) {
+          bool exported = (linkage == llvm::GlobalValue::ExternalLinkage);
+          dibuildhelper()->processGlobal(bv, exported);
+        }
+        return bv;
+      }
     }
   }
 

@@ -446,7 +446,7 @@ TEST(BackendVarTests, GlobalVarsWithSameName) {
   // a declaration (external), the other is a definition.
   // They should refer to the same underlying global var.
 
-  // declare x as external int32;
+  // declare x as external int32
   bool hidden = false;
   bool common = false;
   bool external = true;
@@ -465,6 +465,26 @@ TEST(BackendVarTests, GlobalVarsWithSameName) {
   EXPECT_EQ(repr(gv->value()), "@x = global { i32 } zeroinitializer");
   EXPECT_EQ(repr(gvdecl->value()),
       "i32* getelementptr inbounds ({ i32 }, { i32 }* @x, i32 0, i32 0)");
+
+  // Create them in the other order: definition first,
+  // then external declaration.
+  // define y as non-external struct
+  external = false;
+  Bvariable *gv2 =
+      be->global_variable("y", "y", bst, external,
+                          hidden, common, loc);
+  ASSERT_TRUE(gv2 != nullptr);
+
+  // declare y as external int32
+  external = true;
+  Bvariable *gvdecl2 =
+      be->global_variable("y", "y", bi32t, external,
+                          hidden, common, loc);
+  ASSERT_TRUE(gvdecl2 != nullptr);
+  EXPECT_TRUE(isa<GlobalVariable>(gv2->value()));
+  EXPECT_EQ(repr(gv2->value()), "@y = global { i32 } zeroinitializer");
+  EXPECT_EQ(repr(gvdecl2->value()),
+      "i32* getelementptr inbounds ({ i32 }, { i32 }* @y, i32 0, i32 0)");
 
   bool broken = h.finish(PreserveDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
