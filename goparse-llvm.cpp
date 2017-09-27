@@ -167,7 +167,7 @@ TraceLevel("tracelevel",
            cl::desc("Set debug trace level (def: 0, no trace output)."),
            cl::init(0));
 
-static std::unique_ptr<tool_output_file>
+static std::unique_ptr<ToolOutputFile>
 GetOutputStream() {
   // Decide if we need "binary" output.
   bool Binary = false;
@@ -185,7 +185,7 @@ GetOutputStream() {
   sys::fs::OpenFlags OpenFlags = sys::fs::F_None;
   if (!Binary)
     OpenFlags |= sys::fs::F_Text;
-  auto FDOut = llvm::make_unique<tool_output_file>(OutputFileName, EC,
+  auto FDOut = llvm::make_unique<ToolOutputFile>(OutputFileName, EC,
                                                    OpenFlags);
   if (EC) {
     errs() << EC.message() << '\n';
@@ -366,7 +366,7 @@ int main(int argc, char **argv)
     errs() << "no output file specified (please use -o option)\n";
     return 1;
   }
-  std::unique_ptr<tool_output_file> Out = GetOutputStream();
+  std::unique_ptr<ToolOutputFile> Out = GetOutputStream();
   if (!Out) return 1;
 
   // Kick off the front end
