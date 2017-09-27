@@ -320,7 +320,7 @@ def install_shim(scriptpath):
         here = os.getcwd()
         wf.write("#!/bin/sh\n")
         wf.write("P=%s/bin/gollvm-wrap.py\n" % here)
-        wf.write("exec python ${P} $*\n")
+        wf.write("exec python ${P} \"$@\"\n")
     except IOError:
       u.error("open/write failed for bin/gccgo wrapper")
   docmd("chmod 0755 bin/gccgo")
