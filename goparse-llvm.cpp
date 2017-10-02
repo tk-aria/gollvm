@@ -188,7 +188,8 @@ GetOutputStream() {
   auto FDOut = llvm::make_unique<ToolOutputFile>(OutputFileName, EC,
                                                    OpenFlags);
   if (EC) {
-    errs() << EC.message() << '\n';
+    errs() << "error opening " << OutputFileName << ": "
+           << EC.message() << '\n';
     return nullptr;
   }
 
@@ -210,48 +211,51 @@ static void DiagnosticHandler(const DiagnosticInfo &DI, void *Context) {
   errs() << "\n";
 }
 
-static Llvm_backend *init_gogo(TargetMachine *Target,
-                               llvm::LLVMContext &Context,
-                               llvm::Module *module,
-                               Llvm_linemap *linemap)
+// Helper class for managing the overall Go compilation process.
+
+class CompilationOrchestrator {
+ public:
+  CompilationOrchestrator(const char *argvZero);
+  ~CompilationOrchestrator() { }
+
+  // Various stages in the setup/execution of the compilation.  The
+  // convention here is to return false if there was a fatal error, true
+  // otherwise.
+  bool preamble();
+  bool initBridge();
+  bool invokeFrontEnd();
+  bool invokeBridge();
+  bool invokeBackEnd();
+
+ private:
+  Triple triple_;
+  llvm::LLVMContext context_;
+  const char *progname_;
+  CodeGenOpt::Level olvl_;
+  std::unique_ptr<Llvm_backend> bridge_;
+  std::unique_ptr<TargetMachine> target_;
+  std::unique_ptr<Llvm_linemap> linemap_;
+  std::unique_ptr<llvm::Module> module_;
+  std::unique_ptr<ToolOutputFile> out_;
+
+  bool hasError_;
+};
+
+CompilationOrchestrator::CompilationOrchestrator(const char *argvZero)
+    : progname_(argvZero), olvl_(CodeGenOpt::Default), hasError_(false)
 {
-  struct go_create_gogo_args args;
-  unsigned bpi = Target->getPointerSize() * 8;
-  args.int_type_size = bpi;
-  args.pointer_size = bpi;
-  args.pkgpath = PackagePath.empty() ? NULL : PackagePath.c_str();
-  args.prefix = PackagePrefix.empty() ? NULL : PackagePrefix.c_str();
-  args.relative_import_path = RelativeImportPath.empty() ? NULL : RelativeImportPath.c_str();
-  args.c_header = CHeader.empty() ? NULL : CHeader.c_str();
-  args.check_divide_by_zero = CheckDivideZero;
-  args.check_divide_overflow = CheckDivideOverflow;
-  args.compiling_runtime = CompilingRuntime;
-  args.debug_escape_level = EscapeDebugLevel;
-  args.linemap = linemap;
-  Llvm_backend *backend = new Llvm_backend(Context, module, linemap);
-  args.backend = backend;
-  go_create_gogo (&args);
-
-  /* The default precision for floating point numbers.  This is used
-     for floating point constants with abstract type.  This may
-     eventually be controllable by a command line option.  */
-  mpfr_set_default_prec (256);
-
-  return backend;
-}
-
-int main(int argc, char **argv)
-{
-  Triple TheTriple;
-
   InitializeAllTargets();
   InitializeAllTargetMCs();
   InitializeAllAsmPrinters();
   InitializeAllAsmParsers();
+}
 
-  cl::ParseCommandLineOptions(argc, argv, "llvm go parser driver\n");
-
+bool CompilationOrchestrator::preamble()
+{
   // Initialize codegen and IR passes
+
+  // [assume this will change moving to the new pass manager]
+
   PassRegistry *Registry = PassRegistry::getPassRegistry();
   initializeCore(*Registry);
   initializeCodeGen(*Registry);
@@ -263,45 +267,41 @@ int main(int argc, char **argv)
   initializeScalarOpts(*Registry);
   initializeVectorization(*Registry);
 
-  TheTriple = Triple(Triple::normalize(TargetTriple));
-  if (TheTriple.getTriple().empty())
-    TheTriple.setTriple(sys::getDefaultTargetTriple());
+  triple_ = Triple(Triple::normalize(TargetTriple));
+  if (triple_.getTriple().empty())
+    triple_.setTriple(sys::getDefaultTargetTriple());
 
   // Get the target specific parser.
   std::string Error;
-  const Target *TheTarget = TargetRegistry::lookupTarget(MArch, TheTriple,
-                                                         Error);
+  const Target *TheTarget =
+      TargetRegistry::lookupTarget(MArch, triple_, Error);
   if (!TheTarget) {
-    errs() << argv[0] << ": " << Error;
-    return 1;
+    errs() << progname_ << ": " << Error;
+    return false;
   }
 
   // FIXME: cpu, features not yet supported
   std::string CPUStr = getCPUStr(), FeaturesStr = getFeaturesStr();
 
   // optimization level
-  CodeGenOpt::Level OLvl = CodeGenOpt::Default;
   switch (OptLevel) {
-  default:
-    errs() << argv[0] << ": invalid optimization level.\n";
-    return 1;
-  case ' ': break;
-  case '0': OLvl = CodeGenOpt::None; break;
-  case '1': OLvl = CodeGenOpt::Less; break;
-  case 's': // TODO: same as -O2 for now.
-  case '2': OLvl = CodeGenOpt::Default; break;
-  case '3': OLvl = CodeGenOpt::Aggressive; break;
+    default:
+      errs() << progname_ << ": invalid optimization level.\n";
+      return false;
+    case ' ': break;
+    case '0': olvl_ = CodeGenOpt::None; break;
+    case '1': olvl_ = CodeGenOpt::Less; break;
+    case 's': // TODO: same as -O2 for now.
+    case '2': olvl_ = CodeGenOpt::Default; break;
+    case '3': olvl_ = CodeGenOpt::Aggressive; break;
   }
 
   go_no_warn = NoWarn;
 
   TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
+
+  // FIXME: turn off integrated assembler for now.
   Options.DisableIntegratedAS = true;
-  Optional<llvm::CodeModel::Model> CM = None;
-  std::unique_ptr<TargetMachine> Target(
-      TheTarget->createTargetMachine(TheTriple.getTriple(), CPUStr, FeaturesStr,
-                                     Options, getRelocModel(), CM, OLvl));
-  assert(Target && "Could not allocate target machine!");
 
   // FIXME: this hard-wires on the equivalent of -ffunction-sections
   // and -fdata-sections, since there doesn't seem to be a high-level
@@ -311,31 +311,70 @@ int main(int argc, char **argv)
   Options.FunctionSections = true;
   Options.DataSections = true;
 
-  // Print a stack trace if we signal out.
-  llvm::LLVMContext Context;
-  bool hasError = false;
-  Context.setDiagnosticHandlerCallBack(::DiagnosticHandler, &hasError);
-  sys::PrintStackTraceOnErrorSignal(argv[0]);
-  PrettyStackTraceProgram X(argc, argv);
-  llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
+  // Create target machine
+  Optional<llvm::CodeModel::Model> CM = None;
+  target_.reset(
+      TheTarget->createTargetMachine(triple_.getTriple(), CPUStr, FeaturesStr,
+                                     Options, getRelocModel(), CM, olvl_));
+  assert(target_.get() && "Could not allocate target machine!");
+
+  return true;
+}
+
+// This helper performs the various initial steps needed to set up the
+// compilation, including prepping the LLVM context, creating an LLVM
+// module, creating the bridge itself (Llvm_backend object) and
+// setting up the Go frontend via a call to go_create_gogo(). At the
+// end of this routine things should be ready to kick off the front end.
+
+bool CompilationOrchestrator::initBridge()
+{
+  // Set up the LLVM context
+  context_.setDiagnosticHandlerCallBack(::DiagnosticHandler,
+                                         &this->hasError_);
 
   // Construct linemap and module
-  std::unique_ptr<Llvm_linemap> linemap(new Llvm_linemap());
-  std::unique_ptr<llvm::Module> module(new llvm::Module("gomodule", Context));
+  linemap_.reset(new Llvm_linemap());
+  module_.reset(new llvm::Module("gomodule", context_));
 
   // Add the target data from the target machine, if it exists
-  module->setTargetTriple(TheTriple.getTriple());
-  module->setDataLayout(Target->createDataLayout());
+  module_->setTargetTriple(triple_.getTriple());
+  module_->setDataLayout(target_->createDataLayout());
 
   // Now construct Llvm_backend helper.
-  std::unique_ptr<Llvm_backend> backend(init_gogo(Target.get(), Context,
-                                                  module.get(), linemap.get()));
-  backend->setTraceLevel(TraceLevel);
-  backend->setNoInline(NoInline);
+  bridge_.reset(new Llvm_backend(context_, module_.get(), linemap_.get()));
+
+  // Honor inline, tracelevel cmd line options
+  bridge_->setTraceLevel(TraceLevel);
+  bridge_->setNoInline(NoInline);
 
   // Support -fgo-dump-ast
   if (DumpAst)
     go_enable_dump("ast");
+
+  // Populate 'args' struct with various bits of information needed by
+  // the front end, then pass it to the front end via go_create_gogo().
+  struct go_create_gogo_args args;
+  unsigned bpi = target_->getPointerSize() * 8;
+  args.int_type_size = bpi;
+  args.pointer_size = bpi;
+  args.pkgpath = PackagePath.empty() ? NULL : PackagePath.c_str();
+  args.prefix = PackagePrefix.empty() ? NULL : PackagePrefix.c_str();
+  args.relative_import_path =
+      RelativeImportPath.empty() ? NULL : RelativeImportPath.c_str();
+  args.c_header = CHeader.empty() ? NULL : CHeader.c_str();
+  args.check_divide_by_zero = CheckDivideZero;
+  args.check_divide_overflow = CheckDivideOverflow;
+  args.compiling_runtime = CompilingRuntime;
+  args.debug_escape_level = EscapeDebugLevel;
+  args.linemap = linemap_.get();
+  args.backend = bridge_.get();
+  go_create_gogo (&args);
+
+  /* The default precision for floating point numbers.  This is used
+     for floating point constants with abstract type.  This may
+     eventually be controllable by a command line option.  */
+  mpfr_set_default_prec (256);
 
   // Include dirs
   if (! IncludeDirs.empty()) {
@@ -360,15 +399,21 @@ int main(int argc, char **argv)
     }
   }
 
-
   // Figure out where we are going to send the output.
   if (OutputFileName.empty()) {
     errs() << "no output file specified (please use -o option)\n";
-    return 1;
+    return false;
   }
-  std::unique_ptr<ToolOutputFile> Out = GetOutputStream();
-  if (!Out) return 1;
+  out_ = GetOutputStream();
+  if (!out_)
+    return false;
 
+  return true;
+}
+
+bool CompilationOrchestrator::invokeFrontEnd()
+{
+  // Collect the input files and kick off the front end
   // Kick off the front end
   unsigned nfiles = InputFilenames.size();
   std::unique_ptr<const char *> filenames(new const char *[nfiles]);
@@ -380,43 +425,53 @@ int main(int argc, char **argv)
   if (! NoBackend)
     go_write_globals();
   if (DumpIR)
-    backend->dumpModule();
+    bridge_->dumpModule();
   if (! NoVerify && !go_be_saw_errors())
-    backend->verifyModule();
+    bridge_->verifyModule();
   if (TraceLevel)
-    std::cerr << "linemap stats:" << linemap->statistics() << "\n";
+    std::cerr << "linemap stats:" << linemap_->statistics() << "\n";
 
-  // Delete back end at this point. In the case that there were errors,
-  // this will help clean up any unreachable llvm Instructions (which would
-  // otherwise trigger asserts); in the non-error case it will help to
-  // free up memory used by backend prior to kicking off the pass manager.
-  backend.reset(nullptr);
+  // Delete the bridge at this point. In the case that there were
+  // errors, this will help clean up any unreachable llvm Instructions
+  // (which would otherwise trigger asserts); in the non-error case it
+  // will help to free up bridge-related memory prior to kicking off
+  // the pass manager.
+  bridge_.reset(nullptr);
 
   // Early exit at this point if we've seen errors
   if (go_be_saw_errors())
-    return 1;
+    return false;
 
-  // On to the back end for this module...
-  llvm::Module *M = module.get();
+  return true;
+}
 
-  // Pass manager
+bool CompilationOrchestrator::invokeBackEnd()
+{
+  // Set up and invoke the back end for this module.
+  llvm::Module *M = module_.get();
+
+  // Legacy pass manager for now -- to be replaced by new pass manager
+  // shortly.
   legacy::PassManager PM;
 
   // Add an appropriate TargetLibraryInfo pass for the module triple.
-  TargetLibraryInfoImpl TLII(TheTriple);
+  TargetLibraryInfoImpl TLII(triple_);
   PM.add(new TargetLibraryInfoWrapperPass(TLII));
 
-  // Override function attributes based on CPUStr, FeaturesStr, and command line
-  // flags.
+  // FIXME: cpu, features not yet supported
+  std::string CPUStr = getCPUStr(), FeaturesStr = getFeaturesStr();
+
+  // Override function attributes based on CPUStr, FeaturesStr, and
+  // command line flags.
   setFunctionAttributes(CPUStr, FeaturesStr, *M);
 
-  raw_pwrite_stream *OS = &Out->os();
+  raw_pwrite_stream *OS = &out_->os();
 
   // Ask the target to add backend passes as necessary.
-  if (Target->addPassesToEmitFile(PM, *OS, FileType)) {
-    errs() << argv[0] << ": target does not support generation of this"
+  if (target_->addPassesToEmitFile(PM, *OS, FileType)) {
+    errs() << progname_ << ": target does not support generation of this"
            << " file type!\n";
-    return 1;
+    return false;
   }
 
   // Before executing passes, print the final values of the LLVM options.
@@ -426,12 +481,43 @@ int main(int argc, char **argv)
   PM.run(*M);
 
   // Check for errors
-  auto HasError = *static_cast<bool *>(Context.getDiagnosticContext());
+  auto HasError = *static_cast<bool *>(context_.getDiagnosticContext());
   if (HasError)
     return 1;
 
   // Declare success.
-  Out->keep();
+  out_->keep();
 
+  return true;
+}
+
+int main(int argc, char **argv)
+{
+  CompilationOrchestrator orchestrator(argv[0]);
+
+  cl::ParseCommandLineOptions(argc, argv, "gollvm driver\n");
+
+  // Print a stack trace if we signal out.
+  sys::PrintStackTraceOnErrorSignal(argv[0]);
+  PrettyStackTraceProgram X(argc, argv);
+  llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
+
+  // Initialize target and sort out selected command line options.
+  if (!orchestrator.preamble())
+    return 1;
+
+  // Set up the bridge
+  if (!orchestrator.initBridge())
+    return 2;
+
+  // Invoke front end
+  if (! orchestrator.invokeFrontEnd())
+    return 3;
+
+  // Invoke back end
+  if (! orchestrator.invokeBackEnd())
+    return 3;
+
+  // We're done.
   return 0;
 }
