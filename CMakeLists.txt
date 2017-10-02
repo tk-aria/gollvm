@@ -84,6 +84,7 @@ set(LLVM_LINK_COMPONENTS
   Support
   Target
   Object
+  Passes
   Support
   )
 

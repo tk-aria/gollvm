@@ -11,6 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "go-llvm-linemap.h"
+#include "go-llvm-diagnostics.h"
+#include "go-llvm.h"
+#include "go-c.h"
+#include "mpfr.h"
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Triple.h"
@@ -20,6 +25,8 @@
 #include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/LegacyPassManager.h"
+#include "llvm/IR/Verifier.h"
+#include "llvm/Passes/PassBuilder.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
@@ -34,6 +41,8 @@
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Transforms/IPO.h"
+#include "llvm/Transforms/IPO/PassManagerBuilder.h"
 
 #include <algorithm>
 #include <cstring>
@@ -42,13 +51,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-
-#include "go-c.h"
-#include "go-llvm-linemap.h"
-#include "go-llvm-diagnostics.h"
-#include "go-llvm.h"
-
-#include "mpfr.h"
 
 using namespace llvm;
 
@@ -167,6 +169,15 @@ TraceLevel("tracelevel",
            cl::desc("Set debug trace level (def: 0, no trace output)."),
            cl::init(0));
 
+// Provide a way to turn off the full passmanager (to make it easier
+// to triage failures). This should be a temporary flag (not for the
+// long term).
+static cl::opt<bool>
+FullPasses("full-passes",
+           cl::desc("Enable all available optimization passes."),
+           cl::init(true));
+
+
 static std::unique_ptr<ToolOutputFile>
 GetOutputStream() {
   // Decide if we need "binary" output.
@@ -235,18 +246,24 @@ class CompilationOrchestrator {
   Triple triple_;
   llvm::LLVMContext context_;
   const char *progname_;
-  CodeGenOpt::Level olvl_;
+  CodeGenOpt::Level cgolvl_;
+  unsigned olvl_;
   std::unique_ptr<Llvm_backend> bridge_;
   std::unique_ptr<TargetMachine> target_;
   std::unique_ptr<Llvm_linemap> linemap_;
   std::unique_ptr<llvm::Module> module_;
   std::unique_ptr<ToolOutputFile> out_;
-
+  std::unique_ptr<TargetLibraryInfoImpl> tlii_;
   bool hasError_;
+
+  void createPasses(legacy::PassManager &MPM,
+                    legacy::FunctionPassManager &FPM);
 };
 
 CompilationOrchestrator::CompilationOrchestrator(const char *argvZero)
-    : progname_(argvZero), olvl_(CodeGenOpt::Default), hasError_(false)
+
+    : progname_(argvZero), cgolvl_(CodeGenOpt::Default),
+      olvl_(2), hasError_(false)
 {
   InitializeAllTargets();
   InitializeAllTargetMCs();
@@ -256,21 +273,6 @@ CompilationOrchestrator::CompilationOrchestrator(const char *argvZero)
 
 bool CompilationOrchestrator::preamble()
 {
-  // Initialize codegen and IR passes
-
-  // [assume this will change moving to the new pass manager]
-
-  PassRegistry *Registry = PassRegistry::getPassRegistry();
-  initializeCore(*Registry);
-  initializeCodeGen(*Registry);
-  initializeLoopStrengthReducePass(*Registry);
-  initializeLowerIntrinsicsPass(*Registry);
-  initializeCountingFunctionInserterPass(*Registry);
-  initializeUnreachableBlockElimLegacyPassPass(*Registry);
-  initializeConstantHoistingLegacyPassPass(*Registry);
-  initializeScalarOpts(*Registry);
-  initializeVectorization(*Registry);
-
   triple_ = Triple(Triple::normalize(TargetTriple));
   if (triple_.getTriple().empty())
     triple_.setTriple(sys::getDefaultTargetTriple());
@@ -292,12 +294,22 @@ bool CompilationOrchestrator::preamble()
     default:
       errs() << progname_ << ": invalid optimization level.\n";
       return false;
-    case ' ': break;
-    case '0': olvl_ = CodeGenOpt::None; break;
-    case '1': olvl_ = CodeGenOpt::Less; break;
+    case '0':
+      olvl_ = 0;
+      cgolvl_ = CodeGenOpt::None;
+      break;
+    case '1':
+      olvl_ = 1;
+      cgolvl_ = CodeGenOpt::Less;
+      break;
     case 's': // TODO: same as -O2 for now.
-    case '2': olvl_ = CodeGenOpt::Default; break;
-    case '3': olvl_ = CodeGenOpt::Aggressive; break;
+    case ' ':
+    case '2':
+      break;
+    case '3':
+      olvl_ = 3;
+      cgolvl_ = CodeGenOpt::Aggressive;
+      break;
   }
 
   go_no_warn = NoWarn;
@@ -319,7 +331,7 @@ bool CompilationOrchestrator::preamble()
   Optional<llvm::CodeModel::Model> CM = None;
   target_.reset(
       TheTarget->createTargetMachine(triple_.getTriple(), CPUStr, FeaturesStr,
-                                     Options, getRelocModel(), CM, olvl_));
+                                     Options, getRelocModel(), CM, cgolvl_));
   assert(target_.get() && "Could not allocate target machine!");
 
   return true;
@@ -449,42 +461,83 @@ bool CompilationOrchestrator::invokeFrontEnd()
   return true;
 }
 
+void CompilationOrchestrator::createPasses(legacy::PassManager &MPM,
+                                           legacy::FunctionPassManager &FPM)
+{
+  // FIXME: support LTO, ThinLTO, PGO
+
+  PassManagerBuilder pmb;
+
+  // Configure the inliner
+  if (NoInline || olvl_ == 0) {
+    // Nothing here at the moment. There is go:noinline, but no equivalent
+    // of go:alwaysinline.
+  } else {
+    bool disableInlineHotCallSite = false; // for autofdo, not yet supported
+    pmb.Inliner =
+        createFunctionInliningPass(olvl_, 2, disableInlineHotCallSite);
+  }
+
+  pmb.OptLevel = olvl_;
+  pmb.SizeLevel = 0; // TODO: decide on right value here
+  pmb.PrepareForThinLTO = false;
+  pmb.PrepareForLTO = false;
+
+  FPM.add(new TargetLibraryInfoWrapperPass(*tlii_));
+  if (! NoVerify)
+    FPM.add(createVerifierPass());
+
+  pmb.populateFunctionPassManager(FPM);
+  pmb.populateModulePassManager(MPM);
+}
+
 bool CompilationOrchestrator::invokeBackEnd()
 {
-  // Set up and invoke the back end for this module.
-  llvm::Module *M = module_.get();
+  tlii_.reset(new TargetLibraryInfoImpl(triple_));
 
-  // Legacy pass manager for now -- to be replaced by new pass manager
-  // shortly.
-  legacy::PassManager PM;
+  // Set up module and function passes
+  legacy::PassManager modulePasses;
+  modulePasses.add(
+      createTargetTransformInfoWrapperPass(target_->getTargetIRAnalysis()));
+  legacy::FunctionPassManager functionPasses(module_.get());
+  functionPasses.add(
+      createTargetTransformInfoWrapperPass(target_->getTargetIRAnalysis()));
+  createPasses(modulePasses, functionPasses);
 
-  // Add an appropriate TargetLibraryInfo pass for the module triple.
-  TargetLibraryInfoImpl TLII(triple_);
-  PM.add(new TargetLibraryInfoWrapperPass(TLII));
+  // Set up codegen passes
+  legacy::PassManager codeGenPasses;
+  codeGenPasses.add(
+      createTargetTransformInfoWrapperPass(target_->getTargetIRAnalysis()));
 
-  // FIXME: cpu, features not yet supported
-  std::string CPUStr = getCPUStr(), FeaturesStr = getFeaturesStr();
-
-  // Override function attributes based on CPUStr, FeaturesStr, and
-  // command line flags.
-  setFunctionAttributes(CPUStr, FeaturesStr, *M);
-
+  // Codegen setup
   raw_pwrite_stream *OS = &out_->os();
-
-  // Ask the target to add backend passes as necessary.
-  if (target_->addPassesToEmitFile(PM, *OS, FileType)) {
-    errs() << progname_ << ": target does not support generation of this"
-           << " file type!\n";
+  codeGenPasses.add(new TargetLibraryInfoWrapperPass(*tlii_));
+  if (target_->addPassesToEmitFile(codeGenPasses, *OS, FileType,
+                                   /*DisableVerify=*/ NoVerify)) {
+    errs() << "error: unable to interface with target\n";
     return false;
   }
 
   // Before executing passes, print the final values of the LLVM options.
   cl::PrintOptionValues();
 
-  // Run pass manager
-  PM.run(*M);
+  // Temporary -- to be removed in a follow-on CL
+  if (FullPasses) {
 
-  // Check for errors
+    // Here we go... first function passes
+    functionPasses.doInitialization();
+    for (Function &F : *module_.get())
+      if (!F.isDeclaration())
+        functionPasses.run(F);
+    functionPasses.doFinalization();
+
+    // ... then module passes
+    modulePasses.run(*module_.get());
+  }
+
+  // ... and finally code generation
+  codeGenPasses.run(*module_.get());
+
   if (hasError_)
     return false;
 
@@ -519,7 +572,7 @@ int main(int argc, char **argv)
 
   // Invoke back end
   if (! orchestrator.invokeBackEnd())
-    return 3;
+    return 4;
 
   // We're done.
   return 0;
