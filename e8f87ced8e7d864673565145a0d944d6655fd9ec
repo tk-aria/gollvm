@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1d54671e_c2149c56",
+        "filename": "goparse-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 334,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-10-03T13:45:22Z",
+      "side": 1,
+      "message": "http://llvm.org/doxygen/classllvm_1_1LLVMContext.html#ab06ffcbda11c36a9204cabe23496e0f5\nSeems we should not pass a bool pointer to setDiagnosticHandlerCallBack. Probably I got it wrong when I did the sync...",
+      "range": {
+        "startLine": 334,
+        "startChar": 41,
+        "endLine": 334,
+        "endChar": 57
+      },
+      "revId": "e8f87ced8e7d864673565145a0d944d6655fd9ec",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "08b0f688_449f7935",
+        "filename": "goparse-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 417,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-10-03T13:45:22Z",
+      "side": 1,
+      "message": "Remove duplicate.",
+      "range": {
+        "startLine": 416,
+        "startChar": 33,
+        "endLine": 417,
+        "endChar": 27
+      },
+      "revId": "e8f87ced8e7d864673565145a0d944d6655fd9ec",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "41d34453_b73cec90",
+        "filename": "goparse-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 486,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-10-03T13:45:22Z",
+      "side": 1,
+      "message": "return false",
+      "revId": "e8f87ced8e7d864673565145a0d944d6655fd9ec",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
