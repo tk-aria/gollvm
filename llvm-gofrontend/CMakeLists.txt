@@ -19,6 +19,7 @@ gofrontend/go/gogo.cc
 gofrontend/go/import-archive.cc
 gofrontend/go/import.cc
 gofrontend/go/lex.cc
+gofrontend/go/names.cc
 gofrontend/go/parse.cc
 gofrontend/go/runtime.cc
 gofrontend/go/statements.cc
