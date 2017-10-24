@@ -199,9 +199,12 @@ def perform():
     if clarg.startswith("-fdebug-prefix-map"):
       continue
 
-    # skip .o files in compilation, but record
+    # skip .o and .a files in compilation, but record
     # them for linker invocation.
     if clarg.endswith(".o"):
+      ofiles.append(clarg)
+      continue
+    if clarg.endswith(".a"):
       ofiles.append(clarg)
       continue
 
@@ -209,6 +212,12 @@ def perform():
       ldflags.append(clarg)
       continue
     if clarg == "-static-libgo":
+      ldflags.append(clarg)
+      continue
+    if clarg == "-static-libstdc++":
+      ldflags.append(clarg)
+      continue
+    if clarg == "-static-libgcc":
       ldflags.append(clarg)
       continue
 
