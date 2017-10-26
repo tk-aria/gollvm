@@ -107,12 +107,13 @@ void DIBuildHelper::beginFunction(Bfunction *function,
 
   // Now the function entry itself
   unsigned fcnLine = linemap()->location_line(function->location());
-  bool isLocalToUnit = false; // FIXME -- look at exported/non-exported
+  bool isLocalToUnit = !function->function()->hasExternalLinkage();
   bool isDefinition = true;
   unsigned scopeLine = fcnLine; // FIXME -- determine correct value here
   llvm::DIFile *difile = diFileFromLocation(function->location());
   auto difunc =
-      dibuilder().createFunction(moduleScope(), function->name(), function->asmName(),
+      dibuilder().createFunction(moduleScope(), function->name(),
+                                 isLocalToUnit ? "" : function->asmName(),
                                  difile, fcnLine, dst, isLocalToUnit,
                                  isDefinition, scopeLine);
   pushDIScope(difunc);
