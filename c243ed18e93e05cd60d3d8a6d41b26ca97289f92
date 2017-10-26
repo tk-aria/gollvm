@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ba30a2b3_538ac5fc",
+        "filename": "llvm-gofrontend/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1955,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-10-26T14:07:24Z",
+      "side": 1,
+      "message": "bitcast",
+      "range": {
+        "startLine": 1955,
+        "startChar": 42,
+        "endLine": 1955,
+        "endChar": 49
+      },
+      "revId": "c243ed18e93e05cd60d3d8a6d41b26ca97289f92",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
