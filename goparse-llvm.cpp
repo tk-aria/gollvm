@@ -380,6 +380,10 @@ bool CompilationOrchestrator::initBridge()
      eventually be controllable by a command line option.  */
   mpfr_set_default_prec (256);
 
+  // Escape analysis
+  if (OptimizeAllocs)
+    go_enable_optimize("allocs");
+
   // Include dirs
   if (! IncludeDirs.empty()) {
     std::stringstream ss(IncludeDirs);
