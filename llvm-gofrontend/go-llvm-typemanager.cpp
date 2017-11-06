@@ -2029,11 +2029,12 @@ llvm::DIType *TypeManager::buildDIType(Btype *typ, DIBuildHelper &helper)
     case Btype::ArrayT: {
       const BArrayType *bat = typ->castToBArrayType();
       llvm::DIType *elemDI = buildDIType(bat->elemType(), helper);
-      uint64_t arSize = bat->nelSize();
+      uint64_t arElems = bat->nelSize();
+      uint64_t arSize = datalayout_->getTypeSizeInBits(bat->type());
       uint64_t arAlign =
           datalayout_->getPrefTypeAlignment(bat->elemType()->type());
       llvm::SmallVector<llvm::Metadata *, 1> subscripts;
-      subscripts.push_back(dibuilder.getOrCreateSubrange(0, arSize));
+      subscripts.push_back(dibuilder.getOrCreateSubrange(0, arElems));
       llvm::DINodeArray subsAr = dibuilder.getOrCreateArray(subscripts);
       rval = dibuilder.createArrayType(arSize, arAlign, elemDI, subsAr);
       break;
