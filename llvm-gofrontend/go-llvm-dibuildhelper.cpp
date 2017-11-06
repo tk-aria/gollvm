@@ -144,21 +144,28 @@ void DIBuildHelper::insertVarDecl(Bvariable *var,
 {
   llvm::DIExpression *expr = dibuilder().createExpression();
   llvm::DILocation *vloc = debugLocFromLocation(var->location());
-  llvm::Instruction *insertionPoint = nullptr;
 
   // Don't emit declaration for dead variable.
   if(var->initializer() && !var->initializerInstruction()->getParent())
     return;
 
+  // Create the declare instruction, giving it an initial position at
+  // the end of the entry block (the insertDeclare call below doesn't
+  // allow a NULL insert location, so we pick end-of-block arbitrarily).
+  assert(entryBlock_);
   llvm::Instruction *decl =
-      dibuilder().insertDeclare(var->value(), dilv, expr, vloc, insertionPoint);
+      dibuilder().insertDeclare(var->value(), dilv, expr, vloc, entryBlock_);
+  decl->removeFromParent();
+
+  // Extract the decl from the end of the entry block and reposition
+  // it according to the var properties.
+  llvm::Instruction *insertionPoint = nullptr;
   if (var->initializer()) {
     assert(var->initializerInstruction()->getParent());
     insertionPoint = var->initializerInstruction();
   } else if (var->flavor() == ParamVar) {
     // parameters passing by reference may have no initializers.
     // declare them at function entry.
-    assert(entryBlock_);
     entryBlock_->getInstList().push_front(decl);
     return;
   } else {
