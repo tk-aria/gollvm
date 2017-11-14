@@ -275,7 +275,7 @@ TEST(BackendFcnTests, TestIntrinsicCall) {
   // __builtin_ctzll(x);
   Bfunction *bfcn = be->lookup_builtin("__builtin_ctzll");
   //Bexpression *fnexpr = be->function_code_expression(bfcn, loc);
-  Bexpression *ve = be->var_expression(x, VE_rvalue, loc);
+  Bexpression *ve = be->var_expression(x, loc);
   Bexpression *call = h.mkCallExpr(be, bfcn, ve, nullptr);
   h.mkExprStmt(call);
 
@@ -307,8 +307,8 @@ TEST(BackendFcnTests, TestCallMemBuiltins) {
   // memcmp(&x,&y,sizeof(x))
   {
   Bfunction *bmemcmp = be->lookup_builtin("memcmp");
-  Bexpression *vex = be->var_expression(x, VE_rvalue, loc);
-  Bexpression *vey = be->var_expression(y, VE_rvalue, loc);
+  Bexpression *vex = be->var_expression(x, loc);
+  Bexpression *vey = be->var_expression(y, loc);
   Bexpression *call =
       h.mkCallExpr(be, bmemcmp,
                    be->address_expression(vex, loc),
@@ -321,8 +321,8 @@ TEST(BackendFcnTests, TestCallMemBuiltins) {
   // memmove(&x,&y,sizeof(x))
   {
   Bfunction *bmemmove = be->lookup_builtin("memmove");
-  Bexpression *vex = be->var_expression(x, VE_rvalue, loc);
-  Bexpression *vey = be->var_expression(y, VE_rvalue, loc);
+  Bexpression *vex = be->var_expression(x, loc);
+  Bexpression *vey = be->var_expression(y, loc);
   Bexpression *call =
       h.mkCallExpr(be, bmemmove,
                    be->address_expression(vex, loc),
@@ -335,8 +335,8 @@ TEST(BackendFcnTests, TestCallMemBuiltins) {
   // memcpy(&y,&x,sizeof(y))
   {
   Bfunction *bmemcpy = be->lookup_builtin("memcpy");
-  Bexpression *vey = be->var_expression(y, VE_rvalue, loc);
-  Bexpression *vex = be->var_expression(x, VE_rvalue, loc);
+  Bexpression *vey = be->var_expression(y, loc);
+  Bexpression *vex = be->var_expression(x, loc);
   Bexpression *call =
       h.mkCallExpr(be, bmemcpy,
                    be->address_expression(vey, loc),

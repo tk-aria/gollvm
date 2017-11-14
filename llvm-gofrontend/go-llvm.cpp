@@ -900,7 +900,6 @@ Llvm_backend::makeTempVar(Bexpression *expr, Location location) {
 // An expression that references a variable.
 
 Bexpression *Llvm_backend::var_expression(Bvariable *var,
-                                          Varexpr_context in_lvalue_pos,
                                           Location location)
 {
   if (var == errorVariable_.get())
@@ -1700,7 +1699,7 @@ Llvm_backend::return_statement(Bfunction *bfunction,
     } else if (structVal->isConstant()) {
       llvm::Constant *cval = llvm::cast<llvm::Constant>(structVal->value());
       Bvariable *cv = genVarForConstant(cval, structVal->btype());
-      structVal = var_expression(cv, VE_rvalue, location);
+      structVal = var_expression(cv, location);
       structVal = materialize(address_expression(structVal, location));
     }
     toret = structVal;

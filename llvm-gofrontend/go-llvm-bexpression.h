@@ -106,6 +106,12 @@ class VarContext {
   bool pending_;
 };
 
+// Whether a variable expression appears in lvalue (assignment) context.
+enum Varexpr_context {
+  VE_rvalue,
+  VE_lvalue
+};
+
 // Bexpression is the backend representation of an expression, meaning
 // that it produces a value (llvm::Value) and will encapsulate some
 // set of instructions (llvm::Instruction) needed to produce that
