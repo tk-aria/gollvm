@@ -443,7 +443,7 @@ Bexpression *Llvm_backend::materializeConditional(Bexpression *condExpr)
         // nil_pointer_expression, which is untyped/polymorphic).
         // Assume that the type checking in the call to
         // assignment_statement will catch any problems.
-        Bexpression *varExpr = var_expression(tempv, VE_lvalue, location);
+        Bexpression *varExpr = var_expression(tempv, location);
         elseStmt = assignment_statement(function, varExpr, else_expr, location);
       }
     }
@@ -455,7 +455,7 @@ Bexpression *Llvm_backend::materializeConditional(Bexpression *condExpr)
                                     thenBlock, elseBlock, location);
 
   Bexpression *rval = (tempv ?
-                       var_expression(tempv, VE_rvalue, location) :
+                       var_expression(tempv, location) :
                        nbuilder_.mkVoidValue(void_type()));
   Bexpression *result =
       materialize(compound_expression(ifStmt, rval, location));

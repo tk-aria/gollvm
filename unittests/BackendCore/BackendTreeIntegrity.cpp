@@ -28,7 +28,7 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrity1) {
   // Create "2 + x"
   Btype *bi64t = be->integer_type(false, 64);
   Bvariable *xv = h.mkLocal("x", bi64t);
-  Bexpression *vex = be->var_expression(xv, VE_rvalue, loc);
+  Bexpression *vex = be->var_expression(xv, loc);
   Bexpression *bl1 = mkInt64Const(be, 2);
   Bexpression *badd1 = be->binary_expression(OPERATOR_PLUS, bl1, vex, loc);
   Bstatement *es = be->expression_statement(func, badd1);
@@ -75,7 +75,7 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrity2) {
   Bvariable *loc2 = be->local_variable(func, "loc2", bi64t, true, loc);
 
   // Create "loc1" varexpr, then supply to more than one statement
-  Bexpression *ve = be->var_expression(loc1, VE_rvalue, loc);
+  Bexpression *ve = be->var_expression(loc1, loc);
   Bstatement *es1 = be->expression_statement(func, ve);
   Bblock *block = mkBlockFromStmt(be.get(), func, es1);
   Bstatement *es2 = be->expression_statement(func, ve);
@@ -89,7 +89,7 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrity2) {
 
   be->nodeBuilder().destroy(block, DelBoth);
 
-  Bexpression *ve3 = be->var_expression(loc2, VE_rvalue, loc);
+  Bexpression *ve3 = be->var_expression(loc2, loc);
   Bstatement *es3 = be->expression_statement(func, ve3);
   Bblock *block2 = mkBlockFromStmt(be.get(), func, es3);
 

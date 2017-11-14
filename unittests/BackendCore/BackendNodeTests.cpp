@@ -70,9 +70,9 @@ TEST(BackendNodeTests, VerifyVisitorBehavior) {
   Bexpression *c22 = mkInt32Const(be, 22);
   Bvariable *xv = h.mkLocal("x", bi32t);
   Bvariable *yv = h.mkLocal("y", bpi32t);
-  Bexpression *ve = be->var_expression(xv, VE_rvalue, loc);
+  Bexpression *ve = be->var_expression(xv, loc);
   Bexpression *add = be->binary_expression(OPERATOR_PLUS, c22, ve, loc);
-  Bexpression *ve2 = be->var_expression(yv, VE_rvalue, loc);
+  Bexpression *ve2 = be->var_expression(yv, loc);
   Bexpression *der = be->indirect_expression(bi32t, ve2, false, loc);
   Bexpression *sub = be->binary_expression(OPERATOR_MINUS, add, der, loc);
   Bexpression *matsub = be->materialize(sub);
@@ -141,11 +141,11 @@ TEST(BackendNodeTests, CloneSubtree) {
   Bvariable *xv = h.mkLocal("x", bi32t);
   Bvariable *yv = h.mkLocal("y", bpi32t);
   Bvariable *zv = h.mkLocal("z", bi16t);
-  Bexpression *vex = be->var_expression(xv, VE_rvalue, loc);
-  Bexpression *vez = be->var_expression(zv, VE_rvalue, loc);
+  Bexpression *vex = be->var_expression(xv, loc);
+  Bexpression *vez = be->var_expression(zv, loc);
   Bexpression *conv = be->convert_expression(bi32t, vez, loc);
   Bexpression *sub = be->binary_expression(OPERATOR_PLUS, vex, conv, loc);
-  Bexpression *vey = be->var_expression(yv, VE_rvalue, loc);
+  Bexpression *vey = be->var_expression(yv, loc);
   Bexpression *der = be->indirect_expression(bi32t, vey, false, loc);
   Bexpression *add = be->binary_expression(OPERATOR_PLUS, sub, der, loc);
   Bexpression *matadd = be->materialize(add);
@@ -188,7 +188,7 @@ TEST(BackendNodeTests, FixSharing) {
   Bvariable *xv = h.mkLocal("x", s4t);
 
   // y = x.f1.f1 + x.f1.f1 [with sharing]
-  Bexpression *vex = be->var_expression(xv, VE_rvalue, loc);
+  Bexpression *vex = be->var_expression(xv, loc);
   Bexpression *f1ex = be->struct_field_expression(vex, 0, loc);
   Bexpression *f2ex = be->struct_field_expression(f1ex, 0, loc);
   Bexpression *der = be->indirect_expression(bi32t, f2ex, false, loc);

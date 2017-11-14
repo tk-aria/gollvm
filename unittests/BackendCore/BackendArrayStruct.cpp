@@ -38,30 +38,30 @@ TEST(BackendArrayStructTests, TestStructFieldExprs) {
 
   // var loc2 *X = &loc1
   Btype *ps2t = be->pointer_type(s2t);
-  Bexpression *bl1vex = be->var_expression(loc1, VE_rvalue, loc);
+  Bexpression *bl1vex = be->var_expression(loc1, loc);
   Bexpression *adl1 = be->address_expression(bl1vex, loc);
   Bvariable *loc2 = h.mkLocal("loc2", ps2t, adl1);
 
   // var x int32
   // x = loc1.f2
   Bvariable *x = h.mkLocal("x", bi32t);
-  Bexpression *vex = be->var_expression(x, VE_lvalue, loc);
-  Bexpression *sex = be->var_expression(loc1, VE_rvalue, loc);
+  Bexpression *vex = be->var_expression(x, loc);
+  Bexpression *sex = be->var_expression(loc1, loc);
   Bexpression *fex = be->struct_field_expression(sex, 1, loc);
   h.mkAssign(vex, fex);
 
   // var b2 bool
   // loc1.b = &b2
   Bvariable *b2 = h.mkLocal("b2", bt);
-  Bexpression *lvex = be->var_expression(loc1, VE_lvalue, loc);
+  Bexpression *lvex = be->var_expression(loc1, loc);
   Bexpression *bfex = be->struct_field_expression(lvex, 0, loc);
-  Bexpression *b2ex = be->var_expression(b2, VE_rvalue, loc);
+  Bexpression *b2ex = be->var_expression(b2, loc);
   Bexpression *adb2 = be->address_expression(b2ex, loc);
   h.mkAssign(bfex, adb2);
 
   // var b2 bool
   // loc2.f2 = 2 (equivalent to (*loc2).f2 = 2)
-  Bexpression *lvexi = be->var_expression(loc2, VE_lvalue, loc);
+  Bexpression *lvexi = be->var_expression(loc2, loc);
   bool knValid = false;
   Bexpression *lindx = be->indirect_expression(s2t, lvexi, knValid, loc);
   Bexpression *bfex2 = be->struct_field_expression(lindx, 1, loc);
@@ -116,8 +116,8 @@ TEST(BackendArrayStructTests, TestStructFieldExprs2) {
   Bvariable *y = h.mkLocal("y", bi32t);
   std::vector<Bexpression *> vals1;
   vals1.push_back(be->zero_expression(pbt));
-  vals1.push_back(be->var_expression(y, VE_rvalue, loc));
-  Bexpression *vex1 = be->var_expression(x, VE_lvalue, loc);
+  vals1.push_back(be->var_expression(y, loc));
+  Bexpression *vex1 = be->var_expression(x, loc);
   Bexpression *sex1 = be->constructor_expression(s2t, vals1, loc);
   Bexpression *fex1 = be->struct_field_expression(sex1, 1, loc);
   h.mkAssign(vex1, fex1);
@@ -129,7 +129,7 @@ TEST(BackendArrayStructTests, TestStructFieldExprs2) {
   std::vector<Bexpression *> vals2;
   vals2.push_back(be->zero_expression(pbt));
   vals2.push_back(mkInt32Const(be, int32_t(42)));
-  Bexpression *vex2 = be->var_expression(z, VE_lvalue, loc);
+  Bexpression *vex2 = be->var_expression(z, loc);
   Bexpression *sex2 = be->constructor_expression(s2t, vals2, loc);
   Bexpression *fex2 = be->struct_field_expression(sex2, 1, loc);
   h.mkAssign(vex2, fex2);
@@ -184,12 +184,12 @@ TEST(BackendArrayStructTests, TestArrayIndexingExprs) {
   Bvariable *y = h.mkLocal("y", bi64t);
   std::vector<unsigned long> indexes = { 0, 1, 2, 3 };
   std::vector<Bexpression *> vals1;
-  vals1.push_back(be->var_expression(y, VE_rvalue, loc));
+  vals1.push_back(be->var_expression(y, loc));
   vals1.push_back(mkInt64Const(be, 3));
   vals1.push_back(mkInt64Const(be, 2));
   vals1.push_back(mkInt64Const(be, 1));
   Bexpression *aex1 = be->array_constructor_expression(at4, indexes, vals1, loc);
-  Bexpression *vex1 = be->var_expression(x, VE_lvalue, loc);
+  Bexpression *vex1 = be->var_expression(x, loc);
   Bexpression *bi32one = mkInt32Const(be, 1);
   Bexpression *eex1 = be->array_index_expression(aex1, bi32one, loc);
   h.mkAssign(vex1, eex1);
@@ -202,7 +202,7 @@ TEST(BackendArrayStructTests, TestArrayIndexingExprs) {
   for (int64_t v : {4, 3, 2, 1})
     vals2.push_back(mkInt64Const(be, v));
   Bexpression *aex2 = be->array_constructor_expression(at4, indexes, vals2, loc);
-  Bexpression *vex2 = be->var_expression(z, VE_lvalue, loc);
+  Bexpression *vex2 = be->var_expression(z, loc);
   Bexpression *eex2 = be->array_index_expression(aex2, bi32one, loc);
   h.mkAssign(vex2, eex2);
 
@@ -214,8 +214,8 @@ TEST(BackendArrayStructTests, TestArrayIndexingExprs) {
   for (int64_t v : {4, 3, 2, 1})
     vals3.push_back(mkInt64Const(be, v));
   Bexpression *aex3 = be->array_constructor_expression(at4, indexes, vals3, loc);
-  Bexpression *vex3 = be->var_expression(w, VE_lvalue, loc);
-  Bexpression *iex3 = be->var_expression(x, VE_rvalue, loc);
+  Bexpression *vex3 = be->var_expression(w, loc);
+  Bexpression *iex3 = be->var_expression(x, loc);
   Bexpression *eex3 = be->array_index_expression(aex3, iex3, loc);
   h.mkAssign(vex3, eex3);
 
@@ -288,7 +288,7 @@ TEST(BackendArrayStructTests, CreateArrayConstructionExprs) {
   Bvariable *z = h.mkLocal("z", bi64t);
   std::vector<unsigned long> indexes3 = { 1 };
   std::vector<Bexpression *> vals3;
-  vals3.push_back(be->var_expression(z, VE_rvalue, loc));
+  vals3.push_back(be->var_expression(z, loc));
   Bexpression *arcon3 =
       be->array_constructor_expression(at4, indexes3, vals3, loc);
   h.mkLocal("ac", at4, arcon3);
@@ -346,9 +346,9 @@ TEST(BackendArrayStructTests, CreateStructConstructionExprs) {
 
   // var loc2 X = { &param1, loc1.f2 }
   Bvariable *p1 = func->getNthParamVar(0);
-  Bexpression *ve1 = be->var_expression(p1, VE_rvalue, loc);
+  Bexpression *ve1 = be->var_expression(p1, loc);
   Bexpression *adp = be->address_expression(ve1, loc);
-  Bexpression *ve2 = be->var_expression(loc1, VE_rvalue, loc);
+  Bexpression *ve2 = be->var_expression(loc1, loc);
   Bexpression *fex = be->struct_field_expression(ve2, 1, loc);
   std::vector<Bexpression *> vals2;
   vals2.push_back(adp);
@@ -398,7 +398,7 @@ TEST(BackendArrayStructTests, CreateNestedStructConstructionExprs) {
   // var l1 Y = Y{ X{nil, 3}, 3.0}
   std::vector<Bexpression *> vals1;
   Bvariable *p1 = func->getNthParamVar(0);
-  Bexpression *ve1 = be->var_expression(p1, VE_rvalue, loc);
+  Bexpression *ve1 = be->var_expression(p1, loc);
   Bexpression *adp = be->address_expression(ve1, loc);
   vals1.push_back(adp);
   vals1.push_back(mkInt32Const(be, int32_t(3)));
@@ -411,7 +411,7 @@ TEST(BackendArrayStructTests, CreateNestedStructConstructionExprs) {
   Bexpression *scon2 =
       be->constructor_expression(syt, vals2, loc);
   Bvariable *loc1 = h.mkLocal("loc1", syt);
-  Bexpression *vex = be->var_expression(loc1, VE_lvalue, loc);
+  Bexpression *vex = be->var_expression(loc1, loc);
   h.mkAssign(vex, scon2);
 
   const char *exp = R"RAW_RESULT(
@@ -455,10 +455,10 @@ TEST(BackendArrayStructTests, CreateStructConstructionExprs2) {
   // *p0 = { p1, 101 }
   Bvariable *p0 = func->getNthParamVar(0);
   Bvariable *p1 = func->getNthParamVar(1);
-  Bexpression *ve = be->var_expression(p0, VE_lvalue, loc);
+  Bexpression *ve = be->var_expression(p0, loc);
   Bexpression *dex = be->indirect_expression(s2t, ve, false, loc);
   std::vector<Bexpression *> vals;
-  vals.push_back(be->var_expression(p1, VE_rvalue, loc));
+  vals.push_back(be->var_expression(p1, loc));
   vals.push_back(mkInt32Const(be, int32_t(101)));
   Bexpression *scon =
       be->constructor_expression(s2t, vals, loc);
@@ -499,19 +499,19 @@ TEST(BackendArrayStructTests, CreateStructConstructionExprs3) {
                                      false, /* is_hidden */
                                      false, /* unique_section */
                                      loc);
-  Bexpression *xvex = be->var_expression(x, VE_rvalue, loc);
+  Bexpression *xvex = be->var_expression(x, loc);
   std::vector<Bexpression *> vals1 = {xvex};
   Bexpression *scon1 = be->constructor_expression(s1t, vals1, loc);
   Bvariable *t = be->global_variable("t", "t", s1t, false, /* is_external */
                                      false, /* is_hidden */
                                      false, /* unique_section */
                                      loc);
-  Bexpression *tvex = be->var_expression(t, VE_lvalue, loc);
+  Bexpression *tvex = be->var_expression(t, loc);
   h.mkAssign(tvex, scon1);
 
   // Construct a struct with a field from a field of global var
   // var t2 = T{t.x}
-  Bexpression *tvex2 = be->var_expression(t, VE_rvalue, loc);
+  Bexpression *tvex2 = be->var_expression(t, loc);
   Bexpression *fex = be->struct_field_expression(tvex2, 0, loc);
   std::vector<Bexpression *> vals2 = {fex};
   Bexpression *scon2 = be->constructor_expression(s1t, vals2, loc);
@@ -552,20 +552,20 @@ TEST(BackendArrayStructTests, CreateArrayIndexingExprs) {
 
   // aa[1]
   Bexpression *bi32one = mkInt32Const(be, 1);
-  Bexpression *vea1 = be->var_expression(aa, VE_rvalue, loc);
+  Bexpression *vea1 = be->var_expression(aa, loc);
   Bexpression *aa1 = be->array_index_expression(vea1, bi32one, loc);
 
   // aa[3]
   Bexpression *bi64three = mkInt64Const(be, 3);
-  Bexpression *vea2 = be->var_expression(aa, VE_rvalue, loc);
+  Bexpression *vea2 = be->var_expression(aa, loc);
   Bexpression *aa2 = be->array_index_expression(vea2, bi64three, loc);
 
   // aa[aa[3]]
-  Bexpression *vea3 = be->var_expression(aa, VE_rvalue, loc);
+  Bexpression *vea3 = be->var_expression(aa, loc);
   Bexpression *aa3 = be->array_index_expression(vea3, aa2, loc);
 
   // aa[aa[1]]
-  Bexpression *vea4 = be->var_expression(aa, VE_lvalue, loc);
+  Bexpression *vea4 = be->var_expression(aa, loc);
   Bexpression *aa4 = be->array_index_expression(vea4, aa1, loc);
 
   // aa[aa[1]] = aa[aa[3]]
@@ -628,7 +628,7 @@ TEST(BackendArrayStructTests, CreateComplexIndexingAndFieldExprs) {
 
   // t1[7].ar[3].x = 5
   {
-    Bexpression *vt = be->var_expression(t1, VE_lvalue, loc);
+    Bexpression *vt = be->var_expression(t1, loc);
     Bexpression *bi32sev = mkInt32Const(be, 7);
     Bexpression *ti7 = be->array_index_expression(vt, bi32sev, loc);
     bool knValid = true;
@@ -663,7 +663,7 @@ TEST(BackendArrayStructTests, CreateComplexIndexingAndFieldExprs) {
 
   // q := t1[0].ar[0].y
   {
-    Bexpression *vt = be->var_expression(t1, VE_rvalue, loc);
+    Bexpression *vt = be->var_expression(t1, loc);
     Bexpression *bi32zero = mkInt32Const(be, 0);
     Bexpression *ti0 = be->array_index_expression(vt, bi32zero, loc);
     bool knValid = true;
@@ -717,11 +717,11 @@ TEST(BackendArrayStructTests, TestStructAssignment) {
 
   // x1 = y1
   // x2 = y2
-  Bexpression *ve1 = be->var_expression(x1, VE_lvalue, loc);
-  Bexpression *ve2 = be->var_expression(y1, VE_rvalue, loc);
+  Bexpression *ve1 = be->var_expression(x1, loc);
+  Bexpression *ve2 = be->var_expression(y1, loc);
   h.mkAssign(ve1, ve2);
-  Bexpression *ve3 = be->var_expression(x2, VE_lvalue, loc);
-  Bexpression *ve4 = be->var_expression(y2, VE_rvalue, loc);
+  Bexpression *ve3 = be->var_expression(x2, loc);
+  Bexpression *ve4 = be->var_expression(y2, loc);
   h.mkAssign(ve3, ve4);
 
   const char *exp = R"RAW_RESULT(
@@ -770,7 +770,7 @@ TEST(BackendArrayStructTests, TestStructFieldAddressExpr) {
   // var a1 = &t1.f1
   // var a2 = &t2.f1
   Bvariable *t1 = h.mkLocal("t1", s1t);
-  Bexpression *t1vex = be->var_expression(t1, VE_rvalue, loc);
+  Bexpression *t1vex = be->var_expression(t1, loc);
   Bexpression *fex1 = be->struct_field_expression(t1vex, 0, loc);
   Bexpression *aex1 = be->address_expression(fex1, loc);
   h.mkLocal("a1", bpi32t, aex1);
@@ -779,7 +779,7 @@ TEST(BackendArrayStructTests, TestStructFieldAddressExpr) {
                                       false, /* is_hidden */
                                       false, /* unique_section */
                                       loc);
-  Bexpression *t2vex = be->var_expression(t2, VE_rvalue, loc);
+  Bexpression *t2vex = be->var_expression(t2, loc);
   Bexpression *fex2 = be->struct_field_expression(t2vex, 0, loc);
   Bexpression *aex2 = be->address_expression(fex2, loc);
   h.mkLocal("a2", bpi32t, aex2);

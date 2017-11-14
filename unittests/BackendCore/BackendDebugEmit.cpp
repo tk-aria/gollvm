@@ -134,11 +134,11 @@ TEST(BackendDebugEmit, MoreComplexVarDecls) {
   Bvariable *p0 = func->getNthParamVar(0);
   Bvariable *p1 = func->getNthParamVar(1);
   std::vector<Bexpression *> args;
-  args.push_back(be->var_expression(p0, VE_rvalue, loc));
-  args.push_back(be->var_expression(p1, VE_rvalue, loc));
+  args.push_back(be->var_expression(p0, loc));
+  args.push_back(be->var_expression(p1, loc));
   args.push_back(mkInt32Const(be, 4));
-  args.push_back(be->var_expression(p0, VE_rvalue, loc));
-  args.push_back(be->var_expression(p1, VE_rvalue, loc));
+  args.push_back(be->var_expression(p0, loc));
+  args.push_back(be->var_expression(p1, loc));
   Bexpression *call = be->call_expression(func, fn, args, nullptr, h.loc());
   std::vector<Bexpression *> rvals;
   rvals.push_back(call);

@@ -47,12 +47,12 @@ TEST(BackendVarTests, MakeLocalVar) {
   EXPECT_TRUE(loc1 != loc2 && loc1->value() != loc2->value());
 
   // Test var_expression created from local variable
-  Bexpression *ve1 = be->var_expression(loc1, VE_lvalue, Location());
+  Bexpression *ve1 = be->var_expression(loc1, Location());
   ASSERT_TRUE(ve1 != nullptr);
   EXPECT_EQ(ve1->value(), loc1->value());
 
   // Test var_expression created from local variable
-  Bexpression *ve2 = be->var_expression(loc1, VE_rvalue, Location());
+  Bexpression *ve2 = be->var_expression(loc1, Location());
   ASSERT_TRUE(ve2 != nullptr);
   Bstatement *es = h.mkExprStmt(ve2);
   EXPECT_EQ(repr(ve2->value()), "%loc1 = alloca i64");
@@ -88,7 +88,7 @@ TEST(BackendVarTests, MakeParamVar) {
   EXPECT_TRUE(isa<AllocaInst>(p2->value()));
 
   // Test var_expression created from param variable
-  Bexpression *ve1 = be->var_expression(p1, VE_lvalue, Location());
+  Bexpression *ve1 = be->var_expression(p1, Location());
   ASSERT_TRUE(ve1 != nullptr);
   EXPECT_EQ(ve1->value(), p1->value());
 
@@ -120,7 +120,7 @@ TEST(BackendVarTests, MakeGlobalVar) {
   be->global_variable_set_init(g1, mkInt32Const(be.get(), 101));
 
   // Test var_expression created from global variable
-  Bexpression *ve1 = be->var_expression(g1, VE_lvalue, Location());
+  Bexpression *ve1 = be->var_expression(g1, Location());
   ASSERT_TRUE(ve1 != nullptr);
   EXPECT_EQ(ve1->value(), g1->value());
 
@@ -510,8 +510,8 @@ TEST(BackendVarTests, TestVarLifetimeInsertion) {
   Bstatement *is2 = be->init_statement(func, y, be->zero_expression(bst));
 
   // x := y.f1
-  Bexpression *ve1 = be->var_expression(x, VE_lvalue, loc);
-  Bexpression *ve2 = be->var_expression(y, VE_rvalue, loc);
+  Bexpression *ve1 = be->var_expression(x, loc);
+  Bexpression *ve2 = be->var_expression(y, loc);
   Bexpression *fex = be->struct_field_expression(ve2, 1, loc);
   Bstatement *as =
       be->assignment_statement(func, ve1, fex, loc);
@@ -651,21 +651,21 @@ TEST(BackendVarTests, ZeroSizedGlobals) {
   // some accesses to them.
 
   // emptys2f.f1 = emptystruct
-  Bexpression *vex1 = be->var_expression(gs2, VE_lvalue, loc);
+  Bexpression *vex1 = be->var_expression(gs2, loc);
   Bexpression *fex1 = be->struct_field_expression(vex1, 0, loc);
-  Bexpression *vex2 = be->var_expression(gs1, VE_rvalue, loc);
+  Bexpression *vex2 = be->var_expression(gs1, loc);
   h.mkAssign(fex1, vex2);
 
   // localemptys2f = emptys2f
   Bvariable *loc1 = h.mkLocal("localemptys2f", bef2);
-  Bexpression *vex3 = be->var_expression(loc1, VE_lvalue, loc);
-  Bexpression *vex4 = be->var_expression(gs2, VE_rvalue, loc);
+  Bexpression *vex3 = be->var_expression(loc1, loc);
+  Bexpression *vex4 = be->var_expression(gs2, loc);
   h.mkAssign(vex3, vex4);
 
   // localemptyintar = emptyintar
   Bvariable *loc2 = h.mkLocal("localemptyintar", atint0);
-  Bexpression *vex5 = be->var_expression(loc2, VE_lvalue, loc);
-  Bexpression *vex6 = be->var_expression(ga2, VE_rvalue, loc);
+  Bexpression *vex5 = be->var_expression(loc2, loc);
+  Bexpression *vex6 = be->var_expression(ga2, loc);
   h.mkAssign(vex5, vex6);
 
   bool broken = h.finish(StripDebugInfo);

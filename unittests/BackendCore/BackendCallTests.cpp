@@ -34,7 +34,7 @@ TEST(BackendCallTests, TestSimpleCall) {
   args.push_back(be->zero_expression(bpi64t));
   Bexpression *call = be->call_expression(func, fn, args, nullptr, h.loc());
   Bvariable *x = h.mkLocal("x", bi64t, call);
-  h.mkReturn(be->var_expression(x, VE_rvalue, loc));
+  h.mkReturn(be->var_expression(x, loc));
 
   const char *exp = R"RAW_RESULT(
       %call.0 = call i64 @foo(i8* nest undef, i32 3, i32 6, i64* null)
@@ -126,7 +126,7 @@ TEST(BackendCallTests, MultiReturnCall) {
   //  return p8, nil, nil, 101
   //
   Bvariable *p1 = func->getNthParamVar(0);
-  Bexpression *vex = be->var_expression(p1, VE_rvalue, Location());
+  Bexpression *vex = be->var_expression(p1, Location());
   std::vector<Bexpression *> rvals2 = {
     vex,
     be->nil_pointer_expression(),
@@ -157,7 +157,7 @@ TEST(BackendCallTests, MultiReturnCall) {
 
   // If statement
   Location loc;
-  Bexpression *ve2 = be->var_expression(p1, VE_rvalue, Location());
+  Bexpression *ve2 = be->var_expression(p1, Location());
   Bexpression *npe = be->nil_pointer_expression();
   Bexpression *cmp = be->binary_expression(OPERATOR_EQEQ, ve2, npe, loc);
   h.mkIf(cmp, s1, s2);
