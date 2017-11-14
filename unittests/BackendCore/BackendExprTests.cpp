@@ -225,7 +225,7 @@ TEST(BackendExprTests, TestConversionExpressions) {
   Btype *bi32t = be->integer_type(false, 32);
   Btype *s2t = mkBackendStruct(be, bi32t, "f1", bi32t, "f2", nullptr);
   Btype *ps2t = be->pointer_type(s2t);
-  Bexpression *vex = be->var_expression(xv, VE_lvalue, loc);
+  Bexpression *vex = be->var_expression(xv, loc);
   Bexpression *adx = be->address_expression(vex, loc);
   Bexpression *cast = be->convert_expression(ps2t, adx, loc);
   Bexpression *dex = be->indirect_expression(s2t, cast, false, loc);
@@ -264,7 +264,7 @@ TEST(BackendExprTests, TestMoreConversionExpressions) {
   // *(*int32)parm3 = 5
   {
     Bvariable *p3 = func->getNthParamVar(2);
-    Bexpression *ve = be->var_expression(p3, VE_lvalue, loc);
+    Bexpression *ve = be->var_expression(p3, loc);
     Bexpression *conv = be->convert_expression(bpi32t, ve, loc);
     Bexpression *dex = be->indirect_expression(bi32t, conv, false, loc);
     h.mkAssign(dex, mkInt32Const(be, 5));
@@ -276,7 +276,7 @@ TEST(BackendExprTests, TestMoreConversionExpressions) {
     Btype *bf64t = be->float_type(64);
     Btype *bu64t = be->integer_type(true, 64);
     Bvariable *p = h.mkLocal("p", bf64t);
-    Bexpression *ve = be->var_expression(p, VE_rvalue, loc);
+    Bexpression *ve = be->var_expression(p, loc);
     Bexpression *conv = be->convert_expression(bu64t, ve, loc);
     Bexpression *conv2 = be->convert_expression(bpi32t, conv, loc);
     Bexpression *dex = be->indirect_expression(bi32t, conv2, false, loc);
@@ -330,12 +330,12 @@ TEST(BackendExprTests, TestFloatConversionExpressions) {
     for (unsigned ii = 0; ii < jj; ++ii) {
       Bvariable *vii = parms[ii];
       Bvariable *vjj = parms[jj];
-      Bexpression *vel1 = be->var_expression(vii, VE_lvalue, loc);
-      Bexpression *ver1 = be->var_expression(vjj, VE_rvalue, loc);
+      Bexpression *vel1 = be->var_expression(vii, loc);
+      Bexpression *ver1 = be->var_expression(vjj, loc);
       Bexpression *conv1 = be->convert_expression(vel1->btype(), ver1, loc);
       h.mkAssign(vel1, conv1);
-      Bexpression *vel2 = be->var_expression(vjj, VE_lvalue, loc);
-      Bexpression *ver2 = be->var_expression(vii, VE_rvalue, loc);
+      Bexpression *vel2 = be->var_expression(vjj, loc);
+      Bexpression *ver2 = be->var_expression(vii, loc);
       Bexpression *conv2 = be->convert_expression(vel2->btype(), ver2, loc);
       h.mkAssign(vel2, conv2);
     }
@@ -455,27 +455,27 @@ TEST(BackendExprTests, TestComplexConversionExpression) {
   Bvariable *y = h.mkLocal("y", bc128t);
 
   // a = complex64(x)
-  Bexpression *avex1 = be->var_expression(a, VE_lvalue, loc);
-  Bexpression *xvex1 = be->var_expression(x, VE_rvalue, loc);
+  Bexpression *avex1 = be->var_expression(a, loc);
+  Bexpression *xvex1 = be->var_expression(x, loc);
   Bexpression *convex1 = be->convert_expression(bc64t, xvex1, loc);
   h.mkAssign(avex1, convex1);
 
   // y = complex128(b)
-  Bexpression *yvex2 = be->var_expression(y, VE_lvalue, loc);
-  Bexpression *bvex2 = be->var_expression(b, VE_rvalue, loc);
+  Bexpression *yvex2 = be->var_expression(y, loc);
+  Bexpression *bvex2 = be->var_expression(b, loc);
   Bexpression *convex2 = be->convert_expression(bc128t, bvex2, loc);
   h.mkAssign(yvex2, convex2);
 
   // No-op conversions
   // a = complex64(b)
-  Bexpression *avex3 = be->var_expression(a, VE_lvalue, loc);
-  Bexpression *bvex3 = be->var_expression(b, VE_rvalue, loc);
+  Bexpression *avex3 = be->var_expression(a, loc);
+  Bexpression *bvex3 = be->var_expression(b, loc);
   Bexpression *convex3 = be->convert_expression(bc64t, bvex3, loc);
   h.mkAssign(avex3, convex3);
 
   // x = complex128(y)
-  Bexpression *xvex4 = be->var_expression(x, VE_lvalue, loc);
-  Bexpression *yvex4 = be->var_expression(y, VE_rvalue, loc);
+  Bexpression *xvex4 = be->var_expression(x, loc);
+  Bexpression *yvex4 = be->var_expression(y, loc);
   Bexpression *convex4 = be->convert_expression(bc128t, yvex4, loc);
   h.mkAssign(xvex4, convex4);
 
@@ -561,21 +561,21 @@ TEST(BackendExprTests, MakeVarExpressions) {
 
   // We should get a distinct Bexpression each time we create a new
   // var expression.
-  Bexpression *ve1 = be->var_expression(loc1, VE_rvalue, loc);
+  Bexpression *ve1 = be->var_expression(loc1, loc);
   EXPECT_EQ(repr(ve1->value()), "%loc1 = alloca i64");
   h.mkExprStmt(ve1);
-  Bexpression *ve2 = be->var_expression(loc1, VE_rvalue, loc);
+  Bexpression *ve2 = be->var_expression(loc1, loc);
   h.mkExprStmt(ve2);
   EXPECT_EQ(repr(ve2->value()), "%loc1 = alloca i64");
   EXPECT_NE(ve1, ve2);
 
   // Same here.
-  Bexpression *ve3 = be->var_expression(loc1, VE_lvalue, loc);
-  Bexpression *ve3r = be->var_expression(loc1, VE_rvalue, loc);
+  Bexpression *ve3 = be->var_expression(loc1, loc);
+  Bexpression *ve3r = be->var_expression(loc1, loc);
   EXPECT_EQ(repr(ve3->value()), "%loc1 = alloca i64");
   h.mkAssign(ve3, ve3r);
-  Bexpression *ve4 = be->var_expression(loc1, VE_lvalue, loc);
-  Bexpression *ve4r = be->var_expression(loc1, VE_rvalue, loc);
+  Bexpression *ve4 = be->var_expression(loc1, loc);
+  Bexpression *ve4r = be->var_expression(loc1, loc);
   EXPECT_EQ(repr(ve4->value()), "%loc1 = alloca i64");
   EXPECT_NE(ve3, ve4);
   h.mkAssign(ve4, ve4r);
@@ -611,7 +611,7 @@ TEST(BackendExprTests, TestCompareOps) {
     Bexpression *bleft = valtotest[tidx].first;
     Bvariable *bv = valtotest[tidx].second;
     for (auto op : optotest) {
-      Bexpression *bright = be->var_expression(bv, VE_rvalue, loc);
+      Bexpression *bright = be->var_expression(bv, loc);
       Bexpression *cmp = be->binary_expression(op, bleft, bright, Location());
       Bstatement *es = be->expression_statement(func, cmp);
       h.addStmt(es);
@@ -707,7 +707,7 @@ TEST(BackendExprTests, TestArithOps) {
     Bexpression *bleft = valtotest[tidx].first;
     Bvariable *bv = valtotest[tidx].second;
     for (auto op : optotest) {
-      Bexpression *bright = be->var_expression(bv, VE_rvalue, loc);
+      Bexpression *bright = be->var_expression(bv, loc);
       Bexpression *cmp = be->binary_expression(op, bleft, bright, loc);
       Bstatement *es = be->expression_statement(func, cmp);
       h.addStmt(es);
@@ -747,12 +747,12 @@ TEST(BackendExprTests, TestMoreArith) {
 
   // x = y + z + w
   Location loc;
-  Bexpression *vey = be->var_expression(y, VE_rvalue, loc);
-  Bexpression *vez = be->var_expression(z, VE_rvalue, loc);
-  Bexpression *vew = be->var_expression(w, VE_rvalue, loc);
+  Bexpression *vey = be->var_expression(y, loc);
+  Bexpression *vez = be->var_expression(z, loc);
+  Bexpression *vew = be->var_expression(w, loc);
   Bexpression *ypz = be->binary_expression(OPERATOR_PLUS, vey, vez, loc);
   Bexpression *ypzpw = be->binary_expression(OPERATOR_PLUS, ypz, vew, loc);
-  Bexpression *vex = be->var_expression(x, VE_lvalue, loc);
+  Bexpression *vex = be->var_expression(x, loc);
   h.mkAssign(vex, ypzpw);
 
   const char *exp = R"RAW_RESULT(
@@ -802,8 +802,8 @@ TEST(BackendExprTests, TestLogicalOps) {
     Bvariable *bvl = valtotest[tidx].first;
     Bvariable *bvr = valtotest[tidx].second;
     for (auto op : optotest) {
-      Bexpression *bleft = be->var_expression(bvl, VE_rvalue, loc);
-      Bexpression *bright = be->var_expression(bvr, VE_rvalue, loc);
+      Bexpression *bleft = be->var_expression(bvl, loc);
+      Bexpression *bright = be->var_expression(bvr, loc);
       Bexpression *cmp = be->binary_expression(op, bleft, bright, Location());
       Bstatement *es = be->expression_statement(func, cmp);
       h.addStmt(es);
@@ -908,7 +908,7 @@ TEST(BackendExprTests, TestMulDiv) {
     for (auto op : optotest) {
       if (op == OPERATOR_MOD && bleft->btype()->type()->isFloatingPointTy())
         continue;
-      Bexpression *bright = be->var_expression(bv, VE_rvalue, loc);
+      Bexpression *bright = be->var_expression(bv, loc);
       Bexpression *cmp = be->binary_expression(op, bleft, bright, Location());
       Bstatement *es = be->expression_statement(func, cmp);
       h.addStmt(es);
@@ -967,8 +967,8 @@ TEST(BackendExprTests, TestShift) {
     Bvariable *bvl = valtotest[tidx].first;
     Bvariable *bvr = valtotest[tidx].second;
     for (auto op : optotest) {
-      Bexpression *bleft = be->var_expression(bvl, VE_rvalue, loc);
-      Bexpression *bright = be->var_expression(bvr, VE_rvalue, loc);
+      Bexpression *bleft = be->var_expression(bvl, loc);
+      Bexpression *bright = be->var_expression(bvr, loc);
       Bexpression *cmp = be->binary_expression(op, bleft, bright, Location());
       Bstatement *es = be->expression_statement(func, cmp);
       h.addStmt(es);
@@ -978,16 +978,16 @@ TEST(BackendExprTests, TestShift) {
   // Verify correct behavior when type of shift amount does not match
   // type of shift value.
   {
-    Bexpression *bleft = be->var_expression(x, VE_rvalue, loc);
-    Bexpression *bright = be->var_expression(z, VE_rvalue, loc);
+    Bexpression *bleft = be->var_expression(x, loc);
+    Bexpression *bright = be->var_expression(z, loc);
     Bexpression *mix = be->binary_expression(OPERATOR_LSHIFT, bleft, bright,
                                              Location());
     Bstatement *es = be->expression_statement(func, mix);
     h.addStmt(es);
   }
   {
-    Bexpression *bleft = be->var_expression(z, VE_rvalue, loc);
-    Bexpression *bright = be->var_expression(y, VE_rvalue, loc);
+    Bexpression *bleft = be->var_expression(z, loc);
+    Bexpression *bright = be->var_expression(y, loc);
     Bexpression *mix = be->binary_expression(OPERATOR_RSHIFT, bleft, bright,
                                              Location());
     Bstatement *es = be->expression_statement(func, mix);
@@ -1048,11 +1048,11 @@ TEST(BackendExprTests, TestComplexOps) {
   Bvariable *b = h.mkLocal("b", bt);
 
   for (auto op : optotest) {
-    Bexpression *bleft = be->var_expression(x, VE_rvalue, loc);
-    Bexpression *bright = be->var_expression(y, VE_rvalue, loc);
+    Bexpression *bleft = be->var_expression(x, loc);
+    Bexpression *bright = be->var_expression(y, loc);
     Bexpression *bop = be->binary_expression(op, bleft, bright, Location());
     Bexpression *bvex = be->var_expression(op == OPERATOR_EQEQ || op == OPERATOR_NOTEQ ? b : z,
-                                           VE_lvalue, loc);
+                                           loc);
     h.mkAssign(bvex, bop);
   }
 
@@ -1232,21 +1232,21 @@ TEST(BackendExprTests, TestComplexExpressions) {
   Bvariable *x = h.mkLocal("x", bc128t);
 
   // a = real(x)
-  Bexpression *avex1 = be->var_expression(a, VE_lvalue, loc);
-  Bexpression *xvex1 = be->var_expression(x, VE_rvalue, loc);
+  Bexpression *avex1 = be->var_expression(a, loc);
+  Bexpression *xvex1 = be->var_expression(x, loc);
   Bexpression *realex = be->real_part_expression(xvex1, loc);
   h.mkAssign(avex1, realex);
 
   // b = imag(x)
-  Bexpression *bvex2 = be->var_expression(b, VE_lvalue, loc);
-  Bexpression *xvex2 = be->var_expression(x, VE_rvalue, loc);
+  Bexpression *bvex2 = be->var_expression(b, loc);
+  Bexpression *xvex2 = be->var_expression(x, loc);
   Bexpression *imagex = be->imag_part_expression(xvex2, loc);
   h.mkAssign(bvex2, imagex);
 
   // x = complex(b, a)
-  Bexpression *xvex3 = be->var_expression(x, VE_lvalue, loc);
-  Bexpression *bvex3 = be->var_expression(b, VE_rvalue, loc);
-  Bexpression *avex3 = be->var_expression(a, VE_rvalue, loc);
+  Bexpression *xvex3 = be->var_expression(x, loc);
+  Bexpression *bvex3 = be->var_expression(b, loc);
+  Bexpression *avex3 = be->var_expression(a, loc);
   Bexpression *compex = be->complex_expression(bvex3, avex3, loc);
   h.mkAssign(xvex3, compex);
 
@@ -1320,8 +1320,8 @@ TEST(BackendExprTests, TestConditionalExpression1) {
   // Two calls, no type
   Bexpression *call1 = h.mkCallExpr(be, func, nullptr);
   Bexpression *call2 = h.mkCallExpr(be, func, nullptr);
-  Bexpression *vex1 = be->var_expression(pv1, VE_rvalue, loc);
-  Bexpression *vex2 = be->var_expression(pv2, VE_rvalue, loc);
+  Bexpression *vex1 = be->var_expression(pv1, loc);
+  Bexpression *vex2 = be->var_expression(pv2, loc);
   Bexpression *cmp = be->binary_expression(OPERATOR_LT, vex1, vex2, loc);
   Bexpression *condex = be->conditional_expression(func, nullptr, cmp, call1,
                                                    call2, loc);
@@ -1375,7 +1375,7 @@ TEST(BackendExprTests, TestConditionalExpression2) {
 
   // Call on true branch,
   Bexpression *call1 = h.mkCallExpr(be, func, nullptr);
-  Bexpression *ve = be->var_expression(pv1, VE_rvalue, loc);
+  Bexpression *ve = be->var_expression(pv1, loc);
   Bexpression *cmp = be->binary_expression(OPERATOR_LT,
                                            mkInt64Const(be, int64_t(3)),
                                            mkInt64Const(be, int64_t(4)), loc);
@@ -1428,10 +1428,10 @@ TEST(BackendExprTests, TestConditionalExpression3) {
   // Local var with conditional expression as init
   Bvariable *p0v = func->getNthParamVar(0);
   Bvariable *p1v = func->getNthParamVar(1);
-  Bexpression *vep1 = be->var_expression(p1v, VE_rvalue, loc);
+  Bexpression *vep1 = be->var_expression(p1v, loc);
   Bexpression *cmp = be->binary_expression(OPERATOR_LT, vep1,
                                            mkInt32Const(be, int32_t(7)), loc);
-  Bexpression *vep0 = be->var_expression(p0v, VE_rvalue, loc);
+  Bexpression *vep0 = be->var_expression(p0v, loc);
   Bexpression *bzero = be->zero_expression(s2t);
 
   Bexpression *cond = be->conditional_expression(func, s2t, cmp,
@@ -1491,10 +1491,10 @@ TEST(BackendExprTests, TestCompoundExpression) {
   // x
   Btype *bi64t = be->integer_type(false, 64);
   Bvariable *xv = h.mkLocal("x", bi64t);
-  Bexpression *vex = be->var_expression(xv, VE_lvalue, loc);
+  Bexpression *vex = be->var_expression(xv, loc);
   Bstatement *st =  be->assignment_statement(func, vex,
                                              mkInt64Const(be, 5), loc);
-  Bexpression *vex2 = be->var_expression(xv, VE_rvalue, loc);
+  Bexpression *vex2 = be->var_expression(xv, loc);
   Bexpression *ce = be->compound_expression(st, vex2, loc);
   Bstatement *es = be->expression_statement(func, ce);
   h.addStmt(es);
@@ -1539,11 +1539,11 @@ TEST(BackendExprTests, TestLhsConditionalExpression) {
   // *(p0 == nil ? p1 : p0) = 7
   Bvariable *p0v = func->getNthParamVar(0);
   Bvariable *p1v = func->getNthParamVar(1);
-  Bexpression *vex = be->var_expression(p0v, VE_rvalue, loc);
+  Bexpression *vex = be->var_expression(p0v, loc);
   Bexpression *npe = be->nil_pointer_expression();
   Bexpression *cmp = be->binary_expression(OPERATOR_EQEQ, vex, npe, loc);
-  Bexpression *ver0 = be->var_expression(p0v, VE_rvalue, loc);
-  Bexpression *ver1 = be->var_expression(p1v, VE_rvalue, loc);
+  Bexpression *ver0 = be->var_expression(p0v, loc);
+  Bexpression *ver1 = be->var_expression(p1v, loc);
   Bexpression *guard =
       be->conditional_expression(func, be->pointer_type(bi32t), cmp,
                                  ver1, ver0, loc);
@@ -1599,28 +1599,28 @@ TEST(BackendExprTests, TestUnaryExpression) {
   // var y bool = !x
   Btype *bt = be->bool_type();
   Bvariable *xv = h.mkLocal("x", bt);
-  Bexpression *vex = be->var_expression(xv, VE_rvalue, loc);
+  Bexpression *vex = be->var_expression(xv, loc);
   h.mkLocal("y", bt, be->unary_expression(OPERATOR_NOT, vex, loc));
 
   // var a i32
   // var b i32 = -a
   Btype *bi32t = be->integer_type(false, 32);
   Bvariable *av = h.mkLocal("a", bi32t);
-  Bexpression *vea = be->var_expression(av, VE_rvalue, loc);
+  Bexpression *vea = be->var_expression(av, loc);
   h.mkLocal("b", bi32t, be->unary_expression(OPERATOR_MINUS, vea, loc));
 
   // var z i64
   // var w i64 = ^z
   Btype *bi64t = be->integer_type(false, 64);
   Bvariable *zv = h.mkLocal("z", bi64t);
-  Bexpression *vez = be->var_expression(zv, VE_rvalue, loc);
+  Bexpression *vez = be->var_expression(zv, loc);
   h.mkLocal("w", bi64t, be->unary_expression(OPERATOR_XOR, vez, loc));
 
   // var q float64
   // var r float64 = -z
   Btype *bf64t = be->float_type(64);
   Bvariable *qv = h.mkLocal("q", bf64t);
-  Bexpression *veq = be->var_expression(qv, VE_rvalue, loc);
+  Bexpression *veq = be->var_expression(qv, loc);
   h.mkLocal("r", bf64t, be->unary_expression(OPERATOR_MINUS, veq, loc));
 
   const char *exp = R"RAW_RESULT(

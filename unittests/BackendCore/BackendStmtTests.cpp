@@ -54,7 +54,7 @@ TEST(BackendStmtTests, TestAssignmentStmt) {
 
   // assign a constant to a variable
   Bvariable *loc1 = h.mkLocal("loc1", bi64t);
-  Bexpression *ve1 = be->var_expression(loc1, VE_lvalue, loc);
+  Bexpression *ve1 = be->var_expression(loc1, loc);
   Bstatement *as =
       be->assignment_statement(func, ve1, mkInt64Const(be, 123), loc);
   ASSERT_TRUE(as != nullptr);
@@ -62,8 +62,8 @@ TEST(BackendStmtTests, TestAssignmentStmt) {
 
   // assign a variable to a variable
   Bvariable *loc2 = h.mkLocal("loc2", bi64t);
-  Bexpression *ve2 = be->var_expression(loc2, VE_lvalue, loc);
-  Bexpression *ve3 = be->var_expression(loc1, VE_rvalue, loc);
+  Bexpression *ve2 = be->var_expression(loc2, loc);
+  Bexpression *ve3 = be->var_expression(loc1, loc);
   Bstatement *as2 = be->assignment_statement(func, ve2, ve3, loc);
   ASSERT_TRUE(as2 != nullptr);
   h.addStmt(as2);
@@ -80,7 +80,7 @@ TEST(BackendStmtTests, TestAssignmentStmt) {
 
   // error handling
   Bvariable *loc3 = h.mkLocal("loc3", bi64t);
-  Bexpression *ve4 = be->var_expression(loc3, VE_lvalue, loc);
+  Bexpression *ve4 = be->var_expression(loc3, loc);
   Bstatement *badas =
       be->assignment_statement(func, ve4, be->error_expression(), loc);
   ASSERT_TRUE(badas != nullptr);
@@ -101,7 +101,7 @@ TEST(BackendStmtTests, TestReturnStmt) {
 
   // return loc1
   Location loc;
-  Bexpression *ve1 = be->var_expression(loc1, VE_rvalue, loc);
+  Bexpression *ve1 = be->var_expression(loc1, loc);
   Bstatement *ret = h.mkReturn(ve1);
 
   const char *exp = R"RAW_RESULT(
@@ -136,12 +136,12 @@ TEST(BackendStmtTests, TestReturnStmt2) {
   Bvariable *x = h.mkLocal("x", bi64t, mkInt64Const(be, 10));
 
   // return x
-  Bexpression *ve1 = be->var_expression(x, VE_rvalue, loc);
+  Bexpression *ve1 = be->var_expression(x, loc);
   h.mkReturn(ve1);
 
   // some dead code
   // return x+20
-  Bexpression *ve2 = be->var_expression(x, VE_rvalue, loc);
+  Bexpression *ve2 = be->var_expression(x, loc);
   Bexpression *addexpr = be->binary_expression(OPERATOR_PLUS, ve2, mkInt64Const(be, 20), loc);
   h.mkReturn(addexpr);
 
@@ -185,7 +185,7 @@ TEST(BackendStmtTests, TestLabelGotoStmts) {
   h.addStmt(gots);
 
   // dead stmt: loc1 = 11
-  h.mkAssign(be->var_expression(loc1, VE_lvalue, loc),
+  h.mkAssign(be->var_expression(loc1, loc),
              mkInt64Const(be, 11));
 
   // labeldef
@@ -221,7 +221,7 @@ TEST(BackendStmtTests, TestLabelAddressExpression) {
   // Now define the label, throw a statement in it.
   Bstatement *ldef = be->label_definition_statement(lab1);
   h.addStmt(ldef);
-  h.mkAssign(be->var_expression(loc1, VE_lvalue, h.loc()),
+  h.mkAssign(be->var_expression(loc1, h.loc()),
              be->zero_expression(bu8t));
 
   bool broken = h.finish(StripDebugInfo);
@@ -253,12 +253,12 @@ static Bstatement *CreateIfStmt(FcnTestHarness &h)
   Bvariable *loc1 = h.mkLocal("loc1", bi64t);
 
   // loc1 = 123
-  Bexpression *ve1 = be->var_expression(loc1, VE_lvalue, loc);
+  Bexpression *ve1 = be->var_expression(loc1, loc);
   Bexpression *c123 = mkInt64Const(be, 123);
   Bstatement *as1 = be->assignment_statement(func, ve1, c123, loc);
 
   // loc1 = 987
-  Bexpression *ve2 = be->var_expression(loc1, VE_lvalue, loc);
+  Bexpression *ve2 = be->var_expression(loc1, loc);
   Bexpression *c987 = mkInt64Const(be, 987);
   Bstatement *as2 = be->assignment_statement(func, ve2, c987, loc);
 
@@ -283,7 +283,7 @@ TEST(BackendStmtTests, TestIfStmt) {
   // loc2 = 456
   Btype *bi64t = be->integer_type(false, 64);
   Bvariable *loc2 = h.mkLocal("loc2", bi64t);
-  Bexpression *ve3 = be->var_expression(loc2, VE_lvalue, loc);
+  Bexpression *ve3 = be->var_expression(loc2, loc);
   Bexpression *c456 = mkInt64Const(be, 456);
   Bstatement *as3 = be->assignment_statement(func, ve3, c456, loc);
 
@@ -348,8 +348,8 @@ static void CreateSwitchStmt(FcnTestHarness &h)
 
   // first case
   // loc1 = loc1 / 123
-  Bexpression *ve1 = be->var_expression(loc1, VE_lvalue, loc);
-  Bexpression *ve1r = be->var_expression(loc1, VE_rvalue, loc);
+  Bexpression *ve1 = be->var_expression(loc1, loc);
+  Bexpression *ve1r = be->var_expression(loc1, loc);
   Bexpression *c123 = mkInt64Const(be, 123);
   Bexpression *div = be->binary_expression(OPERATOR_DIV, ve1r, c123, loc);
   Bstatement *as1 = be->assignment_statement(func, ve1, div, loc);
@@ -358,10 +358,10 @@ static void CreateSwitchStmt(FcnTestHarness &h)
 
   // second case
   // loc1 = loc1 < 987 ? loc1 : 987 * loc1
-  Bexpression *ve2 = be->var_expression(loc1, VE_lvalue, loc);
-  Bexpression *ve2r = be->var_expression(loc1, VE_rvalue, loc);
-  Bexpression *ve2r2 = be->var_expression(loc1, VE_rvalue, loc);
-  Bexpression *ve2r3 = be->var_expression(loc1, VE_rvalue, loc);
+  Bexpression *ve2 = be->var_expression(loc1, loc);
+  Bexpression *ve2r = be->var_expression(loc1, loc);
+  Bexpression *ve2r2 = be->var_expression(loc1, loc);
+  Bexpression *ve2r3 = be->var_expression(loc1, loc);
   Bexpression *c987 = mkInt64Const(be, 987);
   Bexpression *mul = be->binary_expression(OPERATOR_MULT, c987, ve2r, loc);
   Bexpression *cmp = be->binary_expression(OPERATOR_LE, ve2r2, c987, loc);
@@ -375,7 +375,7 @@ static void CreateSwitchStmt(FcnTestHarness &h)
 
   // fourth case
   // loc1 = 456
-  Bexpression *ve4 = be->var_expression(loc1, VE_lvalue, loc);
+  Bexpression *ve4 = be->var_expression(loc1, loc);
   Bexpression *c456 = mkInt64Const(be, 456);
   Bstatement *as4 = be->assignment_statement(func, ve4, c456, loc);
   Bstatement *goto4 = be->goto_statement(brklab, loc);
@@ -391,7 +391,7 @@ static void CreateSwitchStmt(FcnTestHarness &h)
   cases.push_back(std::vector<Bexpression*>()); // default
 
   // switch
-  Bexpression *vesw = be->var_expression(loc1, VE_rvalue, loc);
+  Bexpression *vesw = be->var_expression(loc1, loc);
   h.mkSwitch(vesw, cases, statements);
 
   // label definition
@@ -525,7 +525,7 @@ static Bstatement *CreateDeferStmt(Llvm_backend *be,
   // Materialize call to deferreturn
   Bexpression *retfn = be->function_code_expression(bdefretfcn, h.newloc());
   std::vector<Bexpression *> args1;
-  Bexpression *ve1 = be->var_expression(loc1, VE_rvalue, h.newloc());
+  Bexpression *ve1 = be->var_expression(loc1, h.newloc());
   Bexpression *adve1 = be->address_expression(ve1, h.newloc());
   args1.push_back(adve1);
   Bexpression *undcall = be->call_expression(func, retfn, args1,
@@ -534,7 +534,7 @@ static Bstatement *CreateDeferStmt(Llvm_backend *be,
   // Materialize call to checkdefer
   Bexpression *ckfn = be->function_code_expression(bchkfcn, h.newloc());
   std::vector<Bexpression *> args2;
-  Bexpression *ve2 = be->var_expression(loc1, VE_rvalue, h.loc());
+  Bexpression *ve2 = be->var_expression(loc1, h.loc());
   Bexpression *adve2 = be->address_expression(ve2, h.loc());
   args2.push_back(adve2);
   Bexpression *ckdefcall = be->call_expression(func, ckfn, args2,
@@ -630,12 +630,12 @@ TEST(BackendStmtTests, TestExceptionHandlingStmt) {
   // x = id(99)
   // plark()
   // x = 123
-  Bexpression *ve1 = be->var_expression(loc1, VE_lvalue, h.newloc());
+  Bexpression *ve1 = be->var_expression(loc1, h.newloc());
   Bstatement *as1 =
       be->assignment_statement(func, ve1, calls[3], h.newloc());
   Bblock *bb1 = mkBlockFromStmt(be, func, as1);
   addStmtToBlock(be, bb1, h.mkExprStmt(calls[0], FcnTestHarness::NoAppend));
-  Bexpression *ve2 = be->var_expression(loc1, VE_lvalue, h.newloc());
+  Bexpression *ve2 = be->var_expression(loc1, h.newloc());
   Bstatement *as2 =
       be->assignment_statement(func, ve2, mkInt64Const(be, 123), h.newloc());
   addStmtToBlock(be, bb1, as2);
@@ -726,12 +726,12 @@ static Bstatement *mkMemReturn(Llvm_backend *be,
 {
   // Store value to tmp
   Location loc;
-  Bexpression *ve = be->var_expression(rtmp, VE_lvalue, loc);
+  Bexpression *ve = be->var_expression(rtmp, loc);
   Bstatement *as = be->assignment_statement(func, ve, val, loc);
   Bblock *block = mkBlockFromStmt(be, func, as);
 
   // Load from temp and return
-  Bexpression *ve2 = be->var_expression(rtmp, VE_rvalue, loc);
+  Bexpression *ve2 = be->var_expression(rtmp, loc);
   std::vector<Bexpression *> vals;
   vals.push_back(ve2);
   Bstatement *rst = be->return_statement(func, vals, loc);
@@ -775,7 +775,7 @@ TEST(BackendStmtTests, TestExceptionHandlingStmtWithReturns) {
                                           mkInt64Const(be, 88),
                                           h.loc());
     Bvariable *p0 = func->getNthParamVar(0);
-    Bexpression *ve1 = be->var_expression(p0, VE_rvalue, h.newloc());
+    Bexpression *ve1 = be->var_expression(p0, h.newloc());
 
     Bstatement *retparm = mkMemReturn(be, func, rtmp, ve1);
     Bstatement *ret22 = mkMemReturn(be, func, rtmp, mkInt64Const(be, 22));

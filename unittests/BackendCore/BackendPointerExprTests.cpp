@@ -34,8 +34,8 @@ TEST(BackEndPointerExprTests, TestAddrAndIndirection) {
 
   {
     // x = &y
-    Bexpression *vex = be->var_expression(x, VE_lvalue, loc);
-    Bexpression *vey = be->var_expression(y, VE_rvalue, loc);
+    Bexpression *vex = be->var_expression(x, loc);
+    Bexpression *vey = be->var_expression(y, loc);
     Bexpression *ady = be->address_expression(vey, loc);
     Bstatement *as = be->assignment_statement(func, vex, ady, loc);
     h.addStmt(as);
@@ -43,8 +43,8 @@ TEST(BackEndPointerExprTests, TestAddrAndIndirection) {
 
   {
     // y = *x
-    Bexpression *vey = be->var_expression(y, VE_lvalue, loc);
-    Bexpression *vex = be->var_expression(x, VE_rvalue, loc);
+    Bexpression *vey = be->var_expression(y, loc);
+    Bexpression *vex = be->var_expression(x, loc);
     bool knValid = false;
     Bexpression *indx1 = be->indirect_expression(bi64t, vex, knValid, loc);
     Bstatement *as = be->assignment_statement(func, vey, indx1, loc);
@@ -53,7 +53,7 @@ TEST(BackEndPointerExprTests, TestAddrAndIndirection) {
 
   {
     // *x = 3
-    Bexpression *vex = be->var_expression(x, VE_lvalue, loc);
+    Bexpression *vex = be->var_expression(x, loc);
     Bexpression *indx = be->indirect_expression(bi64t, vex, false, loc);
     Bexpression *beic3 = mkInt64Const(be, 3);
     Bstatement *as = be->assignment_statement(func, indx, beic3, loc);
@@ -103,7 +103,7 @@ TEST(BackEndPointerExprTests, CreateFunctionCodeExpression) {
   // Pointer-to-FD variables
   Btype *pfd1t = be->pointer_type(fdesct1);
   Btype *pfd2t = be->pointer_type(fdesct2);
-  Bexpression *vex1 = be->var_expression(bfdv1, VE_rvalue, loc);
+  Bexpression *vex1 = be->var_expression(bfdv1, loc);
   Bexpression *adfd1 = be->address_expression(vex1, loc);
   Bvariable *bfpv1 = h.mkLocal("fploc1", pfd1t, adfd1);
   Bvariable *bfpv2 = h.mkLocal("fploc2", pfd2t);
@@ -111,11 +111,11 @@ TEST(BackEndPointerExprTests, CreateFunctionCodeExpression) {
   // Assignment of function descriptor pointer values. Note that the
   // types here are not going to agree strictly; this test verifies
   // that this flexibility is allowed.
-  Bexpression *vex2 = be->var_expression(bfpv2, VE_lvalue, loc);
-  Bexpression *rvex2 = be->var_expression(bfpv1, VE_rvalue, loc);
+  Bexpression *vex2 = be->var_expression(bfpv2, loc);
+  Bexpression *rvex2 = be->var_expression(bfpv1, loc);
   h.mkAssign(vex2, rvex2);
-  Bexpression *vex3 = be->var_expression(bfpv1, VE_lvalue, loc);
-  Bexpression *rvex3 = be->var_expression(bfpv2, VE_rvalue, loc);
+  Bexpression *vex3 = be->var_expression(bfpv1, loc);
+  Bexpression *rvex3 = be->var_expression(bfpv2, loc);
   h.mkAssign(vex3, rvex3);
 
   const char *exp = R"RAW_RESULT(
@@ -161,8 +161,8 @@ TEST(BackEndPointerExprTests, CreateNilPointerExpression) {
 
   {
     // b1 = (pb1 == nil)
-    Bexpression *vel = be->var_expression(b1, VE_lvalue, loc);
-    Bexpression *ver = be->var_expression(pb1, VE_rvalue, loc);
+    Bexpression *vel = be->var_expression(b1, loc);
+    Bexpression *ver = be->var_expression(pb1, loc);
     Bexpression *npe = be->nil_pointer_expression();
     Bexpression *cmp = be->binary_expression(OPERATOR_EQEQ, ver, npe, loc);
     h.mkAssign(vel, cmp);
@@ -170,8 +170,8 @@ TEST(BackEndPointerExprTests, CreateNilPointerExpression) {
 
   {
     // b1 = (nil == pb1)
-    Bexpression *vel = be->var_expression(b1, VE_lvalue, loc);
-    Bexpression *ver = be->var_expression(pb1, VE_rvalue, loc);
+    Bexpression *vel = be->var_expression(b1, loc);
+    Bexpression *ver = be->var_expression(pb1, loc);
     Bexpression *npe = be->nil_pointer_expression();
     Bexpression *cmp = be->binary_expression(OPERATOR_EQEQ, npe, ver, loc);
     h.mkAssign(vel, cmp);
@@ -258,16 +258,16 @@ TEST(BackEndPointerExprTests, CircularPointerExpressions1) {
 
   {
     // cpv1 = &cpv2
-    Bexpression *ve1 = be->var_expression(cpv1, VE_lvalue, loc);
-    Bexpression *ve2 = be->var_expression(cpv2, VE_rvalue, loc);
+    Bexpression *ve1 = be->var_expression(cpv1, loc);
+    Bexpression *ve2 = be->var_expression(cpv2, loc);
     Bexpression *adx = be->address_expression(ve2, loc);
     h.mkAssign(ve1, adx);
   }
 
   {
     // cpv2 = &cpv1
-    Bexpression *ve1 = be->var_expression(cpv2, VE_lvalue, loc);
-    Bexpression *ve2 = be->var_expression(cpv1, VE_rvalue, loc);
+    Bexpression *ve1 = be->var_expression(cpv2, loc);
+    Bexpression *ve2 = be->var_expression(cpv1, loc);
     Bexpression *adx = be->address_expression(ve2, loc);
     h.mkAssign(ve1, adx);
   }
@@ -279,9 +279,9 @@ TEST(BackEndPointerExprTests, CircularPointerExpressions1) {
 
   {
     // b1 := (cpv1 == *cpv2)
-    Bexpression *ve0 = be->var_expression(b1, VE_lvalue, loc);
-    Bexpression *ve1 = be->var_expression(cpv1, VE_rvalue, loc);
-    Bexpression *ve2 = be->var_expression(cpv2, VE_rvalue, loc);
+    Bexpression *ve0 = be->var_expression(b1, loc);
+    Bexpression *ve1 = be->var_expression(cpv1, loc);
+    Bexpression *ve2 = be->var_expression(cpv2, loc);
     Bexpression *dex = be->indirect_expression(pht, ve2, false, loc);
     Bexpression *cmp = be->binary_expression(OPERATOR_EQEQ, ve1, dex, loc);
     h.mkAssign(ve0, cmp);
@@ -289,19 +289,19 @@ TEST(BackEndPointerExprTests, CircularPointerExpressions1) {
 
   {
     // b2 := (&cpv1 != cpv2)
-    Bexpression *ve0 = be->var_expression(b2, VE_lvalue, loc);
-    Bexpression *ve1 = be->var_expression(cpv1, VE_rvalue, loc);
+    Bexpression *ve0 = be->var_expression(b2, loc);
+    Bexpression *ve1 = be->var_expression(cpv1, loc);
     Bexpression *adx = be->address_expression(ve1, loc);
-    Bexpression *ve2 = be->var_expression(cpv2, VE_rvalue, loc);
+    Bexpression *ve2 = be->var_expression(cpv2, loc);
     Bexpression *cmp = be->binary_expression(OPERATOR_EQEQ, adx, ve2, loc);
     h.mkAssign(ve0, cmp);
   }
 
   {
     // b3 := (cpv1 == ***cpv2)
-    Bexpression *ve0 = be->var_expression(b3, VE_lvalue, loc);
-    Bexpression *ve1 = be->var_expression(cpv1, VE_rvalue, loc);
-    Bexpression *ve2 = be->var_expression(cpv2, VE_rvalue, loc);
+    Bexpression *ve0 = be->var_expression(b3, loc);
+    Bexpression *ve1 = be->var_expression(cpv1, loc);
+    Bexpression *ve2 = be->var_expression(cpv2, loc);
     Bexpression *dex1 = be->indirect_expression(pht, ve2, false, loc);
     Bexpression *dex2 = be->indirect_expression(pht, dex1, false, loc);
     Bexpression *dex3 = be->indirect_expression(pht, dex2, false, loc);
@@ -382,16 +382,16 @@ TEST(BackEndPointerExprTests, CircularPointerExpressions2) {
 
   {
     // x = &y
-    Bexpression *ve1 = be->var_expression(cpv1, VE_lvalue, loc);
-    Bexpression *ve2 = be->var_expression(cpv2, VE_rvalue, loc);
+    Bexpression *ve1 = be->var_expression(cpv1, loc);
+    Bexpression *ve2 = be->var_expression(cpv2, loc);
     Bexpression *adx = be->address_expression(ve2, loc);
     h.mkAssign(ve1, adx);
   }
 
   {
     // y = &x
-    Bexpression *ve1 = be->var_expression(cpv2, VE_lvalue, loc);
-    Bexpression *ve2 = be->var_expression(cpv1, VE_rvalue, loc);
+    Bexpression *ve1 = be->var_expression(cpv2, loc);
+    Bexpression *ve2 = be->var_expression(cpv1, loc);
     Bexpression *adx = be->address_expression(ve2, loc);
     h.mkAssign(ve1, adx);
   }
@@ -401,9 +401,9 @@ TEST(BackEndPointerExprTests, CircularPointerExpressions2) {
 
   {
     // b1 := (x == *y)
-    Bexpression *ve0 = be->var_expression(b1, VE_lvalue, loc);
-    Bexpression *ve1 = be->var_expression(cpv1, VE_rvalue, loc);
-    Bexpression *ve2 = be->var_expression(cpv2, VE_rvalue, loc);
+    Bexpression *ve0 = be->var_expression(b1, loc);
+    Bexpression *ve1 = be->var_expression(cpv1, loc);
+    Bexpression *ve2 = be->var_expression(cpv2, loc);
     Bexpression *dex = be->indirect_expression(pht1, ve2, false, loc);
     Bexpression *cmp = be->binary_expression(OPERATOR_EQEQ, ve1, dex, loc);
     h.mkAssign(ve0, cmp);
@@ -444,7 +444,7 @@ TEST(BackEndPointerExprTests, CreatePointerOffsetExprs) {
 
   {
     // deref(ptr_offset(p3, 5)) = 9
-    Bexpression *ve = be->var_expression(p3, VE_lvalue, loc);
+    Bexpression *ve = be->var_expression(p3, loc);
     Bexpression *cfive = mkInt32Const(be, 5);
     Bexpression *poe1 = be->pointer_offset_expression(ve, cfive, loc);
     Bexpression *der = be->indirect_expression(bi64t, poe1, false, loc);
@@ -455,8 +455,8 @@ TEST(BackEndPointerExprTests, CreatePointerOffsetExprs) {
   {
     // p0 = int32(deref(ptr_offset(p3, 7)))
     Btype *bi32t = be->integer_type(false, 32);
-    Bexpression *ve = be->var_expression(p0, VE_lvalue, loc);
-    Bexpression *ver = be->var_expression(p3, VE_rvalue, loc);
+    Bexpression *ve = be->var_expression(p0, loc);
+    Bexpression *ver = be->var_expression(p3, loc);
     Bexpression *cseven = mkInt32Const(be, 7);
     Bexpression *poe2 = be->pointer_offset_expression(ver, cseven, loc);
     Bexpression *der = be->indirect_expression(bi64t, poe2, false, loc);
@@ -494,13 +494,13 @@ TEST(BackEndPointerExprTests, TestAddrDerefFold) {
   Bvariable *xv = h.mkLocal("x", bi64t);
 
   // p3 = addr(deref(addr(deref(addr(x))))))
-  Bexpression *vexr = be->var_expression(xv, VE_rvalue, loc);
+  Bexpression *vexr = be->var_expression(xv, loc);
   Bexpression *ad1 = be->address_expression(vexr, loc);
   Bexpression *der1 = be->indirect_expression(bi64t, ad1, false, loc);
   Bexpression *ad2 = be->address_expression(der1, loc);
   Bexpression *der2 = be->indirect_expression(bi64t, ad2, false, loc);
   Bexpression *ad3 = be->address_expression(der2, loc);
-  Bexpression *vexl = be->var_expression(p3, VE_lvalue, loc);
+  Bexpression *vexl = be->var_expression(p3, loc);
   h.mkAssign(vexl, ad3);
 
   const char *exp = R"RAW_RESULT(

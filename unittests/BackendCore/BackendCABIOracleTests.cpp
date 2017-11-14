@@ -276,7 +276,7 @@ TEST(BackendCABIOracleTests, RecursiveCall1) {
   // sm1 == 0
   Bvariable *p3 = func->getNthParamVar(3);
   Location loc;
-  Bexpression *vex = be->var_expression(p3, VE_rvalue, loc);
+  Bexpression *vex = be->var_expression(p3, loc);
   Bexpression *c0 = be->convert_expression(bu8t, mkInt32Const(be, 0), loc);
   Bexpression *eq = be->binary_expression(OPERATOR_EQEQ, vex, c0, loc);
 
@@ -284,30 +284,30 @@ TEST(BackendCABIOracleTests, RecursiveCall1) {
   Bexpression *fn = be->function_code_expression(func, loc);
   std::vector<Bexpression *> args;
   Bvariable *p0 = func->getNthParamVar(0);
-  args.push_back(be->var_expression(p0, VE_rvalue, loc));
+  args.push_back(be->var_expression(p0, loc));
 
   Bvariable *p1 = func->getNthParamVar(1);
-  args.push_back(be->var_expression(p1, VE_rvalue, loc));
+  args.push_back(be->var_expression(p1, loc));
 
   Bvariable *p2 = func->getNthParamVar(2);
-  args.push_back(be->var_expression(p2, VE_rvalue, loc));
+  args.push_back(be->var_expression(p2, loc));
 
   Bvariable *p3x = func->getNthParamVar(3);
-  Bexpression *vex3 = be->var_expression(p3x, VE_rvalue, loc);
+  Bexpression *vex3 = be->var_expression(p3x, loc);
   Bexpression *c1 = be->convert_expression(bu8t, mkInt32Const(be, 1), loc);
   Bexpression *minus = be->binary_expression(OPERATOR_MINUS, vex3, c1, loc);
   args.push_back(minus);
 
   Bvariable *p4 = func->getNthParamVar(4);
-  args.push_back(be->var_expression(p4, VE_rvalue, loc));
+  args.push_back(be->var_expression(p4, loc));
 
   Bvariable *p5 = func->getNthParamVar(5);
-  args.push_back(be->var_expression(p5, VE_rvalue, loc));
+  args.push_back(be->var_expression(p5, loc));
   Bexpression *call = be->call_expression(func, fn, args, nullptr, h.loc());
 
   // return y
   std::vector<Bexpression *> rvals1;
-  rvals1.push_back(be->var_expression(p1, VE_rvalue, loc));
+  rvals1.push_back(be->var_expression(p1, loc));
   Bstatement *rst1 = h.mkReturn(rvals1, FcnTestHarness::NoAppend);
 
   // return call
@@ -367,7 +367,7 @@ TEST(BackendCABIOracleTests, PassAndReturnArrays) {
   // foo(fp)
   Location loc;
   Bvariable *p0 = func->getNthParamVar(0);
-  Bexpression *vex = be->var_expression(p0, VE_rvalue, loc);
+  Bexpression *vex = be->var_expression(p0, loc);
   Bexpression *fn = be->function_code_expression(func, loc);
   std::vector<Bexpression *> args;
   args.push_back(vex);
@@ -418,11 +418,11 @@ TEST(BackendCABIOracleTests, EmptyStructParamsAndReturns) {
   Bexpression *fn = be->function_code_expression(func, loc);
   Bvariable *p0 = func->getNthParamVar(0);
   std::vector<Bexpression *> args;
-  args.push_back(be->var_expression(p0, VE_rvalue, loc));
-  args.push_back(be->var_expression(p0, VE_rvalue, loc));
+  args.push_back(be->var_expression(p0, loc));
+  args.push_back(be->var_expression(p0, loc));
   args.push_back(mkInt32Const(be, 4));
-  args.push_back(be->var_expression(p0, VE_rvalue, loc));
-  args.push_back(be->var_expression(p0, VE_rvalue, loc));
+  args.push_back(be->var_expression(p0, loc));
+  args.push_back(be->var_expression(p0, loc));
   Bexpression *call = be->call_expression(func, fn, args, nullptr, h.loc());
 
   // return the call above
@@ -485,8 +485,8 @@ TEST(BackendCABIOracleTests, PassAndReturnComplex) {
   Location loc;
   Bvariable *x = func->getNthParamVar(0);
   Bvariable *y = func->getNthParamVar(1);
-  Bexpression *xvex = be->var_expression(x, VE_rvalue, loc);
-  Bexpression *yvex = be->var_expression(y, VE_rvalue, loc);
+  Bexpression *xvex = be->var_expression(x, loc);
+  Bexpression *yvex = be->var_expression(y, loc);
   Bexpression *fn1 = be->function_code_expression(func, loc);
   std::vector<Bexpression *> args1 = {xvex, yvex};
   Bexpression *call1 = be->call_expression(func, fn1, args1, nullptr, h.loc());
