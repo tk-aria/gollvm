@@ -128,4 +128,57 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrity3) {
   be->function_set_body(func, block2);
 }
 
+TEST(BackendTreeIntegrity, CheckTreeIntegrityRepairableSubtree) {
+  FcnTestHarness h;
+  Llvm_backend *be = h.be();
+  Btype *bi32t = be->integer_type(false, 32);
+  Btype *bpi32t = be->pointer_type(bi32t);
+  BFunctionType *befty = mkFuncTyp(be, L_PARM, bpi32t, L_END);
+  Bfunction *func = h.mkFunction("x", befty);
+  Location loc;
+  TreeIntegCtl ctl(NoDumpPointers, ReportRepairableSharing, BatchMode);
+IntegrityVisitor ivis(be, ctl);
+
+  // *p0 + 2
+  Bvariable *p0v = func->getNthParamVar(0);
+  Bexpression *vex0 = be->var_expression(p0v, loc);
+  Bexpression *deref = be->indirect_expression(bi32t, vex0, false, loc);
+  Bexpression *add =
+      be->binary_expression(OPERATOR_PLUS, mkInt32Const(be, 2), deref, loc);
+  EXPECT_TRUE(ivis.repairableSubTree(vex0));
+  EXPECT_TRUE(ivis.repairableSubTree(deref));
+  EXPECT_TRUE(ivis.repairableSubTree(add));
+
+  // p0 == nil ? foo(nil) : *p0
+  Bexpression *vex2 = be->var_expression(p0v, loc);
+  Bexpression *npe = be->nil_pointer_expression();
+  Bexpression *cmp =
+      be->binary_expression(OPERATOR_EQEQ, npe, vex2, loc);
+  Bexpression *der2 = be->indirect_expression(bi32t, vex2, false, loc);
+  Bexpression *call1 = h.mkCallExpr(be, func, npe, nullptr);
+  Bexpression *condex = be->conditional_expression(func, bi32t, cmp, call1,
+                                                   der2, loc);
+  EXPECT_TRUE(ivis.repairableSubTree(cmp));
+  EXPECT_TRUE(ivis.repairableSubTree(call1));
+  EXPECT_TRUE(ivis.repairableSubTree(condex));
+
+  // p0 != nil ? *p0 + 3 : foo(p)
+  Bexpression *vex3 = be->var_expression(p0v, loc);
+  Bexpression *cmp2 =
+      be->binary_expression(OPERATOR_NOTEQ, vex3, npe, loc);
+  Bexpression *der3 = be->indirect_expression(bi32t, vex3, false, loc);
+  Bexpression *add2 =
+      be->binary_expression(OPERATOR_PLUS, mkInt32Const(be, 3), der3, loc);
+  Bexpression *call2 = h.mkCallExpr(be, func, vex3, nullptr);
+  Bexpression *condex2 = be->conditional_expression(func, bi32t, cmp2, add2,
+                                                   call2, loc);
+
+  h.mkExprStmt(condex);
+  h.mkExprStmt(condex2);
+  h.mkExprStmt(add);
+
+  bool broken = h.finish(StripDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+}
+
 }

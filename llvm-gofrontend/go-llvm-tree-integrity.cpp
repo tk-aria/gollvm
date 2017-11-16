@@ -18,6 +18,26 @@
 
 #include "llvm/IR/Instruction.h"
 
+IntegrityVisitor::IntegrityVisitor(Llvm_backend *be,
+                                   TreeIntegCtl control)
+    : be_(be), ss_(str_), control_(control),
+      instShareCount_(0), stmtShareCount_(0), exprShareCount_(0)
+{
+  acceptableNodes_.insert(N_Const);
+  acceptableNodes_.insert(N_Call);
+  acceptableNodes_.insert(N_FcnAddress);
+  acceptableNodes_.insert(N_Conditional);
+  acceptableNodes_.insert(N_Var);
+  acceptableNodes_.insert(N_Conversion);
+  acceptableNodes_.insert(N_Deref);
+  acceptableNodes_.insert(N_StructField);
+  acceptableNodes_.insert(N_BinaryOp); // subject to acceptableOpcodes
+  acceptableOpcodes_.insert(OPERATOR_PLUS);
+  acceptableOpcodes_.insert(OPERATOR_MINUS);
+  acceptableOpcodes_.insert(OPERATOR_EQEQ);
+  acceptableOpcodes_.insert(OPERATOR_NOTEQ);
+}
+
 void IntegrityVisitor::dumpTag(const char *tag, void *ptr) {
   ss_ << tag << ": ";
   if (includePointers() == DumpPointers)
@@ -147,7 +167,8 @@ void IntegrityVisitor::setParent(Bnode *child, Bnode *parent, unsigned slot)
     }
 
     // capture a description of the error
-    ss_ << "error: " << wh << " has multiple parents\n";
+    ss_ << "error: " << wh << " has multiple parents"
+        << " [ID=" << child->id() << "]\n";
     ss_ << "child " << wh << ":\n";
     dump(child);
     ss_ << "parent 1:\n";
@@ -184,16 +205,6 @@ void IntegrityVisitor::setParent(llvm::Instruction *inst,
 
 bool IntegrityVisitor::repairableSubTree(Bexpression *root)
 {
-  std::set<NodeFlavor> acceptable;
-  acceptable.insert(N_Const);
-  acceptable.insert(N_Var);
-  acceptable.insert(N_Conversion);
-  acceptable.insert(N_Deref);
-  acceptable.insert(N_StructField);
-
-  // Allow a limited set of these.
-  acceptable.insert(N_BinaryOp);
-
   std::set<Bexpression *> visited;
   visited.insert(root);
   std::vector<Bexpression *> workList;
@@ -202,11 +213,10 @@ bool IntegrityVisitor::repairableSubTree(Bexpression *root)
   while (! workList.empty()) {
     Bexpression *e = workList.back();
     workList.pop_back();
-    if (acceptable.find(e->flavor()) == acceptable.end())
+    if (acceptableNodes_.find(e->flavor()) == acceptableNodes_.end())
       return false;
     if (e->flavor() == N_BinaryOp &&
-        (e->op() != OPERATOR_PLUS &&
-         e->op() != OPERATOR_MINUS))
+        acceptableOpcodes_.find(e->op()) == acceptableOpcodes_.end())
       return false;
     for (auto &c : e->children()) {
       Bexpression *ce = c->castToBexpression();
