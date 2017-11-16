@@ -383,6 +383,7 @@ bool CompilationOrchestrator::initBridge()
   args.check_divide_overflow = CheckDivideOverflow;
   args.compiling_runtime = CompilingRuntime;
   args.debug_escape_level = EscapeDebugLevel;
+  args.nil_check_size_threshold = -1;
   args.linemap = linemap_.get();
   args.backend = bridge_.get();
   go_create_gogo (&args);
