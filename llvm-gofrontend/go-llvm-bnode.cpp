@@ -354,6 +354,14 @@ Bfunction *Bnode::getFunction() const
   return u.func;
 }
 
+Bfunction *Bnode::getCallTarget() const
+{
+  assert(flavor() == N_Call);
+  if (kids_[0]->flavor() == N_FcnAddress)
+    return kids_[0]->getFunction();
+  return nullptr;
+}
+
 int Bnode::getIndices() const
 {
   assert(flavor() == N_Composite);
