@@ -168,9 +168,13 @@ class Bnode {
   // Return struct field index for a field expr
   unsigned fieldIndex() const;
 
-  // Return Bfunction operand (valid only for function constants, calls,
-  // and conditionals).
+  // Return function associated with this node. Value only for
+  // function constants, calls, and conditionals. Note that for calls and
+  // conditionals this will be the function containing the construct.
   Bfunction *getFunction() const;
+
+  // Return target function for call (will be nil if indirect call).
+  Bfunction *getCallTarget() const;
 
   // Return index to BnodeBuilder's vector of indices for composite,
   // or -1 if no indexing.

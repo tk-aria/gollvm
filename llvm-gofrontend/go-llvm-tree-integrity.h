@@ -71,10 +71,7 @@ struct TreeIntegCtl {
 
 class IntegrityVisitor {
  public:
-  IntegrityVisitor(Llvm_backend *be,
-                   TreeIntegCtl control)
-      : be_(be), ss_(str_), control_(control),
-        instShareCount_(0), stmtShareCount_(0), exprShareCount_(0) { }
+  IntegrityVisitor(Llvm_backend *be, TreeIntegCtl control);
 
   // Visits the node tree "n", looking for any shared nodes or
   // instructions. Returns TRUE if there is no sharing (or if all
@@ -103,12 +100,17 @@ class IntegrityVisitor {
   // node, so please remove any outstanding references to it.
   void deletePending(Bnode *node);
 
+  // Exposed for unit testing.
+  bool repairableSubTree(Bexpression *root);
+
  private:
   Llvm_backend *be_;
   typedef std::pair<Bnode *, unsigned> parslot; // parent and child index
   std::unordered_map<llvm::Instruction *, parslot> iparent_;
   std::unordered_map<Bnode *, parslot> nparent_;
   pairhashset<Bnode *, unsigned> sharing_;
+  std::set<NodeFlavor> acceptableNodes_;
+  std::set<Operator> acceptableOpcodes_;
   std::string str_;
   llvm::raw_string_ostream ss_;
   TreeIntegCtl control_;
@@ -119,7 +121,6 @@ class IntegrityVisitor {
  private:
   bool repair(Bnode *n);
   void visit(Bnode *n);
-  bool repairableSubTree(Bexpression *root);
   bool shouldBeTracked(Bnode *child);
   void setParent(Bnode *child, Bnode *parent, unsigned slot);
   void setParent(llvm::Instruction *inst, Bexpression *par, unsigned slot);
