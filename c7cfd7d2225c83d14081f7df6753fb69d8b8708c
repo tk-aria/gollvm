@@ -16,6 +16,24 @@
       "revId": "c7cfd7d2225c83d14081f7df6753fb69d8b8708c",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "038686a3_8a5f50a5",
+        "filename": "llvm-gofrontend/go-llvm-builtins.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-11-30T16:49:50Z",
+      "side": 1,
+      "message": "You\u0027re right, that might be a cleaner way to do it. Let me look into that.",
+      "parentUuid": "51719d7f_7d04fd40",
+      "revId": "c7cfd7d2225c83d14081f7df6753fb69d8b8708c",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
