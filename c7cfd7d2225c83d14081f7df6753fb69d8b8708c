@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "51719d7f_7d04fd40",
+        "filename": "llvm-gofrontend/go-llvm-builtins.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2017-11-30T16:38:34Z",
+      "side": 1,
+      "message": "Does the mechanism for builtinExtractReturnAddrMaker (line 328) also work here? i.e. directly insert an unreachable instruction?",
+      "revId": "c7cfd7d2225c83d14081f7df6753fb69d8b8708c",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
