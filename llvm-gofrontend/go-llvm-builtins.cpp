@@ -119,7 +119,6 @@ void BuiltinTable::defineIntrinsicBuiltins() {
 
   defineIntrinsicBuiltin("__builtin_trap", nullptr, llvm::Intrinsic::trap,
                          nullptr);
-
   defineIntrinsicBuiltin("__builtin_return_address", nullptr,
                          llvm::Intrinsic::returnaddress, ptrType,
                          uint32Type, nullptr);
@@ -332,14 +331,29 @@ static llvm::Value *builtinExtractReturnAddrMaker(llvm::SmallVector<llvm::Value*
   return args[0];
 }
 
+static llvm::Value *builtinUnreachableMaker(llvm::SmallVector<llvm::Value*, 16> args,
+                                            BinstructionsLIRBuilder *builder)
+{
+  llvm::UnreachableInst *unr = builder->CreateUnreachable();
+  return unr;
+}
+
 void BuiltinTable::defineExprBuiltins()
 {
   unsigned bitsInPtr = tman_->datalayout()->getPointerSizeInBits();
   Btype *uintPtrType = tman_->integerType(true, bitsInPtr);
 
-  BuiltinEntryTypeVec typeVec(2);
-  typeVec[0] = uintPtrType;
-  typeVec[1] = uintPtrType;
-  registerExprBuiltin("__builtin_extract_return_addr", nullptr,
-                      typeVec, builtinExtractReturnAddrMaker);
+  {
+    BuiltinEntryTypeVec typeVec(2);
+    typeVec[0] = uintPtrType;
+    typeVec[1] = uintPtrType;
+    registerExprBuiltin("__builtin_extract_return_addr", nullptr,
+                        typeVec, builtinExtractReturnAddrMaker);
+  }
+
+  {
+    BuiltinEntryTypeVec typeVec;
+    registerExprBuiltin("__builtin_unreachable", nullptr,
+                        typeVec, builtinUnreachableMaker);
+  }
 }

@@ -437,17 +437,30 @@ Bfunction *Llvm_backend::createBuiltinFcn(BuiltinEntry *be)
   std::vector<Btyped_identifier> results;
   Location bloc(linemap_->get_predeclared_location());
   const BuiltinEntryTypeVec &types = be->types();
-  Btyped_identifier result("ret", types[0], bloc);
-  results.push_back(result);
+  if (types.size() > 0) {
+    Btyped_identifier result("ret", types[0], bloc);
+    results.push_back(result);
+  }
   for (unsigned idx = 1; idx < types.size(); ++idx)
     params.push_back(Btyped_identifier("", types[idx], bloc));
   bool followsCabi = false;
   Btype *fcnType = functionType(receiver, params, results, nullptr,
                                 followsCabi, bloc);
 
+  // FIXME: may want to revisit these settings at some point. For example,
+  // do we want to mark builtins as no-split-stack? Also it might be useful
+  // to allow for creation of no-return builtins (such as longjmp, perhaps).
+  bool is_visible = true;
+  bool is_declaration = false;
+  bool is_inl = true;
+  bool is_splitstack = true;
+  bool in_unique_section = false;
+  bool is_noret = false;
+
   // Create function
   return function(fcnType, be->name(), be->name(),
-                  true, false, false, false, false, bloc);
+                  is_visible, is_declaration, is_inl, is_splitstack,
+                  is_noret, in_unique_section, bloc);
 }
 
 bool Llvm_backend::moduleScopeValue(llvm::Value *val, Btype *btype) const
@@ -2365,7 +2378,7 @@ Bfunction *Llvm_backend::error_function()
 Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
                                   const std::string &asm_name, bool is_visible,
                                   bool is_declaration, bool is_inlinable,
-                                  bool disable_split_stack,
+                                  bool disable_split_stack, bool no_return,
                                   bool in_unique_section, Location location)
 {
   if (fntype == errorType())
@@ -2424,6 +2437,10 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
     // split-stack or nosplit
     if (! disable_split_stack)
       fcn->addFnAttr("split-stack");
+
+    // no-return
+    if (no_return)
+      fcn->addFnAttr(llvm::Attribute::NoReturn);
 
     fcnValue = fcn;
 

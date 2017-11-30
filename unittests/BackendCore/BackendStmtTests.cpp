@@ -515,12 +515,13 @@ static Bstatement *CreateDeferStmt(Llvm_backend *be,
   Btype *befty = mkFuncTyp(be, L_PARM, be->pointer_type(bi8t), L_END);
   bool is_decl = true; bool is_inl = false;
   bool is_vis = true; bool is_split = true;
+  bool is_noret = false; bool is_uniqsec = false;
   Bfunction *bchkfcn = be->function(befty, "checkdefer", "checkdefer",
                                     is_vis, is_decl, is_inl, is_split,
-                                    false, h.newloc());
+                                    is_noret, is_uniqsec, h.newloc());
   Bfunction *bdefretfcn = be->function(befty, "deferreturn", "deferreturn",
                                        is_vis, is_decl, is_inl, is_split,
-                                       false, h.newloc());
+                                       is_noret, is_uniqsec, h.newloc());
 
   // Materialize call to deferreturn
   Bexpression *retfn = be->function_code_expression(bdefretfcn, h.newloc());
@@ -605,13 +606,14 @@ TEST(BackendStmtTests, TestExceptionHandlingStmt) {
 
   bool is_decl = true; bool is_inl = false;
   bool is_vis = true; bool is_split = true;
+  bool is_noret = false; bool is_uniqsec = false;
   const char *fnames[] = { "plark", "plix", "ohstopit" };
   Bfunction *fcns[4];
   Bexpression *calls[4];
   for (unsigned ii = 0; ii < 3; ++ii)  {
     fcns[ii] = be->function(befty, fnames[ii], fnames[ii],
-                                    is_vis, is_decl, is_inl, is_split,
-                                    false, h.newloc());
+                            is_vis, is_decl, is_inl, is_split,
+                            is_noret, is_uniqsec, h.newloc());
     Bexpression *pfn = be->function_code_expression(fcns[ii], h.newloc());
     std::vector<Bexpression *> args;
     calls[ii] = be->call_expression(func, pfn, args,
@@ -619,7 +621,7 @@ TEST(BackendStmtTests, TestExceptionHandlingStmt) {
   }
   fcns[3] = be->function(befty2, "id", "id",
                          is_vis, is_decl, is_inl, is_split,
-                         false, h.newloc());
+                         is_noret, is_uniqsec, h.newloc());
   Bexpression *idfn = be->function_code_expression(fcns[3], h.newloc());
   std::vector<Bexpression *> iargs;
   iargs.push_back(mkInt64Const(be, 99));
@@ -752,9 +754,10 @@ TEST(BackendStmtTests, TestExceptionHandlingStmtWithReturns) {
 
   bool is_decl = true; bool is_inl = false;
   bool is_vis = true; bool is_split = true;
+  bool is_noret = false; bool is_uniqsec = false;
   Bfunction *sfn = be->function(befty, "splat", "splat",
                                 is_vis, is_decl, is_inl, is_split,
-                                false, h.newloc());
+                                is_noret, is_uniqsec, h.newloc());
   Bexpression *splfn = be->function_code_expression(sfn, h.newloc());
 
   // body:
