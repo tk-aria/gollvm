@@ -309,8 +309,8 @@ public:
   Bfunction *function(Btype *fntype, const std::string &name,
                       const std::string &asm_name, bool is_visible,
                       bool is_declaration, bool is_inlinable,
-                      bool disable_split_stack, bool in_unique_section,
-                      Location);
+                      bool disable_split_stack, bool does_not_return,
+                      bool in_unique_section, Location);
 
   Bstatement *function_defer_statement(Bfunction *function,
                                        Bexpression *undefer, Bexpression *defer,

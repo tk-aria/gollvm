@@ -301,10 +301,11 @@ Bfunction *mkFunci32o64(Backend *be, const char *fname, bool mkParams) {
   bool is_inl = true;
   bool split_stack = true;
   bool unique_sec = false;
+  bool no_ret = false;
   Location loc;
   Bfunction *func = be->function(befty, fname, fname, visible,
                                  is_declaration, is_inl,
-                                 split_stack, unique_sec, loc);
+                                 split_stack, no_ret, unique_sec, loc);
   if (mkParams) {
     be->parameter_variable(func, "param1", bi32t, false, loc);
     be->parameter_variable(func, "param2", bi32t, false, loc);
@@ -320,10 +321,11 @@ Bfunction *mkFuncFromType(Backend *be, const char *fname, BFunctionType *befty)
   bool is_inl = true;
   bool split_stack = true;
   bool unique_sec = false;
+  bool no_ret = false;
   Location loc;
   Bfunction *func = be->function(befty, fname, fname, visible,
                                  is_declaration, is_inl,
-                                 split_stack, unique_sec, loc);
+                                 split_stack, no_ret, unique_sec, loc);
   const std::vector<Btype *> &paramTypes = befty->paramTypes();
   for (unsigned idx = 0; idx < paramTypes.size(); ++idx) {
     std::stringstream ss;
