@@ -86,24 +86,28 @@ TEST(BackendFcnTests, MakeFunction) {
   const bool is_visible[2] = {true, false};
   const bool is_inlinable[2] = {true, false};
   bool split_stack[2] = {true, false};
+  bool is_noret[2] = {true, false};
   Location loc;
   unsigned count = 0;
   for (auto vis : is_visible) {
     for (auto inl : is_inlinable) {
       for (auto split : split_stack) {
-        std::stringstream ss;
-        ss << "fcn" << count++;
-        Bfunction *befcn =
-            be->function(befty, "_foo", ss.str(), vis, is_declaration,
-                         inl, split, in_unique_section, loc);
-        llvm::Function *llfunc = befcn->function();
-        ASSERT_TRUE(llfunc != NULL);
-        EXPECT_EQ(llfunc->getName(), ss.str());
-        EXPECT_FALSE(llfunc->isVarArg());
-        EXPECT_EQ(llfunc->hasFnAttribute(Attribute::NoInline), !inl);
-        EXPECT_EQ(llfunc->hasExternalLinkage(), vis);
-        EXPECT_EQ(llfunc->hasInternalLinkage(), !vis);
-        EXPECT_EQ(befcn->splitStack() == Bfunction::YesSplit, !split);
+        for (auto noret : is_noret) {
+          std::stringstream ss;
+          ss << "fcn" << count++;
+          Bfunction *befcn =
+              be->function(befty, "_foo", ss.str(), vis, is_declaration,
+                           inl, split, noret, in_unique_section, loc);
+          llvm::Function *llfunc = befcn->function();
+          ASSERT_TRUE(llfunc != NULL);
+          EXPECT_EQ(llfunc->getName(), ss.str());
+          EXPECT_FALSE(llfunc->isVarArg());
+          EXPECT_EQ(llfunc->hasFnAttribute(Attribute::NoInline), !inl);
+          EXPECT_EQ(llfunc->hasFnAttribute(Attribute::NoReturn), noret);
+          EXPECT_EQ(llfunc->hasExternalLinkage(), vis);
+          EXPECT_EQ(llfunc->hasInternalLinkage(), !vis);
+          EXPECT_EQ(befcn->splitStack() == Bfunction::YesSplit, !split);
+        }
       }
     }
   }
@@ -115,7 +119,7 @@ TEST(BackendFcnTests, MakeFunction) {
   // Try to create a function with an error type -- we should
   // get back error_function
   Bfunction *mistake = be->function(be->error_type(), "bad", "bad", true, true,
-                                    false, false, false, loc);
+                                    false, false, false, false, loc);
   EXPECT_EQ(mistake, be_error_fcn);
 }
 
@@ -243,18 +247,19 @@ TEST(BackendFcnTests, MakeMultipleDeclarations) {
   bool is_inl = true;
   bool is_splitstack = true;
   bool in_unique_section = false;
+  bool is_noret = false;
   Bfunction *bf1 =
       be->function(befty1, "_foo", "bar", is_visible, is_declaration,
-                         is_inl, is_splitstack, in_unique_section, loc);
+                   is_inl, is_splitstack, is_noret, in_unique_section, loc);
   Bfunction *bf2 =
       be->function(befty1, "_foo", "bar", is_visible, is_declaration,
-                         is_inl, is_splitstack, in_unique_section, loc);
+                   is_inl, is_splitstack, is_noret, in_unique_section, loc);
   Bfunction *bf3 =
       be->function(befty1, "_foo", "bar", is_visible, !is_declaration,
-                         is_inl, is_splitstack, in_unique_section, loc);
+                   is_inl, is_splitstack, is_noret, in_unique_section, loc);
   Bfunction *bf4 =
       be->function(befty2, "_foo", "bar", is_visible, is_declaration,
-                         is_inl, is_splitstack, in_unique_section, loc);
+                   is_inl, is_splitstack, is_noret, in_unique_section, loc);
   EXPECT_EQ(bf1, bf2);
   EXPECT_NE(bf1, bf3);
   EXPECT_NE(bf2, bf4);
@@ -395,12 +400,13 @@ TEST(BackendFcnTests, TestMultipleExternalFcnsWithSameName) {
   bool is_inl = true;
   bool split_stack = false;
   bool unique_sec = false;
+  bool no_ret = false;
   Bfunction *bf1 = be->function(btf1, "syscall", "syscall", visible,
                                 is_declaration, is_inl,
-                                split_stack, unique_sec, loc);
+                                split_stack, no_ret, unique_sec, loc);
   Bfunction *bf2 = be->function(btf2, "syscall", "syscall", visible,
                                 is_declaration, is_inl,
-                                split_stack, unique_sec, loc);
+                                split_stack, no_ret, unique_sec, loc);
 
   // Create calls to the functions
 
@@ -462,22 +468,23 @@ TEST(BackendFcnTests, TestDeclAndDefWithSameName) {
   bool is_inl = true;
   bool split_stack = false;
   bool unique_sec = false;
+  bool no_ret = false;
 
   // bar() declaration and definition
   Bfunction *bf1 = be->function(btf1, "bar", "bar", visible,
                                 true, // is_declaration
-                                is_inl, split_stack, unique_sec, loc);
+                                is_inl, split_stack, no_ret, unique_sec, loc);
   Bfunction *bf2 = be->function(btf1, "bar", "bar", visible,
                                 false, // is_declaration
-                                is_inl, split_stack, unique_sec, loc);
+                                is_inl, split_stack, no_ret, unique_sec, loc);
 
   // baz() declaration and definition
   Bfunction *bf3 = be->function(btf2, "baz", "baz", visible,
                                 true, // is_declaration
-                                is_inl, split_stack, unique_sec, loc);
+                                is_inl, split_stack, no_ret, unique_sec, loc);
   Bfunction *bf4 = be->function(btf3, "baz", "baz", visible,
                                 false, // is_declaration
-                                is_inl, split_stack, unique_sec, loc);
+                                is_inl, split_stack, no_ret, unique_sec, loc);
 
   // Create calls to the functions
   Bexpression *call1 = h.mkCallExpr(be, bf1, nullptr);

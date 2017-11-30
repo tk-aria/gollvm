@@ -120,6 +120,13 @@ void BuiltinTable::defineIntrinsicBuiltins() {
   defineIntrinsicBuiltin("__builtin_trap", nullptr, llvm::Intrinsic::trap,
                          nullptr);
 
+  // The frontend emits calls to this intrinsic, however LLVM doesn't include
+  // a specific entry for unreachable in the intrinsics table. Model
+  // it as a debug_trap for now, but rewrite it later on to an unreachable
+  // instruction.
+  defineIntrinsicBuiltin("__builtin_unreachable", nullptr,
+                         llvm::Intrinsic::debugtrap, nullptr);
+
   defineIntrinsicBuiltin("__builtin_return_address", nullptr,
                          llvm::Intrinsic::returnaddress, ptrType,
                          uint32Type, nullptr);

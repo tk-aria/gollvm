@@ -61,9 +61,10 @@ TEST(BackendCallTests, CallToVoid) {
   Btype *befty = mkFuncTyp(be, L_END);
   bool is_decl = true; bool is_inl = false;
   bool is_vis = true; bool is_split = true;
+  bool is_noret = false; bool is_uniqsec = false;
   Bfunction *befcn = be->function(befty, "bar", "bar",
                                   is_vis, is_decl, is_inl, is_split,
-                                  false, loc);
+                                  is_noret, is_uniqsec, loc);
 
   // Create call to it
   Bexpression *fn = be->function_code_expression(befcn, loc);
