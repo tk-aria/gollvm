@@ -22,6 +22,30 @@
       "revId": "c5334a2193c51dcb9f024f840eb08fd7109f2068",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5c2c634f_4af78f7c",
+        "filename": "llvm-gofrontend/go-llvm-tree-integrity.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2017-12-04T15:48:15Z",
+      "side": 1,
+      "message": "Why?  Prior to materialization there are no LLVM instructions, and the function itself is going to be a constant (which is certainly shareable).",
+      "parentUuid": "3026ff20_72d9a675",
+      "range": {
+        "startLine": 27,
+        "startChar": 26,
+        "endLine": 27,
+        "endChar": 32
+      },
+      "revId": "c5334a2193c51dcb9f024f840eb08fd7109f2068",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
