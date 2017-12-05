@@ -670,8 +670,8 @@ Bexpression *Llvm_backend::resolveVarContext(Bexpression *expr,
 Bvariable *Llvm_backend::genVarForConstant(llvm::Constant *conval,
                                            Btype *type)
 {
-  auto it = valueVarMap_.find(conval);
-  if (it != valueVarMap_.end())
+  auto it = genVarConstMap_.find(conval);
+  if (it != genVarConstMap_.end())
     return it->second;
 
   std::string ctag(namegen("const"));
@@ -682,6 +682,7 @@ Bvariable *Llvm_backend::genVarForConstant(llvm::Constant *conval,
                                 llvm::GlobalValue::PrivateLinkage,
                                 conval, 0);
   assert(llvm::isa<llvm::GlobalVariable>(rv->value()));
+  genVarConstMap_[conval] = rv;
   return rv;
 }
 
