@@ -725,17 +725,17 @@ TEST(BackendArrayStructTests, TestStructAssignment) {
   h.mkAssign(ve3, ve4);
 
   const char *exp = R"RAW_RESULT(
-  %cast.0 = bitcast { i8* }* %x1 to i8*
+%cast.0 = bitcast { i8* }* %x1 to i8*
   %cast.1 = bitcast { i8* }* @const.0 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.0, i8* %cast.1, i64 8, i32 8, i1 false)
   %cast.2 = bitcast { i8* }* %y1 to i8*
-  %cast.3 = bitcast { i8* }* @const.1 to i8*
+  %cast.3 = bitcast { i8* }* @const.0 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.2, i8* %cast.3, i64 8, i32 8, i1 false)
   %cast.4 = bitcast { i64, i64, i64, i64, i64, i64 }* %x2 to i8*
-  %cast.5 = bitcast { i64, i64, i64, i64, i64, i64 }* @const.2 to i8*
+  %cast.5 = bitcast { i64, i64, i64, i64, i64, i64 }* @const.1 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.4, i8* %cast.5, i64 48, i32 8, i1 false)
   %cast.6 = bitcast { i64, i64, i64, i64, i64, i64 }* %y2 to i8*
-  %cast.7 = bitcast { i64, i64, i64, i64, i64, i64 }* @const.3 to i8*
+  %cast.7 = bitcast { i64, i64, i64, i64, i64, i64 }* @const.1 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.6, i8* %cast.7, i64 48, i32 8, i1 false)
   %cast.8 = bitcast { i8* }* %x1 to i8*
   %cast.9 = bitcast { i8* }* %y1 to i8*

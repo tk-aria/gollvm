@@ -778,6 +778,10 @@ public:
   // module-scope variables, not vars local to a function.
   std::unordered_map<llvm::Value *, Bvariable *> valueVarMap_;
 
+  // This is used to cache compiler-constructed vars to capture
+  // constant values (created in genVarForConstant).
+  std::unordered_map<llvm::Value *, Bvariable *> genVarConstMap_;
+
   // Table for commoning strings by value. String constants have
   // concrete types like "[5 x i8]", whereas we would like to return
   // things that have type "i8*". To manage this, we eagerly create

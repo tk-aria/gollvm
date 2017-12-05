@@ -494,13 +494,13 @@ entry:
   %cast.1 = bitcast { float, float }* @const.0 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.0, i8* %cast.1, i64 8, i32 4, i1 false)
   %cast.2 = bitcast { float, float }* %b to i8*
-  %cast.3 = bitcast { float, float }* @const.1 to i8*
+  %cast.3 = bitcast { float, float }* @const.0 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.2, i8* %cast.3, i64 8, i32 4, i1 false)
   %cast.4 = bitcast { double, double }* %x to i8*
-  %cast.5 = bitcast { double, double }* @const.2 to i8*
+  %cast.5 = bitcast { double, double }* @const.1 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.4, i8* %cast.5, i64 16, i32 8, i1 false)
   %cast.6 = bitcast { double, double }* %y to i8*
-  %cast.7 = bitcast { double, double }* @const.3 to i8*
+  %cast.7 = bitcast { double, double }* @const.1 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.6, i8* %cast.7, i64 16, i32 8, i1 false)
   %cast.8 = bitcast { double, double }* %tmp.0 to i8*
   %cast.9 = bitcast { double, double }* %x to i8*
@@ -1080,10 +1080,10 @@ TEST(BackendExprTests, TestComplexOps) {
     %cast.1 = bitcast { double, double }* @const.0 to i8*
     call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.0, i8* %cast.1, i64 16, i32 8, i1 false)
     %cast.2 = bitcast { double, double }* %y to i8*
-    %cast.3 = bitcast { double, double }* @const.1 to i8*
+    %cast.3 = bitcast { double, double }* @const.0 to i8*
     call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.2, i8* %cast.3, i64 16, i32 8, i1 false)
     %cast.4 = bitcast { double, double }* %z to i8*
-    %cast.5 = bitcast { double, double }* @const.2 to i8*
+    %cast.5 = bitcast { double, double }* @const.0 to i8*
     call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.4, i8* %cast.5, i64 16, i32 8, i1 false)
     store i8 0, i8* %b
     %cast.6 = bitcast { double, double }* %tmp.0 to i8*
