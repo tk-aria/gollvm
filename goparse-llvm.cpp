@@ -177,6 +177,17 @@ FullPasses("full-passes",
            cl::desc("Enable all available optimization passes."),
            cl::init(true));
 
+static cl::opt<bool>
+PICSmall("fpic",
+        cl::desc("Generate position-independent code (small model)."),
+        cl::ZeroOrMore,
+        cl::init(false));
+static cl::opt<bool>
+PICBig("fPIC",
+        cl::desc("Generate position-independent code (large model)."),
+        cl::ZeroOrMore,
+        cl::init(false));
+
 
 static std::unique_ptr<ToolOutputFile>
 GetOutputStream() {
@@ -356,6 +367,18 @@ bool CompilationOrchestrator::initBridge()
   // Add the target data from the target machine, if it exists
   module_->setTargetTriple(triple_.getTriple());
   module_->setDataLayout(target_->createDataLayout());
+
+  // Honor -fpic/-fPIC options.  The intent of the code below is
+  // to support "rightmost on the command line wins" (compatible
+  // with clang and other compilers), so if you specify "-fPIC -fpic"
+  // you get small PIC, whereas "-fPIC -fpic -fPIC" this will give
+  // you large PIC.
+  auto picLevel = llvm::PICLevel::NotPIC;
+  if (PICBig && PICSmall.getPosition() < PICBig.getPosition())
+    picLevel = llvm::PICLevel::BigPIC;
+  else if (PICSmall && PICSmall.getPosition() > PICBig.getPosition())
+    picLevel = llvm::PICLevel::SmallPIC;
+  module_->setPICLevel(picLevel);
 
   // Now construct Llvm_backend helper.
   bridge_.reset(new Llvm_backend(context_, module_.get(), linemap_.get()));
