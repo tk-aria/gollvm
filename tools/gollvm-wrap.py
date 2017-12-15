@@ -160,8 +160,6 @@ def perform():
       flag_trace_llinvoc = True
 
     # redirect some gcc flags to the ones gollvm uses
-    if clarg == "-fPIC":
-      clarg = "-relocation-model=pic"
     if clarg == "-O":
       clarg = "-O1"
     if clarg == "-w":
