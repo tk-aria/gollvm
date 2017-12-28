@@ -19,17 +19,14 @@ set(MCONF1 "CPPFLAGS=-I/usr/local/include")
 set(MCONF2 "LDFLAGS=-L/usr/local/lib")
 endif()
 
-# FIXME: add in URL args for the projects below.
-# URL ftp://ftp.gnu.org/gnu/gmp/gmp-6.1.0.tar.bz2
-# URL ftp://gcc.gnu.org/pub/gcc/infrastructure/mpfr-3.1.4.tar.bz2
-# URL ftp://gcc.gnu.org/pub/gcc/infrastructure/mpc-1.0.3.tar.gz
-
 # Open issue: should the configure cmds below be run with
 # "CC=${CMAKE_BINARY_DIR}/bin/clang"
 
 set(MPCINSTALL ${CMAKE_CURRENT_BINARY_DIR}/external/build-mpc)
+set(MPCLIBDIR "${MPCINSTALL}/lib")
 externalproject_add(libmpc
   URL ftp://gcc.gnu.org/pub/gcc/infrastructure/mpc-1.0.3.tar.gz
+  URL_MD5 d6a1d5f8ddea3abd2cc3e98f58352d26
   DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/external-downloads
   BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/mpc
   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=${MPCINSTALL} ${MCONF1} ${MCONF2}
@@ -41,8 +38,10 @@ externalproject_add(libmpc
   )
 
 set(MPFRINSTALL ${CMAKE_CURRENT_BINARY_DIR}/external/build-mpfr)
+set(MPFRLIBDIR "${MPFRINSTALL}/lib")
 externalproject_add(libmpfr
   URL ftp://gcc.gnu.org/pub/gcc/infrastructure/mpfr-3.1.4.tar.bz2
+  URL_MD5 b8a2f6b0e68bef46e53da2ac439e1cf4
   DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/external-downloads
   BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/mpfr
   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=${MPFRINSTALL} ${MCONF1} ${MCONF2}
@@ -54,8 +53,10 @@ externalproject_add(libmpfr
   )
 
 set(GMPINSTALL ${CMAKE_CURRENT_BINARY_DIR}/external/build-gmp)
+set(GMPLIBDIR "${GMPINSTALL}/lib")
 externalproject_add(libgmp
   URL ftp://ftp.gnu.org/gnu/gmp/gmp-6.1.0.tar.bz2
+  URL_MD5 86ee6e54ebfc4a90b643a65e402c4048
   DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/external-downloads
   BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/gmp
   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=${GMPINSTALL} ${MCONF1} ${MCONF2}
@@ -105,10 +106,10 @@ add_llvm_tool(llvm-goparse
 # Record the fact that llvm-goparse depends on these libs
 add_dependencies(llvm-goparse libmpfr libmpc libgmp)
 
-# Add in the archives for the llvm-goparse dependencies.
+# Add in llvm-goparse dependencies.
 target_link_libraries(llvm-goparse
-  ${MPCINSTALL}/lib/libmpc.a
-  ${MPFRINSTALL}/lib/libmpfr.a
-  ${GMPINSTALL}/lib/libgmp.a
-  )
+  "-L${MPCLIBDIR}" "-lmpc"
+  "-L${MPFRLIBDIR}" "-lmpfr"
+  "-L${GMPLIBDIR}" "-lgmp")
+
 
