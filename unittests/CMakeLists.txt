@@ -11,5 +11,8 @@ function(add_gobackend_unittest test_dirname)
   add_unittest(GobackendUnitTests ${test_dirname} ${ARGN})
 endfunction()
 
+include_directories(${BRIDGE_SOURCE_DIR})
+include_directories(${GOFRONTEND_SOURCE_DIR})
+
 add_subdirectory(BackendCore)
 add_subdirectory(Parser)
