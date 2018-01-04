@@ -12,11 +12,10 @@ function(add_gobackend_unittest test_dirname)
   add_unittest(GoBackendUnitTests ${test_dirname} ${ARGN})
 endfunction()
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../llvm-gofrontend)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../llvm-gofrontend/gofrontend/go)
-
 include_directories(${MPCINSTALL}/include)
 include_directories(${MPFRINSTALL}/include)
 include_directories(${GMPINSTALL}/include)
+include_directories(${BRIDGE_SOURCE_DIR})
+include_directories(${GOFRONTEND_SOURCE_DIR})
 
 add_subdirectory(BackendCore)

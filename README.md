@@ -1,8 +1,9 @@
+
 # gollvm
 
-LLVM IR generation "middle end" for LLVM-based go compiler. This is currently very much in a prototype phase, with a fairly brittle/fragile build process, so please take careful note of the setup instructions.
+Gollvm is an LLVM-based Go compiler. It incorporates "gofrontend" (a Go language front end written in C++ and shared with GCCGO), a bridge components (which translates from gofrontend IR to LLVM IR), and a driver that sends the resulting IR through the LLVM back end. Gollvm is still at an early stage of development.
 
-Gollvm (name still not finalized) is layered on top of LLVM, much in the same way that things work for "clang" or "compiler-rt": you check out a copy of the LLVM source tree and then within that tree you check out additional git repos. 
+Gollvm (name still not finalized) is set up to be a subprojects within the LLVM tools directory, similar to how things work for "clang" or "compiler-rt": you check out a copy of the LLVM source tree and then within that tree you check out additional git repos. 
 
 You'll need to have an up-to-date copy of cmake on your system (3.6 vintage).
 
@@ -15,11 +16,14 @@ You'll need to have an up-to-date copy of cmake on your system (3.6 vintage).
 
 // Sources
 % git clone http://llvm.org/git/llvm.git
+...
 % cd llvm/tools
 % git clone https://go.googlesource.com/gollvm
-% cd gollvm/llvm-gofrontend
+...
+% cd gollvm
 % git clone https://go.googlesource.com/gofrontend
-% cd ../../../..
+...
+%
 
 // Additional steps needed for MacOS only:
 % brew install gmp mpfr mpc
@@ -29,10 +33,7 @@ You'll need to have an up-to-date copy of cmake on your system (3.6 vintage).
 % cd build.opt
 % cmake -DCMAKE_BUILD_TYPE=Debug -G Ninja ../llvm
 
-// Prebuild
-ninja libgmp libmpfr libmpc
-
-// Now regular build
+// Build
 ninja <gollvm target(s)>
 ```
 
@@ -42,9 +43,18 @@ Within <workarea>/llvm/tools/gollvm, the following directories are of interest:
 
 .../llvm/tools/gollvm:
 
+ * contains rules to build third party libraries needed for gollvm, 
+   along with common definitions for subdirs.
+ 
+.../llvm/tools/gollvm/driver:
+
  * contains build rules and source code for llvm-goparse
  
-.../llvm/tools/gollvm/llvm-gofrontend:
+.../llvm/tools/gollvm/gofrontend:
+
+ * source code for gofrontend and libgo (note: no cmake files here)
+
+.../llvm/tools/gollvm/bridge:
 
  * contains build rules for the libLLVMCppGoFrontEnd.a, a library that contains both the gofrontend code and the LLVM-specific middle layer (for example, the definition of the class Llvm_backend, which inherits from Backend).
  
@@ -54,7 +64,7 @@ Within <workarea>/llvm/tools/gollvm, the following directories are of interest:
  
 ## Building and running llvm-goparse
 
-The executable llvm-goparse is a driver program that runs the gofrontend parser on a specific go program, with the LLVM-specific backend instance connected to the parser. This program is still mostly a skeleton -- it can create LLVM based on the Backend method calls made by the front end, however it doesn't actually do anything with the IR yet (just dumps it out). 
+The executable llvm-goparse is a driver program that runs the gofrontend parser on a specific go program, with the LLVM-specific backend instance connected to the parser. This program not fully usable on its own at the moment; using it requries a companion gccgo installation. 
 
 ```
 // From within <workarea>/build.opt:
@@ -62,20 +72,11 @@ The executable llvm-goparse is a driver program that runs the gofrontend parser 
 % ninja llvm-goparse
 % cat micro.go
 package foo
-func bar() int {
+func Bar() int {
 	return 1
 }
-% ./bin/llvm-goparse ~/micro.go
-...
-define hidden i64 @foo.bar() {
-entry:
-  %"$ret0" = alloca i64
-  store i64 0, i64* %"$ret0"
-  store i64 1, i64* %"$ret0"
-  %"$ret0.ld.0" = load i64, i64* %"$ret0"
-  ret i64 %"$ret0.ld.0"
-}
-%
+% ./bin/llvm-goparse -fgo-pkgpath=foo -O3 -o micro.s micro.go
+% 
 ```
 
 ## Using llvm-goparse in combination with a GCCGO installation
