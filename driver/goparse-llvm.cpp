@@ -164,6 +164,15 @@ EscapeDebugLevel("fgo-debug-escape",
                           "-fgo-optimize-allocs."),
                  cl::init(0));
 
+static cl::opt<std::string>
+EscapeDebugHash("fgo-debug-escape-hash",
+        cl::desc("A hash value to debug escape analysis. Argument is "
+                 "a binary string. This runs escape analysis only on "
+                 "functions whose names hash to values that match the "
+                 "given suffix. Can be used to binary search across "
+                 "functions to uncover escape analysis bugs."),
+                cl::init(""));
+
 static cl::opt<unsigned>
 TraceLevel("tracelevel",
            cl::desc("Set debug trace level (def: 0, no trace output)."),
@@ -383,6 +392,9 @@ bool CompilationOrchestrator::initBridge()
   args.check_divide_overflow = CheckDivideOverflow;
   args.compiling_runtime = CompilingRuntime;
   args.debug_escape_level = EscapeDebugLevel;
+  args.debug_escape_hash = nullptr;
+  if (!EscapeDebugHash.empty())
+    args.debug_escape_hash = EscapeDebugHash.c_str();
   args.nil_check_size_threshold = -1;
   args.linemap = linemap_.get();
   args.backend = bridge_.get();

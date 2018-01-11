@@ -37,7 +37,7 @@ TEST(BackendVarTests, MakeLocalVar) {
   Bvariable *loc2 = h.mkLocal("loc2", bst);
   ASSERT_TRUE(loc2 != nullptr);
   EXPECT_TRUE(loc2 != be->error_variable());
-  Bvariable *loc3 = be->local_variable(func2, "loc3", bst, false, loc);
+  Bvariable *loc3 = be->local_variable(func2, "loc3", bst, nullptr, false, loc);
   ASSERT_TRUE(loc3 != nullptr);
   EXPECT_TRUE(loc3 != be->error_variable());
 
@@ -59,7 +59,8 @@ TEST(BackendVarTests, MakeLocalVar) {
   EXPECT_EQ(repr(es), "%loc1.ld.0 = load i64, i64* %loc1");
 
   // Make sure error detection is working
-  Bvariable *loce = be->local_variable(func1, "", be->error_type(), true, loc);
+  Bvariable *loce = be->local_variable(func1, "", be->error_type(), nullptr,
+                                       true, loc);
   EXPECT_TRUE(loce == be->error_variable());
 
   bool broken = h.finish(PreserveDebugInfo);
@@ -502,8 +503,8 @@ TEST(BackendVarTests, TestVarLifetimeInsertion) {
   Btype *bst = mkTwoFieldStruct(be, bi32t, bi32t);
 
   // Block with two locals
-  Bvariable *x = be->local_variable(func, "x", bi32t, false, loc);
-  Bvariable *y = be->local_variable(func, "y", bst, false, loc);
+  Bvariable *x = be->local_variable(func, "x", bi32t, nullptr, false, loc);
+  Bvariable *y = be->local_variable(func, "y", bst, nullptr, false, loc);
   const std::vector<Bvariable *> vars = { x, y };
   Bblock *b1 = be->block(func, nullptr, vars, loc, loc);
   Bstatement *is1 = be->init_statement(func, x, be->zero_expression(bi32t));
@@ -680,8 +681,31 @@ TEST(BackendVarTests, ZeroSizedGlobals) {
     }
     )RAW_RESULT";
   bool isOK = h.expectValue(func->function(), exp);
-    EXPECT_TRUE(isOK && "Value does not have expected contents");
+  EXPECT_TRUE(isOK && "Value does not have expected contents");
 
+}
+
+TEST(BackendVarTests, MakeLocalWithDeclVar) {
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
+  Bfunction *func1 = h.func();
+
+  // Create an initial local variable at the top level.
+  Location loc;
+  Btype *bi64t = be->integer_type(false, 64);
+  Bvariable *loc1 = h.mkLocal("loc1", bi64t);
+
+  // Now manufacture a second local that refers to the first via the
+  // "declVar" mechanism.
+  Bvariable *loc2 = be->local_variable(func1, "loc2", bi64t, loc1, false, loc);
+  Bstatement *is2 = be->init_statement(func1, loc2, mkInt64Const(be, 9));
+  h.addStmt(is2);
+
+  // The two vars should share the same alloca instruction.
+  EXPECT_TRUE(loc1->value() == loc2->value());
+
+  bool broken = h.finish(PreserveDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
 }

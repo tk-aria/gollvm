@@ -23,7 +23,7 @@ Bvariable::Bvariable(Btype *type, Location location,
     : name_(name), value_(value), initializer_(nullptr),
       type_(type), underlyingType_(nullptr),
       location_(location), which_(which),
-      addrtaken_(address_taken), temporary_(false)
+      addrtaken_(address_taken), temporary_(false), declvar_(false)
 {
 }
 
@@ -33,7 +33,7 @@ Bvariable::Bvariable(Btype *zeroSizeType, Btype *underlyingNonZeroSizeType,
     : name_(name), value_(value), initializer_(nullptr),
       type_(zeroSizeType), underlyingType_(underlyingNonZeroSizeType),
       location_(location), which_(which),
-      addrtaken_(address_taken), temporary_(false)
+      addrtaken_(address_taken), temporary_(false), declvar_(false)
 {
   assert(which == GlobalVar);
 }

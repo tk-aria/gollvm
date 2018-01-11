@@ -71,8 +71,8 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrity2) {
   Location loc;
   Bfunction *func = mkFunci32o64(be.get(), "foo");
   Btype *bi64t = be->integer_type(false, 64);
-  Bvariable *loc1 = be->local_variable(func, "loc1", bi64t, true, loc);
-  Bvariable *loc2 = be->local_variable(func, "loc2", bi64t, true, loc);
+  Bvariable *loc1 = be->local_variable(func, "loc1", bi64t, nullptr, true, loc);
+  Bvariable *loc2 = be->local_variable(func, "loc2", bi64t, nullptr, true, loc);
 
   // Create "loc1" varexpr, then supply to more than one statement
   Bexpression *ve = be->var_expression(loc1, loc);
