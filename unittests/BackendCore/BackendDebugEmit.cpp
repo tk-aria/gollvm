@@ -116,9 +116,9 @@ TEST(BackendDebugEmit, MoreComplexVarDecls) {
 
   Location loc;
   std::vector<Bvariable *> vlist;
-  vlist.push_back(be->local_variable(func, "n1", set, false, loc));
-  vlist.push_back(be->local_variable(func, "n2", beat, false, loc));
-  vlist.push_back(be->local_variable(func, "n3", bi32t, false, loc));
+  vlist.push_back(be->local_variable(func, "n1", set, nullptr, false, loc));
+  vlist.push_back(be->local_variable(func, "n2", beat, nullptr, false, loc));
+  vlist.push_back(be->local_variable(func, "n3", bi32t, nullptr, false, loc));
   h.newBlock(&vlist);
 
   Bexpression *fn2 = be->function_code_expression(func2, loc);

@@ -95,6 +95,25 @@ bool containstokens(const std::string &text, const std::string &pat)
   return false;
 }
 
+unsigned countinstances(const std::string &text, const std::string &pat)
+{
+  unsigned instances = 0;
+  std::vector<std::string> textToks = tokenize(text);
+  std::vector<std::string> patToks = tokenize(pat);
+  for (unsigned ti = 0; ti < textToks.size(); ++ti) {
+    bool fail = false;
+    for (unsigned tic = ti, pi = 0; pi < patToks.size(); ++pi, ++tic) {
+      if (tic >= textToks.size() || patToks[pi] != textToks[tic]) {
+        fail = true;
+        break;
+      }
+    }
+    if (!fail)
+      instances += 1;
+  }
+  return instances;
+}
+
 std::string repr(llvm::Value *val) {
   std::string res;
   llvm::raw_string_ostream os(res);
@@ -520,7 +539,7 @@ Bvariable *FcnTestHarness::mkLocal(const char *name,
                                    Bexpression *init)
 {
   assert(func_);
-  Bvariable *v = be()->local_variable(func_, name, typ, true, loc_);
+  Bvariable *v = be()->local_variable(func_, name, typ, nullptr, true, loc_);
   if (!init)
     init = be()->zero_expression(typ);
   Bstatement *is = be()->init_statement(func_, v, init);
@@ -714,6 +733,15 @@ bool FcnTestHarness::expectModuleDumpContains(const std::string &expected)
   be()->module().print(os, nullptr);
   std::string actual(trimsp(os.str()));
   return containstokens(actual, expected);
+}
+
+unsigned FcnTestHarness::countInstancesInModuleDump(const std::string &expected)
+{
+  std::string res;
+  llvm::raw_string_ostream os(res);
+  be()->module().print(os, nullptr);
+  std::string actual(trimsp(os.str()));
+  return countinstances(actual, expected);
 }
 
 bool FcnTestHarness::expectRepr(Bnode *node, const std::string &expected)

@@ -228,17 +228,36 @@ Bvariable *Bfunction::staticChainVariable(const std::string &name,
 }
 
 Bvariable *Bfunction::localVariable(const std::string &name,
-                                     Btype *btype,
-                                     bool is_address_taken,
-                                     Location location)
+                                    Btype *btype,
+                                    Bvariable *declVar,
+                                    bool is_address_taken,
+                                    Location location)
 {
   lazyAbiSetup();
-  llvm::Instruction *inst = addAlloca(btype->type(), name);
+  llvm::Instruction *inst = nullptr;
+  if (declVar != nullptr) {
+    // If provided, declVar must be an existing local variable in
+    // the same function (presumably at an outer scope).
+    assert(valueVarMap_.find(declVar->value()) != valueVarMap_.end());
+
+    // For the correct semantics, we need the two variables in question
+    // to share the same alloca instruction.
+    inst = llvm::cast<llvm::Instruction>(declVar->value());
+  } else {
+    inst = addAlloca(btype->type(), name);
+  }
   Bvariable *bv =
       new Bvariable(btype, location, name, LocalVar, is_address_taken, inst);
   localVariables_.push_back(bv);
-  assert(valueVarMap_.find(bv->value()) == valueVarMap_.end());
-  valueVarMap_[bv->value()] = bv;
+  if (declVar != nullptr) {
+    // Don't add the variable in question to the value var map.
+    // Mark it so that it can be handled properly during creation
+    // of lifetime annotations.
+    bv->markAsDeclVar();
+  } else {
+    assert(valueVarMap_.find(bv->value()) == valueVarMap_.end());
+    valueVarMap_[bv->value()] = bv;
+  }
   return bv;
 }
 
