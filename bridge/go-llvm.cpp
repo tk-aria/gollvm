@@ -1751,7 +1751,7 @@ Bstatement *Llvm_backend::exception_handler_statement(Bstatement *bstat,
 
   std::string tname(namegen("finvar"));
   Bvariable *tvar = func->localVariable(tname, boolType(),
-                                        false, location);
+                                        nullptr, false, location);
   tvar->markAsTemporary();
   Bstatement *excepst = nbuilder_.mkExcepStmt(func, bstat,
                                               except_stmt,
@@ -2089,13 +2089,15 @@ Bvariable *Llvm_backend::error_variable()
 Bvariable *Llvm_backend::local_variable(Bfunction *function,
                                         const std::string &name,
                                         Btype *btype,
+                                        Bvariable *decl_var,
                                         bool is_address_taken,
                                         Location location)
 {
   assert(function);
   if (btype == errorType() || function == errorFunction_.get())
     return errorVariable_.get();
-  return function->localVariable(name, btype, is_address_taken, location);
+  return function->localVariable(name, btype, decl_var,
+                                 is_address_taken, location);
 }
 
 // Make a function parameter variable.
@@ -2137,7 +2139,7 @@ Bvariable *Llvm_backend::temporary_variable(Bfunction *function,
   if (binit == errorExpression())
     return errorVariable_.get();
   std::string tname(namegen("tmpv"));
-  Bvariable *tvar = local_variable(function, tname, btype,
+  Bvariable *tvar = local_variable(function, tname, btype, nullptr,
                                    is_address_taken, location);
   if (tvar == errorVariable_.get()) {
     *pstatement = errorStatement();
@@ -2727,6 +2729,13 @@ void GenBlocks::insertLifetimeMarkersForBlock(Bblock *block,
 {
   assert(llbb);
   for (auto v : block->vars()) {
+    if (v->isDeclVar()) {
+      // This variable does not have its own alloca -- it is borrowing the
+      // alloca instruction from some other outer-scope var, hence we
+      // don't have as much information about its lifetime: avoid inserting
+      // lifetime ops.
+      continue;
+    }
     llvm::Value *ai = v->value();
     appendLifetimeIntrinsic(ai, insertBefore, llbb, isStart);
   }

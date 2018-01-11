@@ -262,8 +262,8 @@ public:
 
   void global_variable_set_init(Bvariable *, Bexpression *);
 
-  Bvariable *local_variable(Bfunction *, const std::string &, Btype *, bool,
-                            Location);
+  Bvariable *local_variable(Bfunction *, const std::string &, Btype *,
+                            Bvariable *, bool, Location);
 
   Bvariable *parameter_variable(Bfunction *, const std::string &, Btype *, bool,
                                 Location);

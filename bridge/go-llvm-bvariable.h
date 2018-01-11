@@ -55,6 +55,8 @@ public:
   WhichVar flavor() const { return which_; }
   bool isTemporary() const { return temporary_; }
   void markAsTemporary() { temporary_ = true; }
+  bool isDeclVar() const { return declvar_; }
+  void markAsDeclVar() { declvar_ = true; }
 
   // Set/get variable initializer. Some variables may not have an
   // initializer, for example module-scoped globals, or variables
@@ -87,6 +89,7 @@ private:
   WhichVar which_;
   bool addrtaken_;
   bool temporary_;
+  bool declvar_;
 
   friend class Llvm_backend;
 };

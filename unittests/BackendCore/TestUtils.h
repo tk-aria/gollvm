@@ -235,6 +235,10 @@ class FcnTestHarness {
   // trouble here.
   bool expectModuleDumpContains(const std::string &expected);
 
+  // Return a count of the number of times we see the specified
+  // token sequence within the module dump.
+  unsigned countInstancesInModuleDump(const std::string &expected);
+
   // Skip the checking at finish time for orphan CFG blocks.
   void allowOrphans() { findOrphanBBs_ = false; }
 

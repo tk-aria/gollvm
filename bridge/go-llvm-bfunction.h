@@ -66,15 +66,16 @@ public:
 
   // Add a local variable
   Bvariable *localVariable(const std::string &name,
-                            Btype *btype,
-                            bool is_address_taken,
-                            Location location);
+                           Btype *btype,
+                           Bvariable *decl_var,
+                           bool is_address_taken,
+                           Location location);
 
   // Add a parameter variable
   Bvariable *parameterVariable(const std::string &name,
-                                Btype *btype,
-                                bool is_address_taken,
-                                Location location);
+                               Btype *btype,
+                               bool is_address_taken,
+                               Location location);
 
   // Create a Bvariable for the static chain param of the function.
   Bvariable *staticChainVariable(const std::string &name,

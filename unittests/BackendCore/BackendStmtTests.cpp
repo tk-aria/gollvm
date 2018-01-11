@@ -26,14 +26,14 @@ TEST(BackendStmtTests, TestInitStmt) {
   Location loc;
 
   // local variable with init
-  Bvariable *loc1 = be->local_variable(func, "loc1", bi64t, true, loc);
+  Bvariable *loc1 = be->local_variable(func, "loc1", bi64t, nullptr, true, loc);
   Bstatement *is = be->init_statement(func, loc1, mkInt64Const(be, 10));
   ASSERT_TRUE(is != nullptr);
   h.addStmt(is);
   EXPECT_EQ(repr(is), "store i64 10, i64* %loc1");
 
   // error handling
-  Bvariable *loc2 = be->local_variable(func, "loc2", bi64t, true, loc);
+  Bvariable *loc2 = be->local_variable(func, "loc2", bi64t, nullptr, true, loc);
   Bstatement *bad = be->init_statement(func, loc2, be->error_expression());
   ASSERT_TRUE(bad != nullptr);
   EXPECT_EQ(bad, be->error_statement());
