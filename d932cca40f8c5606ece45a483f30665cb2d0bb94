@@ -16,6 +16,24 @@
       "revId": "d932cca40f8c5606ece45a483f30665cb2d0bb94",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6d0e965f_f4fc94a9",
+        "filename": "bridge/go-llvm-bfunction.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 256,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-01-12T17:24:50Z",
+      "side": 1,
+      "message": "Yes.   At this point we\u0027re emitting lifetimes for some vars but not all. I\u0027ll update the patch shortly to take care of the one\u0027s we\u0027re already emitting.",
+      "parentUuid": "89e5d14f_a1e212d0",
+      "revId": "d932cca40f8c5606ece45a483f30665cb2d0bb94",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
