@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "89e5d14f_a1e212d0",
+        "filename": "bridge/go-llvm-bfunction.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 256,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-01-12T17:06:14Z",
+      "side": 1,
+      "message": "I assume this is for a later change about the lifetime annotations?",
+      "revId": "d932cca40f8c5606ece45a483f30665cb2d0bb94",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
