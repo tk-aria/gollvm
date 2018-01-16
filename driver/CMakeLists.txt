@@ -37,7 +37,8 @@ add_dependencies(llvm-goparse libmpfr libmpc libgmp)
 
 # Add in the libraries for the llvm-goparse dependencies.
 target_link_libraries(llvm-goparse
+  PRIVATE
   "-L${MPCLIBDIR}" "-lmpc"
   "-L${MPFRLIBDIR}" "-lmpfr"
-  "-L${GMPLIBDIR}" "-lgmp")
-
+  "-L${GMPLIBDIR}" "-lgmp"
+  )

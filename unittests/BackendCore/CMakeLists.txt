@@ -38,7 +38,8 @@ add_dependencies(GoBackendCoreTests libmpfr libmpc libgmp)
 
 # Add in the archives for the llvm-goparse dependencies.
 target_link_libraries(GoBackendCoreTests
+  PRIVATE
   "-L${MPCLIBDIR}" "-lmpc"
   "-L${MPFRLIBDIR}" "-lmpfr"
-  "-L${GMPLIBDIR}" "-lgmp")
-
+  "-L${GMPLIBDIR}" "-lgmp"
+  )
