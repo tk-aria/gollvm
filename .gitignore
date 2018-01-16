@@ -3,7 +3,7 @@
 external/
 
 # This is a separate git repo and is tracked independently
-llvm-gofrontend/gofrontend/
+gofrontend/
 
 # Compiled Object files
 *.slo
