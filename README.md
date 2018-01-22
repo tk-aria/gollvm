@@ -23,6 +23,11 @@ You'll need to have an up-to-date copy of cmake on your system (3.6 vintage).
 % cd gollvm
 % git clone https://go.googlesource.com/gofrontend
 ...
+% cd libgo
+% git clone https://github.com/libffi/libffi.git
+...
+% git clone https://github.com/ianlancetaylor/libbacktrace.git 
+...
 %
 
 // Additional steps needed for MacOS only:
@@ -31,7 +36,7 @@ You'll need to have an up-to-date copy of cmake on your system (3.6 vintage).
 // Create a build directory and run cmake
 % mkdir build.opt
 % cd build.opt
-% cmake -DCMAKE_BUILD_TYPE=Debug -G Ninja ../llvm
+% cmake -DCMAKE_BUILD_TYPE=Debug -DLLVM_USE_LINKER=gold -G Ninja ../llvm
 
 // Build
 ninja <gollvm target(s)>
@@ -170,4 +175,19 @@ TEST(BackendCoreTests, ComplexTypes) {
 ```
 
 The test above makes sure that the LLVM type we get as a result of calling Backend::complex_type() is kosher and matches up to expectations.
+
+## Building libgo (Go runtime and standard libraries)
+
+To build the Go runtime and standard libraries, use the following:
+
+```
+// From within <workarea>/build.opt:
+
+// Build Go runtime and standard libraries
+% ninja libgo_all
+
+```
+
+This will compile static (*.a) and dynamic (*.so) versions of the library.
+
 

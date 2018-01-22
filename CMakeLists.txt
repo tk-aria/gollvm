@@ -67,6 +67,9 @@ externalproject_add(libgmp
   LOG_INSTALL 1
   )
 
+# Root of gollvm source code. 
+set(GOLLVM_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
 # Location of gofrontend source code.
 set(GOFRONTEND_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gofrontend/go)
 
@@ -82,4 +85,7 @@ add_subdirectory(driver)
 
 # Subdir for unit tests that test the middle layer
 add_subdirectory(unittests)
+
+# Go standard library
+add_subdirectory(libgo)
 
