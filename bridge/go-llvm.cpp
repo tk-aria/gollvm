@@ -1457,9 +1457,11 @@ Bexpression *Llvm_backend::binary_expression(Operator op, Bexpression *left,
 
   // Arbitrarily select the left child type as the type for the binop.
   // This may be revised later during materializeBinary.
-  Btype *btype = left->btype();
+  // The FE should have handled operations with aggregate types, e.g.
+  // string concatenation or comparisons of structs/arrays.
+  assert(!bltype->type()->isAggregateType());
   Bexpression *rval =
-      nbuilder_.mkBinaryOp(op, btype, nullptr, left, right, location);
+      nbuilder_.mkBinaryOp(op, bltype, nullptr, left, right, location);
   return rval;
 }
 
