@@ -3,7 +3,7 @@
 
 Gollvm is an LLVM-based Go compiler. It incorporates "gofrontend" (a Go language front end written in C++ and shared with GCCGO), a bridge components (which translates from gofrontend IR to LLVM IR), and a driver that sends the resulting IR through the LLVM back end. Gollvm is still at an early stage of development.
 
-Gollvm (name still not finalized) is set up to be a subprojects within the LLVM tools directory, similar to how things work for "clang" or "compiler-rt": you check out a copy of the LLVM source tree and then within that tree you check out additional git repos. 
+Gollvm (name still not finalized) is set up to be a subprojects within the LLVM tools directory, similar to how things work for "clang" or "compiler-rt": you check out a copy of the LLVM source tree and then within that tree you check out additional git repos.
 
 You'll need to have an up-to-date copy of cmake on your system (3.6 vintage).
 
@@ -23,6 +23,11 @@ You'll need to have an up-to-date copy of cmake on your system (3.6 vintage).
 % cd gollvm
 % git clone https://go.googlesource.com/gofrontend
 ...
+% cd libgo
+% git clone https://github.com/libffi/libffi.git
+...
+% git clone https://github.com/ianlancetaylor/libbacktrace.git
+...
 %
 
 // Additional steps needed for MacOS only:
@@ -31,7 +36,7 @@ You'll need to have an up-to-date copy of cmake on your system (3.6 vintage).
 // Create a build directory and run cmake
 % mkdir build.opt
 % cd build.opt
-% cmake -DCMAKE_BUILD_TYPE=Debug -G Ninja ../llvm
+% cmake -DCMAKE_BUILD_TYPE=Debug -DLLVM_USE_LINKER=gold -G Ninja ../llvm
 
 // Build
 ninja <gollvm target(s)>
@@ -43,13 +48,13 @@ Within <workarea>/llvm/tools/gollvm, the following directories are of interest:
 
 .../llvm/tools/gollvm:
 
- * contains rules to build third party libraries needed for gollvm, 
+ * contains rules to build third party libraries needed for gollvm,
    along with common definitions for subdirs.
- 
+
 .../llvm/tools/gollvm/driver:
 
  * contains build rules and source code for llvm-goparse
- 
+
 .../llvm/tools/gollvm/gofrontend:
 
  * source code for gofrontend and libgo (note: no cmake files here)
@@ -57,14 +62,14 @@ Within <workarea>/llvm/tools/gollvm, the following directories are of interest:
 .../llvm/tools/gollvm/bridge:
 
  * contains build rules for the libLLVMCppGoFrontEnd.a, a library that contains both the gofrontend code and the LLVM-specific middle layer (for example, the definition of the class Llvm_backend, which inherits from Backend).
- 
+
 .../llvm/tools/gollvm/unittests:
 
  * source code for the unit tests
- 
+
 ## Building and running llvm-goparse
 
-The executable llvm-goparse is a driver program that runs the gofrontend parser on a specific go program, with the LLVM-specific backend instance connected to the parser. This program not fully usable on its own at the moment; using it requries a companion gccgo installation. 
+The executable llvm-goparse is a driver program that runs the gofrontend parser on a specific go program, with the LLVM-specific backend instance connected to the parser. This program not fully usable on its own at the moment; using it requries a companion gccgo installation.
 
 ```
 // From within <workarea>/build.opt:
@@ -76,12 +81,12 @@ func Bar() int {
 	return 1
 }
 % ./bin/llvm-goparse -fgo-pkgpath=foo -O3 -o micro.s micro.go
-% 
+%
 ```
 
 ## Using llvm-goparse in combination with a GCCGO installation
 
-At the moment llvm-goparse is not capable of building the Go libraries + runtime (libgo), which makes it difficult/unwieldy to use for running actual Go programs. As an interim workaround, I've written a shim/wrapper script that allows you to use llvm-goparse in combination with an existing GCCGO installation, using gccgo for the runtime/libraries and the linking step, but llvm-goparse for any compilation. 
+At the moment llvm-goparse is not capable of building the Go libraries + runtime (libgo), which makes it difficult/unwieldy to use for running actual Go programs. As an interim workaround, I've written a shim/wrapper script that allows you to use llvm-goparse in combination with an existing GCCGO installation, using gccgo for the runtime/libraries and the linking step, but llvm-goparse for any compilation.
 
 The wrapper script can be found in the tools/ subdir. To use it, build a copy of GCCGO and run "make install" to copy the bits into an install directory. From the GCCGO install directory, you can insert the wrapper by running it with the "--install" option:
 
@@ -120,7 +125,7 @@ Here are instructions on building and running the unit tests for the middle laye
 // From within <workarea>/build.opt:
 
 // Build unit test
-% ninja GoBackendCoreTests 
+% ninja GoBackendCoreTests
 
 // Run unit test
 % ./tools/gollvm/unittests/BackendCore/GoBackendCoreTests
@@ -171,3 +176,16 @@ TEST(BackendCoreTests, ComplexTypes) {
 
 The test above makes sure that the LLVM type we get as a result of calling Backend::complex_type() is kosher and matches up to expectations.
 
+## Building libgo (Go runtime and standard libraries)
+
+To build the Go runtime and standard libraries, use the following:
+
+```
+// From within <workarea>/build.opt:
+
+// Build Go runtime and standard libraries
+% ninja libgo_all
+
+```
+
+This will compile static (*.a) and dynamic (*.so) versions of the library.
