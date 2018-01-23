@@ -11,6 +11,7 @@ message(STATUS "starting libgo configuration.")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 include(AutoGenGo)
+include(CheckTypeSize)
 include(ConfigSetup)
 include(GenDeps)
 include(GoPackage)
@@ -23,6 +24,9 @@ set(libgo_srcroot "${GOLLVM_SOURCE_DIR}/gofrontend/libgo")
 
 # Directory from which we're going to pull libgo Go source code.
 set(libgo_gosrcroot "${libgo_srcroot}/go")
+
+# Directory from which we're going to pull libgo C source code.
+set(libgo_csrcroot "${libgo_srcroot}")
 
 # Directory from which we're going to pull libgo helper scripts (ex: match.sh)
 set(libgo_scriptroot ${libgo_srcroot})
@@ -343,5 +347,124 @@ set_target_properties(libbacktrace_piclib
 # Call a helper to set up libffi. This also creates the libffi
 # targets (libffi_nonpiclib, libffi_piclib).
 setup_libffi(${libffi_srcroot})
+
+#......................................................................
+#
+# C portion of libgo
+
+# Copy the LLVM-generated config.h and related files (the libgo config.h
+# will includes the llvm config.h).
+file(MAKE_DIRECTORY "${libgo_binroot}/llvm/Config")
+set(llvmconfigdir "${LLVM_BINARY_DIR}/include/llvm/Config")
+file(COPY "${llvmconfigdir}/config.h" DESTINATION "llvm/Config")
+file(COPY "${llvmconfigdir}/llvm-config.h" DESTINATION "llvm/Config")
+
+
+set(USING_SPLIT_STACK 1)
+set(USE_LIBFFI 1)
+
+# Generate config.h, included by various C files in libgo/go/runtime
+file(MAKE_DIRECTORY "${libgo_binroot}/runtime")
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake
+  ${libgo_binroot}/runtime/config.h)
+
+# Generate new runtime.inc from runtime.inc.raw if anything has changed.
+set(runtimeinc "${libgo_binroot}/runtime.inc")
+set(runtimeincraw "${libgo_binroot}/runtime.inc.raw")
+set(runtimeinctmp "${libgo_binroot}/runtime.inc.tmp")
+set(runtimeincgen "${libgo_binroot}/tmp-runtime.inc")
+set(mkruntimeincsh "${CMAKE_CURRENT_SOURCE_DIR}/mkruntimeinc.sh")
+generate_go_from_script(${runtimeinc} ${mkruntimeincsh} "" "" ${libgo_binroot} SCRIPTARGS ${runtimeincraw} ${runtimeinctmp} ${runtimeincgen} DEP "libgo_runtime")
+
+# Create a target for runtime.inc so that things can depend on it
+add_custom_target(runtimeinctarg DEPENDS ${runtimeinc})
+
+# Base C files from the runtime dir.
+set(runtimecfiles
+  "runtime/aeshash.c"
+  "runtime/go-assert.c"
+  "runtime/go-caller.c"
+  "runtime/go-callers.c"
+  "runtime/go-cdiv.c"
+  "runtime/go-cgo.c"
+  "runtime/go-construct-map.c"
+  "runtime/go-ffi.c"
+  "runtime/go-fieldtrack.c"
+  "runtime/go-matherr.c"
+  "runtime/go-memclr.c"
+  "runtime/go-memcmp.c"
+  "runtime/go-memequal.c"
+  "runtime/go-memmove.c"
+  "runtime/go-nanotime.c"
+  "runtime/go-now.c"
+  "runtime/go-nosys.c"
+  "runtime/go-reflect-call.c"
+  "runtime/go-runtime-error.c"
+  "runtime/go-setenv.c"
+  "runtime/go-signal.c"
+  "runtime/go-strslice.c"
+  "runtime/go-typedesc-equal.c"
+  "runtime/go-unsafe-pointer.c"
+  "runtime/go-unsetenv.c"
+  "runtime/go-unwind.c"
+  "runtime/go-varargs.c"
+  "runtime/env_posix.c"
+  "runtime/panic.c"
+  "runtime/print.c"
+  "runtime/proc.c"
+  "runtime/runtime_c.c"
+  "runtime/stack.c"
+  "runtime/thread.c"
+  "runtime/yield.c")
+
+# C files that happen to be living in other packages.
+list(APPEND runtimecfiles
+  "go/bytes/indexbyte.c"
+  "go/log/syslog/syslog_c.c"
+  "go/reflect/makefunc_ffi_c.c"
+  "go/runtime/internal/atomic/atomic.c"
+  "go/strings/indexbyte.c"
+  "go/sync/atomic/atomic.c"
+  "go/sync/cas.c"
+  "go/syscall/errno.c"
+  "go/syscall/signame.c"
+  "go/syscall/wait.c")
+
+# Linux-specific C files.
+if(${goos} STREQUAL "linux")
+  list(APPEND runtimecfiles
+    "runtime/getncpu-linux.c"
+    "go/syscall/clone_linux.c")
+endif()
+
+# Formal full paths.
+set(runtimecpaths)
+foreach(cfile ${runtimecfiles})
+  list(APPEND runtimecpaths "${libgo_csrcroot}/${cfile}")
+endforeach()
+
+# Compiler flags for C files in the runtime.
+set(baseopts "-Wno-zero-length-array -fsplit-stack -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64")
+
+# Object library based on libgo C code, PIC-compiled
+add_library(libgo_c_piclib OBJECT EXCLUDE_FROM_ALL ${runtimecpaths})
+set_target_properties(libgo_c_piclib PROPERTIES COMPILE_FLAGS "-fPIC ${baseopts}")
+target_include_directories(libgo_c_piclib PUBLIC
+  "${libgo_csrcroot}/runtime"
+  "${libgo_binroot}/runtime"
+  ${libbacktrace_srcroot}
+  ${libgcc_srcroot})
+add_dependencies(libgo_c_piclib runtimeinctarg)
+
+# Library with non-PIC-compiled objects from libgo C code
+add_library(libgo_c_nonpiclib OBJECT EXCLUDE_FROM_ALL ${runtimecpaths})
+set_target_properties(libgo_c_nonpiclib PROPERTIES COMPILE_FLAGS "${baseopts}")
+target_include_directories(libgo_c_nonpiclib PUBLIC
+  "${libgo_csrcroot}/runtime"
+  "${libgo_binroot}/runtime"
+  ${libbacktrace_srcroot}
+  ${libgcc_srcroot})
+add_dependencies(libgo_c_nonpiclib runtimeinctarg)
 
 message(STATUS "libgo configuration complete.")
