@@ -467,4 +467,29 @@ target_include_directories(libgo_c_nonpiclib PUBLIC
   ${libgcc_srcroot})
 add_dependencies(libgo_c_nonpiclib runtimeinctarg)
 
+# Static libgo -- combines non-pic C objects and non-pic Go objects
+add_library(libgo_static STATIC
+  $<TARGET_OBJECTS:libgo_c_nonpiclib>
+  ${libgo_go_nonpicobjects}
+  $<TARGET_OBJECTS:libbacktrace_nonpiclib>
+  $<TARGET_OBJECTS:libffi_nonpiclib>)
+
+# HACK: undo LLVM default here.
+string(REPLACE "-Wl,-z,defs" "" CMAKE_SHARED_LINKER_FLAGS
+    ${CMAKE_SHARED_LINKER_FLAGS})
+
+# Shared libgo -- combines pic C objects and non-pic Go objects.
+add_library(libgo_shared SHARED
+  $<TARGET_OBJECTS:libgo_c_piclib>
+  ${libgo_go_picobjects}
+  $<TARGET_OBJECTS:libbacktrace_piclib>
+  $<TARGET_OBJECTS:libffi_piclib>)
+set_target_properties(libgo_shared PROPERTIES
+  LIBRARY_OUTPUT_DIRECTORY ${libgo_binroot})
+set_target_properties(libgo_shared PROPERTIES OUTPUT_NAME "go")
+target_link_libraries(libgo_shared PUBLIC "-fsplit-stack;-lpthread;-lm")
+
+# Pseudo-target for all libgo buildables.
+add_custom_target(libgo_all DEPENDS llvm-goparse libgo_static libgo_shared)
+
 message(STATUS "libgo configuration complete.")
