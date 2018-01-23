@@ -44,6 +44,19 @@ check_symbol_exists(lstat "sys/types.h;sys/stat.h;unistd.h" HAVE_LSTAT)
 check_symbol_exists(readlink "unistd.h" HAVE_READLINK)
 check_symbol_exists(mmap "sys/mman.h" HAVE_MMAP)
 
+# Tests for things that libgo needs.
+check_symbol_exists(setenv "stdlib.h" HAVE_SETENV)
+check_symbol_exists(splice "fcntl.h" HAVE_SPLICE)
+check_symbol_exists(strerror_r "string.h" HAVE_STRERROR_R)
+check_symbol_exists(syscall "unistd.h" HAVE_SYSCALL)
+check_symbol_exists(tee "fcntl.h" HAVE_TEE)
+check_symbol_exists(openat "fcntl.h" HAVE_OPENAT)
+list(APPEND CMAKE_REQUIRED_DEFINITIONS "-D_LARGEFILE64_SOURCE=1")
+check_symbol_exists(open64 "fcntl.h" HAVE_OPEN64)
+check_symbol_exists(mknodat "sys/types.h;sys/stat.h;fcntl.h;unistd.h" HAVE_MKNODAT)
+check_symbol_exists(pipe2 "unistd.h" HAVE_PIPE2)
+
+# Checks for include files
 check_include_file(inttypes.h HAVE_INTTYPES_H)
 check_include_file(dlfcn.h HAVE_DLFCN_H)
 check_include_file(link.h HAVE_LINK_H)
@@ -69,3 +82,18 @@ check_include_file(stdint.h HAVE_STDINT_H)
 check_function_exists(alloca HAVE_ALLOCA)
 check_function_exists(memcpy HAVE_MEMCPY)
 
+check_c_source_compiles("int main(int argc, char **argv) { return __sync_bool_compare_and_swap(&argc, argc, -argc); }\n" HAVE_SYNC_BOOL_COMPARE_AND_SWAP_4)
+check_c_source_compiles("#include <stdint.h>\nstatic uint64_t s;\nint main(int argc, char **argv) { return __sync_bool_compare_and_swap(&s, argc, -argc) == s ? 0 : 1; }\n" HAVE_SYNC_BOOL_COMPARE_AND_SWAP_8)
+
+check_c_source_compiles("int main(int argc, char **argv) { return __sync_fetch_and_add(&argc, 1); }\n" HAVE_SYNC_FETCH_AND_ADD_4)
+check_c_source_compiles("#include <stdint.h>\nstatic uint64_t s;\nint main(int argc, char **argv) { return __sync_add_and_fetch(&s, 1) == s ? 0 : 1; }\n" HAVE_SYNC_ADD_AND_FETCH_8)
+
+# Issue an error if the C compiler doesn't support -fsplit-stack
+# (in theory you can build libgo without it, so I suppose this could
+# be changed to a warning).
+check_c_compiler_flag("-fsplit-stack" C_SUPPORTS_SPLIT_STACK)
+if(NOT C_SUPPORTS_SPLIT_STACK)
+  message(SEND_ERROR "C compiler does not support -fsplit-stack")
+endif()
+set(USING_SPLIT_STACK 1)
+set(USE_LIBFFI 1)
