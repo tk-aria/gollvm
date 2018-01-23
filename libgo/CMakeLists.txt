@@ -10,9 +10,11 @@ message(STATUS "starting libgo configuration.")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+include(AutoGenGo)
 include(ConfigSetup)
-include(GoPackage)
 include(GenDeps)
+include(GoPackage)
+include(StructConfigUtils)
 
 # Root of libgo sources.
 set(libgo_srcroot "${GOLLVM_SOURCE_DIR}/gofrontend/libgo")
@@ -89,6 +91,122 @@ set(runtime_internal_atomic_gocflags "-fgo-compiling-runtime")
 set(runtime_internal_atomic_check_gocflags "-fgo-compiling-runtime")
 set(runtime_internal_sys_gocflags "-fgo-compiling-runtime")
 set(runtime_internal_sys_check_gocflags "-fgo-compiling-runtime")
+
+# Incorporate auto-generated Go files.
+set(runtime_extra_go_files "runtime_sysinfo.go" "sigtab.go")
+set(cmd_internal_objabi_extra_go_files "objabi.go")
+set(cmd_go_internal_load_extra_go_files "zstdpkglist.go")
+set(cmd_go_internal_cfg_extra_go_files "zdefaultcc.go")
+set(runtime_internal_sys_extra_go_files "version.go")
+set(go_types_extra_go_files "gccgosizes.go")
+set(syscall_extra_go_files "libcalls.go" "sysinfo.go" "syscall_arch.go")
+if(${goos} STREQUAL "linux")
+  list(APPEND syscall_extra_go_files "epoll.go")
+endif()
+
+#........................................................................
+
+# Rules for version.go
+set(versiondotgo "${libgo_binroot}/version.go")
+set(versiontmp "${libgo_binroot}/version.go.tmp")
+mkversion(${goos} ${goarch} ${versiontmp} ${libgo_binroot}
+          ${libgo_gosrcroot} ${libgo_scriptroot})
+copy_if_different(${versiontmp} ${versiondotgo})
+
+# Rules for gccgosizes.go
+set(gccgosizesdotgo "${libgo_binroot}/gccgosizes.go")
+set(gccgosizestmp "${libgo_binroot}/gccgosizes.go.tmp")
+mkgccgosizes(${goarch} ${gccgosizestmp} ${libgo_scriptroot})
+copy_if_different(${gccgosizestmp} ${gccgosizesdotgo})
+
+# Rules for objabi.go
+set(objabidotgo "${libgo_binroot}/objabi.go")
+set(objabitmp "${libgo_binroot}/objabi.go.tmp")
+mkobjabi(${objabitmp} ${libgo_binroot} ${libgo_gosrcroot})
+copy_if_different(${objabitmp} ${objabidotgo})
+
+# Rules for zstdpkglist.go
+set(zstdpkglistdotgo "${libgo_binroot}/zstdpkglist.go")
+set(zstdpkglisttmp "${libgo_binroot}/zstdpkglist.go.tmp")
+mkzstdpkglist(${zstdpkglisttmp} ${libpackages})
+copy_if_different(${zstdpkglisttmp} ${zstdpkglistdotgo})
+
+# Rules for zdefaultcc.go
+set(zdefaultccdotgo "${libgo_binroot}/zdefaultcc.go")
+set(zdefaultcctmp "${libgo_binroot}/zdefaultcc.go.tmp")
+mkzdefaultcc(${zdefaultcctmp} ${gollvm_driver}
+             ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER})
+copy_if_different(${zdefaultcctmp} ${zdefaultccdotgo})
+
+
+# FIXME: Use a rule that copies in an archived copy of this source
+# file, since for the moment there is no clang support for the
+# -fdump-go-spec option (better to implement that as a bitcode pass,
+# to be submitted in a forthcoming patch).
+set(gensysinfo "${libgo_binroot}/gen-sysinfo.go")
+generate_go_from_archived(${gensysinfo} ${goos} ${goarch})
+
+# Command to create runtime_sysinfo.go, via shell script.
+set(mkrsysinfosh "${libgo_scriptroot}/mkrsysinfo.sh")
+set(rsysinfodotgo "${libgo_binroot}/runtime_sysinfo.go")
+generate_go_from_script(${rsysinfodotgo} ${mkrsysinfosh}
+                        ${goos} ${goarch} ${libgo_binroot} DEP ${gensysinfo})
+
+# Command to create sigtab.go, via shell script
+set(sigtabdotgo "${libgo_binroot}/sigtab.go")
+set(mksigtabsh "${libgo_scriptroot}/mksigtab.sh")
+generate_go_from_script(${sigtabdotgo} ${mksigtabsh}
+                        ${goos} ${goarch} ${libgo_binroot}
+                        CAPTURE DEP ${gensysinfo})
+
+# Generation of libcalls.go
+set(libcallsdotgo "${libgo_binroot}/libcalls.go")
+set(libcallstmp "${libgo_binroot}/tmp-libcalls.go")
+set(awkfile "${libgo_gosrcroot}/syscall/mksyscall.awk")
+set(mklibcallssh "${CMAKE_CURRENT_SOURCE_DIR}/mklibcalls.sh")
+set(syscallgofiles "${libgo_binroot}/syscall.gofiles")
+generate_go_from_script(${libcallsdotgo} ${mklibcallssh} ${goos} ${goarch}
+                        ${libgo_binroot} DEP ${awkfile} ${syscallgofiles}
+                        SCRIPTARGS ${awk} ${awkfile} ${syscallgofiles}
+			${libcallstmp})
+
+# Generated file errno.i
+set(errnoi "${libgo_binroot}/errno.i")
+set(errnoitmp "${libgo_binroot}/tmp-errno.i")
+set(mkerrnoish "${CMAKE_CURRENT_SOURCE_DIR}/mkerrnoi.sh")
+generate_go_from_script(${errnoi} ${mkerrnoish} ${goos} ${goarch}
+                        ${libgo_binroot} SCRIPTARGS "${CMAKE_C_COMPILER}"
+                        ${errnoitmp} ${CMAKE_C_FLAGS})
+
+# Generated file sysinfo.go
+set(sysinfodotgo "${libgo_binroot}/sysinfo.go")
+set(mksysinfosh "${libgo_scriptroot}/mksysinfo.sh")
+
+generate_go_from_script(${sysinfodotgo} ${mksysinfosh} ${goos} ${goarch}
+                        ${libgo_binroot} DEP ${gensysinfo} ${errnoi})
+
+# Generated file syscall_arch.go
+set(syscallarchdotgo "${libgo_binroot}/syscall_arch.go")
+set(syscallarchtmp "${libgo_binroot}/syscall_arch.go.tmp")
+mksyscallarch(${syscallarchtmp} ${goos} ${goarch})
+copy_if_different(${syscallarchtmp} ${syscallarchdotgo})
+
+# Compute epoll size/offset info
+compute_struct_size_at_compile_time(SIZEOF_STRUCT_EPOLL_EVENT
+  "struct epoll_event"
+  "sys/epoll.h"
+  "cmake-epoll-tmpfile.cpp")
+compute_field_offset_at_compile_time(STRUCT_EPOLL_EVENT_FD_OFFSET
+  "struct epoll_event"
+  "data.fd"
+  "stddef.h;sys/epoll.h"
+  "cmake-epoll-tmpfile.cpp")
+
+# Generated file epoll.go
+set(epolldotgo "${libgo_binroot}/epoll.go")
+set(epolltmp "${libgo_binroot}/epoll.go.tmp")
+mkepoll(${epolltmp})
+copy_if_different(${epolltmp} ${epolldotgo})
 
 #........................................................................
 
