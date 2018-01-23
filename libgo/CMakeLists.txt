@@ -16,6 +16,7 @@ include(GenDeps)
 include(GoPackage)
 include(StructConfigUtils)
 include(LibbacktraceUtils)
+include(LibffiUtils)
 
 # Root of libgo sources.
 set(libgo_srcroot "${GOLLVM_SOURCE_DIR}/gofrontend/libgo")
@@ -28,6 +29,9 @@ set(libgo_scriptroot ${libgo_srcroot})
 
 # Libbacktrace source code.
 set(libbacktrace_srcroot "${CMAKE_CURRENT_SOURCE_DIR}/libbacktrace")
+
+# Libffi source code.
+set(libffi_srcroot "${CMAKE_CURRENT_SOURCE_DIR}/libffi")
 
 # Binary root (top level of libgo build).
 set(libgo_binroot "${CMAKE_CURRENT_BINARY_DIR}")
@@ -335,5 +339,9 @@ target_include_directories(libbacktrace_piclib
   BEFORE PRIVATE "${libgo_binroot}/libbacktrace")
 set_target_properties(libbacktrace_piclib
   PROPERTIES COMPILE_FLAGS "${libbacktraceflags}")
+
+# Call a helper to set up libffi. This also creates the libffi
+# targets (libffi_nonpiclib, libffi_piclib).
+setup_libffi(${libffi_srcroot})
 
 message(STATUS "libgo configuration complete.")
