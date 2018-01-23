@@ -53,3 +53,19 @@ check_include_file(stdlib.h HAVE_STDLIB_H)
 check_include_file(stdint.h HAVE_STDINT_H)
 
 check_library_exists(z compress "" HAS_LIBZ)
+
+# To generate libffi headers we need to know the sizes of various types.
+check_type_size("double" SIZEOF_DOUBLE)
+check_type_size("long double" HAVE_LONG_DOUBLE)
+check_type_size("long double" SIZEOF_LONG_DOUBLE)
+check_type_size("void*" SIZEOF_VOID_P)
+
+# Check for various include files
+check_include_file(alloca.h HAVE_ALLOCA_H)
+check_include_file(inttypes.h HAVE_INTTYPES_H)
+check_include_file(stdint.h HAVE_STDINT_H)
+
+# Check for various functions
+check_function_exists(alloca HAVE_ALLOCA)
+check_function_exists(memcpy HAVE_MEMCPY)
+
