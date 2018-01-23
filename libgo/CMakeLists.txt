@@ -15,6 +15,7 @@ include(ConfigSetup)
 include(GenDeps)
 include(GoPackage)
 include(StructConfigUtils)
+include(LibbacktraceUtils)
 
 # Root of libgo sources.
 set(libgo_srcroot "${GOLLVM_SOURCE_DIR}/gofrontend/libgo")
@@ -24,6 +25,9 @@ set(libgo_gosrcroot "${libgo_srcroot}/go")
 
 # Directory from which we're going to pull libgo helper scripts (ex: match.sh)
 set(libgo_scriptroot ${libgo_srcroot})
+
+# Libbacktrace source code.
+set(libbacktrace_srcroot "${CMAKE_CURRENT_SOURCE_DIR}/libbacktrace")
 
 # Binary root (top level of libgo build).
 set(libgo_binroot "${CMAKE_CURRENT_BINARY_DIR}")
@@ -283,5 +287,12 @@ foreach( pack ${allpackages})
     list(APPEND libgotool_nonpicobjects ${package_ofile})
   endif()
 endforeach()
+
+#........................................................................
+#
+# Libbacktrace
+
+# Call a helper to set up libbacktrace.
+setup_libbacktrace()
 
 message(STATUS "libgo configuration complete.")
