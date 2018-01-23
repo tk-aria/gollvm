@@ -15,6 +15,7 @@ include(ConfigSetup)
 include(GenDeps)
 include(GoPackage)
 include(StructConfigUtils)
+include(LibbacktraceUtils)
 
 # Root of libgo sources.
 set(libgo_srcroot "${GOLLVM_SOURCE_DIR}/gofrontend/libgo")
@@ -24,6 +25,9 @@ set(libgo_gosrcroot "${libgo_srcroot}/go")
 
 # Directory from which we're going to pull libgo helper scripts (ex: match.sh)
 set(libgo_scriptroot ${libgo_srcroot})
+
+# Libbacktrace source code.
+set(libbacktrace_srcroot "${CMAKE_CURRENT_SOURCE_DIR}/libbacktrace")
 
 # Binary root (top level of libgo build).
 set(libgo_binroot "${CMAKE_CURRENT_BINARY_DIR}")
@@ -285,5 +289,50 @@ foreach( pack ${allpackages})
     list(APPEND libgotool_nonpicobjects ${package_ofile})
   endif()
 endforeach()
+
+#........................................................................
+#
+# Libbacktrace
+
+# Call a helper to set up libbacktrace.
+setup_libbacktrace()
+
+# libbacktrace sources. FIXME: break out into a separate dir or file.
+set(libbacktracecfiles
+  "${libbacktrace_srcroot}/atomic.c"
+  "${libbacktrace_srcroot}/backtrace.c"
+  "${libbacktrace_srcroot}/dwarf.c"
+  "${libbacktrace_srcroot}/elf.c"
+  "${libbacktrace_srcroot}/fileline.c"
+  "${libbacktrace_srcroot}/mmapio.c"
+  "${libbacktrace_srcroot}/mmap.c"
+  "${libbacktrace_srcroot}/posix.c"
+  "${libbacktrace_srcroot}/print.c"
+  "${libbacktrace_srcroot}/simple.c"
+  "${libbacktrace_srcroot}/sort.c"
+  "${libbacktrace_srcroot}/state.c")
+
+set(libbacktraceflags "-fsplit-stack")
+
+# Object libraries built from libbacktrace sources.
+# Note: this build uses -fsplit-stack, whereas in the gccgo
+# libgo it does not. In theory this should be a good thing.
+
+# nonpic
+add_library(libbacktrace_nonpiclib
+  OBJECT EXCLUDE_FROM_ALL ${libbacktracecfiles})
+set_target_properties(libbacktrace_nonpiclib
+  PROPERTIES COMPILE_FLAGS "${libbacktraceflags}")
+target_include_directories(libbacktrace_nonpiclib
+  BEFORE PRIVATE "${libgo_binroot}/libbacktrace")
+
+# pic
+string(APPEND libbacktraceflags " -fPIC")
+add_library(libbacktrace_piclib
+  OBJECT EXCLUDE_FROM_ALL ${libbacktracecfiles})
+target_include_directories(libbacktrace_piclib
+  BEFORE PRIVATE "${libgo_binroot}/libbacktrace")
+set_target_properties(libbacktrace_piclib
+  PROPERTIES COMPILE_FLAGS "${libbacktraceflags}")
 
 message(STATUS "libgo configuration complete.")
