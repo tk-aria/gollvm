@@ -21,3 +21,36 @@ set(shell $ENV{SHELL})
 
 # FIXME: write cmake to discover awk, test to make sure it works
 set(awk "/usr/bin/awk")
+
+set(atomicstuff "
+int i;
+int main () {
+  __atomic_load_n (&i, __ATOMIC_ACQUIRE);
+  __atomic_store_n (&i, 1, __ATOMIC_RELEASE);
+ return 0;
+}\n")
+
+# Check for atomics
+check_c_source_compiles("${atomicstuff}" HAVE_ATOMIC_FUNCTIONS)
+
+# Assorted things needed by libbacktrace
+check_symbol_exists(clock_gettime "time.h" HAVE_CLOCK_GETTIME)
+check_symbol_exists(strnlen "string.h" HAVE_DECL_STRNLEN)
+list(APPEND CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE")
+check_symbol_exists(dl_iterate_phdr "link.h" HAVE_DL_ITERATE_PHDR)
+check_symbol_exists(fcntl "unistd.h;fcntl.h" HAVE_FCNTL)
+check_symbol_exists(getexecname "stdlib.h" HAVE_GETEXECNAME)
+check_symbol_exists(lstat "sys/types.h;sys/stat.h;unistd.h" HAVE_LSTAT)
+check_symbol_exists(readlink "unistd.h" HAVE_READLINK)
+check_symbol_exists(mmap "sys/mman.h" HAVE_MMAP)
+
+check_include_file(inttypes.h HAVE_INTTYPES_H)
+check_include_file(dlfcn.h HAVE_DLFCN_H)
+check_include_file(link.h HAVE_LINK_H)
+check_include_file(memory.h HAVE_MEMORY_H)
+check_include_file(strings.h HAVE_STRINGS_H)
+check_include_file(stdlib.h HAVE_STDLIB_H)
+check_include_file(stdint.h HAVE_STDINT_H)
+
+check_library_exists(z compress "" HAS_LIBZ)
+  
