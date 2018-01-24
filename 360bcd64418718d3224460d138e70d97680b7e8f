@@ -1,0 +1,101 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8c0e9c8d_bc47e8ce",
+        "filename": "libgo/CMakeLists.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2018-01-24T15:39:33Z",
+      "side": 1,
+      "message": "Trailing whitespace here and a few places below.",
+      "revId": "360bcd64418718d3224460d138e70d97680b7e8f",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c542cbac_f8c073cc",
+        "filename": "libgo/cmake/GenDeps.cmake",
+        "patchSetId": 2
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2018-01-24T15:39:33Z",
+      "side": 1,
+      "message": "s/gendeps.sh/godeps.sh/ ?",
+      "range": {
+        "startLine": 2,
+        "startChar": 41,
+        "endLine": 2,
+        "endChar": 52
+      },
+      "revId": "360bcd64418718d3224460d138e70d97680b7e8f",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c210f8b4_e7a1e953",
+        "filename": "libgo/cmake/GenDeps.cmake",
+        "patchSetId": 2
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2018-01-24T15:39:33Z",
+      "side": 1,
+      "message": "s/Gendeps/godeps/",
+      "range": {
+        "startLine": 92,
+        "startChar": 4,
+        "endLine": 92,
+        "endChar": 11
+      },
+      "revId": "360bcd64418718d3224460d138e70d97680b7e8f",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "106f9bfe_e98a9e8f",
+        "filename": "libgo/cmake/GoPackage.cmake",
+        "patchSetId": 2
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2018-01-24T15:39:33Z",
+      "side": 1,
+      "message": "Trailing whitespace here and a few places below.",
+      "revId": "360bcd64418718d3224460d138e70d97680b7e8f",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "77a6e14a_91f5ee81",
+        "filename": "libgo/gotool-packages.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2018-01-24T15:39:33Z",
+      "side": 1,
+      "message": "There is probably some way to have automake/GNU make reads this files for the gccgo-libgo build, in which case the files can be shared between gccgo and gollvm.",
+      "revId": "360bcd64418718d3224460d138e70d97680b7e8f",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
