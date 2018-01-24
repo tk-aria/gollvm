@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "80fbc623_3d5d6ac9",
+        "filename": "libgo/cmake/AutoGenGo.cmake",
+        "patchSetId": 4
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2018-01-24T21:10:17Z",
+      "side": 1,
+      "message": "The whole concept of DefaultGoRoot is somewhat bogus for gofrontend anyhow.",
+      "revId": "8be73ea122d691e5a1aa4f1349d61c2efff11b98",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "62e31c2f_5b353961",
+        "filename": "libgo/cmake/AutoGenGo.cmake",
+        "patchSetId": 4
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2018-01-24T21:10:17Z",
+      "side": 1,
+      "message": "With the exciting new goarch.sh script you don\u0027t really need a switch here, maybe.",
+      "revId": "8be73ea122d691e5a1aa4f1349d61c2efff11b98",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
