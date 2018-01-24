@@ -298,6 +298,15 @@ foreach( pack ${allpackages})
   endif()
 endforeach()
 
+# Create object library for libgotool
+add_library(libgotool STATIC EXCLUDE_FROM_ALL ${libgotool_nonpicobjects})
+set_target_properties(libgotool PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${libgo_binroot})
+set_target_properties(libgotool PROPERTIES OUTPUT_NAME "gotool")
+set_target_properties(libgotool PROPERTIES LINKER_LANGUAGE C)
+
+# This file contains the list of packages for which we want to run tests.
+file(STRINGS "${libgo_srcroot}/check-packages.txt" checkpackages)
+
 #........................................................................
 #
 # Libbacktrace
@@ -490,5 +499,61 @@ target_link_libraries(libgo_shared PUBLIC "-fsplit-stack;-lpthread;-lm")
 
 # Pseudo-target for all libgo buildables.
 add_custom_target(libgo_all DEPENDS llvm-goparse libgo_static libgo_shared)
+
+#........................................................................
+#
+# Check target generation.
+#
+set(extra_check_libs_cmd_go_internal_cache "${libgo_binroot}/libgotool.a")
+set(extra_check_libs_cmd_go_internal_generate "${libgo_binroot}/libgotool.a")
+set(extra_check_libs_cmd_go_internal_get "${libgo_binroot}/libgotool.a")
+set(extra_check_libs_cmd_go_internal_load "${libgo_binroot}/libgotool.a")
+set(extra_check_libs_cmd_go_internal_work "${libgo_binroot}/libgotool.a")
+set(extra_check_libs_cmd_vet_internal_cfg "${libgo_binroot}/libgotool.a")
+
+set(checktargets)
+
+message(STATUS "Libgo: generating check targets")
+foreach( pack ${checkpackages})
+  string(REPLACE "/" "_" ptarget "${pack}")
+  set(runner "${CMAKE_CURRENT_SOURCE_DIR}/checkpackage.sh")
+
+  # This will set 'packsrcs' and 'packopts'
+  collect_package_inputs(${pack})
+
+  set(extralibs "${extra_check_libs_${ptarget}}")
+
+  # In some cases we want a different set of flags for the check
+  # target, notable the runtime package (where the main build uses
+  # -fgo-c-header=... but the check build does not).
+  set(checkgocflags "${${ptarget}_check_gocflags}")
+  if(NOT "${checkgocflags}" STREQUAL "")
+    set(packopts "${checkgocflags}")
+  endif()
+
+  # Test target for package x/y/z will be check_libgo_x_y_z
+  set(targetname "check_libgo_${ptarget}")
+
+  # Note: only a subset of package tests are dependent on libgotool.a,
+  # but for simplicity's sake we'll just make them all dependent on it.
+  add_custom_target(
+    ${targetname}
+    COMMAND "${shell}" ${runner}
+    "PACKAGE" ${pack}
+    "FILES" ${packsrcs}
+    "GOOS" ${goos}
+    "GOARCH" ${goarch}
+    "GC" ${gocompiler} "-L" ${libgo_binroot}
+    "GOLIBS" ${packlibs} ${extralibs}
+    "BINDIR" "${libgo_binroot}"
+    "BASEDIR" "${libgo_srcroot}"
+    DEPENDS ${libgo_goxfiles} libgotool libgo_shared libgo_static
+    COMMENT "Checking Go package ${pack}"
+    VERBATIM)
+  list(APPEND checktargets ${targetname})
+
+endforeach()
+
+add_custom_target(check-libgo DEPENDS ${checktargets})
 
 message(STATUS "libgo configuration complete.")
