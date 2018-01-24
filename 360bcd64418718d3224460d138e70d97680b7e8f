@@ -114,6 +114,24 @@
       "revId": "360bcd64418718d3224460d138e70d97680b7e8f",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "70142834_4aba5482",
+        "filename": "libgo/gotool-packages.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-01-24T17:13:00Z",
+      "side": 1,
+      "message": "Sent https://go-review.googlesource.com/c/gofrontend/+/89515",
+      "parentUuid": "5a7844fc_4c87819f",
+      "revId": "360bcd64418718d3224460d138e70d97680b7e8f",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
