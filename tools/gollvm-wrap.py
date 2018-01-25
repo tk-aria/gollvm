@@ -151,10 +151,12 @@ def perform():
       skipc = 1
       larg = sys.argv[ii+1]
       largs.append(larg)
+      ldflags.append(larg)
       continue
     if clarg.startswith("-L"):
       larg = clarg[2:]
       largs.append(larg)
+      ldflags.append(larg)
       continue
     if clarg == "-v":
       flag_trace_llinvoc = True
