@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "139aa7ad_e4530161",
+        "filename": "tools/gollvm-wrap.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 154,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-01-26T17:59:37Z",
+      "side": 1,
+      "message": "Shouldn\u0027t we append \"-L\", larg?",
+      "range": {
+        "startLine": 154,
+        "startChar": 21,
+        "endLine": 154,
+        "endChar": 25
+      },
+      "revId": "42d42be6bf19468bb78793bc7e63f1380221b2f1",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
