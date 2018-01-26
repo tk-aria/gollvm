@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f27fabe2_460ce9b3",
+        "filename": "libgo/backtrace-supported.h.cmake",
+        "patchSetId": 6
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-01-26T22:21:48Z",
+      "side": 1,
+      "message": "Should there be a 1 here? (also below)",
+      "range": {
+        "startLine": 60,
+        "startChar": 41,
+        "endLine": 60,
+        "endChar": 43
+      },
+      "revId": "bb7fbd32c6b57da0280b28992c5cee2db972ecb0",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
