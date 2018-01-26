@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "caa59ea1_b9d62b58",
+        "filename": "libgo/CMakeLists.txt",
+        "patchSetId": 6
+      },
+      "lineNbr": 344,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-01-26T22:41:27Z",
+      "side": 1,
+      "message": "For libbacktrace, the library targets are added in the file, whereas for libffi they are added in the setup function. Is there a reason to do it differently?",
+      "revId": "51ee16cd476bf0fb56c41133789b9c31a73b6405",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a0c0315a_ce7f9c08",
+        "filename": "libgo/fficonfig.h.cmake",
+        "patchSetId": 6
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-01-26T22:41:27Z",
+      "side": 1,
+      "message": "This line has a space.",
+      "revId": "51ee16cd476bf0fb56c41133789b9c31a73b6405",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
