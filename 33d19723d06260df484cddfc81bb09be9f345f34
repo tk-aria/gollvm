@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "88de8623_73cf1567",
+        "filename": "libgo/CMakeLists.txt",
+        "patchSetId": 7
+      },
+      "lineNbr": 480,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-01-26T23:49:49Z",
+      "side": 1,
+      "message": "pic",
+      "range": {
+        "startLine": 480,
+        "startChar": 45,
+        "endLine": 480,
+        "endChar": 52
+      },
+      "revId": "33d19723d06260df484cddfc81bb09be9f345f34",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
