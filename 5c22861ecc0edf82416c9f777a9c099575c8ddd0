@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3db68631_0193880e",
+        "filename": "libgo/cmake/ConfigSetup.cmake",
+        "patchSetId": 7
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-01-26T23:39:01Z",
+      "side": 1,
+      "message": "__sync_bool_compare_and_swap will return a bool. Is it intended to compare it with s (uint64_t)?",
+      "range": {
+        "startLine": 86,
+        "startChar": 107,
+        "endLine": 86,
+        "endChar": 157
+      },
+      "revId": "5c22861ecc0edf82416c9f777a9c099575c8ddd0",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
