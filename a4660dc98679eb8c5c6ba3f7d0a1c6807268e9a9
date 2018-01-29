@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "bc256d81_b768e9b6",
+        "filename": "libgo/cmake/StructConfigUtils.cmake",
+        "patchSetId": 5
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-01-29T16:45:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8075a1dc_3919aae7",
+      "range": {
+        "startLine": 2,
+        "startChar": 2,
+        "endLine": 2,
+        "endChar": 34
+      },
+      "revId": "a4660dc98679eb8c5c6ba3f7d0a1c6807268e9a9",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "bfaf2564_c6c5c331",
         "filename": "libgo/cmake/StructConfigUtils.cmake",
         "patchSetId": 5
@@ -45,6 +69,30 @@
       "revId": "a4660dc98679eb8c5c6ba3f7d0a1c6807268e9a9",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "94d9ecde_669e861b",
+        "filename": "libgo/cmake/StructConfigUtils.cmake",
+        "patchSetId": 5
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-01-29T16:45:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bfaf2564_c6c5c331",
+      "range": {
+        "startLine": 83,
+        "startChar": 56,
+        "endLine": 83,
+        "endChar": 60
+      },
+      "revId": "a4660dc98679eb8c5c6ba3f7d0a1c6807268e9a9",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
