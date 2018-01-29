@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "8d8c6e7b_4f9e519c",
+        "filename": "libgo/CMakeLists.txt",
+        "patchSetId": 6
+      },
+      "lineNbr": 344,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-01-29T16:55:34Z",
+      "side": 1,
+      "message": "Good point. I\u0027ll see about moving the backtrace target creation into the setup function (I\u0027ll update the previous patch).",
+      "parentUuid": "caa59ea1_b9d62b58",
+      "revId": "51ee16cd476bf0fb56c41133789b9c31a73b6405",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "a0c0315a_ce7f9c08",
         "filename": "libgo/fficonfig.h.cmake",
         "patchSetId": 6
@@ -33,6 +51,24 @@
       "revId": "51ee16cd476bf0fb56c41133789b9c31a73b6405",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c584089f_ffa78f65",
+        "filename": "libgo/fficonfig.h.cmake",
+        "patchSetId": 6
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-01-29T16:55:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a0c0315a_ce7f9c08",
+      "revId": "51ee16cd476bf0fb56c41133789b9c31a73b6405",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
