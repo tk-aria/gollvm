@@ -186,6 +186,8 @@ FullPasses("full-passes",
            cl::desc("Enable all available optimization passes."),
            cl::init(true));
 
+static cl::alias FFuseFPOps("ffp-contract", cl::desc("Alias for -fp-contract"),
+                            cl::aliasopt(FuseFPOps));
 
 static std::unique_ptr<ToolOutputFile>
 GetOutputStream() {
@@ -335,6 +337,12 @@ bool CompilationOrchestrator::preamble()
   // always what we want).
   Options.FunctionSections = true;
   Options.DataSections = true;
+
+  // FP contract settings.
+  Options.AllowFPOpFusion = FuseFPOps;
+
+  // FIXME: get rid of -fp-contract in favor of -ffp-contract
+  // FIXME: allow multiple -ffp-contract=XXX settings on the command line.
 
   // Create target machine
   Optional<llvm::CodeModel::Model> CM = None;
