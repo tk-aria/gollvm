@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "026c1db5_a78695e7",
+        "filename": "driver/goparse-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-01-31T21:03:16Z",
+      "side": 1,
+      "message": "For consistency of the style, probably\n\nstatic cl::alias\nFFuseFPOps(...);",
+      "revId": "84605a6aad2cc87858836d3782c4651d4229ece0",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
