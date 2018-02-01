@@ -8,8 +8,6 @@ endif()
 
 message(STATUS "starting libgo configuration.")
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-
 include(AutoGenGo)
 include(CheckTypeSize)
 include(ConfigSetup)
