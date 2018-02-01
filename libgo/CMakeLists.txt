@@ -94,7 +94,8 @@ endforeach()
 
 # FIXME: when 386 comes on line, use correct 386-specific options here.
 
-set(math_gocflags "-ffp-contract=off")
+set(math_gocflags "-ffp-contract=off" "-fno-math-errno" "-fno-trapping-math")
+set(math_check_gocflags "-ffp-contract=off" "-fno-math-errno" "-fno-trapping-math")
 
 set(runtime_gocflags "-fgo-c-header=runtime.inc.raw" "-fgo-compiling-runtime")
 set(runtime_check_gocflags "-fgo-compiling-runtime")

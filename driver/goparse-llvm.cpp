@@ -191,6 +191,62 @@ FFuseFPOps("ffp-contract",
            cl::desc("Alias for -fp-contract"),
            cl::aliasopt(FuseFPOps));
 
+static cl::opt<bool>
+NoTrappingMath("fno-trapping-math",
+               cl::desc("Generate code with the assumption FP operations will "
+                        "not generate user-visible traps."),
+               cl::ZeroOrMore,
+               cl::init(false));
+
+static cl::opt<bool>
+TrappingMath("ftrapping-math",
+             cl::desc("Generate code with the assumption FP operations can "
+                      "generate user-visible traps."),
+             cl::ZeroOrMore,
+             cl::init(false));
+
+static cl::opt<bool>
+NoMathErrno("fno-math-errno",
+            cl::desc("Do not require that math functions set "
+                     "'errno' to indicate errors. This option has no "
+                     "effect (provided for compatibility purposes)."),
+            cl::ZeroOrMore,
+            cl::init(false));
+
+static cl::opt<bool>
+MathErrno("fmath-errno",
+          cl::desc("Insure that calls to math functions that incur errors "
+                   "results in setting of 'errno' (unimplemented, will "
+                   "generate an error if not overridden with a subsequent "
+                   "instance of -fno-math-errno)."),
+          cl::ZeroOrMore,
+          cl::init(false));
+
+// Given a pair of cl::opt objects corresponding to -fXXX and -fno-XXX
+// boolean flags, select the correct value for the option depending on
+// the relative position of the options on the command line (rightmost
+// wins). For example, given -fblah -fno-blah -fblah, we want the same
+// semantics as a single -fblah.
+
+static bool reconcileOptionPair(cl::opt<bool> &yesOption,
+                                cl::opt<bool> &noOption,
+                                bool defaultVal)
+{
+  bool value = defaultVal;
+  if (yesOption.getNumOccurrences() > 0) {
+    if (noOption.getNumOccurrences() > 0) {
+      value = yesOption.getPosition() > noOption.getPosition();
+    } else {
+      value = true;
+    }
+  } else {
+    if (noOption.getNumOccurrences() > 0) {
+      value = false;
+    }
+  }
+  return value;
+}
+
 static std::unique_ptr<ToolOutputFile>
 GetOutputStream() {
   // Decide if we need "binary" output.
@@ -339,6 +395,22 @@ bool CompilationOrchestrator::preamble()
   // always what we want).
   Options.FunctionSections = true;
   Options.DataSections = true;
+
+  // FP trapping mode
+  Options.NoTrappingFPMath = reconcileOptionPair(TrappingMath,
+                                                 NoTrappingMath,
+                                                 true);
+
+  // The -fno-math-errno option is essentially a no-op when compiling
+  // Go code, but -fmath-errno does not make sense, since 'errno' is
+  // not exposed in any meaningful way as part of the math package.
+  // Allow users to set -fno-math-errno for compatibility reasons, but
+  // issue an error if -fmath-errno is set.
+  bool mathErrno = reconcileOptionPair(MathErrno, NoMathErrno, false);
+  if (mathErrno) {
+    errs() << "error: -fmath-errno unsupported for Go code\n";
+    return false;
+  }
 
   // FP contract settings.
   Options.AllowFPOpFusion = FuseFPOps;
