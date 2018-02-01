@@ -135,6 +135,13 @@ NoInline("fno-inline",
 static cl::opt<bool>
 OptimizeAllocs("fgo-optimize-allocs",
                cl::desc("Enable escape analysis in the go frontend."),
+               cl::ZeroOrMore,
+               cl::init(false));
+
+static cl::opt<bool>
+NoOptimizeAllocs("fno-go-optimize-allocs",
+               cl::desc("Disable escape analysis in the go frontend."),
+               cl::ZeroOrMore,
                cl::init(false));
 
 static cl::opt<std::string>
@@ -488,8 +495,10 @@ bool CompilationOrchestrator::initBridge()
   mpfr_set_default_prec (256);
 
   // Escape analysis
-  if (OptimizeAllocs)
-    go_enable_optimize("allocs");
+  bool enableEscapeAnalysis = reconcileOptionPair(OptimizeAllocs,
+                                                  NoOptimizeAllocs,
+                                                  true);
+  go_enable_optimize("allocs", enableEscapeAnalysis ? 1 : 0);
 
   // Include dirs
   if (! IncludeDirs.empty()) {
