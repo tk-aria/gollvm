@@ -10,6 +10,8 @@ include(ExternalProject)
 include(ProcessorCount)
 include(LLVMExternalProjectUtils)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
 # So that we can issue "make -jN" cmds in externalproject_add
 processorcount(PROCESSOR_COUNT)
 
