@@ -22,6 +22,30 @@
       "revId": "cb1eb763e1bb0f338e18c50afaf53cfe34289235",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6b3e3f1b_9e2b66db",
+        "filename": "driver/goparse-llvm.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 402,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-02-01T16:53:41Z",
+      "side": 1,
+      "message": "Yes, sorry. Thanks for catching that.",
+      "parentUuid": "b91cf88c_4a85aa18",
+      "range": {
+        "startLine": 400,
+        "startChar": 29,
+        "endLine": 402,
+        "endChar": 55
+      },
+      "revId": "cb1eb763e1bb0f338e18c50afaf53cfe34289235",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
