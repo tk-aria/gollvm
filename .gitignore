@@ -4,6 +4,8 @@ external/
 
 # This is a separate git repo and is tracked independently
 gofrontend/
+libgo/libbacktrace/
+libgo/libffi/
 
 # Compiled Object files
 *.slo
