@@ -16,6 +16,24 @@
       "revId": "84605a6aad2cc87858836d3782c4651d4229ece0",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fd456142_f041f346",
+        "filename": "driver/goparse-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-02-01T01:02:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "026c1db5_a78695e7",
+      "revId": "84605a6aad2cc87858836d3782c4651d4229ece0",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
