@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b91cf88c_4a85aa18",
+        "filename": "driver/goparse-llvm.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 402,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-02-01T16:48:49Z",
+      "side": 1,
+      "message": "Seems a negation is missing. Should this be\n!reconcileOptionPair(TrappingMath, NoTrappingMath, false) ?",
+      "range": {
+        "startLine": 400,
+        "startChar": 29,
+        "endLine": 402,
+        "endChar": 55
+      },
+      "revId": "cb1eb763e1bb0f338e18c50afaf53cfe34289235",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
