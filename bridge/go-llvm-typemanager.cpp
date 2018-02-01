@@ -1012,10 +1012,6 @@ void TypeManager::postProcessResolvedPlaceholder(Btype *btype)
 
 // Set the real target type for a placeholder pointer type.
 
-// NB: for reasons that are unclear to me, the front end sometimes
-// calls this more than once on the same type -- this doesn't necessarily
-// seem like a horrible thing, just kind of curious.
-
 bool TypeManager::setPlaceholderPointerType(Btype *placeholder,
                                             Btype *to_type)
 {
@@ -1026,6 +1022,17 @@ bool TypeManager::setPlaceholderPointerType(Btype *placeholder,
   assert(to_type->type()->isPointerTy());
   assert(anonTypes_.find(placeholder) == anonTypes_.end());
   assert(placeholders_.find(placeholder) != placeholders_.end());
+
+  // This function may be called by the frontend multiple times on the same
+  // type. At the second time, the type is no longer marked as placeholder,
+  // and the types referencing this type are already finalized. Don't update
+  // it in this case.
+  // Circular function/pointer types have isPlaceholder false, but they do
+  // need to resolve, so special-case them.
+  if (!placeholder->isPlaceholder() &&
+      circularPointerTypes_.find(placeholder->type()) == circularPointerTypes_.end() &&
+      circularFunctionTypes_.find(placeholder->type()) == circularFunctionTypes_.end())
+    return true;
 
   if (traceLevel() > 1) {
     std::cerr << "\n^ placeholder pointer "
