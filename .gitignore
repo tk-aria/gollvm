@@ -2,8 +2,10 @@
 # for the gofrontend deps (GMP, MPCR, etc)
 external/
 
-# This is a separate git repo and is tracked independently
+# These are separate git repos and are tracked independently
 gofrontend/
+libgo/libbacktrace/
+libgo/libffi/
 
 # Compiled Object files
 *.slo
