@@ -90,3 +90,6 @@ add_subdirectory(unittests)
 
 # Go standard library
 add_subdirectory(libgo)
+
+# Go tools (go, gofmt, etc)
+add_subdirectory(gotools)

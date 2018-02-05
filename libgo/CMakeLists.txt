@@ -147,10 +147,9 @@ copy_if_different(${zstdpkglisttmp} ${zstdpkglistdotgo})
 # Rules for zdefaultcc.go
 set(zdefaultccdotgo "${libgo_binroot}/zdefaultcc.go")
 set(zdefaultcctmp "${libgo_binroot}/zdefaultcc.go.tmp")
-mkzdefaultcc(${zdefaultcctmp} ${gollvm_driver}
-             ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER})
+mkzdefaultcc("cfg" ${zdefaultcctmp} ${gollvm_driver}
+             ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER} EXPORT)
 copy_if_different(${zdefaultcctmp} ${zdefaultccdotgo})
-
 
 # FIXME: Use a rule that copies in an archived copy of this source
 # file, since for the moment there is no clang support for the
