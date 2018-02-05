@@ -267,25 +267,45 @@ endfunction()
 #
 # Unnamed parameters:
 #
+#   * package to use for generated Go code 
 #   * output file to target
 #   * path to gollvm driver binary
 #   * C compiler path
 #   * C++ compiler path
 #
-function(mkzdefaultcc outfile driverpath ccpath cxxpath)
+# Named parameters:
+#
+# EXPORT    Generated public functions (ex: DefaultCC not defaultCC).
+#
+function(mkzdefaultcc package outfile driverpath ccpath cxxpath)
+  CMAKE_PARSE_ARGUMENTS(ARG "EXPORT" "" "" ${ARGN})
+  
   file(REMOVE ${outfile})
-  file(WRITE ${outfile} "package cfg\n\n")
+  file(WRITE ${outfile} "package ${package}\n\n")
 
   # FIXME: once again, this is a problematic function since in theory
   # we don't yet know yet where things are going to be installed. For
   # the time being, just use that paths of the host build C/C++
   # compiler and the gollvm driver executable.
 
-  file(APPEND ${outfile} "func DefaultGCCGO(goos, goarch string) string { return \"${driverpath}\" }\n")
-  file(APPEND ${outfile} "func DefaultCC(goos, goarch string) string { return \"${ccpath}\" }\n")
-  file(APPEND ${outfile} "func DefaultCXX(goos, goarch string) string { return \"${cxxpath}\" }\n")
-  file(APPEND ${outfile} "const DefaultPkgConfig = \"pkg-config\"\n")
-  file(APPEND ${outfile} "var OSArchSupportsCgo = map[string]bool{}\n")
+  set(f1 "defaultGCCGO")
+  set(f2 "defaultCC")
+  set(f3 "defaultCXX")
+  set(f4 "defaultPkgConfig")
+  set(v1 "oSArchSupportsCgo")
+  if( ${ARG_EXPORT} )
+    upperfirst(${f1} "f1")
+    upperfirst(${f2} "f2")
+    upperfirst(${f3} "f3")
+    upperfirst(${f4} "f4")
+    upperfirst(${v1} "v1")
+  endif()
+
+  file(APPEND ${outfile} "func ${f1}(goos, goarch string) string { return \"${driverpath}\" }\n")
+  file(APPEND ${outfile} "func ${f2}(goos, goarch string) string { return \"${ccpath}\" }\n")
+  file(APPEND ${outfile} "func ${f3}(goos, goarch string) string { return \"${cxxpath}\" }\n")
+  file(APPEND ${outfile} "const ${f4} = \"pkg-config\"\n")
+  file(APPEND ${outfile} "var ${v1} = map[string]bool{}\n")
 endfunction()
 
 #----------------------------------------------------------------------
