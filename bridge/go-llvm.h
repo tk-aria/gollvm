@@ -206,9 +206,6 @@ public:
                                const std::vector<Bexpression *> &args,
                                Bexpression *static_chain,
                                Location);
-
-  Bexpression *stack_allocation_expression(int64_t size, Location);
-
   // Statements.
 
   Bstatement *error_statement();
