@@ -8,6 +8,7 @@ endif()
 
 message(STATUS "starting libgo configuration.")
 
+include(GoVars)
 include(AutoGenGo)
 include(CheckTypeSize)
 include(ConfigSetup)
