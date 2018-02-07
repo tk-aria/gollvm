@@ -13,7 +13,6 @@
 
 namespace goBackendUnitTests {
 
-
 std::string repr(llvm::Value *val) {
   std::string res;
   llvm::raw_string_ostream os(res);
