@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "844e4f96_4ffd7d0a",
+        "filename": "gotools/CMakeLists.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-02-07T17:08:02Z",
+      "side": 1,
+      "message": "I had patterned this on the existing gotools Makefile.am, which hard-codes the list... but in fact it would not be hard to use match.sh here I think. I will take a stab at it.",
+      "parentUuid": "82c809e7_4f6598ca",
+      "revId": "d9dc436d0f854b9df76f5da17de0792e28646370",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "2a51c8a0_44ba4466",
         "filename": "libgo/CMakeLists.txt",
         "patchSetId": 2
@@ -33,6 +51,24 @@
       "revId": "d9dc436d0f854b9df76f5da17de0792e28646370",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "51f9a332_0b2d5da8",
+        "filename": "libgo/CMakeLists.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 149,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-02-07T17:08:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2a51c8a0_44ba4466",
+      "revId": "d9dc436d0f854b9df76f5da17de0792e28646370",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
