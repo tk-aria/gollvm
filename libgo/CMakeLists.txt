@@ -58,8 +58,21 @@ list(APPEND allpackages ${toolpackages})
 # Script used to collect the Go source files that make up a package.
 set(matchdotsh "${libgo_scriptroot}/match.sh")
 
-# Package-specific match script arguments
+# Set <pkg>_matchargs for packages that need additional match.sh args.
 set(runtime_matchargs "--tag=libffi")
+
+# Certain packages need extra Go source files. The convention here is
+# that <pkg>_extra_go_files holds the additional sources for <pkg>.
+set(runtime_extra_go_files "runtime_sysinfo.go" "sigtab.go")
+set(cmd_internal_objabi_extra_go_files "objabi.go")
+set(cmd_go_internal_load_extra_go_files "zstdpkglist.go")
+set(cmd_go_internal_cfg_extra_go_files "zdefaultcc.go")
+set(runtime_internal_sys_extra_go_files "version.go")
+set(go_types_extra_go_files "gccgosizes.go")
+set(syscall_extra_go_files "libcalls.go" "sysinfo.go" "syscall_arch.go")
+if(${goos} STREQUAL "linux")
+  list(APPEND syscall_extra_go_files "epoll.go")
+endif()
 
 # Collect the source files in each package, write to temp file.
 foreach( pack ${allpackages})
@@ -76,20 +89,64 @@ foreach( pack ${allpackages})
     set(margs "${${ptarget}_matchargs}")
 
     # Invoke match.sh to collect Go files of interest for this
-    # package, via shell script. Read result into variable
+    # package, via shell script.
     execute_process(COMMAND "${shell}" "${matchdotsh}" ${margs}
       "--goarch=${goarch}" "--goos=${goos}"
       "--srcdir=${libgo_gosrcroot}/${pack}"
-      OUTPUT_FILE ${packfilestmp})
+      OUTPUT_VARIABLE packfiles)
+    string(STRIP ${packfiles} packfiles)
+
+    # Incorporate any extra source files. These generated files are
+    # expected to appear in the root of the bin dir.
+    set(extrasrcs "${${ptarget}_extra_go_files}")
+    foreach( esrc ${extrasrcs})
+      string(STRIP ${esrc} esrcf)
+      string(APPEND packfiles " ${libgo_binroot}/${esrcf}")
+    endforeach()
+
+    file(WRITE ${packfilestmp} "${packfiles}\n")
   endif()
 endforeach()
 
 #........................................................................
 
-# Certain packages need special compiler options and extra Go source files.
-# The convention here is that <package>_extra_go_files holds the
-# additional sources, and <package>_gocflags holds the command line options,
-# and <package>_matchargs holds additional match.sh arguments.
+# This macro determines the final set of Go source files and Go compiler
+# flags for a given package. Outputs are returned in the following
+# variables:
+#
+#    basepacksrcs      Base Go source files (no autogenfiles)
+#    packsrcs          All Go source files (including autogenfiles)
+#    packopts          GOCFLAGS to use when building package
+#
+macro(collect_package_inputs pack)
+  set(basepacksrcs)
+  set(packsrcs)
+  set(packopts)
+
+  string(REPLACE "/" "_" ptarget "${pack}")
+  set(packfilestmp "${libgo_binroot}/${ptarget}.gofiles")
+  file(STRINGS ${packfilestmp} matchoutput)
+  separate_arguments(matchoutput)
+
+  # Canonicalize paths. Not strictly needed, but makes output nicer.
+  foreach( packsrc ${matchoutput})
+    string(STRIP ${packsrc} spack)
+    get_filename_component(canonsrc "${spack}" REALPATH)
+    list(APPEND packsrcs "${canonsrc}")
+    get_filename_component(canondir "${canonsrc}" DIRECTORY)
+    if(NOT ${canondir} STREQUAL ${libgo_binroot})
+      list(APPEND basepacksrcs "${canonsrc}")
+    endif()
+  endforeach()
+
+  # Collect any package-specific Go command line flags
+  set(packopts "${${ptarget}_gocflags}")
+endmacro()
+
+#........................................................................
+
+# Certain packages need special compiler options. The convention here
+# <pkg>_gocflags holds the command line options needed for <pkg>.
 
 # FIXME: when 386 comes on line, use correct 386-specific options here.
 
@@ -104,18 +161,6 @@ set(runtime_internal_atomic_check_gocflags "-fgo-compiling-runtime")
 
 set(runtime_internal_sys_gocflags "-fgo-compiling-runtime")
 set(runtime_internal_sys_check_gocflags "-fgo-compiling-runtime")
-
-# Incorporate auto-generated Go files.
-set(runtime_extra_go_files "runtime_sysinfo.go" "sigtab.go")
-set(cmd_internal_objabi_extra_go_files "objabi.go")
-set(cmd_go_internal_load_extra_go_files "zstdpkglist.go")
-set(cmd_go_internal_cfg_extra_go_files "zdefaultcc.go")
-set(runtime_internal_sys_extra_go_files "version.go")
-set(go_types_extra_go_files "gccgosizes.go")
-set(syscall_extra_go_files "libcalls.go" "sysinfo.go" "syscall_arch.go")
-if(${goos} STREQUAL "linux")
-  list(APPEND syscall_extra_go_files "epoll.go")
-endif()
 
 #........................................................................
 
@@ -177,7 +222,10 @@ set(libcallsdotgo "${libgo_binroot}/libcalls.go")
 set(libcallstmp "${libgo_binroot}/tmp-libcalls.go")
 set(awkfile "${libgo_gosrcroot}/syscall/mksyscall.awk")
 set(mklibcallssh "${CMAKE_CURRENT_SOURCE_DIR}/mklibcalls.sh")
-set(syscallgofiles "${libgo_binroot}/syscall.gofiles")
+collect_package_inputs("syscall")
+set(syscallgofiles "${libgo_binroot}/syscall.basefiles")
+string(REPLACE ";" " " basepacksrcs "${basepacksrcs}")
+file(WRITE "${syscallgofiles}" "${basepacksrcs}\n")
 generate_go_from_script(${libcallsdotgo} ${mklibcallssh} ${goos} ${goarch}
                         ${libgo_binroot} DEP ${awkfile} ${syscallgofiles}
                         SCRIPTARGS ${awk} ${awkfile} ${syscallgofiles}
@@ -220,45 +268,6 @@ set(epolldotgo "${libgo_binroot}/epoll.go")
 set(epolltmp "${libgo_binroot}/epoll.go.tmp")
 mkepoll(${epolltmp})
 copy_if_different(${epolltmp} ${epolldotgo})
-
-#........................................................................
-
-# This macro determines the final set of Go source files and Go compiler
-# flags for a given package. Outputs are returned in the following
-# variables:
-#
-#    basepacksrcs      Base Go source files (no autogenfiles)
-#    packsrcs          All Go source files (including autogenfiles)
-#    packopts          GOCFLAGS to use when building package
-#
-macro(collect_package_inputs pack)
-  set(packsrcs)
-  set(packopts)
-
-  string(REPLACE "/" "_" ptarget "${pack}")
-  set(packfilestmp "${libgo_binroot}/${ptarget}.gofiles")
-  file(STRINGS ${packfilestmp} matchoutput)
-  separate_arguments(matchoutput)
-
-  # Canonicalize paths. Not strictly needed, but makes output nicer.
-  foreach( packsrc ${matchoutput})
-    string(STRIP ${packsrc} spack)
-    get_filename_component(canonsrc "${spack}" REALPATH)
-    list(APPEND packsrcs "${canonsrc}")
-  endforeach()
-  set(basepacksrcs ${packsrcs})
-
-  # Incorporate any extra source files. These generated files are
-  # expected to appear in the root of the bin dir.
-  set(extrasrcs "${${ptarget}_extra_go_files}")
-  foreach( esrc ${extrasrcs})
-    string(STRIP ${esrc} esrcf)
-    list(APPEND packsrcs "${libgo_binroot}/${esrcf}")
-  endforeach()
-
-  # Collect any package-specific Go command line flags
-  set(packopts "${${ptarget}_gocflags}")
-endmacro()
 
 #........................................................................
 
