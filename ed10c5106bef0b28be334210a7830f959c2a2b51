@@ -22,6 +22,30 @@
       "revId": "ed10c5106bef0b28be334210a7830f959c2a2b51",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ba95cb83_9124a3ee",
+        "filename": "libgo/CMakeLists.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 268,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-02-07T19:54:34Z",
+      "side": 1,
+      "message": "Thanks, yes. I will fix that up.",
+      "parentUuid": "89111783_63098f0c",
+      "range": {
+        "startLine": 265,
+        "startChar": 0,
+        "endLine": 268,
+        "endChar": 14
+      },
+      "revId": "ed10c5106bef0b28be334210a7830f959c2a2b51",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
