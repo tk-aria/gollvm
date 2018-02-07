@@ -1,4 +1,6 @@
 
+include(CheckTypeSize)
+
 # Small atomic test case.
 set(atomicstuff "
 int i;
@@ -35,14 +37,54 @@ check_symbol_exists(mknodat "sys/types.h;sys/stat.h;fcntl.h;unistd.h" HAVE_MKNOD
 check_symbol_exists(pipe2 "unistd.h" HAVE_PIPE2)
 
 # Checks for include files
-check_include_file(inttypes.h HAVE_INTTYPES_H)
 check_include_file(dlfcn.h HAVE_DLFCN_H)
+check_include_file(inttypes.h HAVE_INTTYPES_H)
 check_include_file(link.h HAVE_LINK_H)
+check_include_file(linux/ether.h HAVE_LINUX_ETHER_H)
+check_include_file(linux/filter.h HAVE_LINUX_FILTER_H)
+check_include_file(linux/if_addr.h HAVE_LINUX_IF_ADDR_H)
+check_include_file(linux/if_ether.h HAVE_LINUX_IF_ETHER_H)
+check_include_file(linux/if_tun.h HAVE_LINUX_IF_TUN_H)
+check_include_file(linux/netlink.h HAVE_LINUX_NETLINK_H)
+check_include_file(linux/ptrace.h HAVE_LINUX_PTRACE_H)
+check_include_file(linux/reboot.h HAVE_LINUX_REBOOT_H)
+check_include_file(linux/rtnetlink.h HAVE_LINUX_RTNETLINK_H)
 check_include_file(memory.h HAVE_MEMORY_H)
-check_include_file(strings.h HAVE_STRINGS_H)
-check_include_file(stdlib.h HAVE_STDLIB_H)
+check_include_file(net/if.h HAVE_NET_IF_H)
+check_include_file(net/if_arp.h HAVE_NET_IF_ARP_H)
+check_include_file(net/route.h HAVE_NET_ROUTE_H)
+check_include_file(netinet/icmp6.h HAVE_NETINET_ICMP6_H)
+check_include_file(netinet/if_ether.h HAVE_NETINET_IF_ETHER_H)
+check_include_file(netinet/in_systm.h HAVE_NETINET_IN_SYSTM_H)
+check_include_file(netinet/ip.h HAVE_NETINET_IP_H)
+check_include_file(netinet/ip_mroute.h HAVE_NETINET_IP_MROUTE_H)
+check_include_file(netpacket/packet.h HAVE_NETPACKET_PACKET_H)
+check_include_file(port.h HAVE_PORT_H)
+check_include_file(sched.h HAVE_SCHED_H)
+check_include_file(semaphore.h HAVE_SEMAPHORE_H)
 check_include_file(stdint.h HAVE_STDINT_H)
+check_include_file(stdlib.h HAVE_STDLIB_H)
+check_include_file(strings.h HAVE_STRINGS_H)
+check_include_file(sys/epoll.h HAVE_SYS_EPOLL_H)
+check_include_file(sys/file.h HAVE_SYS_FILE_H)
+check_include_file(sys/inotify.h HAVE_SYS_INOTIFY_H)
+check_include_file(sys/mman.h HAVE_SYS_MMAN_H)
+check_include_file(sys/mount.h HAVE_SYS_MOUNT_H)
+check_include_file(sys/prctl.h HAVE_SYS_PRCTL_H)
+check_include_file(sys/ptrace.h HAVE_SYS_PTRACE_H)
+check_include_file(sys/select.h HAVE_SYS_SELECT_H)
+check_include_file(sys/statfs.h HAVE_STATFS_H)
+check_include_file(sys/syscall.h SYS_SYSCALL_H)
+check_include_file(sys/sysinfo.h HAVE_SYS_SYSINFO_H)
+check_include_file(sys/timex.h HAVE_SYS_TIMEX_H)
+check_include_file(sys/user.h HAVE_SYS_USER_H)
+check_include_file(sys/utsname.h HAVE_SYS_UTSNAME_H)
+check_include_file(sys/vfs.h HAVE_SYS_VFS_H)
+check_include_file(syscall.h HAVE_SYSCALL_H)
+check_include_file(ustat.h HAVE_USTAT_H)
+check_include_file(utime.h HAVE_UTIME_H)
 
+# Checks for libraries
 check_library_exists(z compress "" HAS_LIBZ)
 
 # To generate libffi headers we need to know the sizes of various types.

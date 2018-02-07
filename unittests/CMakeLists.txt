@@ -15,6 +15,8 @@ function(add_gobackend_unittest test_dirname)
   add_unittest(GoBackendUnitTests ${test_dirname} ${ARGN})
 endfunction()
 
+add_subdirectory(GoDumpSpec)
+
 include_directories(${MPCINSTALL}/include)
 include_directories(${MPFRINSTALL}/include)
 include_directories(${GMPINSTALL}/include)

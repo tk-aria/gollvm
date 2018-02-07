@@ -10,7 +10,6 @@ message(STATUS "starting libgo configuration.")
 
 include(GoVars)
 include(AutoGenGo)
-include(CheckTypeSize)
 include(ConfigSetup)
 include(GenDeps)
 include(GoPackage)
@@ -346,6 +345,9 @@ file(MAKE_DIRECTORY "${libgo_binroot}/runtime")
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake
   ${libgo_binroot}/runtime/config.h)
+
+# Subdirectory for godumpspec tool. This depends on config.h above.
+add_subdirectory(godumpspec)
 
 # Generate new runtime.inc from runtime.inc.raw if anything has changed.
 set(runtimeinc "${libgo_binroot}/runtime.inc")

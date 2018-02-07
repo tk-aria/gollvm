@@ -1,4 +1,4 @@
-//===- llvm/tools/gollvm/unittests/BackendCore/DiffUtils.h --------------===//
+//===- llvm/tools/gollvm/unittests/TestUtils/DiffUtils.h --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef GOLLVM_UNITTESTS_BACKENDCORE_DIFFUTILS_H
-#define GOLLVM_UNITTESTS_BACKENDCORE_DIFFUTILS_H
+#ifndef GOLLVM_UNITTESTS_TESTUTILS_DIFFUTILS_H
+#define GOLLVM_UNITTESTS_TESTUTILS_DIFFUTILS_H
 
 #include <string>
 #include <vector>
@@ -51,4 +51,4 @@ void complainOnNequal(const std::string &reason,
 
 }
 
-#endif // GOLLVM_UNITTESTS_BACKENDCORE_DIFFUTILS_H
+#endif // GOLLVM_UNITTESTS_TESTUTILS_DIFFUTILS_H
