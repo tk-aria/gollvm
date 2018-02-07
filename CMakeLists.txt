@@ -88,6 +88,9 @@ add_subdirectory(driver)
 # Subdir for unit tests that test the middle layer
 add_subdirectory(unittests)
 
+# Subdirectory for godumpspec tool
+add_subdirectory(godumpspec)
+
 # Go standard library
 add_subdirectory(libgo)
 
