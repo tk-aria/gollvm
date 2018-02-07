@@ -1658,10 +1658,8 @@ bool TypeManager::fcnPointerCompatible(llvm::Type *left,
                                        std::set<llvm::Type *> &visited)
 {
   // Allow for pointer-to-fp and func-desc matching
-  bool leftFPD = isPtrToFuncType(left) || isPtrToVoidType(left) ||
-                 isPtrToFuncDescriptorType(left);
-  bool rightFPD = isPtrToFuncType(right) || isPtrToVoidType(right) ||
-                  isPtrToFuncDescriptorType(right);
+  bool leftFPD = isPtrToFuncType(left) || isPtrToVoidType(left);
+  bool rightFPD = isPtrToFuncType(right) || isPtrToVoidType(right);
   if (leftFPD && rightFPD)
     return true;
 

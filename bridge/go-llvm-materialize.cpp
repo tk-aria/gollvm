@@ -320,12 +320,6 @@ llvm::Value *Llvm_backend::makeFieldGEP(llvm::StructType *llst,
   assert(fieldIndex < llst->getNumElements());
   std::string tag(namegen("field"));
 
-  // Allow function-pointer and function-descriptor mismatch
-  llvm::Type *llpst = llvm::PointerType::get(llst, addressSpace_);
-  std::set<llvm::Type *> visited;
-  if (llpst != srcTyp && fcnPointerCompatible(llpst, srcTyp, visited))
-    llst = llvm::cast<llvm::StructType>(srcTyp->getElementType());
-
   llvm::Value *val =
       builder.CreateConstInBoundsGEP2_32(llst, sptr, 0, fieldIndex, tag);
   return val;
