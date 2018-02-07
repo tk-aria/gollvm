@@ -1566,14 +1566,6 @@ Llvm_backend::call_expression(Bfunction *caller,
   return rval;
 }
 
-// Return an expression that allocates SIZE bytes on the stack.
-
-Bexpression *Llvm_backend::stack_allocation_expression(int64_t size,
-                                                       Location location) {
-  assert(false && "Llvm_backend::stack_allocation_expression not yet impl");
-  return nullptr;
-}
-
 Bstatement *Llvm_backend::error_statement()
 {
   errorCount_++;
