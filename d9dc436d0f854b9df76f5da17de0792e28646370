@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "82c809e7_4f6598ca",
+        "filename": "gotools/CMakeLists.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-02-07T16:59:12Z",
+      "side": 1,
+      "message": "(Perhaps for a later CL) Is there a way not to hard-code files? Seems we don\u0027t do this for libgo.",
+      "revId": "d9dc436d0f854b9df76f5da17de0792e28646370",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2a51c8a0_44ba4466",
+        "filename": "libgo/CMakeLists.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 149,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-02-07T16:59:12Z",
+      "side": 1,
+      "message": "Remove trailing space.",
+      "revId": "d9dc436d0f854b9df76f5da17de0792e28646370",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
