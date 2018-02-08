@@ -54,6 +54,12 @@ Bfunction::~Bfunction()
   }
   for (auto &lab : labels_)
     delete lab;
+  for (auto &v : localVariables_) {
+    // only delete declvars here, others are in valueVarMap_
+    // and will be deleted below.
+    if (v->isDeclVar())
+      delete v;
+  }
   for (auto &kv : valueVarMap_)
     delete kv.second;
   assert(labelAddressPlaceholders_.empty());
