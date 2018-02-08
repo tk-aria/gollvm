@@ -16,6 +16,24 @@
       "revId": "6fae546eec617ba3db83bad4c057b9cfd00dab34",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "862204ce_3348cf5a",
+        "filename": "gotools/CMakeLists.txt",
+        "patchSetId": 4
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-02-08T14:34:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2974308b_d6554800",
+      "revId": "6fae546eec617ba3db83bad4c057b9cfd00dab34",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
