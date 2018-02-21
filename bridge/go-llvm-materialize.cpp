@@ -1332,15 +1332,7 @@ Bexpression *Llvm_backend::materializeCall(Bexpression *callExpr)
       }
       case llvm::Intrinsic::memmove:
       case llvm::Intrinsic::memcpy: {
-        // memmove/memcpy take additional alignment/volatile args
-
-        // alignment => 1
-        // TODO: incorporate more-accurate alignment info where possible.
-        Btype *buint32t = integerType(true, 32);
-        llvm::Constant *c1 = llvm::ConstantInt::get(llvmInt32Type(), 1);
-        Bexpression *alignexpr = nbuilder_.mkConst(buint32t, c1);
-        fn_args.push_back(alignexpr);
-
+        // memmove/memcpy take additional volatile arg
         // volatile => false
         llvm::Value *fcon = llvm::ConstantInt::getFalse(context_);
         Btype *bt = makeAuxType(llvmBoolType());
