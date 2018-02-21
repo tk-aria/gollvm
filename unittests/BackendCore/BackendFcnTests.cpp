@@ -359,10 +359,10 @@ TEST(BackendFcnTests, TestCallMemBuiltins) {
   %call.0 = call i32 @memcmp(i8* %cast.0, i8* %cast.1, i64 8)
   %cast.2 = bitcast i64* %x to i8*
   %cast.3 = bitcast i64* %y to i8*
-  call void @llvm.memmove.p0i8.p0i8.i64(i8* %cast.2, i8* %cast.3, i64 8, i32 1, i1 false)
+  call void @llvm.memmove.p0i8.p0i8.i64(i8* %cast.2, i8* %cast.3, i64 8, i1 false)
   %cast.4 = bitcast i64* %y to i8*
   %cast.5 = bitcast i64* %x to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.4, i8* %cast.5, i64 8, i32 1, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.4, i8* %cast.5, i64 8, i1 false)
   )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);

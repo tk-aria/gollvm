@@ -492,19 +492,19 @@ entry:
   %y = alloca { double, double }
   %cast.0 = bitcast { float, float }* %a to i8*
   %cast.1 = bitcast { float, float }* @const.0 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.0, i8* %cast.1, i64 8, i32 4, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.0, i8* align 4 %cast.1, i64 8, i1 false)
   %cast.2 = bitcast { float, float }* %b to i8*
   %cast.3 = bitcast { float, float }* @const.0 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.2, i8* %cast.3, i64 8, i32 4, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.2, i8* align 4 %cast.3, i64 8, i1 false)
   %cast.4 = bitcast { double, double }* %x to i8*
   %cast.5 = bitcast { double, double }* @const.1 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.4, i8* %cast.5, i64 16, i32 8, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.4, i8* align 8 %cast.5, i64 16, i1 false)
   %cast.6 = bitcast { double, double }* %y to i8*
   %cast.7 = bitcast { double, double }* @const.1 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.6, i8* %cast.7, i64 16, i32 8, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.6, i8* align 8 %cast.7, i64 16, i1 false)
   %cast.8 = bitcast { double, double }* %tmp.0 to i8*
   %cast.9 = bitcast { double, double }* %x to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.8, i8* %cast.9, i64 16, i32 8, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.8, i8* align 8 %cast.9, i64 16, i1 false)
   %field.0 = getelementptr inbounds { double, double }, { double, double }* %tmp.0, i32 0, i32 0
   %.real.ld.0 = load double, double* %field.0
   %fptrunc.0 = fptrunc double %.real.ld.0 to float
@@ -517,10 +517,10 @@ entry:
   store float %fptrunc.1, float* %field.3
   %cast.10 = bitcast { float, float }* %a to i8*
   %cast.11 = bitcast { float, float }* %tmp.1 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.10, i8* %cast.11, i64 8, i32 4, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.10, i8* align 4 %cast.11, i64 8, i1 false)
   %cast.12 = bitcast { float, float }* %tmp.2 to i8*
   %cast.13 = bitcast { float, float }* %b to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.12, i8* %cast.13, i64 8, i32 4, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.12, i8* align 4 %cast.13, i64 8, i1 false)
   %field.4 = getelementptr inbounds { float, float }, { float, float }* %tmp.2, i32 0, i32 0
   %.real.ld.1 = load float, float* %field.4
   %fpext.0 = fpext float %.real.ld.1 to double
@@ -533,13 +533,13 @@ entry:
   store double %fpext.1, double* %field.7
   %cast.14 = bitcast { double, double }* %y to i8*
   %cast.15 = bitcast { double, double }* %tmp.3 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.14, i8* %cast.15, i64 16, i32 8, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.14, i8* align 8 %cast.15, i64 16, i1 false)
   %cast.16 = bitcast { float, float }* %a to i8*
   %cast.17 = bitcast { float, float }* %b to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.16, i8* %cast.17, i64 8, i32 4, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.16, i8* align 4 %cast.17, i64 8, i1 false)
   %cast.18 = bitcast { double, double }* %x to i8*
   %cast.19 = bitcast { double, double }* %y to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.18, i8* %cast.19, i64 16, i32 8, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.18, i8* align 8 %cast.19, i64 16, i1 false)
   ret void
 }
   )RAW_RESULT";
@@ -1078,20 +1078,20 @@ TEST(BackendExprTests, TestComplexOps) {
     %b = alloca i8
     %cast.0 = bitcast { double, double }* %x to i8*
     %cast.1 = bitcast { double, double }* @const.0 to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.0, i8* %cast.1, i64 16, i32 8, i1 false)
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 16, i1 false)
     %cast.2 = bitcast { double, double }* %y to i8*
     %cast.3 = bitcast { double, double }* @const.0 to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.2, i8* %cast.3, i64 16, i32 8, i1 false)
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.2, i8* align 8 %cast.3, i64 16, i1 false)
     %cast.4 = bitcast { double, double }* %z to i8*
     %cast.5 = bitcast { double, double }* @const.0 to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.4, i8* %cast.5, i64 16, i32 8, i1 false)
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.4, i8* align 8 %cast.5, i64 16, i1 false)
     store i8 0, i8* %b
     %cast.6 = bitcast { double, double }* %tmp.0 to i8*
     %cast.7 = bitcast { double, double }* %x to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.6, i8* %cast.7, i64 16, i32 8, i1 false)
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.6, i8* align 8 %cast.7, i64 16, i1 false)
     %cast.8 = bitcast { double, double }* %tmp.1 to i8*
     %cast.9 = bitcast { double, double }* %y to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.8, i8* %cast.9, i64 16, i32 8, i1 false)
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.8, i8* align 8 %cast.9, i64 16, i1 false)
     %field.0 = getelementptr inbounds { double, double }, { double, double }* %tmp.0, i32 0, i32 0
     %.real.ld.0 = load double, double* %field.0
     %field.1 = getelementptr inbounds { double, double }, { double, double }* %tmp.1, i32 0, i32 0
@@ -1108,13 +1108,13 @@ TEST(BackendExprTests, TestComplexOps) {
     store double %fadd.1, double* %field.5
     %cast.10 = bitcast { double, double }* %z to i8*
     %cast.11 = bitcast { double, double }* %tmp.2 to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.10, i8* %cast.11, i64 16, i32 8, i1 false)
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.10, i8* align 8 %cast.11, i64 16, i1 false)
     %cast.12 = bitcast { double, double }* %tmp.3 to i8*
     %cast.13 = bitcast { double, double }* %x to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.12, i8* %cast.13, i64 16, i32 8, i1 false)
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.12, i8* align 8 %cast.13, i64 16, i1 false)
     %cast.14 = bitcast { double, double }* %tmp.4 to i8*
     %cast.15 = bitcast { double, double }* %y to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.14, i8* %cast.15, i64 16, i32 8, i1 false)
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.14, i8* align 8 %cast.15, i64 16, i1 false)
     %field.6 = getelementptr inbounds { double, double }, { double, double }* %tmp.3, i32 0, i32 0
     %.real.ld.2 = load double, double* %field.6
     %field.7 = getelementptr inbounds { double, double }, { double, double }* %tmp.4, i32 0, i32 0
@@ -1131,13 +1131,13 @@ TEST(BackendExprTests, TestComplexOps) {
     store double %fsub.1, double* %field.11
     %cast.16 = bitcast { double, double }* %z to i8*
     %cast.17 = bitcast { double, double }* %tmp.5 to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.16, i8* %cast.17, i64 16, i32 8, i1 false)
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.16, i8* align 8 %cast.17, i64 16, i1 false)
     %cast.18 = bitcast { double, double }* %tmp.6 to i8*
     %cast.19 = bitcast { double, double }* %x to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.18, i8* %cast.19, i64 16, i32 8, i1 false)
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.18, i8* align 8 %cast.19, i64 16, i1 false)
     %cast.20 = bitcast { double, double }* %tmp.7 to i8*
     %cast.21 = bitcast { double, double }* %y to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.20, i8* %cast.21, i64 16, i32 8, i1 false)
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.20, i8* align 8 %cast.21, i64 16, i1 false)
     %field.12 = getelementptr inbounds { double, double }, { double, double }* %tmp.6, i32 0, i32 0
     %.real.ld.4 = load double, double* %field.12
     %field.13 = getelementptr inbounds { double, double }, { double, double }* %tmp.7, i32 0, i32 0
@@ -1166,13 +1166,13 @@ TEST(BackendExprTests, TestComplexOps) {
     store double %fadd.2, double* %field.21
     %cast.22 = bitcast { double, double }* %z to i8*
     %cast.23 = bitcast { double, double }* %tmp.8 to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.22, i8* %cast.23, i64 16, i32 8, i1 false)
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.22, i8* align 8 %cast.23, i64 16, i1 false)
     %cast.24 = bitcast { double, double }* %tmp.9 to i8*
     %cast.25 = bitcast { double, double }* %x to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.24, i8* %cast.25, i64 16, i32 8, i1 false)
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.24, i8* align 8 %cast.25, i64 16, i1 false)
     %cast.26 = bitcast { double, double }* %tmp.10 to i8*
     %cast.27 = bitcast { double, double }* %y to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.26, i8* %cast.27, i64 16, i32 8, i1 false)
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.26, i8* align 8 %cast.27, i64 16, i1 false)
     %field.22 = getelementptr inbounds { double, double }, { double, double }* %tmp.9, i32 0, i32 0
     %.real.ld.6 = load double, double* %field.22
     %field.23 = getelementptr inbounds { double, double }, { double, double }* %tmp.10, i32 0, i32 0
@@ -1189,10 +1189,10 @@ TEST(BackendExprTests, TestComplexOps) {
     store i8 %iand.0, i8* %b
     %cast.28 = bitcast { double, double }* %tmp.11 to i8*
     %cast.29 = bitcast { double, double }* %x to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.28, i8* %cast.29, i64 16, i32 8, i1 false)
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.28, i8* align 8 %cast.29, i64 16, i1 false)
     %cast.30 = bitcast { double, double }* %tmp.12 to i8*
     %cast.31 = bitcast { double, double }* %y to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.30, i8* %cast.31, i64 16, i32 8, i1 false)
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.30, i8* align 8 %cast.31, i64 16, i1 false)
     %field.26 = getelementptr inbounds { double, double }, { double, double }* %tmp.11, i32 0, i32 0
     %.real.ld.8 = load double, double* %field.26
     %field.27 = getelementptr inbounds { double, double }, { double, double }* %tmp.12, i32 0, i32 0
@@ -1255,7 +1255,7 @@ TEST(BackendExprTests, TestComplexExpressions) {
     store double 0.000000e+00, double* %b
     %cast.0 = bitcast { double, double }* %x to i8*
     %cast.1 = bitcast { double, double }* @const.0 to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.0, i8* %cast.1, i64 16, i32 8, i1 false)
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 16, i1 false)
     %field.0 = getelementptr inbounds { double, double }, { double, double }* %x, i32 0, i32 0
     %x.real.ld.0 = load double, double* %field.0
     store double %x.real.ld.0, double* %a
@@ -1455,19 +1455,19 @@ entry:
 then.0:                                           ; preds = %entry
   %cast.0 = bitcast { [16 x i32], i32 }* %tmpv.0 to i8*
   %cast.1 = bitcast { [16 x i32], i32 }* %p0 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.0, i8* %cast.1, i64 68, i32 4, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.0, i8* align 4 %cast.1, i64 68, i1 false)
   br label %fallthrough.0
 
 fallthrough.0:                                    ; preds = %else.0, %then.0
   %cast.4 = bitcast { [16 x i32], i32 }* %a to i8*
   %cast.5 = bitcast { [16 x i32], i32 }* %tmpv.0 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.4, i8* %cast.5, i64 68, i32 4, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.4, i8* align 4 %cast.5, i64 68, i1 false)
   ret void
 
 else.0:                                           ; preds = %entry
   %cast.2 = bitcast { [16 x i32], i32 }* %tmpv.0 to i8*
   %cast.3 = bitcast { [16 x i32], i32 }* @const.0 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.2, i8* %cast.3, i64 68, i32 4, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.2, i8* align 4 %cast.3, i64 68, i1 false)
   br label %fallthrough.0
 }
     )RAW_RESULT";

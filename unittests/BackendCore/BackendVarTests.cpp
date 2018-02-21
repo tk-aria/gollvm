@@ -536,7 +536,7 @@ TEST(BackendVarTests, TestVarLifetimeInsertion) {
     store i32 0, i32* %x
     %cast.0 = bitcast { i32, i32 }* %y to i8*
     %cast.1 = bitcast { i32, i32 }* @const.0 to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.0, i8* %cast.1, i64 8, i32 4, i1 false)
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.0, i8* align 4 %cast.1, i64 8, i1 false)
     %field.0 = getelementptr inbounds { i32, i32 }, { i32, i32 }* %y, i32 0, i32 1
     %y.field.ld.0 = load i32, i32* %field.0
     store i32 %y.field.ld.0, i32* %x

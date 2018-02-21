@@ -121,7 +121,7 @@ TEST(BackEndPointerExprTests, CreateFunctionCodeExpression) {
   const char *exp = R"RAW_RESULT(
   %cast.0 = bitcast { i64 }* %fdloc1 to i8*
   %cast.1 = bitcast { i64 }* @const.0 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.0, i8* %cast.1, i64 8, i32 8, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 8, i1 false)
   store { i64 }* %fdloc1, { i64 }** %fploc1
   store { i64 (i8*, i32, i32, i64*)* }* null, { i64 (i8*, i32, i32, i64*)* }** %fploc2
   %fploc1.ld.0 = load { i64 }*, { i64 }** %fploc1
@@ -218,7 +218,7 @@ TEST(BackEndPointerExprTests, TestDerefNilPointer) {
     store i32 %deref.ld.0, i32* %x
     %cast.2 = bitcast { i32, i32 }* %y to i8*
     %cast.3 = bitcast { i32, i32 }* null to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.2, i8* %cast.3, i64 8, i32 4, i1 false)
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.2, i8* align 4 %cast.3, i64 8, i1 false)
   )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);

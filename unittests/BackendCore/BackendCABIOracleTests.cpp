@@ -384,7 +384,7 @@ TEST(BackendCABIOracleTests, PassAndReturnArrays) {
     call void @foo([3 x double]* sret %sret.actual.0, i8* nest undef, <2 x float> %ld.0)
     %cast.1 = bitcast [3 x double]* %sret.formal.0 to i8*
     %cast.2 = bitcast [3 x double]* %sret.actual.0 to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.1, i8* %cast.2, i64 24, i32 8, i1 false)
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.1, i8* align 8 %cast.2, i64 24, i1 false)
     ret void
     )RAW_RESULT";
 
@@ -523,7 +523,7 @@ TEST(BackendCABIOracleTests, PassAndReturnComplex) {
     store <2 x float> %call.0, <2 x float>* %cast.2
     %cast.3 = bitcast { float, float }* %z to i8*
     %cast.4 = bitcast { float, float }* %sret.actual.0 to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.3, i8* %cast.4, i64 8, i32 4, i1 false)
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.3, i8* align 4 %cast.4, i64 8, i1 false)
     %ld.3 = load <2 x float>, <2 x float>* bitcast ({ float, float }* @const.0 to <2 x float>*)
     %ld.4 = load double, double* getelementptr inbounds ({ double, double }, { double, double }* @const.1, i32 0, i32 0)
     %ld.5 = load double, double* getelementptr inbounds ({ double, double }, { double, double }* @const.1, i32 0, i32 1)
