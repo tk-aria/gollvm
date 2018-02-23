@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9040bc20_e7492473",
+        "filename": "unittests/BackendCore/CMakeLists.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-02-23T14:56:39Z",
+      "side": 1,
+      "message": "By way of explanation: libraries that are marked \"build tree only\" apparently can\u0027t be pulled in via LLVM_LINK_COMPONENTS above -- you have to call them out explicitly via target_link_libraries.",
+      "revId": "34427d41398d29d7116884251c19f1db056dcaa3",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
