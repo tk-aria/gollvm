@@ -2,6 +2,9 @@
 add_custom_target(GoBackendUnitTests)
 set_target_properties(GoBackendUnitTests PROPERTIES FOLDER "Tests")
 
+add_subdirectory(TestUtils)
+set(unittest_testutils_src "${CMAKE_CURRENT_SOURCE_DIR}/TestUtils")
+
 if (APPLE)
   set(CMAKE_INSTALL_RPATH "@executable_path/../../lib")
 else(UNIX)

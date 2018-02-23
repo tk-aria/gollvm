@@ -29,6 +29,7 @@ add_gobackend_unittest(GoBackendCoreTests
   ${BackendCoreSources}
   )
 
+include_directories(${unittest_testutils_src})
 include_directories(${MPCINSTALL}/include)
 include_directories(${MPFRINSTALL}/include)
 include_directories(${GMPINSTALL}/include)
@@ -39,6 +40,7 @@ add_dependencies(GoBackendCoreTests libmpfr libmpc libgmp)
 # Add in the archives for the llvm-goparse dependencies.
 target_link_libraries(GoBackendCoreTests
   PRIVATE
+  GoUnitTestUtils
   "-L${MPCLIBDIR}" "-lmpc"
   "-L${MPFRLIBDIR}" "-lmpfr"
   "-L${GMPLIBDIR}" "-lgmp"
