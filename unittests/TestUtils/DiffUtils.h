@@ -37,6 +37,18 @@ bool difftokens(const std::string &expected,
 // Tokenizes both strings to avoid whitespace differences
 bool containstokens(const std::string &text, const std::string &pat);
 
+// Return the number of instances of 'pat' within 'text'. Both the pattern
+// and the text are tokenized prior to the search. Search is brute-force.
+unsigned countinstances(const std::string &text, const std::string &pat);
+
+// Issue an error message to std:cerr to report the fact that
+// 'expected' does not match 'actual'; emit actual/expected debug dump
+// files if 'emitDump' is true.
+void complainOnNequal(const std::string &reason,
+                      const std::string &expected,
+                      const std::string &actual,
+                      bool emitDump);
+
 }
 
 #endif // GOLLVM_UNITTESTS_BACKENDCORE_DIFFUTILS_H
