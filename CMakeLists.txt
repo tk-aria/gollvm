@@ -15,57 +15,51 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 # So that we can issue "make -jN" cmds in externalproject_add
 processorcount(PROCESSOR_COUNT)
 
-# FIXME: something less hacky for MacOS
-if(APPLE)
-set(MCONF1 "CPPFLAGS=-I/usr/local/include")
-set(MCONF2 "LDFLAGS=-L/usr/local/lib")
-endif()
+set(EXTINSTALLDIR ${CMAKE_CURRENT_BINARY_DIR}/external/install)
+set(EXTLIBDIR "${EXTINSTALLDIR}/lib")
+set(EXTINCLUDEDIR "${EXTINSTALLDIR}/include")
+set(EXTCPPFLAGS "CFLAGS=-I${EXTINCLUDEDIR}")
+set(EXTLDFLAGS "LDFLAGS=-L${EXTLIBDIR}")
 
 set(gollvm_binroot "${CMAKE_CURRENT_BINARY_DIR}")
 
-# Open issue: should the configure cmds below be run with
-# "CC=${CMAKE_BINARY_DIR}/bin/clang"
-
-set(MPCINSTALL ${CMAKE_CURRENT_BINARY_DIR}/external/build-mpc)
-set(MPCLIBDIR "${MPCINSTALL}/lib")
-externalproject_add(libmpc
-  URL ftp://gcc.gnu.org/pub/gcc/infrastructure/mpc-1.0.3.tar.gz
-  URL_MD5 d6a1d5f8ddea3abd2cc3e98f58352d26
-  DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/external-downloads
-  BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/mpc
-  CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=${MPCINSTALL} ${MCONF1} ${MCONF2}
-  BUILD_COMMAND make -j${PROCESSOR_COUNT}
-  INSTALL_COMMAND make -j${PROCESSOR_COUNT} install
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-  )
-
-set(MPFRINSTALL ${CMAKE_CURRENT_BINARY_DIR}/external/build-mpfr)
-set(MPFRLIBDIR "${MPFRINSTALL}/lib")
-externalproject_add(libmpfr
-  URL ftp://gcc.gnu.org/pub/gcc/infrastructure/mpfr-3.1.4.tar.bz2
-  URL_MD5 b8a2f6b0e68bef46e53da2ac439e1cf4
-  DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/external-downloads
-  BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/mpfr
-  CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=${MPFRINSTALL} ${MCONF1} ${MCONF2}
-  BUILD_COMMAND make -j${PROCESSOR_COUNT}
-  INSTALL_COMMAND make -j${PROCESSOR_COUNT} install
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-  )
-
-set(GMPINSTALL ${CMAKE_CURRENT_BINARY_DIR}/external/build-gmp)
-set(GMPLIBDIR "${GMPINSTALL}/lib")
 externalproject_add(libgmp
   URL ftp://ftp.gnu.org/gnu/gmp/gmp-6.1.0.tar.bz2
   URL_MD5 86ee6e54ebfc4a90b643a65e402c4048
   DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/external-downloads
-  BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/gmp
-  CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=${GMPINSTALL} ${MCONF1} ${MCONF2}
-  BUILD_COMMAND make -j${PROCESSOR_COUNT}
-  INSTALL_COMMAND make -j${PROCESSOR_COUNT} install
+  BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/gmp-build
+  SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/gmp
+  CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=${EXTINSTALLDIR} ${EXTCPPFLAGS} ${EXTLDFLAGS}
+  BUILD_COMMAND make -j${PROCESSOR_COUNT} install
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_INSTALL 1
+  )
+
+externalproject_add(libmpfr
+  DEPENDS libgmp
+  URL ftp://gcc.gnu.org/pub/gcc/infrastructure/mpfr-3.1.4.tar.bz2
+  URL_MD5 b8a2f6b0e68bef46e53da2ac439e1cf4
+  DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/external-downloads
+  BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/mpfr
+  SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/mpfr
+  CONFIGURE_COMMAND <SOURCE_DIR>/configure --with-gmp=${CMAKE_CURRENT_BINARY_DIR}/external/gmp --prefix=${EXTINSTALLDIR} ${EXTCPPFLAGS} ${EXTLDFLAGS}
+  BUILD_COMMAND make -j${PROCESSOR_COUNT} install
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_INSTALL 1
+  )
+
+externalproject_add(libmpc
+  DEPENDS libgmp libmpfr
+  URL ftp://gcc.gnu.org/pub/gcc/infrastructure/mpc-1.0.3.tar.gz
+  URL_MD5 d6a1d5f8ddea3abd2cc3e98f58352d26
+  DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/external-downloads
+  BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/mpc
+  SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/mpc
+  PREFIX ${EXTINSTALLDIR}
+  CONFIGURE_COMMAND <SOURCE_DIR>/configure --with-gmp=${CMAKE_CURRENT_BINARY_DIR}/external/gmp --with-mpfr=${CMAKE_CURRENT_BINARY_DIR}/external/mpfr --prefix=${EXTINSTALLDIR} ${EXTCPPFLAGS} ${EXTLDFLAGS}
+  BUILD_COMMAND make -j${PROCESSOR_COUNT} install
   LOG_CONFIGURE 1
   LOG_BUILD 1
   LOG_INSTALL 1

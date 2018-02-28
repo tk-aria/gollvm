@@ -41,7 +41,5 @@ add_dependencies(GoBackendCoreTests libmpfr libmpc libgmp)
 target_link_libraries(GoBackendCoreTests
   PRIVATE
   GoUnitTestUtils
-  "-L${MPCLIBDIR}" "-lmpc"
-  "-L${MPFRLIBDIR}" "-lmpfr"
-  "-L${GMPLIBDIR}" "-lgmp"
+  "-L${EXTLIBDIR}" "-lmpc" "-lmpfr" "-lgmp"
   )
