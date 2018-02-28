@@ -454,7 +454,7 @@ add_library(libgo_static STATIC
 
 # HACK: undo LLVM default here.
 string(REPLACE "-Wl,-z,defs" "" CMAKE_SHARED_LINKER_FLAGS
-    ${CMAKE_SHARED_LINKER_FLAGS})
+    "${CMAKE_SHARED_LINKER_FLAGS}")
 
 # Shared libgo -- combines pic C objects and non-pic Go objects.
 add_library(libgo_shared SHARED
