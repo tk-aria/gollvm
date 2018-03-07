@@ -4,6 +4,47 @@
 /* Include config.h from llvm */
 #include "llvm/Config/config.h"
 
+/* Header files */
+#cmakedefine HAVE_LINUX_ETHER_H
+#cmakedefine HAVE_LINUX_FILTER_H
+#cmakedefine HAVE_LINUX_IF_ADDR_H
+#cmakedefine HAVE_LINUX_IF_ETHER_H
+#cmakedefine HAVE_LINUX_IF_TUN_H
+#cmakedefine HAVE_LINUX_NETLINK_H
+#cmakedefine HAVE_LINUX_PTRACE_H
+#cmakedefine HAVE_LINUX_REBOOT_H
+#cmakedefine HAVE_LINUX_RTNETLINK_H
+#cmakedefine HAVE_NETINET_ICMP6_H
+#cmakedefine HAVE_NETINET_IF_ETHER_H
+#cmakedefine HAVE_NETINET_IN_SYSTM_H
+#cmakedefine HAVE_NETINET_IP_H
+#cmakedefine HAVE_NETINET_IP_MROUTE_H
+#cmakedefine HAVE_NETPACKET_PACKET_H
+#cmakedefine HAVE_NET_IF_ARP_H
+#cmakedefine HAVE_NET_IF_H
+#cmakedefine HAVE_NET_ROUTE_H
+#cmakedefine HAVE_PORT_H
+#cmakedefine HAVE_SCHED_H
+#cmakedefine HAVE_SEMAPHORE_H
+#cmakedefine HAVE_STATFS_H
+#cmakedefine HAVE_SYSCALL_H
+#cmakedefine HAVE_SYS_EPOLL_H
+#cmakedefine HAVE_SYS_FILE_H
+#cmakedefine HAVE_SYS_INOTIFY_H
+#cmakedefine HAVE_SYS_MMAN_H
+#cmakedefine HAVE_SYS_MOUNT_H
+#cmakedefine HAVE_SYS_PRCTL_H
+#cmakedefine HAVE_SYS_PTRACE_H
+#cmakedefine HAVE_SYS_SELECT_H
+#cmakedefine HAVE_SYS_SYSCALL_H
+#cmakedefine HAVE_SYS_SYSINFO_H
+#cmakedefine HAVE_SYS_TIMEX_H
+#cmakedefine HAVE_SYS_USER_H
+#cmakedefine HAVE_SYS_UTSNAME_H
+#cmakedefine HAVE_SYS_VFS_H
+#cmakedefine HAVE_USTAT_H
+#cmakedefine HAVE_UTIME_H
+
 /* Define to 1 if you have the libc 'mknodat' function, and to 0 if you don't. */
 #cmakedefine01 HAVE_MKNODAT
 
