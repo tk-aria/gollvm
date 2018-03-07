@@ -1,6 +1,6 @@
 
 # Rules for building LLVMCppGoFrontEnd library, which incorporates
-# both the Go frontend and the frontend -> LLVM-IR bridge component.
+# both the Go frontend and the frontend => LLVM-IR bridge component.
 
 set(LLVM_LINK_COMPONENTS
   CodeGen
