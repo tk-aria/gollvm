@@ -79,11 +79,12 @@ add_subdirectory(bridge)
 # Subdirectory for llvm-goparse executable.
 add_subdirectory(driver)
 
-# Subdir for unit tests that test the middle layer
-add_subdirectory(unittests)
-
 # Go standard library
 add_subdirectory(libgo)
 
 # Go tools (go, gofmt, etc)
 add_subdirectory(gotools)
+
+# Subdir for unit tests that test the middle layer
+add_subdirectory(unittests)
+
