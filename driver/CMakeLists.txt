@@ -23,9 +23,7 @@ include_directories(${GOFRONTEND_SOURCE_DIR})
 include_directories(${BRIDGE_SOURCE_DIR})
 
 # Gofrontend headers use headers from these packages.
-include_directories(${MPCINSTALL}/include)
-include_directories(${MPFRINSTALL}/include)
-include_directories(${GMPINSTALL}/include)
+include_directories(${EXTINSTALLDIR}/include)
 
 # The llvm-goparse executable itself
 add_llvm_tool(llvm-goparse
@@ -38,7 +36,5 @@ add_dependencies(llvm-goparse libmpfr libmpc libgmp)
 # Add in the libraries for the llvm-goparse dependencies.
 target_link_libraries(llvm-goparse
   PRIVATE
-  "-L${MPCLIBDIR}" "-lmpc"
-  "-L${MPFRLIBDIR}" "-lmpfr"
-  "-L${GMPLIBDIR}" "-lgmp"
+  "-L${EXTLIBDIR}" "-lmpc" "-lmpfr" "-lgmp"
   )

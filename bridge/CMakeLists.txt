@@ -51,9 +51,8 @@ add_llvm_library(LLVMCppGoFrontEnd
 )
 
 add_dependencies(LLVMCppGoFrontEnd intrinsics_gen)
+add_dependencies(LLVMCppGoFrontEnd libmpfr libmpc libgmp)
 
-include_directories(${MPCINSTALL}/include)
-include_directories(${MPFRINSTALL}/include)
-include_directories(${GMPINSTALL}/include)
+include_directories(${EXTINSTALLDIR}/include)
 include_directories(${GOFRONTEND_SOURCE_DIR})
 
