@@ -420,32 +420,60 @@ function(generate_go_from_script outpath script goos goarch workdir)
   copy_if_different(${tmpfile} ${outpath})
 endfunction()
 
-# This is a temporary CMake rule for creating a system-specific Go file
-# by copying in an archived repo copy. This function needs to go away,
-# and hopefully can be retired once we have an LLVM-specific equivalent
-# of the '-fdump-go-spec' option.
-#
-# Example usage:
-#
-# generate_go_from_archived(outfile goos goarch GODEP <deps>)
+# This function manages the cmake rules for the auto-generated
+# 'gen-sysinfo.go' file, which contains type information derived from
+# compiling a C program that includes various system headers.
 #
 # Unnamed parameters:
 #
-#   * name of generated Go source file
-#   * GOOS setting (target OS)
-#   * GOARCH setting (target architecture)
+#   * name of tmpfile into which to generate provisional Go code
+#   * name of generated Go source file for final Go code
+#   * name of macro temp file to generate
+#   * name of temp object file to write
+#   * path to godumpspec tool
+#   * path to sysinfo.c
 #
-# Named parameters:
+# Names params:
 #
-# GODEP     Things that the generated file should depend on.
+#   * DEPS -- things gen-sysinfo.go is dependent on (ex: config.h)
+#   * CFLAGS -- additional compile options (ex: -I ...)
 #
+function(mkgensysinfo tmpfile outfile macrofile objfile godumpspec sysinfoc)
+  CMAKE_PARSE_ARGUMENTS(ARG "" "" "DEPS;CFLAGS" ${ARGN})
 
-function(generate_go_from_archived outpath goos goarch)
-  CMAKE_PARSE_ARGUMENTS(ARG "" "" "GODEP" ${ARGN})
+  set(ccomp ${CMAKE_C_COMPILER})
+  
+  # Run the host C compiler to generate the object. NB: clang will
+  # accept -fno-eliminate-unused-debug-types but does not actually
+  # implement this functionality.
+  add_custom_command(
+    OUTPUT ${objfile}
+    COMMAND ${ccomp} "-g3" "-c" "-fno-eliminate-unused-debug-types"
+            ${sysinfoc} -o ${objfile} ${ARG_CFLAGS}
+    DEPENDS ${sysinfoc} ${ARG_DEPS}
+    COMMENT "Building sysinfo.o "
+    VERBATIM)
 
-  get_filename_component(outfile "${outpath}" NAME)
-  set(archived "${CMAKE_CURRENT_SOURCE_DIR}/${outfile}.${goos}-${goarch}")
+  # Another compile to build the macro temp file.
+  add_custom_command(
+    OUTPUT ${macrofile}
+    COMMAND ${ccomp} "-E" "-dM"
+            ${sysinfoc} -o ${macrofile} ${ARG_CFLAGS}
+    DEPENDS ${sysinfoc} ${ARG_DEPS}
+    COMMENT "Building sysinfo.c macro temp file"
+    VERBATIM)
 
-  # Create a rule that copies archived copy to output file if different.
-  copy_if_different(${archived} ${outpath})
+  # Next step is to run the llvm-godumpspec utility, which consumes
+  # the two files produced above and generates the Go file in question.
+  add_custom_command(
+    OUTPUT ${tmpfile}
+    COMMAND ${godumpspec}
+    "--macrotmp=${macrofile}" "--object=${objfile}" "--output=${tmpfile}"
+    DEPENDS ${objfile} ${macrofile} ${ARG_DEPS}
+    COMMENT "Generating ${outfile}"
+    VERBATIM)
+
+  # Create a rule that copies tmpfile to output file if different.
+  copy_if_different(${tmpfile} ${outfile})
+  
 endfunction()

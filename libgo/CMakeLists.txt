@@ -10,7 +10,6 @@ message(STATUS "starting libgo configuration.")
 
 include(GoVars)
 include(AutoGenGo)
-include(CheckTypeSize)
 include(ConfigSetup)
 include(GenDeps)
 include(GoPackage)
@@ -39,8 +38,41 @@ set(libffi_srcroot "${CMAKE_CURRENT_SOURCE_DIR}/libffi")
 # Binary root (top level of libgo build).
 set(libgo_binroot "${CMAKE_CURRENT_BINARY_DIR}")
 
+#........................................................................
+#
+# Call a helper to set up libbacktrace. This also creates the libbacktrace
+# targets (libbacktrace_nonpiclib, libbacktrace_piclib).
+setup_libbacktrace()
+
+# Call a helper to set up libffi. This also creates the libffi
+# targets (libffi_nonpiclib, libffi_piclib).
+setup_libffi(${libffi_srcroot})
+
+# Base set of defines for building C code
+set(basedefines "-D_GNU_SOURCE" "-D_LARGEFILE_SOURCE" "-D_FILE_OFFSET_BITS=64")
+
+# Set up various config.h files. Copy the LLVM-generated config.h and
+# related files (the libgo config.h will include the llvm config.h).
+file(MAKE_DIRECTORY "${libgo_binroot}/llvm/Config")
+set(llvmconfigdir "${LLVM_BINARY_DIR}/include/llvm/Config")
+file(COPY "${llvmconfigdir}/config.h" DESTINATION "llvm/Config")
+file(COPY "${llvmconfigdir}/llvm-config.h" DESTINATION "llvm/Config")
+
+set(USING_SPLIT_STACK 1)
+set(USE_LIBFFI 1)
+
+# Generate config.h, included by various C files in libgo/go/runtime
+# and also used to emit gen-sysinfo.go. 
+file(MAKE_DIRECTORY "${libgo_binroot}/runtime")
+set(runtimeconfigdoth ${libgo_binroot}/runtime/config.h)
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake
+  ${runtimeconfigdoth})
+
 # Subdirectory for godumpspec tool.
 add_subdirectory(godumpspec)
+
+#......................................................................
 
 # FIXME: rewrite this to locate llvm-goparse in a more official way
 # set(driver "${bin}/../bin/llvm-goparse")
@@ -199,25 +231,34 @@ mkzdefaultcc("cfg" ${zdefaultcctmp} ${gollvm_driver}
              ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER} EXPORT)
 copy_if_different(${zdefaultcctmp} ${zdefaultccdotgo})
 
-# FIXME: Use a rule that copies in an archived copy of this source
-# file, since for the moment there is no clang support for the
-# -fdump-go-spec option (better to implement that as a bitcode pass,
-# to be submitted in a forthcoming patch).
-set(gensysinfo "${libgo_binroot}/gen-sysinfo.go")
-generate_go_from_archived(${gensysinfo} ${goos} ${goarch})
+# Rules for gen-sysinfo.go
+set(gensysinfodotgo "${libgo_binroot}/gen-sysinfo.go")
+set(gensysinfotmp "${libgo_binroot}/gen-sysinfo.go.tmp")
+set(gensysinfomacrotmp "${libgo_binroot}/sysinfo.macros.txt")
+set(gensysinfoobject "${libgo_binroot}/sysinfo.o")
+get_target_property(godumpspecdir llvm-godumpspec RUNTIME_OUTPUT_DIRECTORY)
+set(godumpspecexec "${godumpspecdir}/llvm-godumpspec")
+set(sysinfoc "${libgo_srcroot}/sysinfo.c")
+set(sysinfoflags ${basedefines})
+list(APPEND sysinfoflags "-I${libgo_binroot}" "-I${libgo_binroot}/runtime")
+mkgensysinfo(${gensysinfotmp} ${gensysinfodotgo}
+  ${gensysinfomacrotmp} ${gensysinfoobject} ${godumpspecexec} ${sysinfoc}
+  CFLAGS ${sysinfoflags}
+  DEPS llvm-godumpspec ${runtimeconfigdoth})
 
 # Command to create runtime_sysinfo.go, via shell script.
 set(mkrsysinfosh "${libgo_scriptroot}/mkrsysinfo.sh")
 set(rsysinfodotgo "${libgo_binroot}/runtime_sysinfo.go")
 generate_go_from_script(${rsysinfodotgo} ${mkrsysinfosh}
-                        ${goos} ${goarch} ${libgo_binroot} DEP ${gensysinfo})
+  ${goos} ${goarch} ${libgo_binroot}
+  DEP ${gensysinfodotgo})
 
 # Command to create sigtab.go, via shell script
 set(sigtabdotgo "${libgo_binroot}/sigtab.go")
 set(mksigtabsh "${libgo_scriptroot}/mksigtab.sh")
 generate_go_from_script(${sigtabdotgo} ${mksigtabsh}
                         ${goos} ${goarch} ${libgo_binroot}
-                        CAPTURE DEP ${gensysinfo})
+                        CAPTURE DEP ${gensysinfodotgo})
 
 # Generation of libcalls.go
 set(libcallsdotgo "${libgo_binroot}/libcalls.go")
@@ -244,9 +285,8 @@ generate_go_from_script(${errnoi} ${mkerrnoish} ${goos} ${goarch}
 # Generated file sysinfo.go
 set(sysinfodotgo "${libgo_binroot}/sysinfo.go")
 set(mksysinfosh "${libgo_scriptroot}/mksysinfo.sh")
-
 generate_go_from_script(${sysinfodotgo} ${mksysinfosh} ${goos} ${goarch}
-                        ${libgo_binroot} DEP ${gensysinfo} ${errnoi})
+                        ${libgo_binroot} DEP ${gensysinfodotgo} ${errnoi})
 
 # Generated file syscall_arch.go
 set(syscallarchdotgo "${libgo_binroot}/syscall_arch.go")
@@ -319,36 +359,9 @@ set_target_properties(libgotool PROPERTIES LINKER_LANGUAGE C)
 # This file contains the list of packages for which we want to run tests.
 file(STRINGS "${libgo_srcroot}/check-packages.txt" checkpackages)
 
-#........................................................................
-#
-# Call a helper to set up libbacktrace. This also creates the libbacktrace
-# targets (libbacktrace_nonpiclib, libbacktrace_piclib).
-setup_libbacktrace()
-
-# Call a helper to set up libffi. This also creates the libffi
-# targets (libffi_nonpiclib, libffi_piclib).
-setup_libffi(${libffi_srcroot})
-
 #......................................................................
 #
 # C portion of libgo
-
-# Copy the LLVM-generated config.h and related files (the libgo config.h
-# will includes the llvm config.h).
-file(MAKE_DIRECTORY "${libgo_binroot}/llvm/Config")
-set(llvmconfigdir "${LLVM_BINARY_DIR}/include/llvm/Config")
-file(COPY "${llvmconfigdir}/config.h" DESTINATION "llvm/Config")
-file(COPY "${llvmconfigdir}/llvm-config.h" DESTINATION "llvm/Config")
-
-
-set(USING_SPLIT_STACK 1)
-set(USE_LIBFFI 1)
-
-# Generate config.h, included by various C files in libgo/go/runtime
-file(MAKE_DIRECTORY "${libgo_binroot}/runtime")
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake
-  ${libgo_binroot}/runtime/config.h)
 
 # Generate new runtime.inc from runtime.inc.raw if anything has changed.
 set(runtimeinc "${libgo_binroot}/runtime.inc")
@@ -426,7 +439,8 @@ foreach(cfile ${runtimecfiles})
 endforeach()
 
 # Compiler flags for C files in the runtime.
-set(baseopts "-Wno-zero-length-array -fsplit-stack -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64")
+set(baseopts "-Wno-zero-length-array -fsplit-stack ")
+string(APPEND baseopts ${basedefines})
 
 # Object library based on libgo C code, PIC-compiled
 add_library(libgo_c_piclib OBJECT EXCLUDE_FROM_ALL ${runtimecpaths})
