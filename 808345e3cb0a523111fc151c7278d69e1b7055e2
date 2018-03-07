@@ -1,0 +1,61 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "118f53c6_552eead6",
+        "filename": "libgo/godumpspec/godumpspec.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-07T17:47:26Z",
+      "side": 1,
+      "message": "-c is not needed? I think only one of -E and -c will have effect.",
+      "range": {
+        "startLine": 16,
+        "startChar": 17,
+        "endLine": 16,
+        "endChar": 19
+      },
+      "revId": "808345e3cb0a523111fc151c7278d69e1b7055e2",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "db1cd5dd_a799124e",
+        "filename": "libgo/godumpspec/godumpspec.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-07T17:47:26Z",
+      "side": 1,
+      "message": "Is it needed? Lines below all have cl:: prefixes.",
+      "revId": "808345e3cb0a523111fc151c7278d69e1b7055e2",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1328e21a_0cb07c86",
+        "filename": "libgo/godumpspec/godumpspec.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 168,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-07T17:47:26Z",
+      "side": 1,
+      "message": "error() will exit if there is an error. I guess this line needs to be before calling error().",
+      "revId": "808345e3cb0a523111fc151c7278d69e1b7055e2",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
