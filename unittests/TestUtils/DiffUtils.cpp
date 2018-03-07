@@ -136,7 +136,7 @@ void complainOnNequal(const std::string &reason,
 {
   std::cerr << reason << "\n";
   std::cerr << "expected dump:\n" << expected << "\n";
-  std::cerr << "statement dump:\n" << actual << "\n";
+  std::cerr << "actual dump:\n" << actual << "\n";
   if (emitDump) {
     static unsigned filecount;
     emitStringToDumpFile("expected", filecount, expected);
@@ -145,4 +145,4 @@ void complainOnNequal(const std::string &reason,
   }
 }
 
-}
+} // end namespace
