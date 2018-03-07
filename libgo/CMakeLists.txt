@@ -39,6 +39,9 @@ set(libffi_srcroot "${CMAKE_CURRENT_SOURCE_DIR}/libffi")
 # Binary root (top level of libgo build).
 set(libgo_binroot "${CMAKE_CURRENT_BINARY_DIR}")
 
+# Subdirectory for godumpspec tool.
+add_subdirectory(godumpspec)
+
 # FIXME: rewrite this to locate llvm-goparse in a more official way
 # set(driver "${bin}/../bin/llvm-goparse")
 get_target_property(driverdir llvm-goparse RUNTIME_OUTPUT_DIRECTORY)
