@@ -448,8 +448,7 @@ set_target_properties(libgo_c_piclib PROPERTIES COMPILE_FLAGS "-fPIC ${baseopts}
 target_include_directories(libgo_c_piclib PUBLIC
   "${libgo_csrcroot}/runtime"
   "${libgo_binroot}/runtime"
-  ${libbacktrace_srcroot}
-  ${libgcc_srcroot})
+  ${libbacktrace_srcroot})
 add_dependencies(libgo_c_piclib runtimeinctarg)
 
 # Library with non-PIC-compiled objects from libgo C code
@@ -458,8 +457,7 @@ set_target_properties(libgo_c_nonpiclib PROPERTIES COMPILE_FLAGS "${baseopts}")
 target_include_directories(libgo_c_nonpiclib PUBLIC
   "${libgo_csrcroot}/runtime"
   "${libgo_binroot}/runtime"
-  ${libbacktrace_srcroot}
-  ${libgcc_srcroot})
+  ${libbacktrace_srcroot})
 add_dependencies(libgo_c_nonpiclib runtimeinctarg)
 
 # Static libgo -- combines non-pic C objects and non-pic Go objects
@@ -487,8 +485,40 @@ set_target_properties(libgo_shared PROPERTIES
 set_target_properties(libgo_shared PROPERTIES OUTPUT_NAME "go")
 target_link_libraries(libgo_shared PUBLIC "-fsplit-stack;-lpthread;-lm")
 
+# Sources for libgobegin.a
+set(libgobegincfiles
+  "${libgo_csrcroot}/runtime/go-main.c")
+# libgobegin.a (static library only)
+add_library(libgobegin STATIC
+  ${libgobegincfiles})
+target_include_directories(libgobegin PUBLIC
+  "${libgo_csrcroot}/runtime"
+  "${libgo_binroot}/runtime")
+# Use -fPIC for libgobegin so that it can be put in a PIE.
+set_target_properties(libgobegin PROPERTIES COMPILE_FLAGS "${baseopts} -fPIC")
+set_target_properties(libgobegin PROPERTIES OUTPUT_NAME "gobegin")
+set_target_properties(libgobegin PROPERTIES
+  ARCHIVE_OUTPUT_DIRECTORY ${libgo_binroot})
+
+# Sources for libgolibbegin.a
+set(libgolibbegincfiles
+  "${libgo_csrcroot}/runtime/go-libmain.c")
+# libgolibbegin.a (static library only)
+add_library(libgolibbegin STATIC
+  ${libgolibbegincfiles})
+target_include_directories(libgolibbegin PUBLIC
+  "${libgo_csrcroot}/runtime"
+  "${libgo_binroot}/runtime")
+# Use -fPIC for libgolibbegin so that it can be put in a PIE.
+set_target_properties(libgolibbegin PROPERTIES
+  COMPILE_FLAGS "${baseopts} -fPIC")
+set_target_properties(libgolibbegin PROPERTIES OUTPUT_NAME "golibbegin")
+set_target_properties(libgolibbegin PROPERTIES
+  ARCHIVE_OUTPUT_DIRECTORY ${libgo_binroot})
+
 # Pseudo-target for all libgo buildables.
-add_custom_target(libgo_all DEPENDS llvm-goparse libgo_static libgo_shared)
+add_custom_target(libgo_all DEPENDS
+  llvm-goparse libgo_static libgo_shared libgobegin libgolibbegin)
 
 #........................................................................
 #
