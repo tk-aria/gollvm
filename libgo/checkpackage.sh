@@ -22,14 +22,15 @@ CUR=""
 for ARG in $*
 do
   case "$ARG" in
-    PACKAGE) CUR=PACKAGE ;;
-    FILES) CUR=FILES ;;
-    GC) CUR=GC ;;
-    GOOS) CUR=GOOS ;;
-    GOARCH) CUR=GOARCH ;;
-    GOLIBS) CUR=GOLIBS ;;
+    ADDTOPATH) CUR=ADDTOPATH ;;
     BASEDIR) CUR=BASEDIR ;;
     BINDIR) CUR=BINDIR ;;
+    FILES) CUR=FILES ;;
+    GC) CUR=GC ;;
+    GOARCH) CUR=GOARCH ;;
+    GOLIBS) CUR=GOLIBS ;;
+    GOOS) CUR=GOOS ;;
+    PACKAGE) CUR=PACKAGE ;;
     *) if [ -z "${CUR}" ]; then
          echo "unexpected stray argument $ARG"
          exit 1
@@ -55,6 +56,9 @@ done
 export GC
 export GOLIBS
 export LD_LIBRARY_PATH="${BINDIR}:${LD_LIBARY_PATH}"
+if [ ! -z "${ADDTOPATH}" ]; then
+  export PATH=${ADDTOPATH}:${PATH}
+fi
 #
 exec ${SHELL} ${BASEDIR}/testsuite/gotest --goarch=${GOARCH} --goos=${GOOS} --basedir=${BASEDIR} --srcdir=${BASEDIR}/go/${PACKAGE} --pkgpath=${PACKAGE} --pkgfiles="${FILES}" ${GOTESTFLAGS}
 
