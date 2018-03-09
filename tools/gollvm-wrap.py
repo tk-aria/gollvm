@@ -110,10 +110,6 @@ def perform():
     os.execv(driver, args)
     u.error("exec failed: %s" % driver)
 
-  # These hold the arguments of -I and -L options
-  largs = []
-  iargs = []
-
   # Create a set of massaged args.
   nargs = []
   skipc = 0
@@ -135,24 +131,6 @@ def perform():
     if clarg == "-o":
       outfile = sys.argv[ii+1]
       skipc = 1
-      continue
-    if clarg == "-I":
-      skipc = 1
-      iarg = sys.argv[ii+1]
-      iargs.append(iarg)
-      continue
-    if clarg.startswith("-I"):
-      iarg = clarg[2:]
-      iargs.append(iarg)
-      continue
-    if clarg == "-L":
-      skipc = 1
-      larg = sys.argv[ii+1]
-      largs.append(larg)
-      continue
-    if clarg.startswith("-L"):
-      larg = clarg[2:]
-      largs.append(larg)
       continue
     if clarg == "-v":
       flag_trace_llinvoc = True
@@ -227,14 +205,8 @@ def perform():
     nargs.append("-o")
     nargs.append(outfile)
 
-  if not largs:
-    golibargs = form_golibargs(sys.argv[0])
-    largs.append(golibargs)
   nargs.append("-L")
-  nargs.append(":".join(largs))
-  if iargs:
-    nargs.append("-I")
-    nargs.append(":".join(iargs))
+  nargs.append(form_golibargs(sys.argv[0]))
   u.verbose(1, "revised args: %s" % " ".join(nargs))
 
   # Invoke gollvm.
