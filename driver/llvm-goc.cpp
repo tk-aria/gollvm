@@ -37,6 +37,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/Program.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
@@ -97,7 +98,7 @@ MinusVOption("v",  cl::desc("Dummy -v arg."), cl::init(false), cl::ZeroOrMore);
 // Generate assembly and not object file. This is a no-op for now.
 static cl::opt<bool>
 CapSOption("S",  cl::desc("Emit assembly as opposed to object code."),
-           cl::init(true), cl::ZeroOrMore);
+           cl::init(false), cl::ZeroOrMore);
 
 static cl::opt<bool>
 NoBackend("nobackend",
@@ -273,28 +274,34 @@ PICBig("fPIC",
         cl::ZeroOrMore,
         cl::init(false));
 
-static std::unique_ptr<ToolOutputFile>
-GetOutputStream() {
-  // Decide if we need "binary" output.
-  bool Binary = false;
-  switch (FileType) {
-  case TargetMachine::CGFT_AssemblyFile:
-    break;
-  case TargetMachine::CGFT_ObjectFile:
-  case TargetMachine::CGFT_Null:
-    Binary = true;
-    break;
-  }
+static TargetMachine::CodeGenFileType getOutputFileType()
+{
+  // FIXME: as a result of including CodeGen/CommandFlags.def, we have
+  // both the -filetype option as well as "-S". For now, honor the
+  // former first, then the latter (eventually we'll want to move away
+  // from CommandFlags.def).
+  TargetMachine::CodeGenFileType ft;
+  if (FileType.getNumOccurrences() > 0)
+    ft = FileType;
+  else if (CapSOption.getNumOccurrences() > 0 && CapSOption)
+    ft = TargetMachine::CGFT_AssemblyFile;
+  else
+    ft = TargetMachine::CGFT_ObjectFile;
+  return ft;
+}
 
+static std::unique_ptr<ToolOutputFile>
+GetOutputStream(std::string outFileName, bool binary)
+{
   // Open the file.
   std::error_code EC;
   sys::fs::OpenFlags OpenFlags = sys::fs::F_None;
-  if (!Binary)
+  if (!binary)
     OpenFlags |= sys::fs::F_Text;
-  auto FDOut = llvm::make_unique<ToolOutputFile>(OutputFileName, EC,
-                                                   OpenFlags);
+  auto FDOut = llvm::make_unique<ToolOutputFile>(outFileName, EC,
+                                                OpenFlags);
   if (EC) {
-    errs() << "error opening " << OutputFileName << ": "
+    errs() << "error opening " << outFileName << ": "
            << EC.message() << '\n';
     return nullptr;
   }
@@ -326,16 +333,18 @@ class BEDiagnosticHandler : public DiagnosticHandler {
 class CompilationOrchestrator {
  public:
   CompilationOrchestrator(const char *argvZero);
-  ~CompilationOrchestrator() { }
+  ~CompilationOrchestrator();
 
   // Various stages in the setup/execution of the compilation.  The
   // convention here is to return false if there was a fatal error, true
   // otherwise.
   bool preamble();
   bool initBridge();
+  bool resolveInputOutput();
   bool invokeFrontEnd();
   bool invokeBridge();
   bool invokeBackEnd();
+  bool invokeAssembler();
 
  private:
   Triple triple_;
@@ -347,9 +356,13 @@ class CompilationOrchestrator {
   std::unique_ptr<TargetMachine> target_;
   std::unique_ptr<Llvm_linemap> linemap_;
   std::unique_ptr<llvm::Module> module_;
+  std::string outFileName_;
+  std::string asmOutFileName_;
+  std::unique_ptr<ToolOutputFile> asmout_;
   std::unique_ptr<ToolOutputFile> out_;
   std::unique_ptr<TargetLibraryInfoImpl> tlii_;
   bool hasError_;
+  bool tmpCreated_;
 
   void createPasses(legacy::PassManager &MPM,
                     legacy::FunctionPassManager &FPM);
@@ -358,12 +371,18 @@ class CompilationOrchestrator {
 CompilationOrchestrator::CompilationOrchestrator(const char *argvZero)
 
     : progname_(argvZero), cgolvl_(CodeGenOpt::Default),
-      olvl_(2), hasError_(false)
+      olvl_(2), hasError_(false), tmpCreated_(false)
 {
   InitializeAllTargets();
   InitializeAllTargetMCs();
   InitializeAllAsmPrinters();
   InitializeAllAsmParsers();
+}
+
+CompilationOrchestrator::~CompilationOrchestrator()
+{
+  if (tmpCreated_)
+    sys::fs::remove(asmOutFileName_);
 }
 
 bool CompilationOrchestrator::preamble()
@@ -554,14 +573,57 @@ bool CompilationOrchestrator::initBridge()
     }
   }
 
-  // Figure out where we are going to send the output.
+  return true;
+}
+
+bool CompilationOrchestrator::resolveInputOutput()
+{
+  TargetMachine::CodeGenFileType ft = getOutputFileType();
+
+  // Decide where we're going to send the output for this compilation.
+  // If the "-o" option was not specified, use the basename of the
+  // first input argument.
+  outFileName_ = OutputFileName;
   if (OutputFileName.empty()) {
-    errs() << "no output file specified (please use -o option)\n";
-    return false;
+    std::string firstFile = InputFilenames[0];
+    size_t dotindex = firstFile.find_last_of(".");
+    if (dotindex == std::string::npos) {
+      errs() << "malformed first input filename '"
+             << firstFile << "' (no extension)\n";
+      return false;
+    }
+    outFileName_ = firstFile.substr(0, dotindex);
+    outFileName_ += (ft == TargetMachine::CGFT_AssemblyFile ? ".s" : ".o");
   }
-  out_ = GetOutputStream();
-  if (!out_)
+
+  // If we're not compiling to assembly, then we need an intermediate
+  // output file into which we'll emit assembly code.
+  if (ft != TargetMachine::CGFT_AssemblyFile) {
+    llvm::SmallString<128> tempFileName;
+    std::error_code tfcEC =
+        llvm::sys::fs::createTemporaryFile("asm", "s", tempFileName);
+    if (tfcEC) {
+      errs() << tfcEC.message() << "\n";
+      return false;
+    }
+    tmpCreated_ = true;
+    sys::RemoveFileOnSignal(tempFileName);
+    asmOutFileName_ = std::string(tempFileName.c_str());
+  } else {
+    asmOutFileName_ = outFileName_;
+  }
+
+  // Open the assembler output file
+  asmout_ = GetOutputStream(asmOutFileName_, /*text*/ false);
+  if (!asmout_)
     return false;
+
+  // Open object file as well if needed
+  if (ft != TargetMachine::CGFT_AssemblyFile) {
+    out_ = GetOutputStream(outFileName_, /*binary*/ true);
+    if (!out_)
+      return false;
+  }
 
   return true;
 }
@@ -649,7 +711,7 @@ bool CompilationOrchestrator::invokeBackEnd()
       createTargetTransformInfoWrapperPass(target_->getTargetIRAnalysis()));
 
   // Codegen setup
-  raw_pwrite_stream *OS = &out_->os();
+  raw_pwrite_stream *OS = &asmout_->os();
   codeGenPasses.add(new TargetLibraryInfoWrapperPass(*tlii_));
   if (target_->addPassesToEmitFile(codeGenPasses, *OS, FileType,
                                    /*DisableVerify=*/ NoVerify)) {
@@ -680,10 +742,46 @@ bool CompilationOrchestrator::invokeBackEnd()
   if (hasError_)
     return false;
 
-  // Declare success.
-  out_->keep();
+  // Keep the resulting output file if -S is in effect.
+  if (getOutputFileType() == TargetMachine::CGFT_AssemblyFile)
+    asmout_->keep();
 
   return true;
+}
+
+bool CompilationOrchestrator::invokeAssembler()
+{
+  if (getOutputFileType() == TargetMachine::CGFT_AssemblyFile)
+    return true;
+
+  ArrayRef<StringRef> searchpaths;
+  auto aspath = sys::findProgramByName("as", searchpaths);
+  if (! aspath ) {
+    errs() << "error: unable to locate path for 'as'" << "\n";
+    return false;
+  }
+
+  std::vector<const char *> args;
+  args.push_back("as");
+  args.push_back(asmOutFileName_.c_str());
+  args.push_back("-o");
+  args.push_back(outFileName_.c_str());
+  args.push_back(nullptr);
+
+  std::string errMsg;
+  bool rval = true;
+  int rc = sys::ExecuteAndWait(*aspath, args.data(),
+                               /*env=*/nullptr, /*Redirects*/{},
+                               /*secondsToWait=*/0,
+                               /*memoryLimit=*/0, &errMsg);
+  if (rc != 0) {
+    errs() << errMsg << "\n";
+    rval = false;
+  } else {
+    out_->keep();
+  }
+
+  return rval;
 }
 
 int main(int argc, char **argv)
@@ -705,13 +803,21 @@ int main(int argc, char **argv)
   if (!orchestrator.initBridge())
     return 2;
 
+  // Determine output file
+  if (!orchestrator.resolveInputOutput())
+    return 3;
+
   // Invoke front end
   if (! orchestrator.invokeFrontEnd())
-    return 3;
+    return 4;
 
   // Invoke back end
   if (! orchestrator.invokeBackEnd())
-    return 4;
+    return 5;
+
+  // Invoke assembler if needed.
+  if (! orchestrator.invokeAssembler())
+    return 6;
 
   // We're done.
   return 0;
