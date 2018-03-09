@@ -34,10 +34,10 @@ include_directories(${MPCINSTALL}/include)
 include_directories(${MPFRINSTALL}/include)
 include_directories(${GMPINSTALL}/include)
 
-# Record the fact that llvm-goparse depends on these libs
+# Record the fact that this unit test depends on these libs
 add_dependencies(GoBackendCoreTests libmpfr libmpc libgmp)
 
-# Add in the archives for the llvm-goparse dependencies.
+# Add in the archives for the unit test dependencies.
 target_link_libraries(GoBackendCoreTests
   PRIVATE
   GoUnitTestUtils

@@ -50,7 +50,7 @@ void DIBuildHelper::createCompileUnitIfNeeded()
   unsigned runtimeVersion = 0; // not sure what would be for Go
   moduleScope_ =
       dibuilder_->createCompileUnit(llvm::dwarf::DW_LANG_Go, primaryFile,
-                                    "llvm-goparse", isOptimized,
+                                    "llvm-goc", isOptimized,
                                     compileFlags, runtimeVersion);
   pushDIScope(moduleScope_);
 }
