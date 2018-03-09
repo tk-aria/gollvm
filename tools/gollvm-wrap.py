@@ -130,10 +130,8 @@ def perform():
       continue
     if clarg == "-S":
       minus_s = True
-      continue
     if clarg == "-c":
       minus_c = True
-      continue
     if clarg == "-o":
       outfile = sys.argv[ii+1]
       skipc = 1
@@ -222,24 +220,12 @@ def perform():
     nargs.append(clarg)
 
   if not outfile:
-    if minus_s:
-      outfile = "%s.s" % gofile[:len(gofile)-3] # strip .go suffix
-    elif minus_c:
-      outfile = "%s.o" % gofile[:len(gofile)-3] # strip .go suffix
-    else:
+    if not minus_s and not minus_c:
       outfile = "a.out"
 
-  if minus_s:
-    asmfile = "%s" % outfile
-  else:
-    asmfile = "%s.s" % outfile
-  nargs.append("-o")
-  nargs.append(asmfile)
-
-  if minus_c:
-    objfile = "%s" % outfile
-  else:
-    objfile = "%s.o" % outfile
+  if outfile:
+    nargs.append("-o")
+    nargs.append(outfile)
 
   if not largs:
     golibargs = form_golibargs(sys.argv[0])
@@ -262,18 +248,9 @@ def perform():
     u.verbose(1, "return code %d from %s" % (rc, " ".join(nargs)))
     return 1
 
-  # Invoke the assembler
-  if not minus_s:
-    ascmd = "as %s -o %s" % (asmfile, objfile)
-    u.verbose(1, "asm command is: %s" % ascmd)
-    rc = u.docmdnf(ascmd)
-    if rc != 0:
-      u.verbose(1, "return code %d from %s" % (rc, ascmd))
-      return 1
-
     # Invoke the linker
     # Right now we use the real gccgo as the linker
-    if not minus_c:
+    if not minus_c and not minus_s:
       bd = os.path.dirname(sys.argv[0])
       driver = "%s/gccgo.real" % bd
       ldflags += ["-o", outfile]
