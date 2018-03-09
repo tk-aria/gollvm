@@ -39,14 +39,14 @@ set(libffi_srcroot "${CMAKE_CURRENT_SOURCE_DIR}/libffi")
 # Binary root (top level of libgo build).
 set(libgo_binroot "${CMAKE_CURRENT_BINARY_DIR}")
 
-# FIXME: rewrite this to locate llvm-goparse in a more official way
-# set(driver "${bin}/../bin/llvm-goparse")
-get_target_property(driverdir llvm-goparse RUNTIME_OUTPUT_DIRECTORY)
-set(gollvm_driver "${driverdir}/llvm-goparse")
+# FIXME: rewrite this to locate llvm-goc in a more official way
+# set(driver "${bin}/../bin/llvm-goc")
+get_target_property(driverdir llvm-goc RUNTIME_OUTPUT_DIRECTORY)
+set(gollvm_driver "${driverdir}/llvm-goc")
 #set(gocompiler ${gollvm_driver})
 
 # FIXME: still need to use wrapper for compilation, since
-# llvm-goparse functionality not yet complete.
+# llvm-goc functionality not yet complete.
 set(gocompiler "gccgo")
 
 # Read in list of all libgo packages
@@ -468,7 +468,7 @@ set_target_properties(libgo_shared PROPERTIES OUTPUT_NAME "go")
 target_link_libraries(libgo_shared PUBLIC "-fsplit-stack;-lpthread;-lm")
 
 # Pseudo-target for all libgo buildables.
-add_custom_target(libgo_all DEPENDS llvm-goparse libgo_static libgo_shared)
+add_custom_target(libgo_all DEPENDS llvm-goc libgo_static libgo_shared)
 
 #........................................................................
 #

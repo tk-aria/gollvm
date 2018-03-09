@@ -30,8 +30,7 @@ function(add_go_package pkgpath dest)
     set(pdir ".")
   endif()
 
-  # Note: currently no 32-bit support, need to revisit once
-  # llvm-goparse supports -m32
+  # Note: currently no 32-bit support, need to revisit once we have -m32
 
   # Dependent packages (*.gox files). The fully qualified paths are
   # needed primarily for correct dependency generation; the actual

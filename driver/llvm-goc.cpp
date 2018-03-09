@@ -1,4 +1,4 @@
-//===-- llvm-goparse.cpp - Debug test driver for go parser for llvm  ------===//
+//===-- llvm-goc.cpp - compiler driver for gollvm  ------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Invokes the gofrontend parser on specified input files.
+// Compiler driver for gollvm. Invokes frontend / backend to compile
+// Go code into assembly and/or object files, and orchestrates process
+// of assembling and linking if needed.
 //
 //===----------------------------------------------------------------------===//
 
