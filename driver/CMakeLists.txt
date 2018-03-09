@@ -1,9 +1,9 @@
 
-# Rules for building llvm-goparse executable.
+# Rules for building llvm-goc executable.
 
 #----------------------------------------------------------------------
 
-# Libraries that we need to link into llvm-goparse
+# Libraries that we need to link into llvm-goc
 set(LLVM_LINK_COMPONENTS
   ${LLVM_TARGETS_TO_BUILD}
   CppGoFrontEnd
@@ -18,23 +18,23 @@ set(LLVM_LINK_COMPONENTS
   Support
   )
 
-# Include directories needed by llvm-goparse
+# Include directories needed by llvm-goc
 include_directories(${GOFRONTEND_SOURCE_DIR})
 include_directories(${BRIDGE_SOURCE_DIR})
 
 # Gofrontend headers use headers from these packages.
 include_directories(${EXTINSTALLDIR}/include)
 
-# The llvm-goparse executable itself
-add_llvm_tool(llvm-goparse
-  goparse-llvm.cpp
+# The llvm-goc executable itself
+add_llvm_tool(llvm-goc
+  llvm-goc.cpp
   )
 
-# Record the fact that llvm-goparse depends on these libs
-add_dependencies(llvm-goparse libmpfr libmpc libgmp)
+# Record the fact that llvm-goc depends on these libs
+add_dependencies(llvm-goc libmpfr libmpc libgmp)
 
-# Add in the libraries for the llvm-goparse dependencies.
-target_link_libraries(llvm-goparse
+# Add in the libraries for the llvm-goc dependencies.
+target_link_libraries(llvm-goc
   PRIVATE
   "-L${EXTLIBDIR}" "-lmpc" "-lmpfr" "-lgmp"
   )

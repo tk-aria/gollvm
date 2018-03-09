@@ -15,10 +15,10 @@ and then a final invocation will be made at the link step, e.g.
   gccgo -L ... somearchive.a ... -o binary
 
 The goal of this shim is to convert invocations of the first form to
-llvm-goparse invocations, and to ignore invocations of the second form
+llvm-goc invocations, and to ignore invocations of the second form
 and just pass them on to gccgo.
 
-We also tack on a set of additional "-L" options to the llvm-goparse
+We also tack on a set of additional "-L" options to the llvm-goc
 invocation so that it can find the go runtime libraries, and intercept
 the "-o" option so that we can run the asembler afterwards.
 
@@ -50,7 +50,7 @@ flag_dryrun = False
 # gccgo only mode
 flag_nollvm = False
 
-# trace llvm-goparse invocations
+# trace llvm-goc invocations
 flag_trace_llinvoc = False
 
 
@@ -83,10 +83,10 @@ def perform():
 
   u.verbose(1, "argv: %s" % " ".join(sys.argv))
 
-  # llvm-goparse should be available somewhere in PATH, error if not
-  lines = u.docmdlines("which llvm-goparse", True)
+  # llvm-goc should be available somewhere in PATH, error if not
+  lines = u.docmdlines("which llvm-goc", True)
   if not lines:
-    u.error("no 'llvm-goparse' in PATH -- can't proceed")
+    u.error("no 'llvm-goc' in PATH -- can't proceed")
 
   # Perform a walk of the command line arguments looking for Go files.
   reg = re.compile(r"^\S+\.go$")
@@ -252,9 +252,9 @@ def perform():
   u.verbose(1, "revised args: %s" % " ".join(nargs))
 
   # Invoke gollvm.
-  driver = "llvm-goparse"
+  driver = "llvm-goc"
   u.verbose(1, "driver path is %s" % driver)
-  nargs = ["llvm-goparse"] + nargs
+  nargs = ["llvm-goc"] + nargs
   if flag_trace_llinvoc:
     u.verbose(0, "+ %s" % " ".join(nargs))
   rc = subprocess.call(nargs)
@@ -350,11 +350,11 @@ def usage(msgarg):
     --install   installs wrapper into gccgo directory
 
     Options (via GOLLVM_WRAP_OPTIONS):
-    -t          trace llvm-goparse executions
+    -t          trace llvm-goc executions
     -d          increase debug msg verbosity level
     -e          show commands being invoked
     -D          dry run (echo cmds but do not execute)
-    -G          pure gccgo compile (no llvm-goparse invocations)
+    -G          pure gccgo compile (no llvm-goc invocations)
 
     """ % os.path.basename(sys.argv[0])
   sys.exit(1)

@@ -78,7 +78,7 @@ set(BRIDGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bridge)
 # calls into LLVM IR.
 add_subdirectory(bridge)
 
-# Subdirectory for llvm-goparse executable.
+# Subdirectory for compiler driver executable.
 add_subdirectory(driver)
 
 # Go standard library

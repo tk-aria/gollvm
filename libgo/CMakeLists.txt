@@ -74,14 +74,14 @@ add_subdirectory(godumpspec)
 
 #......................................................................
 
-# FIXME: rewrite this to locate llvm-goparse in a more official way
-# set(driver "${bin}/../bin/llvm-goparse")
-get_target_property(driverdir llvm-goparse RUNTIME_OUTPUT_DIRECTORY)
-set(gollvm_driver "${driverdir}/llvm-goparse")
+# FIXME: rewrite this to locate llvm-goc in a more official way
+# set(driver "${bin}/../bin/llvm-goc")
+get_target_property(driverdir llvm-goc RUNTIME_OUTPUT_DIRECTORY)
+set(gollvm_driver "${driverdir}/llvm-goc")
 #set(gocompiler ${gollvm_driver})
 
 # FIXME: still need to use wrapper for compilation, since
-# llvm-goparse functionality not yet complete.
+# llvm-goc functionality not yet complete.
 set(gocompiler "gccgo")
 
 # Read in list of all libgo packages
@@ -518,7 +518,7 @@ set_target_properties(libgolibbegin PROPERTIES
 
 # Pseudo-target for all libgo buildables.
 add_custom_target(libgo_all DEPENDS
-  llvm-goparse libgo_static libgo_shared libgobegin libgolibbegin)
+  llvm-goc libgo_static libgo_shared libgobegin libgolibbegin)
 
 #........................................................................
 #
