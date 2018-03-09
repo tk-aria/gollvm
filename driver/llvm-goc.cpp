@@ -94,6 +94,11 @@ MinusCOption("c",  cl::desc("Dummy -c arg."), cl::init(false), cl::ZeroOrMore);
 static cl::opt<bool>
 MinusVOption("v",  cl::desc("Dummy -v arg."), cl::init(false), cl::ZeroOrMore);
 
+// Generate assembly and not object file. This is a no-op for now.
+static cl::opt<bool>
+CapSOption("S",  cl::desc("Emit assembly as opposed to object code."),
+           cl::init(true), cl::ZeroOrMore);
+
 static cl::opt<bool>
 NoBackend("nobackend",
           cl::desc("Stub out back end invocation."),
