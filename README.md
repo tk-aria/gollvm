@@ -50,7 +50,7 @@ Within <workarea>/llvm/tools/gollvm, the following directories are of interest:
 
 .../llvm/tools/gollvm/driver:
 
- * contains build rules and source code for llvm-goparse
+ * contains build rules and source code for llvm-goc
 
 .../llvm/tools/gollvm/gofrontend:
 
@@ -64,26 +64,26 @@ Within <workarea>/llvm/tools/gollvm, the following directories are of interest:
 
  * source code for the unit tests
 
-## Building and running llvm-goparse
+## Building and running llvm-goc
 
-The executable llvm-goparse is a driver program that runs the gofrontend parser on a specific go program, with the LLVM-specific backend instance connected to the parser. This program not fully usable on its own at the moment; using it requries a companion gccgo installation.
+The executable llvm-goc is the main compiler driver for gollvm; it functions as a compiler (consuming source for a Go package and producing an object file) and will eventually include any necessary invocations of the linker or assembler. This program not fully usable on its own at the moment; using it requries a companion gccgo installation.
 
 ```
 // From within <workarea>/build.opt:
 
-% ninja llvm-goparse
+% ninja llvm-goc
 % cat micro.go
 package foo
 func Bar() int {
 	return 1
 }
-% ./bin/llvm-goparse -fgo-pkgpath=foo -O3 -o micro.s micro.go
+% ./bin/llvm-goc -fgo-pkgpath=foo -O3 -o micro.s micro.go
 %
 ```
 
-## Using llvm-goparse in combination with a GCCGO installation
+## Using llvm-goc in combination with a GCCGO installation
 
-At the moment llvm-goparse is not capable of building the Go libraries + runtime (libgo), which makes it difficult/unwieldy to use for running actual Go programs. As an interim workaround, I've written a shim/wrapper script that allows you to use llvm-goparse in combination with an existing GCCGO installation, using gccgo for the runtime/libraries and the linking step, but llvm-goparse for any compilation.
+At the moment the CMake build/install support for libgo is not entirely on line, which makes it difficult/unwieldy to use for running actual Go programs. As an interim workaround, I've written a shim/wrapper script that allows you to use llvm-goc in combination with an existing GCCGO installation, using gccgo for the runtime/libraries and the linking step, but llvm-goc for any compilation.
 
 The wrapper script can be found in the tools/ subdir. To use it, build a copy of GCCGO and run "make install" to copy the bits into an install directory. From the GCCGO install directory, you can insert the wrapper by running it with the "--install" option:
 
@@ -99,7 +99,7 @@ The wrapper script can be found in the tools/ subdir. To use it, build a copy of
 
 ```
 
-At this point you can now run "go build", "go run", etc using GCCGO -- the compilation steps will be performed by llvm-goparse, and the remainder (linking, incorporation of runtime) will be done by gccgo. Example:
+At this point you can now run "go build", "go run", etc using GCCGO -- the compilation steps will be performed by llvm-goc, and the remainder (linking, incorporation of runtime) will be done by gccgo. Example:
 
 ```
 % cd $GOPATH/src/himom
@@ -109,7 +109,7 @@ hi mom!
 hi mom!
 % GOLLVM_WRAP_OPTIONS=-t go run -compiler gccgo himom.go
 # command-line-arguments
-+ llvm-goparse -I $WORK -c -g -m64 -fgo-relative-import-path=_/mygopath/src/himom -o $WORK/command-line-arguments/_obj/_go_.o.s ./himom.go -L /my/gccgo/install/lib64/go/8.0.0/x86_64-pc-linux-gnu
++ llvm-goc -I $WORK -c -g -m64 -fgo-relative-import-path=_/mygopath/src/himom -o $WORK/command-line-arguments/_obj/_go_.o.s ./himom.go -L /my/gccgo/install/lib64/go/8.0.0/x86_64-pc-linux-gnu
 hi mom
 %
 ```
