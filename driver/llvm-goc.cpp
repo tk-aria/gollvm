@@ -65,11 +65,15 @@ InputFilenames(cl::Positional,
                cl::desc("<input go source files>"),
                cl::OneOrMore);
 
-static cl::opt<std::string>
-IncludeDirs("I", cl::desc("<include dirs>"));
+static cl::list<std::string>
+IncludeDirs("I", cl::desc("Include directory to be searched for packages."),
+            cl::Prefix,
+            cl::ZeroOrMore);
 
-static cl::opt<std::string>
-LibDirs("L", cl::desc("<system library dirs>"));
+static cl::list<std::string>
+LibDirs("L", cl::desc("Library directory to be added to search path"),
+        cl::Prefix,
+        cl::ZeroOrMore);
 
 // Determine optimization level.
 static cl::opt<char>
@@ -552,9 +556,7 @@ bool CompilationOrchestrator::initBridge()
 
   // Include dirs
   if (! IncludeDirs.empty()) {
-    std::stringstream ss(IncludeDirs);
-    std::string dir;
-    while(std::getline(ss, dir, ':')) {
+    for (auto dir : IncludeDirs) {
       struct stat st;
       if (stat (dir.c_str(), &st) == 0 && S_ISDIR (st.st_mode))
         go_add_search_path(dir.c_str());
@@ -564,9 +566,7 @@ bool CompilationOrchestrator::initBridge()
   // Library dirs
   // TODO: add version, architecture dirs
   if (! LibDirs.empty()) {
-    std::stringstream ss(LibDirs);
-    std::string dir;
-    while(std::getline(ss, dir, ':')) {
+    for (auto dir : LibDirs) {
       struct stat st;
       if (stat (dir.c_str(), &st) == 0 && S_ISDIR (st.st_mode))
         go_add_search_path(dir.c_str());
