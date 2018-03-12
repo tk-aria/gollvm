@@ -52,7 +52,6 @@
 #include <string>
 #include <system_error>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <unistd.h>
 
 using namespace llvm;
@@ -340,6 +339,14 @@ class BEDiagnosticHandler : public DiagnosticHandler {
   }
 };
 
+// Are we in "assemble" mode (all inputs are .s files) or "compile" mode
+// (all inputs are *.go files)?
+enum CompileMode {
+  UnknownCompileMode,
+  CompileAssemblyMode,
+  CompileGoMode
+};
+
 // Helper class for managing the overall Go compilation process.
 
 class CompilationOrchestrator {
@@ -373,8 +380,19 @@ class CompilationOrchestrator {
   std::unique_ptr<ToolOutputFile> asmout_;
   std::unique_ptr<ToolOutputFile> out_;
   std::unique_ptr<TargetLibraryInfoImpl> tlii_;
+  CompileMode compileMode_;
   bool hasError_;
   bool tmpCreated_;
+
+  CompileMode compileMode() const { return compileMode_; }
+  bool setCompileMode(CompileMode mode) {
+    bool mixedModeError = false;
+    if (compileMode_ == UnknownCompileMode)
+      compileMode_ = mode;
+    else if (compileMode_ != mode)
+      mixedModeError = true;
+    return mixedModeError;
+  }
 
   void createPasses(legacy::PassManager &MPM,
                     legacy::FunctionPassManager &FPM);
@@ -383,7 +401,8 @@ class CompilationOrchestrator {
 CompilationOrchestrator::CompilationOrchestrator(const char *argvZero)
 
     : progname_(argvZero), cgolvl_(CodeGenOpt::Default),
-      olvl_(2), hasError_(false), tmpCreated_(false)
+      olvl_(2), compileMode_(UnknownCompileMode),
+      hasError_(false), tmpCreated_(false)
 {
   InitializeAllTargets();
   InitializeAllTargetMCs();
@@ -565,8 +584,7 @@ bool CompilationOrchestrator::initBridge()
   // Include dirs
   if (! IncludeDirs.empty()) {
     for (auto dir : IncludeDirs) {
-      struct stat st;
-      if (stat (dir.c_str(), &st) == 0 && S_ISDIR (st.st_mode))
+      if (sys::fs::is_directory(dir))
         go_add_search_path(dir.c_str());
     }
   }
@@ -586,20 +604,62 @@ bool CompilationOrchestrator::initBridge()
 
 bool CompilationOrchestrator::resolveInputOutput()
 {
-  TargetMachine::CodeGenFileType ft = getOutputFileType();
+  // What 'mode' are we operating in? If all inputs are *.s files,
+  // then we're in assemble mode; if all inputs are *.go files, we're
+  // in compile mode. No support for a mix of *.s and *.go files.
+  bool mixedModeError = false;
+  if (InputFilenames.size() == 0) {
+    errs() << "error: no input files supplied.\n";
+    return false;
+  }
+  for (auto &fn : InputFilenames) {
+    // Check for existence of input file.
+    if (!sys::fs::exists(fn)) {
+      errs() << "error: input file '"
+             << fn << "' does not exist\n";
+      return false;
+    }
+    size_t dotindex = fn.find_last_of(".");
+    if (dotindex == std::string::npos) {
+      errs() << "error: malformed input file '"
+             << fn << "' (no extension)\n";
+      return false;
+    }
+    std::string extension = fn.substr(dotindex);
+    if (extension.compare(".s") == 0) {
+      mixedModeError = setCompileMode(CompileAssemblyMode);
+      if (mixedModeError)
+        break;
+    } else if (extension.compare(".go") == 0) {
+      mixedModeError = setCompileMode(CompileGoMode);
+      if (mixedModeError)
+        break;
+    } else {
+      errs() << "error: unknown input file '"
+             << fn << "' (extension must be '.s' or '.go')\n";
+      return false;
+    }
+  }
+  if (mixedModeError) {
+    errs() << "error: mixing of assembler (*.s) and Go (*.go) "
+           << "source files not supported.\n";
+    return false;
+  }
+  if (CapSOption && compileMode_ == CompileAssemblyMode) {
+    errs() << "error: -S option not valid if input files "
+           << "are assembly source.\n";
+    return false;
+  }
 
   // Decide where we're going to send the output for this compilation.
   // If the "-o" option was not specified, use the basename of the
   // first input argument.
   outFileName_ = OutputFileName;
+  TargetMachine::CodeGenFileType ft = getOutputFileType();
   if (OutputFileName.empty()) {
     std::string firstFile = InputFilenames[0];
     size_t dotindex = firstFile.find_last_of(".");
-    if (dotindex == std::string::npos) {
-      errs() << "malformed first input filename '"
-             << firstFile << "' (no extension)\n";
-      return false;
-    }
+    assert(dotindex != std::string::npos);
     outFileName_ = firstFile.substr(0, dotindex);
     outFileName_ += (ft == TargetMachine::CGFT_AssemblyFile ? ".s" : ".o");
   }
@@ -638,6 +698,10 @@ bool CompilationOrchestrator::resolveInputOutput()
 
 bool CompilationOrchestrator::invokeFrontEnd()
 {
+  // If we're in "assemble" mode, no need to invoke the compiler
+  if (compileMode_ == CompileAssemblyMode)
+    return true;
+
   // Collect the input files and kick off the front end
   // Kick off the front end
   unsigned nfiles = InputFilenames.size();
@@ -702,6 +766,10 @@ void CompilationOrchestrator::createPasses(legacy::PassManager &MPM,
 
 bool CompilationOrchestrator::invokeBackEnd()
 {
+  // If we're in "assemble" mode, no need to invoke the compiler
+  if (compileMode_ == CompileAssemblyMode)
+    return true;
+
   tlii_.reset(new TargetLibraryInfoImpl(triple_));
 
   // Set up module and function passes
@@ -771,7 +839,12 @@ bool CompilationOrchestrator::invokeAssembler()
 
   std::vector<const char *> args;
   args.push_back("as");
-  args.push_back(asmOutFileName_.c_str());
+  if (compileMode_ == CompileAssemblyMode) {
+    for (auto &fn : InputFilenames)
+      args.push_back(fn.c_str());
+  } else {
+    args.push_back(asmOutFileName_.c_str());
+  }
   args.push_back("-o");
   args.push_back(outFileName_.c_str());
   args.push_back(nullptr);
