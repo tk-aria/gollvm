@@ -75,6 +75,11 @@ LibDirs("L", cl::desc("Library directory to be added to search path"),
         cl::Prefix,
         cl::ZeroOrMore);
 
+static cl::list<std::string>
+PreprocDefs("D", cl::desc("Preprocessor definitions (currently ignored)."),
+            cl::Prefix,
+            cl::ZeroOrMore);
+
 // Determine optimization level.
 static cl::opt<char>
 OptLevel("O",
@@ -98,6 +103,9 @@ static cl::opt<bool>
 MinusCOption("c",  cl::desc("Dummy -c arg."), cl::init(false), cl::ZeroOrMore);
 static cl::opt<bool>
 MinusVOption("v",  cl::desc("Dummy -v arg."), cl::init(false), cl::ZeroOrMore);
+static cl::opt<bool>
+XasmCppOption("xassembler-with-cpp", cl::desc("Dummy -xassembler-with-cpp arg."), cl::init(false), cl::ZeroOrMore);
+
 
 // Generate assembly and not object file. This is a no-op for now.
 static cl::opt<bool>
