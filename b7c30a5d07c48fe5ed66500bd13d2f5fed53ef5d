@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "88fb20fa_d32b3bc8",
+        "filename": "libgo/godumpspec/mtokenizer/macro-tokenizer.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 80,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-13T21:07:54Z",
+      "side": 1,
+      "message": "What about things like 1e-5? Do we process the +/- sign here? Or they don\u0027t appear in the generated macro file?",
+      "revId": "b7c30a5d07c48fe5ed66500bd13d2f5fed53ef5d",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
