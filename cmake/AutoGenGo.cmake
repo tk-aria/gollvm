@@ -51,7 +51,7 @@ function(mkversion goos goarch outfile bindir srcroot scriptroot)
   # that build with a second run of cmake. For this reason looking at
   # things like CMAKE_INSTALL_PREFIX doesn't make much sense (it will
   # simply be set to /usr/local). This area needs some work.
-  file(APPEND ${outfile} "func init() { DefaultGoroot = \"$(bindir)\" }\n")
+  file(APPEND ${outfile} "func init() { DefaultGoroot = \"${bindir}\" }\n")
 
   # Compiler version
   file(STRINGS "${srcroot}/../VERSION" rawver)
@@ -229,7 +229,7 @@ function(mkobjabi outfile binroot srcroot)
 
   # FIXME: see the comment in mkversion above relating to the GoRoot
   # setting (we may not know installation dir at time of cmake run).
-  file(APPEND ${outfile} "func init() { defaultGOROOT = \"$(binroot)\" }\n")
+  file(APPEND ${outfile} "func init() { defaultGOROOT = \"${binroot}\" }\n")
 
   file(APPEND ${outfile} "const defaultGO386 = `sse2`\n")
   file(APPEND ${outfile} "const defaultGOARM = `5`\n")
