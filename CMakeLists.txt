@@ -21,6 +21,8 @@ set(MCONF1 "CPPFLAGS=-I/usr/local/include")
 set(MCONF2 "LDFLAGS=-L/usr/local/lib")
 endif()
 
+set(gollvm_binroot "${CMAKE_CURRENT_BINARY_DIR}")
+
 # Open issue: should the configure cmds below be run with
 # "CC=${CMAKE_BINARY_DIR}/bin/clang"
 

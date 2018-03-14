@@ -451,6 +451,9 @@ add_library(libgo_static STATIC
   ${libgo_go_nonpicobjects}
   $<TARGET_OBJECTS:libbacktrace_nonpiclib>
   $<TARGET_OBJECTS:libffi_nonpiclib>)
+set_target_properties(libgo_static PROPERTIES OUTPUT_NAME "go")
+set_target_properties(libgo_static PROPERTIES
+  ARCHIVE_OUTPUT_DIRECTORY ${libgo_binroot})
 
 # HACK: undo LLVM default here.
 string(REPLACE "-Wl,-z,defs" "" CMAKE_SHARED_LINKER_FLAGS
