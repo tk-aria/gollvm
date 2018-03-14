@@ -25,7 +25,7 @@ set(gocompiler "gccgo")
 set(cmd_srcroot "${GOLLVM_SOURCE_DIR}/gofrontend/libgo/go/cmd")
 
 set(gotools_binroot "${CMAKE_CURRENT_BINARY_DIR}")
-set(libgo_binroot "${CMAKE_CURRENT_BINARY_DIR}/../libgo")
+set(libgo_binroot "${gollvm_binroot}/libgo")
 
 set(libgotool_archive "${libgo_binroot}/libgotool.a")
 
