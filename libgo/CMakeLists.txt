@@ -6,6 +6,10 @@ if(DISABLE_LIBGO_BUILD)
   return()
 endif()
 
+# Pick up any extra Go compiler flags specified via
+# "cmake -DGOLLVM_EXTRA_GOCFLAGS=..."
+set(libgo_extra_gocflags ${GOLLVM_EXTRA_GOCFLAGS})
+
 message(STATUS "starting libgo configuration.")
 
 include(GoVars)
@@ -295,7 +299,7 @@ foreach( pack ${allpackages})
   endif()
 
   # Call into helper to create rules for package.
-  add_go_package("${pack}" "${libgo_binroot}" GOSRC ${packsrcs} GODEP ${packdeps} GOCFLAGS ${packopts} ${nopic})
+  add_go_package("${pack}" "${libgo_binroot}" GOSRC ${packsrcs} GODEP ${packdeps} GOCFLAGS ${packopts} ${nopic} ${libgo_extra_gocflags})
 
   # Accumulate libgo objects.
   if(${found} EQUAL -1)

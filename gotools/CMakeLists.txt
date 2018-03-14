@@ -6,6 +6,10 @@ if(DISABLE_LIBGO_BUILD)
   return()
 endif()
 
+# Pick up any extra Go compiler flags specified via
+# "cmake -DGOLLVM_EXTRA_GOCFLAGS=..."
+set(gotools_extra_gocflags ${GOLLVM_EXTRA_GOCFLAGS})
+
 include(GoProgram)
 
 message(STATUS "starting gotools configuration.")
@@ -76,6 +80,7 @@ foreach(tool ${tools})
       ${libgo_binroot} ${gotools_binroot}
       GOSRC ${toolfiles}
       GOLIB ${libgotool_archive}
+      GOCFLAGS ${gotools_extra_gocflags}
       GODEP libgotool libgo_shared libgo_static)
     list(APPEND allgotools ${tool_target})
   endif()
