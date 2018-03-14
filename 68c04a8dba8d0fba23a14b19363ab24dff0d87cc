@@ -1,0 +1,158 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "cbd0fbf3_b7e579c8",
+        "filename": "libgo/godumpspec/mparser/macro-parser.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-14T18:19:39Z",
+      "side": 1,
+      "message": "Is this to capture empty macro?",
+      "range": {
+        "startLine": 29,
+        "startChar": 0,
+        "endLine": 34,
+        "endChar": 3
+      },
+      "revId": "68c04a8dba8d0fba23a14b19363ab24dff0d87cc",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "75063e4f_aa1013c3",
+        "filename": "libgo/godumpspec/mparser/macro-parser.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 128,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-14T18:19:39Z",
+      "side": 1,
+      "message": "The if above should have captured VisitedEmpty.",
+      "revId": "68c04a8dba8d0fba23a14b19363ab24dff0d87cc",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2c355053_4c841452",
+        "filename": "libgo/godumpspec/mparser/macro-parser.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 146,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-14T18:19:39Z",
+      "side": 1,
+      "message": "Should we set expect_operand here also?",
+      "revId": "68c04a8dba8d0fba23a14b19363ab24dff0d87cc",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "868f05ff_ea98eb42",
+        "filename": "libgo/godumpspec/mparser/macro-parser.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 211,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-14T18:19:39Z",
+      "side": 1,
+      "message": "Is there a reason to do two passes?",
+      "revId": "68c04a8dba8d0fba23a14b19363ab24dff0d87cc",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d4d57555_0493b5a5",
+        "filename": "libgo/godumpspec/mparser/macro-parser.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 234,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-14T18:19:39Z",
+      "side": 1,
+      "message": "visitMacro should catch this already, right? (by setting mstate tp VistedEmpty)",
+      "range": {
+        "startLine": 231,
+        "startChar": 0,
+        "endLine": 234,
+        "endChar": 15
+      },
+      "revId": "68c04a8dba8d0fba23a14b19363ab24dff0d87cc",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "967c29c5_cc9631f6",
+        "filename": "libgo/godumpspec/mparser/macro-parser.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-14T18:19:39Z",
+      "side": 1,
+      "message": "Would be good to have some comment about what the second arg is for.",
+      "revId": "68c04a8dba8d0fba23a14b19363ab24dff0d87cc",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0dbfd955_4690e793",
+        "filename": "unittests/GoDumpSpec/ParserTests.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-14T18:19:39Z",
+      "side": 1,
+      "message": "Too many empty lines.",
+      "range": {
+        "startLine": 103,
+        "startChar": 0,
+        "endLine": 104,
+        "endChar": 0
+      },
+      "revId": "68c04a8dba8d0fba23a14b19363ab24dff0d87cc",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9c023686_d819f3cc",
+        "filename": "unittests/GoDumpSpec/ParserTests.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 165,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-14T18:19:39Z",
+      "side": 1,
+      "message": "In C program I think the #define\u0027d EX value would be used (I am considering\nenum { EX \u003d 9 };\n#define E1 10\n#define E2 (EX + E1)\n#define EX \"ignored\"\n).\nIs there a case that we should pick the enum value instead?",
+      "revId": "68c04a8dba8d0fba23a14b19363ab24dff0d87cc",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
