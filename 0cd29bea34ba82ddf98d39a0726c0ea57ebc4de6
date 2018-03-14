@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b953157e_541ae5e4",
+        "filename": "libgo/CMakeLists.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 477,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-14T15:28:18Z",
+      "side": 1,
+      "message": "Maybe add a comment about -fPIC flag.",
+      "range": {
+        "startLine": 477,
+        "startChar": 71,
+        "endLine": 477,
+        "endChar": 76
+      },
+      "revId": "0cd29bea34ba82ddf98d39a0726c0ea57ebc4de6",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
