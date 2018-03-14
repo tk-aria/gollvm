@@ -34,6 +34,24 @@
       "revId": "b7c30a5d07c48fe5ed66500bd13d2f5fed53ef5d",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f12a806a_c33a4520",
+        "filename": "libgo/godumpspec/mtokenizer/macro-tokenizer.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 80,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-14T15:01:17Z",
+      "side": 1,
+      "message": "Ok. Yeah, as we are generating Go code from it, this is probably fine.",
+      "parentUuid": "191384b6_e0132b5e",
+      "revId": "b7c30a5d07c48fe5ed66500bd13d2f5fed53ef5d",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
