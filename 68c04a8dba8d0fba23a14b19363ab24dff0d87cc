@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "bc85429c_0827322d",
+        "filename": "libgo/godumpspec/mparser/macro-parser.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-03-15T17:17:09Z",
+      "side": 1,
+      "message": "This code is present just to locate the boundary line between the macro name and the macro body, e.g. \n \n   #define FOO BAR+2\n              ^",
+      "parentUuid": "cbd0fbf3_b7e579c8",
+      "range": {
+        "startLine": 29,
+        "startChar": 0,
+        "endLine": 34,
+        "endChar": 3
+      },
+      "revId": "68c04a8dba8d0fba23a14b19363ab24dff0d87cc",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "75063e4f_aa1013c3",
         "filename": "libgo/godumpspec/mparser/macro-parser.cpp",
         "patchSetId": 3
@@ -36,6 +60,24 @@
       "writtenOn": "2018-03-14T18:19:39Z",
       "side": 1,
       "message": "The if above should have captured VisitedEmpty.",
+      "revId": "68c04a8dba8d0fba23a14b19363ab24dff0d87cc",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8259d510_da0aa2c1",
+        "filename": "libgo/godumpspec/mparser/macro-parser.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 128,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-03-15T17:17:09Z",
+      "side": 1,
+      "message": "Good point. Will revise.",
+      "parentUuid": "75063e4f_aa1013c3",
       "revId": "68c04a8dba8d0fba23a14b19363ab24dff0d87cc",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
@@ -59,6 +101,24 @@
     },
     {
       "key": {
+        "uuid": "65d80677_47ee2589",
+        "filename": "libgo/godumpspec/mparser/macro-parser.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 146,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-03-15T17:17:09Z",
+      "side": 1,
+      "message": "To match GCC\u0027s implementation, no. I think the intent is to allow unary as well as binary minus, e.g. \n\n  #define FOO -BAR + ABC",
+      "parentUuid": "2c355053_4c841452",
+      "revId": "68c04a8dba8d0fba23a14b19363ab24dff0d87cc",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "868f05ff_ea98eb42",
         "filename": "libgo/godumpspec/mparser/macro-parser.cpp",
         "patchSetId": 3
@@ -73,6 +133,24 @@
       "revId": "68c04a8dba8d0fba23a14b19363ab24dff0d87cc",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "324e0c10_19ef7ed7",
+        "filename": "libgo/godumpspec/mparser/macro-parser.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 211,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-03-15T17:17:09Z",
+      "side": 1,
+      "message": "Good point. I think at one point in a previous version of the code it was needed, but not here. I will remove.",
+      "parentUuid": "868f05ff_ea98eb42",
+      "revId": "68c04a8dba8d0fba23a14b19363ab24dff0d87cc",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     },
     {
       "key": {
@@ -96,6 +174,30 @@
       "revId": "68c04a8dba8d0fba23a14b19363ab24dff0d87cc",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "21b08512_5e906578",
+        "filename": "libgo/godumpspec/mparser/macro-parser.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 234,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-03-15T17:17:09Z",
+      "side": 1,
+      "message": "Yup, good point, sorry for the sloppy code. I\u0027ll fix it up.",
+      "parentUuid": "d4d57555_0493b5a5",
+      "range": {
+        "startLine": 231,
+        "startChar": 0,
+        "endLine": 234,
+        "endChar": 15
+      },
+      "revId": "68c04a8dba8d0fba23a14b19363ab24dff0d87cc",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     },
     {
       "key": {
@@ -139,6 +241,30 @@
     },
     {
       "key": {
+        "uuid": "1f4a0da1_97c55784",
+        "filename": "unittests/GoDumpSpec/ParserTests.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-03-15T17:17:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0dbfd955_4690e793",
+      "range": {
+        "startLine": 103,
+        "startChar": 0,
+        "endLine": 104,
+        "endChar": 0
+      },
+      "revId": "68c04a8dba8d0fba23a14b19363ab24dff0d87cc",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "9c023686_d819f3cc",
         "filename": "unittests/GoDumpSpec/ParserTests.cpp",
         "patchSetId": 3
@@ -150,6 +276,24 @@
       "writtenOn": "2018-03-14T18:19:39Z",
       "side": 1,
       "message": "In C program I think the #define\u0027d EX value would be used (I am considering\nenum { EX \u003d 9 };\n#define E1 10\n#define E2 (EX + E1)\n#define EX \"ignored\"\n).\nIs there a case that we should pick the enum value instead?",
+      "revId": "68c04a8dba8d0fba23a14b19363ab24dff0d87cc",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "557d52e6_ef3ad898",
+        "filename": "unittests/GoDumpSpec/ParserTests.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 165,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-03-15T17:17:09Z",
+      "side": 1,
+      "message": "Yes, it is counter-intuitive, but I\u0027m doing this to match the current behavior of GCC. Here is an example:\n\n% cat exs.c\nenum { EEEX \u003d 9 };\n#define EEEX 3\nint r[EEEX];\n% ./gotools/check-gcc -c -fdump-go-spec\u003dt exs.c\n% fgrep EEEX t\nconst _EEEX \u003d 9\n%\n\nI will check with Ian to make sure this is WAI.",
+      "parentUuid": "9c023686_d819f3cc",
       "revId": "68c04a8dba8d0fba23a14b19363ab24dff0d87cc",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
