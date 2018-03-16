@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1f6e90d6_fa14bf50",
+        "filename": "cmake/AutoGenGo.cmake",
+        "patchSetId": 2
+      },
+      "lineNbr": 436,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-16T17:23:34Z",
+      "side": 1,
+      "message": "Named",
+      "range": {
+        "startLine": 436,
+        "startChar": 2,
+        "endLine": 436,
+        "endChar": 7
+      },
+      "revId": "11defeba02caaa590beb5d589ad83ac7f3bade9e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8c7d4716_b76bd361",
+        "filename": "cmake/AutoGenGo.cmake",
+        "patchSetId": 2
+      },
+      "lineNbr": 454,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-16T17:23:34Z",
+      "side": 1,
+      "message": "Remove trailing space.",
+      "range": {
+        "startLine": 454,
+        "startChar": 31,
+        "endLine": 454,
+        "endChar": 32
+      },
+      "revId": "11defeba02caaa590beb5d589ad83ac7f3bade9e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
