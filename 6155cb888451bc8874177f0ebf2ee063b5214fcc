@@ -16,6 +16,24 @@
       "revId": "6155cb888451bc8874177f0ebf2ee063b5214fcc",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "22bc8c36_33ce81b8",
+        "filename": "tools/gollvm-wrap.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 209,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-03-17T17:36:42Z",
+      "side": 1,
+      "message": "Hmm, yes, I agree. I will update accordingly.",
+      "parentUuid": "28ff3edf_e4234c19",
+      "revId": "6155cb888451bc8874177f0ebf2ee063b5214fcc",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
