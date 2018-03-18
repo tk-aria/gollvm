@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ade06a9d_218fa848",
+        "filename": "driver/llvm-goc.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 391,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-18T02:44:20Z",
+      "side": 1,
+      "message": "This indented too much.\nNit: for symmetry, use {} on both branches or neither.",
+      "range": {
+        "startLine": 391,
+        "startChar": 0,
+        "endLine": 391,
+        "endChar": 8
+      },
+      "revId": "d7d03e9613ae68abd484e4dedc6d7c4bb19930d4",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d2362fca_70ba6be0",
+        "filename": "driver/llvm-goc.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 620,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-18T02:44:20Z",
+      "side": 1,
+      "message": "Quote (\u0027) is missing.",
+      "range": {
+        "startLine": 620,
+        "startChar": 23,
+        "endLine": 620,
+        "endChar": 24
+      },
+      "revId": "d7d03e9613ae68abd484e4dedc6d7c4bb19930d4",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f8d13a26_c4d69981",
+        "filename": "driver/llvm-goc.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 847,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-18T02:44:20Z",
+      "side": 1,
+      "message": "This line needs indentation.",
+      "revId": "d7d03e9613ae68abd484e4dedc6d7c4bb19930d4",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
