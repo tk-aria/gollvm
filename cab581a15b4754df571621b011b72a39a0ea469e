@@ -1,0 +1,130 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "e9fdf632_a472a474",
+        "filename": "libgo/godumpspec/godumpspec.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 552,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-18T20:39:07Z",
+      "side": 1,
+      "message": "Not needed?",
+      "range": {
+        "startLine": 552,
+        "startChar": 6,
+        "endLine": 552,
+        "endChar": 20
+      },
+      "revId": "cab581a15b4754df571621b011b72a39a0ea469e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "283a7f25_b107f503",
+        "filename": "libgo/godumpspec/godumpspec.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 559,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-18T20:39:07Z",
+      "side": 1,
+      "message": "If totElements starts as 1, I think we don\u0027t need to ?: expressions below, and the zero length case can still be handled correctly.",
+      "revId": "cab581a15b4754df571621b011b72a39a0ea469e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f4c4d3ea_8432ef6d",
+        "filename": "libgo/godumpspec/godumpspec.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 635,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-18T20:39:07Z",
+      "side": 1,
+      "message": "size",
+      "range": {
+        "startLine": 635,
+        "startChar": 16,
+        "endLine": 635,
+        "endChar": 20
+      },
+      "revId": "cab581a15b4754df571621b011b72a39a0ea469e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "86f81926_8bca4acc",
+        "filename": "libgo/godumpspec/godumpspec.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 695,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-18T20:39:07Z",
+      "side": 1,
+      "message": "Is this case always unsigned? Could it be, say int16?",
+      "range": {
+        "startLine": 695,
+        "startChar": 14,
+        "endLine": 695,
+        "endChar": 18
+      },
+      "revId": "cab581a15b4754df571621b011b72a39a0ea469e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8029d3b4_8eb2adb4",
+        "filename": "libgo/godumpspec/godumpspec.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 934,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-18T20:39:07Z",
+      "side": 1,
+      "message": "Also restrict type?",
+      "revId": "cab581a15b4754df571621b011b72a39a0ea469e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0528ceb3_d94aef8c",
+        "filename": "libgo/godumpspec/godumpspec.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1017,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-18T20:39:07Z",
+      "side": 1,
+      "message": "invalidOffset ?",
+      "range": {
+        "startLine": 1017,
+        "startChar": 18,
+        "endLine": 1017,
+        "endChar": 32
+      },
+      "revId": "cab581a15b4754df571621b011b72a39a0ea469e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
