@@ -249,16 +249,19 @@ endfunction()
 #
 # Unnamed parameters:
 #
+#   * package to use for generated Go code
 #   * output file to target
 #   * list of go std library packages (does not include libgotool packages)
 #
-function(mkzstdpkglist outfile libpackages)
+function(mkzstdpkglist package outfile libpackages)
   file(REMOVE ${outfile})
-  file(WRITE ${outfile} "package load\n\n")
+  file(WRITE ${outfile} "package ${package}\n\n")
   file(APPEND ${outfile} "var stdpkg = map[string]bool{")
   foreach(pack ${libpackages})
-    file(APPEND ${outfile} "\"$pack\": true,\n")
+    file(APPEND ${outfile} "\"${pack}\": true,\n")
   endforeach()
+  file(APPEND ${outfile} "\"unsafe\": true,\n")
+  file(APPEND ${outfile} "\"runtime/cgo\": true,\n")
   file(APPEND ${outfile} "}\n")
 endfunction()
 
