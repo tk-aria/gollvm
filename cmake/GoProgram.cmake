@@ -24,6 +24,8 @@
 function(add_go_program progname target libgodir destdir)
   CMAKE_PARSE_ARGUMENTS(ARG "" "" "GOSRC;GOLIB;GODEP;GOCFLAGS" ${ARGN})
 
+  set(object "${progname}_.o")
+
   # Target of build
   set(program_exe "${destdir}/${progname}")
 
@@ -31,12 +33,21 @@ function(add_go_program progname target libgodir destdir)
   set(deps ${ARG_GOSRC})
   list(APPEND deps ${ARG_GODEP})
 
+  # Command to build object from sources.
+  add_custom_command(
+    OUTPUT ${object}
+    COMMAND "${gocompiler}" "-o" ${object} ${ARG_GOSRC} ${ARG_GOCFLAGS}
+            -I ${libgodir} -L ${libgodir} 
+    DEPENDS ${deps}
+    COMMENT "Building object for go program ${progname}"
+    VERBATIM)
+
   # Command to build executable.
   add_custom_command(
     OUTPUT ${program_exe}
-    COMMAND "${gocompiler}" "-o" ${program_exe} ${ARG_GOSRC} ${ARG_GOCFLAGS}
+    COMMAND "${gocompiler}" "-o" ${program_exe} ${object} ${ARG_GOCFLAGS}
             -I ${libgodir} -L ${libgodir} ${ARG_GOLIB}
-    DEPENDS ${deps}
+    DEPENDS ${deps} ${object}
     COMMENT "Building go program ${progname}"
     VERBATIM)
 
