@@ -491,6 +491,7 @@ set(libgobegincfiles
 # libgobegin.a (static library only)
 add_library(libgobegin STATIC
   ${libgobegincfiles})
+add_dependencies(libgobegin runtimeinctarg)
 target_include_directories(libgobegin PUBLIC
   "${libgo_csrcroot}/runtime"
   "${libgo_binroot}/runtime")
@@ -506,6 +507,7 @@ set(libgolibbegincfiles
 # libgolibbegin.a (static library only)
 add_library(libgolibbegin STATIC
   ${libgolibbegincfiles})
+add_dependencies(libgolibbegin runtimeinctarg)
 target_include_directories(libgolibbegin PUBLIC
   "${libgo_csrcroot}/runtime"
   "${libgo_binroot}/runtime")
