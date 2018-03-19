@@ -285,6 +285,53 @@ PICBig("fPIC",
         cl::ZeroOrMore,
         cl::init(false));
 
+// Return any settings from the -fPIC/-fpic options, if present. The
+// intent of the code below is to support "rightmost on the command
+// line wins" (compatible with clang and other compilers), so if you
+// specify "-fPIC -fpic" you get small PIC, whereas "-fPIC -fpic
+// -fPIC" this will give you large PIC.
+static PICLevel::Level getPicLevel()
+{
+  auto picLevel = PICLevel::NotPIC;
+  if (PICBig && PICSmall.getPosition() < PICBig.getPosition())
+    picLevel = PICLevel::BigPIC;
+  else if (PICSmall && PICSmall.getPosition() > PICBig.getPosition())
+    picLevel = PICLevel::SmallPIC;
+  return picLevel;
+}
+
+static PICLevel::Level reconcilePicLevel()
+{
+  // FIXME: as a result of including CodeGen/CommandFlags.def, we have
+  // both the -relocation-model option as well as -fpic/-fPIC. For
+  // now, honor the former first, then the latter (this behavior will
+  // eventually go away once we no longer use CommandFlags.def).
+  if (RelocModel.getNumOccurrences() > 0) {
+    if (RelocModel == llvm::Reloc::Static)
+      return llvm::PICLevel::NotPIC;
+    assert(RelocModel == llvm::Reloc::PIC_);
+    return llvm::PICLevel::BigPIC;
+  }
+  return getPicLevel();
+}
+
+static llvm::Optional<llvm::Reloc::Model> reconcileRelocModel()
+{
+  // FIXME: again, as a result of including CodeGen/CommandFlags.def,
+  // both the -relocation-model option as well as -fpic/-fPIC.  Honor
+  // the first the former, then the latter.
+  if (RelocModel.getNumOccurrences()) {
+    llvm::Reloc::Model R = RelocModel;
+    return R;
+  }
+  auto picLevel = getPicLevel();
+  if (picLevel != llvm::PICLevel::NotPIC) {
+    Reloc::Model R = Reloc::PIC_;
+    return R;
+  }
+  return None;
+}
+
 static TargetMachine::CodeGenFileType getOutputFileType()
 {
   // FIXME: as a result of including CodeGen/CommandFlags.def, we have
@@ -498,7 +545,8 @@ bool CompilationOrchestrator::preamble()
   Optional<llvm::CodeModel::Model> CM = None;
   target_.reset(
       TheTarget->createTargetMachine(triple_.getTriple(), CPUStr, FeaturesStr,
-                                     Options, getRelocModel(), CM, cgolvl_));
+                                     Options, reconcileRelocModel(),
+                                     CM, cgolvl_));
   assert(target_.get() && "Could not allocate target machine!");
 
   return true;
@@ -516,6 +564,14 @@ bool CompilationOrchestrator::initBridge()
   context_.setDiagnosticHandler(
       llvm::make_unique<BEDiagnosticHandler>(&this->hasError_));
 
+  // Vett relocation model.
+  if (RelocModel.getNumOccurrences() > 0 &&
+      (RelocModel != llvm::Reloc::Static &&
+       RelocModel != llvm::Reloc::PIC_)) {
+    errs() << "error: unsupported -relocation-model selection\n";
+    return false;
+  }
+
   // Construct linemap and module
   linemap_.reset(new Llvm_linemap());
   module_.reset(new llvm::Module("gomodule", context_));
@@ -523,18 +579,7 @@ bool CompilationOrchestrator::initBridge()
   // Add the target data from the target machine, if it exists
   module_->setTargetTriple(triple_.getTriple());
   module_->setDataLayout(target_->createDataLayout());
-
-  // Honor -fpic/-fPIC options.  The intent of the code below is
-  // to support "rightmost on the command line wins" (compatible
-  // with clang and other compilers), so if you specify "-fPIC -fpic"
-  // you get small PIC, whereas "-fPIC -fpic -fPIC" this will give
-  // you large PIC.
-  auto picLevel = llvm::PICLevel::NotPIC;
-  if (PICBig && PICSmall.getPosition() < PICBig.getPosition())
-    picLevel = llvm::PICLevel::BigPIC;
-  else if (PICSmall && PICSmall.getPosition() > PICBig.getPosition())
-    picLevel = llvm::PICLevel::SmallPIC;
-  module_->setPICLevel(picLevel);
+  module_->setPICLevel(reconcilePicLevel());
 
   // Now construct Llvm_backend helper.
   bridge_.reset(new Llvm_backend(context_, module_.get(), linemap_.get()));
