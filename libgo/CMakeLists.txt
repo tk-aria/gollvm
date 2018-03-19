@@ -221,7 +221,7 @@ copy_if_different(${objabitmp} ${objabidotgo})
 # Rules for zstdpkglist.go
 set(zstdpkglistdotgo "${libgo_binroot}/zstdpkglist.go")
 set(zstdpkglisttmp "${libgo_binroot}/zstdpkglist.go.tmp")
-mkzstdpkglist(${zstdpkglisttmp} ${libpackages})
+mkzstdpkglist("load" ${zstdpkglisttmp} "${libpackages}")
 copy_if_different(${zstdpkglisttmp} ${zstdpkglistdotgo})
 
 # Rules for zdefaultcc.go
