@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "af0f8841_238f6c9e",
+        "filename": "libgo/godumpspec/godumpspec.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 552,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-03-19T12:23:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e9fdf632_a472a474",
+      "range": {
+        "startLine": 552,
+        "startChar": 6,
+        "endLine": 552,
+        "endChar": 20
+      },
+      "revId": "cab581a15b4754df571621b011b72a39a0ea469e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "283a7f25_b107f503",
         "filename": "libgo/godumpspec/godumpspec.cpp",
         "patchSetId": 4
@@ -39,6 +63,24 @@
       "revId": "cab581a15b4754df571621b011b72a39a0ea469e",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e97df4a3_e836762f",
+        "filename": "libgo/godumpspec/godumpspec.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 559,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-03-19T12:23:48Z",
+      "side": 1,
+      "message": "Good point. I\u0027ll fix that up.",
+      "parentUuid": "283a7f25_b107f503",
+      "revId": "cab581a15b4754df571621b011b72a39a0ea469e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     },
     {
       "key": {
@@ -65,6 +107,30 @@
     },
     {
       "key": {
+        "uuid": "97249307_48095667",
+        "filename": "libgo/godumpspec/godumpspec.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 635,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-03-19T12:23:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f4c4d3ea_8432ef6d",
+      "range": {
+        "startLine": 635,
+        "startChar": 16,
+        "endLine": 635,
+        "endChar": 20
+      },
+      "revId": "cab581a15b4754df571621b011b72a39a0ea469e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "86f81926_8bca4acc",
         "filename": "libgo/godumpspec/godumpspec.cpp",
         "patchSetId": 4
@@ -76,6 +142,30 @@
       "writtenOn": "2018-03-18T20:39:07Z",
       "side": 1,
       "message": "Is this case always unsigned? Could it be, say int16?",
+      "range": {
+        "startLine": 695,
+        "startChar": 14,
+        "endLine": 695,
+        "endChar": 18
+      },
+      "revId": "cab581a15b4754df571621b011b72a39a0ea469e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7c3e2528_3ac84b92",
+        "filename": "libgo/godumpspec/godumpspec.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 695,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-03-19T12:23:48Z",
+      "side": 1,
+      "message": "Good catch.  I had thought GCC was using unsigned for everything in a bitfield, but it does look as though it\u0027s emitting a signed type in this case. I\u0027ll see about fixing that.",
+      "parentUuid": "86f81926_8bca4acc",
       "range": {
         "startLine": 695,
         "startChar": 14,
@@ -105,6 +195,24 @@
     },
     {
       "key": {
+        "uuid": "151d8d4a_e6d14a99",
+        "filename": "libgo/godumpspec/godumpspec.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 934,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-03-19T12:23:48Z",
+      "side": 1,
+      "message": "I\u0027ll add that in.",
+      "parentUuid": "8029d3b4_8eb2adb4",
+      "revId": "cab581a15b4754df571621b011b72a39a0ea469e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "0528ceb3_d94aef8c",
         "filename": "libgo/godumpspec/godumpspec.cpp",
         "patchSetId": 4
@@ -125,6 +233,30 @@
       "revId": "cab581a15b4754df571621b011b72a39a0ea469e",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9648dee7_d21c48ab",
+        "filename": "libgo/godumpspec/godumpspec.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1017,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-03-19T12:23:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0528ceb3_d94aef8c",
+      "range": {
+        "startLine": 1017,
+        "startChar": 18,
+        "endLine": 1017,
+        "endChar": 32
+      },
+      "revId": "cab581a15b4754df571621b011b72a39a0ea469e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
