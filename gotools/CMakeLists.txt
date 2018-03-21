@@ -100,7 +100,7 @@ set(rungoctmp "${gotools_binroot}/../rungoc")
 file(REMOVE ${rungoctmp})
 file(WRITE ${rungoctmp} "#!/bin/sh\n")
 file(APPEND ${rungoctmp} "exec ${gocompiler} ")
-file(APPEND ${rungoctmp} " -I ${libgo_binroot}")
+file(APPEND ${rungoctmp} " -I . -I ${libgo_binroot}")
 file(APPEND ${rungoctmp} " -L ${libgo_binroot} $*\n")
 
 # Copy with correct perms.
@@ -215,6 +215,30 @@ add_custom_target(
     "LIBDIR" ${libgo_binroot}
   DEPENDS ${libgo_goxfiles} libgotool libgo_shared 
   COMMENT "Checking cmd/carchive tool"
+  VERBATIM)
+list(APPEND checktargets ${targetname})
+
+# Finally, kick off the runtime package test using the 'go' tool
+# from the build area. 
+set(gotestrunner "${GOLLVM_SOURCE_DIR}/libgo/checkpackage.sh")
+file(STRINGS "${libgo_binroot}/runtime.gofiles" runtimefiles)
+separate_arguments(runtimefiles)
+
+set(targetname "check_runtime_with_gotool")
+add_custom_target(
+  ${targetname}
+  COMMAND "${shell}" ${gotestrunner}
+  "PACKAGE" "runtime"
+  "FILES" ${runtimefiles}
+  "GOOS" ${goos}
+  "GOARCH" ${goarch}
+  "ADDTOPATH" ${gotools_binroot}
+  "GC" ${rungoc} -fgo-compiling-runtime
+  "GOLIBS" ${packlibs} ${extralibs}
+  "BINDIR" "${libgo_binroot}"
+  "BASEDIR" "${libgo_srcroot}"
+  DEPENDS libgotool libgo_shared libgo_static
+  COMMENT "Checking runtime package with 'go' tool"
   VERBATIM)
 list(APPEND checktargets ${targetname})
 
