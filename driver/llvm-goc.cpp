@@ -595,7 +595,7 @@ bool CompilationOrchestrator::initBridge()
   // Populate 'args' struct with various bits of information needed by
   // the front end, then pass it to the front end via go_create_gogo().
   struct go_create_gogo_args args;
-  unsigned bpi = target_->getPointerSize() * 8;
+  unsigned bpi = target_->getPointerSize(0) * 8;
   args.int_type_size = bpi;
   args.pointer_size = bpi;
   args.pkgpath = PackagePath.empty() ? NULL : PackagePath.c_str();
