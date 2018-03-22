@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "26b067a3_a70e292d",
+        "filename": "cmake/GoProgram.cmake",
+        "patchSetId": 2
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-22T16:06:05Z",
+      "side": 1,
+      "message": "Maybe pass a dummy \"-c\" to make it more like that we\u0027re generating object.",
+      "revId": "b40a3d83f246a7b8ccb8b3d98891a967240e3285",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
