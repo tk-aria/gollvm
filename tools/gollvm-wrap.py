@@ -38,6 +38,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 
 import script_utils as u
 
@@ -89,12 +90,14 @@ def perform():
     u.error("no 'llvm-goc' in PATH -- can't proceed")
 
   # Perform a walk of the command line arguments looking for Go files.
-  reg = re.compile(r"^\S+\.go$")
+  reg = re.compile(r"^(\S+)\.go$")
   gofile = None
+  basename = None
   for clarg in sys.argv[1:]:
     m = reg.match(clarg)
     if m:
       gofile = clarg
+      basename = m.group(1)
       break
 
   if not gofile or flag_nollvm:
@@ -114,8 +117,9 @@ def perform():
   nargs = []
   skipc = 0
   outfile = None
-  asmfile = None
+  linkoutfile = None
   minus_s = False
+  minus_v = False
   minus_c = False
   ofiles = []
   ldflags = []
@@ -137,6 +141,7 @@ def perform():
       largsSeen = True
     if clarg == "-v":
       flag_trace_llinvoc = True
+      minus_v = True
 
     # redirect some gcc flags to the ones gollvm uses
     if clarg == "-O":
@@ -146,7 +151,7 @@ def perform():
 
     # dummy flags that are not supported by gollvm
     if clarg == "-lm":
-      continue # TODO: if the linker is invoked, pass this to the linker?
+      continue  # TODO: if the linker is invoked, pass this to the linker?
     if clarg == "-fbounds-check":
       continue
     if clarg == "-finline-functions":
@@ -199,10 +204,16 @@ def perform():
       continue
 
     nargs.append(clarg)
+    u.verbose(2, "append arg %s" % clarg)
 
-  if not outfile:
-    if not minus_s and not minus_c:
-      outfile = "a.out"
+  tf = None
+  if not minus_c and not minus_s:
+    if not outfile:
+      outfile = "%s.o" % basename
+    linkoutfile = outfile
+    tf = tempfile.NamedTemporaryFile(mode="w", prefix="asm%s" % basename,
+                                     delete=True)
+    outfile = tf.name
 
   if outfile:
     nargs.append("-o")
@@ -217,26 +228,30 @@ def perform():
   driver = "llvm-goc"
   u.verbose(1, "driver path is %s" % driver)
   nargs = ["llvm-goc"] + nargs
-  if flag_trace_llinvoc:
-    u.verbose(0, "+ %s" % " ".join(nargs))
+  if flag_trace_llinvoc or minus_v:
+    u.verbose(0, "%s" % " ".join(nargs))
   rc = subprocess.call(nargs)
   if rc != 0:
     u.verbose(1, "return code %d from %s" % (rc, " ".join(nargs)))
     return 1
 
-    # Invoke the linker
-    # Right now we use the real gccgo as the linker
-    if not minus_c and not minus_s:
-      bd = os.path.dirname(sys.argv[0])
-      driver = "%s/gccgo.real" % bd
-      ldflags += ["-o", outfile]
-      ldcmd = "%s %s %s " % (driver, " ".join(ldflags), objfile)
-      ldcmd += " ".join(ofiles) # pass extra .o files to the linker
-      u.verbose(1, "link command is: %s" % ldcmd)
-      rc = u.docmdnf(ldcmd)
-      if rc != 0:
-        u.verbose(1, "return code %d from %s" % (rc, ldcmd))
-        return 1
+  # Invoke the linker
+  # Right now we use the real gccgo as the linker
+  if not minus_c and not minus_s:
+    bd = os.path.dirname(sys.argv[0])
+    driver = "%s/gccgo.real" % bd
+    ldflags += ["-o", linkoutfile]
+    ldcmd = "%s %s %s " % (driver, " ".join(ldflags), outfile)
+    ldcmd += " ".join(ofiles)  # pass extra .o files to the linker
+    u.verbose(1, "link command is: %s" % ldcmd)
+    if minus_v:
+      u.verbose(0, "%s" % ldcmd)
+    rc = u.docmdnf(ldcmd)
+    if rc != 0:
+      u.verbose(1, "return code %d from %s" % (rc, ldcmd))
+      return 1
+    if tf:
+      tf.close()
 
   return 0
 
