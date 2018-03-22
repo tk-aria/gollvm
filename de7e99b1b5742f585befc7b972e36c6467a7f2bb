@@ -1,0 +1,124 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "711bb12c_b81e6a5d",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 4
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-22T19:00:51Z",
+      "side": 1,
+      "message": "I remember this was fixed by quoting the args in the wrapper, at least when running the tests in gccgo build dir they passed. Maybe this is a different problem? (But make sure the installed wrapper is up to date.)",
+      "revId": "de7e99b1b5742f585befc7b972e36c6467a7f2bb",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cb065890_dd8bf1b0",
+        "filename": "gotools/CMakeLists.txt",
+        "patchSetId": 4
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-22T19:00:51Z",
+      "side": 1,
+      "message": "With CL 101657, this needs \"package\" argument, right?",
+      "revId": "de7e99b1b5742f585befc7b972e36c6467a7f2bb",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2bb624a4_bd7f165b",
+        "filename": "gotools/CMakeLists.txt",
+        "patchSetId": 4
+      },
+      "lineNbr": 99,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-22T19:00:51Z",
+      "side": 1,
+      "message": "Is there a reason that the tmp file is in the directory one level up? Is it because the file copy command can\u0027t rename things so src and dst must both be the same name, so it has to be in a different directory?",
+      "revId": "de7e99b1b5742f585befc7b972e36c6467a7f2bb",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "444410fb_e75cb523",
+        "filename": "gotools/gotestprogram.sh",
+        "patchSetId": 4
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-22T19:00:51Z",
+      "side": 1,
+      "message": "Should this be [TESTARG \u003cvalues\u003e] ?",
+      "range": {
+        "startLine": 15,
+        "startChar": 6,
+        "endLine": 15,
+        "endChar": 24
+      },
+      "revId": "de7e99b1b5742f585befc7b972e36c6467a7f2bb",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ea5e86ae_05fdaf6e",
+        "filename": "gotools/gotestprogram.sh",
+        "patchSetId": 4
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-22T19:00:51Z",
+      "side": 1,
+      "message": "E",
+      "range": {
+        "startLine": 32,
+        "startChar": 56,
+        "endLine": 32,
+        "endChar": 57
+      },
+      "revId": "de7e99b1b5742f585befc7b972e36c6467a7f2bb",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "85454b60_f7701f60",
+        "filename": "gotools/gotestprogram.sh",
+        "patchSetId": 4
+      },
+      "lineNbr": 167,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-22T19:00:51Z",
+      "side": 1,
+      "message": "Where is FLAGS defined/set? Just an environment variable?",
+      "range": {
+        "startLine": 167,
+        "startChar": 29,
+        "endLine": 167,
+        "endChar": 37
+      },
+      "revId": "de7e99b1b5742f585befc7b972e36c6467a7f2bb",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
