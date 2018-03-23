@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "373464dc_86e4efc9",
+        "filename": "tools/gollvm-wrap.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 212,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-03-23T15:12:48Z",
+      "side": 1,
+      "message": "I think some tests in gccgo\u0027s torture test and go.test depends on the default output file name being a.out. Also an executable named .o might be a little weird.",
+      "revId": "fb7922235764cebc8cd7ed7ae6bf9312cfae692a",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
