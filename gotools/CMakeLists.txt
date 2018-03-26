@@ -160,7 +160,7 @@ add_custom_target(
     "GOC" "${rungoc}"
     "BINDIR" ${gotools_binroot}
     "LIBDIR" ${libgo_binroot}
-  DEPENDS ${libgo_goxfiles} libgotool libgo_shared
+  DEPENDS ${libgo_goxfiles} libgotool libgo_shared gotools_all
     ${libgo_binroot}/zstdpkglist.go ${libgo_binroot}/zdefaultcc.go
   COMMENT "Checking cmd/go tool"
   VERBATIM)
@@ -180,7 +180,7 @@ add_custom_target(
     "GOC" "${rungoc}"
     "BINDIR" ${gotools_binroot}
     "LIBDIR" ${libgo_binroot}
-  DEPENDS ${libgo_goxfiles} libgotool libgo_shared
+  DEPENDS ${libgo_goxfiles} libgotool libgo_shared gotools_all
   COMMENT "Checking cmd/vet tool"
   VERBATIM)
 list(APPEND checktargets ${targetname})
@@ -199,7 +199,7 @@ add_custom_target(
     "SETENV" "GOTRACEBACK=2"
     "BINDIR" ${gotools_binroot}
     "LIBDIR" ${libgo_binroot}
-  DEPENDS ${libgo_goxfiles} libgotool libgo_shared
+  DEPENDS ${libgo_goxfiles} libgotool libgo_shared gotools_all
   COMMENT "Checking cmd/cgo tool"
   VERBATIM)
 list(APPEND checktargets ${targetname})
@@ -219,7 +219,7 @@ add_custom_target(
     "TESTARG" "carchive_test.go"
     "BINDIR" ${gotools_binroot}
     "LIBDIR" ${libgo_binroot}
-  DEPENDS ${libgo_goxfiles} libgotool libgo_shared
+  DEPENDS ${libgo_goxfiles} libgotool libgo_shared gotools_all
   COMMENT "Checking cmd/carchive tool"
   VERBATIM)
 list(APPEND checktargets ${targetname})
@@ -243,7 +243,7 @@ add_custom_target(
   "GOLIBS" ${packlibs} ${extralibs}
   "BINDIR" "${libgo_binroot}"
   "BASEDIR" "${libgo_srcroot}"
-  DEPENDS libgotool libgo_shared libgo_static
+  DEPENDS libgotool libgo_shared libgo_static gotools_all
   COMMENT "Checking runtime package with 'go' tool"
   VERBATIM)
 list(APPEND checktargets ${targetname})
