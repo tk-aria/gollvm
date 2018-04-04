@@ -28,6 +28,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Verifier.h"
+#include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/OptTable.h"
 #include "llvm/Option/Option.h"
@@ -338,22 +339,6 @@ static llvm::Optional<llvm::Reloc::Model> reconcileRelocModel()
   return None;
 }
 
-static TargetMachine::CodeGenFileType getOutputFileType()
-{
-  // FIXME: as a result of including CodeGen/CommandFlags.def, we have
-  // both the -filetype option as well as "-S". For now, honor the
-  // former first, then the latter (eventually we'll want to move away
-  // from CommandFlags.def).
-  TargetMachine::CodeGenFileType ft;
-  if (FileType.getNumOccurrences() > 0)
-    ft = FileType;
-  else if (CapSOption.getNumOccurrences() > 0 && CapSOption)
-    ft = TargetMachine::CGFT_AssemblyFile;
-  else
-    ft = TargetMachine::CGFT_ObjectFile;
-  return ft;
-}
-
 static std::unique_ptr<ToolOutputFile>
 GetOutputStream(std::string outFileName, bool binary)
 {
@@ -437,6 +422,7 @@ class CompilationOrchestrator {
   std::unique_ptr<TargetMachine> target_;
   std::unique_ptr<Llvm_linemap> linemap_;
   std::unique_ptr<llvm::Module> module_;
+  std::vector<std::string> inputFileNames_;
   std::string outFileName_;
   std::string asmOutFileName_;
   std::unique_ptr<ToolOutputFile> asmout_;
@@ -460,6 +446,7 @@ class CompilationOrchestrator {
 
   void createPasses(legacy::PassManager &MPM,
                     legacy::FunctionPassManager &FPM);
+  TargetMachine::CodeGenFileType getOutputFileType();
 };
 
 CompilationOrchestrator::CompilationOrchestrator(const char *argvZero)
@@ -480,6 +467,22 @@ CompilationOrchestrator::~CompilationOrchestrator()
 {
   if (tmpCreated_)
     sys::fs::remove(asmOutFileName_);
+}
+
+TargetMachine::CodeGenFileType CompilationOrchestrator::getOutputFileType()
+{
+  // FIXME: as a result of including CodeGen/CommandFlags.def, we have
+  // both the -filetype option as well as "-S". For now, honor the
+  // former first, then the latter (eventually we'll want to move away
+  // from CommandFlags.def).
+  TargetMachine::CodeGenFileType ft;
+  if (FileType.getNumOccurrences() > 0)
+    ft = FileType;
+  else if (args_.hasArg(gollvm::options::OPT_S))
+    ft = TargetMachine::CGFT_AssemblyFile;
+  else
+    ft = TargetMachine::CGFT_ObjectFile;
+  return ft;
 }
 
 bool CompilationOrchestrator::parseCommandLine(int argc, char **argv)
@@ -505,6 +508,14 @@ bool CompilationOrchestrator::parseCommandLine(int argc, char **argv)
   // Temporary until we can migrate over to new parsing scheme.
   cl::ParseCommandLineOptions(argc, argv, "gollvm driver\n");
 
+  // Collect input file names
+  for (opt::Arg *arg : args_) {
+    if (arg->getOption().getKind() == opt::Option::InputClass) {
+      const char *val = arg->getValue();
+      inputFileNames_.push_back(val);
+    }
+  }
+
   return phaseSuccessful();
 }
 
@@ -527,26 +538,41 @@ bool CompilationOrchestrator::preamble()
   std::string CPUStr = getCPUStr(), FeaturesStr = getFeaturesStr();
 
   // optimization level
-  switch (OptLevel) {
-    default:
-      errs() << progname_ << ": invalid optimization level.\n";
+  opt::Arg *oarg = args_.getLastArg(gollvm::options::OPT_O_Group);
+  if (oarg != nullptr) {
+    StringRef lev(oarg->getValue());
+    if (lev.size() != 1) {
+      errs() << progname_ << ": invalid argument to -O flag: "
+             << lev << "\n";
       return false;
-    case '0':
-      olvl_ = 0;
-      cgolvl_ = CodeGenOpt::None;
-      break;
-    case '1':
-      olvl_ = 1;
-      cgolvl_ = CodeGenOpt::Less;
-      break;
-    case 's': // TODO: same as -O2 for now.
-    case ' ':
-    case '2':
-      break;
-    case '3':
-      olvl_ = 3;
-      cgolvl_ = CodeGenOpt::Aggressive;
-      break;
+    }
+    switch (lev[0]) {
+      case '0': {
+        olvl_ = 0;
+        cgolvl_ = CodeGenOpt::None;
+        break;
+      }
+      case '1': {
+        olvl_ = 1;
+        cgolvl_ = CodeGenOpt::Less;
+        break;
+      }
+      case 's': // TODO: -Os same as -O for now.
+      case '2': {
+        olvl_ = 2;
+        cgolvl_ = CodeGenOpt::Default;
+        break;
+      }
+      case '3': {
+        olvl_ = 3;
+        cgolvl_ = CodeGenOpt::Aggressive;
+        break;
+      }
+      default: {
+        errs() << progname_ << ": invalid optimization level.\n";
+        return false;
+      }
+    }
   }
 
   go_no_warn = NoWarn;
@@ -672,22 +698,20 @@ bool CompilationOrchestrator::initBridge()
   go_enable_optimize("allocs", enableEscapeAnalysis ? 1 : 0);
 
   // Include dirs
-  if (! IncludeDirs.empty()) {
-    for (auto dir : IncludeDirs) {
-      if (sys::fs::is_directory(dir))
-        go_add_search_path(dir.c_str());
-    }
+  std::vector<std::string> incargs =
+      args_.getAllArgValues(gollvm::options::OPT_I);
+  for (auto dir : incargs) {
+    if (sys::fs::is_directory(dir))
+      go_add_search_path(dir.c_str());
   }
 
   // Library dirs
   // TODO: add version, architecture dirs
-  if (! LibDirs.empty()) {
-    for (auto dir : LibDirs) {
-      struct stat st;
-      if (stat (dir.c_str(), &st) == 0 && S_ISDIR (st.st_mode))
-        go_add_search_path(dir.c_str());
-    }
-  }
+  std::vector<std::string> libargs =
+      args_.getAllArgValues(gollvm::options::OPT_L);
+  for (auto dir : libargs)
+    if (sys::fs::is_directory(dir))
+      go_add_search_path(dir.c_str());
 
   return phaseSuccessful();
 }
@@ -698,11 +722,11 @@ bool CompilationOrchestrator::resolveInputOutput()
   // then we're in assemble mode; if all inputs are *.go files, we're
   // in compile mode. No support for a mix of *.s and *.go files.
   bool mixedModeError = false;
-  if (InputFilenames.size() == 0) {
+  if (inputFileNames_.size() == 0) {
     errs() << "error: no input files supplied.\n";
     return false;
   }
-  for (auto &fn : InputFilenames) {
+  for (auto &fn : inputFileNames_) {
     // Check for existence of input file.
     if (!sys::fs::exists(fn)) {
       errs() << "error: input file '"
@@ -735,7 +759,8 @@ bool CompilationOrchestrator::resolveInputOutput()
            << "source files not supported.\n";
     return false;
   }
-  if (CapSOption && compileMode_ == CompileAssemblyMode) {
+  if (args_.hasArg(gollvm::options::OPT_S) &&
+      compileMode_ == CompileAssemblyMode) {
     errs() << "error: -S option not valid if input files "
            << "are assembly source.\n";
     return false;
@@ -744,10 +769,12 @@ bool CompilationOrchestrator::resolveInputOutput()
   // Decide where we're going to send the output for this compilation.
   // If the "-o" option was not specified, use the basename of the
   // first input argument.
-  outFileName_ = OutputFileName;
   TargetMachine::CodeGenFileType ft = getOutputFileType();
-  if (OutputFileName.empty()) {
-    std::string firstFile = InputFilenames[0];
+  opt::Arg *outFileArg = args_.getLastArg(gollvm::options::OPT_o);
+  if (outFileArg) {
+    outFileName_ = outFileArg->getValue();
+  } else {
+    std::string firstFile = inputFileNames_[0];
     size_t dotindex = firstFile.find_last_of(".");
     assert(dotindex != std::string::npos);
     outFileName_ = firstFile.substr(0, dotindex);
@@ -794,11 +821,11 @@ bool CompilationOrchestrator::invokeFrontEnd()
 
   // Collect the input files and kick off the front end
   // Kick off the front end
-  unsigned nfiles = InputFilenames.size();
+  unsigned nfiles = inputFileNames_.size();
   std::unique_ptr<const char *> filenames(new const char *[nfiles]);
   const char **fns = filenames.get();
   unsigned idx = 0;
-  for (auto &fn : InputFilenames)
+  for (auto &fn : inputFileNames_)
     fns[idx++] = fn.c_str();
   go_parse_input_files(fns, nfiles, false, true);
   if (! NoBackend)
@@ -930,7 +957,7 @@ bool CompilationOrchestrator::invokeAssembler()
   std::vector<const char *> args;
   args.push_back("as");
   if (compileMode_ == CompileAssemblyMode) {
-    for (auto &fn : InputFilenames)
+    for (auto &fn : inputFileNames_)
       args.push_back(fn.c_str());
   } else {
     args.push_back(asmOutFileName_.c_str());
