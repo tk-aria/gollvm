@@ -144,8 +144,6 @@ def perform():
       minus_v = True
 
     # redirect some gcc flags to the ones gollvm uses
-    if clarg == "-O":
-      clarg = "-O1"
     if clarg == "-w":
       clarg = "-no-warn"
 
