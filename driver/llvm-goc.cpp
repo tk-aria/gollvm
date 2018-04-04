@@ -28,6 +28,9 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Verifier.h"
+#include "llvm/Option/ArgList.h"
+#include "llvm/Option/OptTable.h"
+#include "llvm/Option/Option.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -37,6 +40,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/Process.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -46,6 +50,8 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
+
+#include "GollvmOptions.h"
 
 #include <algorithm>
 #include <cstring>
@@ -404,6 +410,7 @@ class CompilationOrchestrator {
   // Various stages in the setup/execution of the compilation.  The
   // convention here is to return false if there was a fatal error, true
   // otherwise.
+  bool parseCommandLine(int argc, char **argv);
   bool preamble();
   bool initBridge();
   bool resolveInputOutput();
@@ -412,12 +419,20 @@ class CompilationOrchestrator {
   bool invokeBackEnd();
   bool invokeAssembler();
 
+  // Exit code to return if there was an error in one of the steps above.
+  int errorReturnCode() const { return errorReturnCode_; }
+
  private:
   Triple triple_;
   llvm::LLVMContext context_;
   const char *progname_;
   CodeGenOpt::Level cgolvl_;
   unsigned olvl_;
+  int errorReturnCode_;
+  std::unique_ptr<opt::OptTable> opts_;
+  SmallVector<const char *, 256> argvsmv_;
+  SpecificBumpPtrAllocator<char> argallocator_;
+  opt::InputArgList args_;
   std::unique_ptr<Llvm_backend> bridge_;
   std::unique_ptr<TargetMachine> target_;
   std::unique_ptr<Llvm_linemap> linemap_;
@@ -441,6 +456,8 @@ class CompilationOrchestrator {
     return mixedModeError;
   }
 
+  bool phaseSuccessful() { errorReturnCode_++; return true; }
+
   void createPasses(legacy::PassManager &MPM,
                     legacy::FunctionPassManager &FPM);
 };
@@ -448,7 +465,9 @@ class CompilationOrchestrator {
 CompilationOrchestrator::CompilationOrchestrator(const char *argvZero)
 
     : progname_(argvZero), cgolvl_(CodeGenOpt::Default),
-      olvl_(2), compileMode_(UnknownCompileMode),
+      olvl_(2), errorReturnCode_(1),
+      opts_(gollvm::options::createGollvmDriverOptTable()),
+      compileMode_(UnknownCompileMode),
       hasError_(false), tmpCreated_(false)
 {
   InitializeAllTargets();
@@ -461,6 +480,32 @@ CompilationOrchestrator::~CompilationOrchestrator()
 {
   if (tmpCreated_)
     sys::fs::remove(asmOutFileName_);
+}
+
+bool CompilationOrchestrator::parseCommandLine(int argc, char **argv)
+{
+  unsigned missingArgIndex, missingArgCount;
+  ArrayRef<const char *> argvv = makeArrayRef(argv, argc);
+
+  this->args_ =
+      opts_->ParseArgs(argvv.slice(1), missingArgIndex, missingArgCount);
+
+  // Honor -mllvm
+  auto llvmargs = args_.getAllArgValues(gollvm::options::OPT_mllvm);
+  if (! llvmargs.empty()) {
+    unsigned nargs = llvmargs.size();
+    auto args = llvm::make_unique<const char*[]>(nargs + 2);
+    args[0] = "gollvm (LLVM option parsing)";
+    for (unsigned i = 0; i != nargs; ++i)
+      args[i + 1] = llvmargs[i].c_str();
+    args[nargs + 1] = nullptr;
+    llvm::cl::ParseCommandLineOptions(nargs + 1, args.get());
+  }
+
+  // Temporary until we can migrate over to new parsing scheme.
+  cl::ParseCommandLineOptions(argc, argv, "gollvm driver\n");
+
+  return phaseSuccessful();
 }
 
 bool CompilationOrchestrator::preamble()
@@ -549,7 +594,7 @@ bool CompilationOrchestrator::preamble()
                                      CM, cgolvl_));
   assert(target_.get() && "Could not allocate target machine!");
 
-  return true;
+  return phaseSuccessful();
 }
 
 // This helper performs the various initial steps needed to set up the
@@ -644,7 +689,7 @@ bool CompilationOrchestrator::initBridge()
     }
   }
 
-  return true;
+  return phaseSuccessful();
 }
 
 bool CompilationOrchestrator::resolveInputOutput()
@@ -738,7 +783,7 @@ bool CompilationOrchestrator::resolveInputOutput()
       return false;
   }
 
-  return true;
+  return phaseSuccessful();
 }
 
 bool CompilationOrchestrator::invokeFrontEnd()
@@ -776,7 +821,7 @@ bool CompilationOrchestrator::invokeFrontEnd()
   if (go_be_saw_errors())
     return false;
 
-  return true;
+  return phaseSuccessful();
 }
 
 void CompilationOrchestrator::createPasses(legacy::PassManager &MPM,
@@ -867,7 +912,7 @@ bool CompilationOrchestrator::invokeBackEnd()
   if (getOutputFileType() == TargetMachine::CGFT_AssemblyFile)
     asmout_->keep();
 
-  return true;
+  return phaseSuccessful();
 }
 
 bool CompilationOrchestrator::invokeAssembler()
@@ -907,43 +952,45 @@ bool CompilationOrchestrator::invokeAssembler()
     out_->keep();
   }
 
-  return rval;
+  return (rval ? phaseSuccessful() : false);
 }
 
 int main(int argc, char **argv)
 {
   CompilationOrchestrator orchestrator(argv[0]);
 
-  cl::ParseCommandLineOptions(argc, argv, "gollvm driver\n");
-
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal(argv[0]);
   PrettyStackTraceProgram X(argc, argv);
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 
+  // Parse command line.
+  if (!orchestrator.parseCommandLine(argc, argv))
+    return orchestrator.errorReturnCode();
+
   // Initialize target and sort out selected command line options.
   if (!orchestrator.preamble())
-    return 1;
+    return orchestrator.errorReturnCode();
 
   // Set up the bridge
   if (!orchestrator.initBridge())
-    return 2;
+    return orchestrator.errorReturnCode();
 
   // Determine output file
   if (!orchestrator.resolveInputOutput())
-    return 3;
+    return orchestrator.errorReturnCode();
 
   // Invoke front end
   if (! orchestrator.invokeFrontEnd())
-    return 4;
+    return orchestrator.errorReturnCode();
 
   // Invoke back end
   if (! orchestrator.invokeBackEnd())
-    return 5;
+    return orchestrator.errorReturnCode();
 
   // Invoke assembler if needed.
   if (! orchestrator.invokeAssembler())
-    return 6;
+    return orchestrator.errorReturnCode();
 
   // We're done.
   return 0;
