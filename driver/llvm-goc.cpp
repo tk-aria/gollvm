@@ -280,6 +280,22 @@ static bool reconcileOptionPair(cl::opt<bool> &yesOption,
   return value;
 }
 
+// Equivalent to above, but for llvm:opt options.
+
+static bool reconcileOptionPair(const opt::InputArgList &arglist,
+                                gollvm::options::ID yesOption,
+                                gollvm::options::ID noOption,
+                                bool defaultVal)
+{
+  opt::Arg *arg = arglist.getLastArg(yesOption, noOption);
+  if (arg == nullptr)
+    return defaultVal;
+  if (arg->getOption().matches(yesOption))
+    return true;
+  assert(arg->getOption().matches(noOption));
+  return false;
+}
+
 static cl::opt<bool>
 PICSmall("fpic",
         cl::desc("Generate position-independent code (small model)."),
@@ -445,6 +461,9 @@ class CompilationOrchestrator {
   void createPasses(legacy::PassManager &MPM,
                     legacy::FunctionPassManager &FPM);
   TargetMachine::CodeGenFileType getOutputFileType();
+  template<typename IT>
+  bool getLastArgAsInteger(gollvm::options::ID id,
+                           IT *result, IT defaultValue);
 };
 
 CompilationOrchestrator::CompilationOrchestrator(const char *argvZero)
@@ -481,6 +500,24 @@ TargetMachine::CodeGenFileType CompilationOrchestrator::getOutputFileType()
   else
     ft = TargetMachine::CGFT_ObjectFile;
   return ft;
+}
+
+template<typename IT>
+bool CompilationOrchestrator::getLastArgAsInteger(gollvm::options::ID id,
+                                                  IT *result,
+                                                  IT defaultValue)
+{
+  *result = defaultValue;
+  opt::Arg *arg = args_.getLastArg(id);
+  if (arg != nullptr) {
+    if (llvm::StringRef(arg->getValue()).getAsInteger(10, *result)) {
+      errs() << progname_ << ": invalid argument '"
+             << arg->getValue() << "' to '"
+             << arg->getAsString(args_) << "' option\n";
+      return false;
+    }
+  }
+  return true;
 }
 
 bool CompilationOrchestrator::parseCommandLine(int argc, char **argv)
@@ -663,10 +700,10 @@ bool CompilationOrchestrator::initBridge()
 
   // Honor inline, tracelevel cmd line options
   bridge_->setTraceLevel(TraceLevel);
-  bridge_->setNoInline(NoInline);
+  bridge_->setNoInline(args_.hasArg(gollvm::options::OPT_fno_inline));
 
   // Support -fgo-dump-ast
-  if (DumpAst)
+  if (args_.hasArg(gollvm::options::OPT_fgo_dump_ast))
     go_enable_dump("ast");
 
   // Populate 'args' struct with various bits of information needed by
@@ -675,18 +712,38 @@ bool CompilationOrchestrator::initBridge()
   unsigned bpi = target_->getPointerSize(0) * 8;
   args.int_type_size = bpi;
   args.pointer_size = bpi;
-  args.pkgpath = PackagePath.empty() ? NULL : PackagePath.c_str();
-  args.prefix = PackagePrefix.empty() ? NULL : PackagePrefix.c_str();
+  opt::Arg *pkpa = args_.getLastArg(gollvm::options::OPT_fgo_pkgpath);
+  args.pkgpath = (pkpa == nullptr ? NULL : pkpa->getValue());
+  opt::Arg *pkpp = args_.getLastArg(gollvm::options::OPT_fgo_prefix);
+  args.prefix = (pkpp == nullptr ? NULL : pkpp->getValue());
+  opt::Arg *relimp =
+      args_.getLastArg(gollvm::options::OPT_fgo_relative_import_path);
   args.relative_import_path =
-      RelativeImportPath.empty() ? NULL : RelativeImportPath.c_str();
-  args.c_header = CHeader.empty() ? NULL : CHeader.c_str();
-  args.check_divide_by_zero = CheckDivideZero;
-  args.check_divide_overflow = CheckDivideOverflow;
-  args.compiling_runtime = CompilingRuntime;
-  args.debug_escape_level = EscapeDebugLevel;
-  args.debug_escape_hash = nullptr;
-  if (!EscapeDebugHash.empty())
-    args.debug_escape_hash = EscapeDebugHash.c_str();
+      (relimp == nullptr ? NULL : relimp->getValue());
+  opt::Arg *chdr =
+      args_.getLastArg(gollvm::options::OPT_fgo_c_header);
+  args.c_header = (chdr == nullptr ? NULL : chdr->getValue());
+
+  args.check_divide_by_zero =
+      reconcileOptionPair(args_,
+                          gollvm::options::OPT_fgo_check_divide_zero,
+                          gollvm::options::OPT_fno_go_check_divide_zero,
+                          true);
+
+  args.check_divide_overflow =
+        reconcileOptionPair(args_,
+                          gollvm::options::OPT_fgo_check_divide_overflow,
+                          gollvm::options::OPT_fno_go_check_divide_overflow,
+                          true);
+
+  args.compiling_runtime =
+      args_.hasArg(gollvm::options::OPT_fgo_compiling_runtime);
+  if (! getLastArgAsInteger(gollvm::options::OPT_fgo_debug_escape,
+                            &args.debug_escape_level, 0))
+    return false;
+  opt::Arg *hasharg =
+      args_.getLastArg(gollvm::options::OPT_fgo_debug_escape_hash);
+  args.debug_escape_hash = (hasharg != nullptr ? hasharg->getValue() : NULL);
   args.nil_check_size_threshold = -1;
   args.linemap = linemap_.get();
   args.backend = bridge_.get();
@@ -698,9 +755,11 @@ bool CompilationOrchestrator::initBridge()
   mpfr_set_default_prec (256);
 
   // Escape analysis
-  bool enableEscapeAnalysis = reconcileOptionPair(OptimizeAllocs,
-                                                  NoOptimizeAllocs,
-                                                  true);
+  bool enableEscapeAnalysis =
+      reconcileOptionPair(args_,
+                          gollvm::options::OPT_fgo_optimize_allocs,
+                          gollvm::options::OPT_fno_go_optimize_allocs,
+                          true);
   go_enable_optimize("allocs", enableEscapeAnalysis ? 1 : 0);
 
   // Include dirs
@@ -867,7 +926,7 @@ void CompilationOrchestrator::createPasses(legacy::PassManager &MPM,
   PassManagerBuilder pmb;
 
   // Configure the inliner
-  if (NoInline || olvl_ == 0) {
+  if (args_.hasArg(gollvm::options::OPT_fno_inline) || olvl_ == 0) {
     // Nothing here at the moment. There is go:noinline, but no equivalent
     // of go:alwaysinline.
   } else {
@@ -923,19 +982,15 @@ bool CompilationOrchestrator::invokeBackEnd()
   // Before executing passes, print the final values of the LLVM options.
   cl::PrintOptionValues();
 
-  // Temporary -- to be removed in a follow-on CL
-  if (FullPasses) {
+  // Here we go... first function passes
+  functionPasses.doInitialization();
+  for (Function &F : *module_.get())
+    if (!F.isDeclaration())
+      functionPasses.run(F);
+  functionPasses.doFinalization();
 
-    // Here we go... first function passes
-    functionPasses.doInitialization();
-    for (Function &F : *module_.get())
-      if (!F.isDeclaration())
-        functionPasses.run(F);
-    functionPasses.doFinalization();
-
-    // ... then module passes
-    modulePasses.run(*module_.get());
-  }
+  // ... then module passes
+  modulePasses.run(*module_.get());
 
   // ... and finally code generation
   codeGenPasses.run(*module_.get());
