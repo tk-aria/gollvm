@@ -18,16 +18,17 @@
 #include "go-llvm.h"
 #include "go-c.h"
 #include "mpfr.h"
+#include "GollvmOptions.h"
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
-#include "llvm/CodeGen/CommandFlags.def"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Verifier.h"
+#include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/OptTable.h"
@@ -52,8 +53,6 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 
-#include "GollvmOptions.h"
-
 #include <algorithm>
 #include <cstring>
 #include <string>
@@ -62,298 +61,6 @@
 #include <unistd.h>
 
 using namespace llvm;
-
-static cl::opt<std::string>
-TargetTriple("mtriple", cl::desc("Override target triple for module"));
-
-static cl::list<std::string>
-InputFilenames(cl::Positional,
-               cl::desc("<input go source files>"),
-               cl::OneOrMore);
-
-static cl::list<std::string>
-IncludeDirs("I", cl::desc("Include directory to be searched for packages."),
-            cl::Prefix,
-            cl::ZeroOrMore);
-
-static cl::list<std::string>
-LibDirs("L", cl::desc("Library directory to be added to search path"),
-        cl::Prefix,
-        cl::ZeroOrMore);
-
-static cl::list<std::string>
-PreprocDefs("D", cl::desc("Preprocessor definitions (currently ignored)."),
-            cl::Prefix,
-            cl::ZeroOrMore);
-
-// Determine optimization level.
-static cl::opt<char>
-OptLevel("O",
-         cl::desc("Optimization level. [-O0, -O1, -O2, or -O3] "
-                  "(default = '-O2')"),
-         cl::Prefix,
-         cl::ZeroOrMore,
-         cl::init(' '));
-
-static cl::opt<std::string>
-OutputFileName("o",
-               cl::desc("Set name of output file."),
-               cl::init(""));
-
-// These are provided for compatibility purposes -- they are currently ignored.
-static cl::opt<bool>
-M64Option("m64",  cl::desc("Dummy -m64 arg."), cl::init(false), cl::ZeroOrMore);
-static cl::opt<bool>
-MinusGOption("g",  cl::desc("Dummy -g arg."), cl::init(false), cl::ZeroOrMore);
-static cl::opt<bool>
-MinusCOption("c",  cl::desc("Dummy -c arg."), cl::init(false), cl::ZeroOrMore);
-static cl::opt<bool>
-MinusVOption("v",  cl::desc("Dummy -v arg."), cl::init(false), cl::ZeroOrMore);
-static cl::opt<bool>
-XasmCppOption("xassembler-with-cpp", cl::desc("Dummy -xassembler-with-cpp arg."), cl::init(false), cl::ZeroOrMore);
-
-
-// Generate assembly and not object file. This is a no-op for now.
-static cl::opt<bool>
-CapSOption("S",  cl::desc("Emit assembly as opposed to object code."),
-           cl::init(false), cl::ZeroOrMore);
-
-static cl::opt<bool>
-NoBackend("nobackend",
-          cl::desc("Stub out back end invocation."),
-          cl::init(false));
-
-static cl::opt<bool>
-NoVerify("noverify",
-          cl::desc("Stub out module verifier invocation."),
-          cl::init(false));
-
-static cl::opt<bool>
-CheckDivideZero("fgo-check-divide-zero",
-                cl::desc("Add explicit checks for divide-by-zero."),
-                cl::init(true));
-
-static cl::opt<bool>
-CheckDivideOverflow("fgo-check-divide-overflow",
-                    cl::desc("Add explicit checks for division overflow in INT_MIN / -1."),
-                    cl::init(true));
-
-static cl::opt<bool>
-CompilingRuntime("fgo-compiling-runtime",
-                 cl::desc("Compiling the runtime package."),
-                 cl::init(false));
-
-static cl::opt<bool>
-DumpAst("fgo-dump-ast",
-        cl::desc("Dump Go frontend internal AST structure."),
-        cl::init(false));
-
-static cl::opt<bool>
-DumpIR("dump-ir",
-        cl::desc("Dump LLVM IR for module at end of run."),
-        cl::init(false));
-
-static cl::opt<bool>
-NoInline("fno-inline",
-         cl::desc("Disable inlining."),
-         cl::init(false));
-
-static cl::opt<bool>
-OptimizeAllocs("fgo-optimize-allocs",
-               cl::desc("Enable escape analysis in the go frontend."),
-               cl::ZeroOrMore,
-               cl::init(false));
-
-static cl::opt<bool>
-NoOptimizeAllocs("fno-go-optimize-allocs",
-               cl::desc("Disable escape analysis in the go frontend."),
-               cl::ZeroOrMore,
-               cl::init(false));
-
-static cl::opt<std::string>
-PackagePath("fgo-pkgpath",
-            cl::desc("Set Go package path."),
-            cl::init(""));
-
-static cl::opt<std::string>
-PackagePrefix("fgo-prefix",
-              cl::desc("Set package-specific prefix for exported Go names."),
-              cl::init(""));
-
-static cl::opt<std::string>
-RelativeImportPath("fgo-relative-import-path",
-                   cl::desc("Treat a relative import as relative to path."),
-                   cl::init(""));
-
-static cl::opt<std::string>
-CHeader("fgo-c-header",
-        cl::desc("The C header file to write."),
-        cl::init(""));
-
-static cl::opt<int>
-EscapeDebugLevel("fgo-debug-escape",
-                 cl::desc("Emit debugging information related to the "
-                          "escape analysis pass when run with "
-                          "-fgo-optimize-allocs."),
-                 cl::init(0));
-
-static cl::opt<std::string>
-EscapeDebugHash("fgo-debug-escape-hash",
-        cl::desc("A hash value to debug escape analysis. Argument is "
-                 "a binary string. This runs escape analysis only on "
-                 "functions whose names hash to values that match the "
-                 "given suffix. Can be used to binary search across "
-                 "functions to uncover escape analysis bugs."),
-                cl::init(""));
-
-static cl::opt<unsigned>
-TraceLevel("tracelevel",
-           cl::desc("Set debug trace level (def: 0, no trace output)."),
-           cl::init(0));
-
-// Provide a way to turn off the full passmanager (to make it easier
-// to triage failures). This should be a temporary flag (not for the
-// long term).
-static cl::opt<bool>
-FullPasses("full-passes",
-           cl::desc("Enable all available optimization passes."),
-           cl::init(true));
-
-static cl::alias
-FFuseFPOps("ffp-contract",
-           cl::desc("Alias for -fp-contract"),
-           cl::aliasopt(FuseFPOps));
-
-static cl::opt<bool>
-NoTrappingMath("fno-trapping-math",
-               cl::desc("Generate code with the assumption FP operations will "
-                        "not generate user-visible traps."),
-               cl::ZeroOrMore,
-               cl::init(false));
-
-static cl::opt<bool>
-TrappingMath("ftrapping-math",
-             cl::desc("Generate code with the assumption FP operations can "
-                      "generate user-visible traps."),
-             cl::ZeroOrMore,
-             cl::init(false));
-
-static cl::opt<bool>
-NoMathErrno("fno-math-errno",
-            cl::desc("Do not require that math functions set "
-                     "'errno' to indicate errors. This option has no "
-                     "effect (provided for compatibility purposes)."),
-            cl::ZeroOrMore,
-            cl::init(false));
-
-static cl::opt<bool>
-MathErrno("fmath-errno",
-          cl::desc("Insure that calls to math functions that incur errors "
-                   "results in setting of 'errno' (unimplemented, will "
-                   "generate an error if not overridden with a subsequent "
-                   "instance of -fno-math-errno)."),
-          cl::ZeroOrMore,
-          cl::init(false));
-
-// Given a pair of cl::opt objects corresponding to -fXXX and -fno-XXX
-// boolean flags, select the correct value for the option depending on
-// the relative position of the options on the command line (rightmost
-// wins). For example, given -fblah -fno-blah -fblah, we want the same
-// semantics as a single -fblah.
-
-static bool reconcileOptionPair(cl::opt<bool> &yesOption,
-                                cl::opt<bool> &noOption,
-                                bool defaultVal)
-{
-  bool value = defaultVal;
-  if (yesOption.getNumOccurrences() > 0) {
-    if (noOption.getNumOccurrences() > 0) {
-      value = yesOption.getPosition() > noOption.getPosition();
-    } else {
-      value = true;
-    }
-  } else {
-    if (noOption.getNumOccurrences() > 0) {
-      value = false;
-    }
-  }
-  return value;
-}
-
-// Equivalent to above, but for llvm:opt options.
-
-static bool reconcileOptionPair(const opt::InputArgList &arglist,
-                                gollvm::options::ID yesOption,
-                                gollvm::options::ID noOption,
-                                bool defaultVal)
-{
-  opt::Arg *arg = arglist.getLastArg(yesOption, noOption);
-  if (arg == nullptr)
-    return defaultVal;
-  if (arg->getOption().matches(yesOption))
-    return true;
-  assert(arg->getOption().matches(noOption));
-  return false;
-}
-
-static cl::opt<bool>
-PICSmall("fpic",
-        cl::desc("Generate position-independent code (small model)."),
-        cl::ZeroOrMore,
-        cl::init(false));
-
-static cl::opt<bool>
-PICBig("fPIC",
-        cl::desc("Generate position-independent code (large model)."),
-        cl::ZeroOrMore,
-        cl::init(false));
-
-// Return any settings from the -fPIC/-fpic options, if present. The
-// intent of the code below is to support "rightmost on the command
-// line wins" (compatible with clang and other compilers), so if you
-// specify "-fPIC -fpic" you get small PIC, whereas "-fPIC -fpic
-// -fPIC" this will give you large PIC.
-static PICLevel::Level getPicLevel()
-{
-  auto picLevel = PICLevel::NotPIC;
-  if (PICBig && PICSmall.getPosition() < PICBig.getPosition())
-    picLevel = PICLevel::BigPIC;
-  else if (PICSmall && PICSmall.getPosition() > PICBig.getPosition())
-    picLevel = PICLevel::SmallPIC;
-  return picLevel;
-}
-
-static PICLevel::Level reconcilePicLevel()
-{
-  // FIXME: as a result of including CodeGen/CommandFlags.def, we have
-  // both the -relocation-model option as well as -fpic/-fPIC. For
-  // now, honor the former first, then the latter (this behavior will
-  // eventually go away once we no longer use CommandFlags.def).
-  if (RelocModel.getNumOccurrences() > 0) {
-    if (RelocModel == llvm::Reloc::Static)
-      return llvm::PICLevel::NotPIC;
-    assert(RelocModel == llvm::Reloc::PIC_);
-    return llvm::PICLevel::BigPIC;
-  }
-  return getPicLevel();
-}
-
-static llvm::Optional<llvm::Reloc::Model> reconcileRelocModel()
-{
-  // FIXME: again, as a result of including CodeGen/CommandFlags.def,
-  // both the -relocation-model option as well as -fpic/-fPIC.  Honor
-  // the first the former, then the latter.
-  if (RelocModel.getNumOccurrences()) {
-    llvm::Reloc::Model R = RelocModel;
-    return R;
-  }
-  auto picLevel = getPicLevel();
-  if (picLevel != llvm::PICLevel::NotPIC) {
-    Reloc::Model R = Reloc::PIC_;
-    return R;
-  }
-  return None;
-}
 
 static std::unique_ptr<ToolOutputFile>
 GetOutputStream(std::string outFileName, bool binary)
@@ -462,8 +169,14 @@ class CompilationOrchestrator {
                     legacy::FunctionPassManager &FPM);
   TargetMachine::CodeGenFileType getOutputFileType();
   template<typename IT>
-  bool getLastArgAsInteger(gollvm::options::ID id,
-                           IT *result, IT defaultValue);
+  llvm::Optional<IT> getLastArgAsInteger(gollvm::options::ID id,
+                                         IT defaultValue);
+  PICLevel::Level getPicLevel();
+  llvm::Optional<llvm::Reloc::Model> reconcileRelocModel();
+  bool reconcileOptionPair(gollvm::options::ID yesOption,
+                           gollvm::options::ID noOption,
+                           bool defaultVal);
+  llvm::Optional<llvm::FPOpFusion::FPOpFusionMode> getFPOpFusionMode();
 };
 
 CompilationOrchestrator::CompilationOrchestrator(const char *argvZero)
@@ -488,13 +201,7 @@ CompilationOrchestrator::~CompilationOrchestrator()
 
 TargetMachine::CodeGenFileType CompilationOrchestrator::getOutputFileType()
 {
-  // FIXME: as a result of including CodeGen/CommandFlags.def, we have
-  // both the -filetype option as well as "-S". For now, honor the
-  // former first, then the latter (eventually we'll want to move away
-  // from CommandFlags.def).
   TargetMachine::CodeGenFileType ft;
-  if (FileType.getNumOccurrences() > 0)
-    ft = FileType;
   if (args_.hasArg(gollvm::options::OPT_S))
     ft = TargetMachine::CGFT_AssemblyFile;
   else
@@ -503,21 +210,95 @@ TargetMachine::CodeGenFileType CompilationOrchestrator::getOutputFileType()
 }
 
 template<typename IT>
-bool CompilationOrchestrator::getLastArgAsInteger(gollvm::options::ID id,
-                                                  IT *result,
-                                                  IT defaultValue)
+llvm::Optional<IT>
+CompilationOrchestrator::getLastArgAsInteger(gollvm::options::ID id,
+                                             IT defaultValue)
 {
-  *result = defaultValue;
+  IT result = defaultValue;
   opt::Arg *arg = args_.getLastArg(id);
   if (arg != nullptr) {
-    if (llvm::StringRef(arg->getValue()).getAsInteger(10, *result)) {
+    if (llvm::StringRef(arg->getValue()).getAsInteger(10, result)) {
       errs() << progname_ << ": invalid argument '"
              << arg->getValue() << "' to '"
              << arg->getAsString(args_) << "' option\n";
-      return false;
+      return None;
     }
   }
-  return true;
+  return result;
+}
+
+// Return any settings from the -fPIC/-fpic options, if present. The
+// intent of the code below is to support "rightmost on the command
+// line wins" (compatible with clang and other compilers), so if you
+// specify "-fPIC -fpic" you get small PIC, whereas "-fPIC -fpic
+// -fPIC" this will give you large PIC.
+PICLevel::Level CompilationOrchestrator::getPicLevel()
+{
+  opt::Arg *arg = args_.getLastArg(gollvm::options::OPT_fpic,
+                                   gollvm::options::OPT_fno_pic,
+                                   gollvm::options::OPT_fPIC,
+                                   gollvm::options::OPT_fno_PIC);
+  if (arg == nullptr)
+    return PICLevel::NotPIC;
+  if (arg->getOption().matches(gollvm::options::OPT_fpic))
+    return PICLevel::SmallPIC;
+  else if (arg->getOption().matches(gollvm::options::OPT_fPIC))
+    return PICLevel::BigPIC;
+  return PICLevel::NotPIC;
+}
+
+// Given a pair of llvm::opt options (presumably corresponding to
+// -fXXX and -fno-XXX boolean flags), select the correct value for the
+// option depending on the relative position of the options on the
+// command line (rightmost wins). For example, given -fblah -fno-blah
+// -fblah, we want the same semantics as a single -fblah.
+
+bool
+CompilationOrchestrator::reconcileOptionPair(gollvm::options::ID yesOption,
+                                             gollvm::options::ID noOption,
+                                             bool defaultVal)
+{
+  opt::Arg *arg = args_.getLastArg(yesOption, noOption);
+  if (arg == nullptr)
+    return defaultVal;
+  if (arg->getOption().matches(yesOption))
+    return true;
+  assert(arg->getOption().matches(noOption));
+  return false;
+}
+
+llvm::Optional<llvm::Reloc::Model>
+CompilationOrchestrator::reconcileRelocModel()
+{
+  auto picLevel = getPicLevel();
+  if (picLevel != llvm::PICLevel::NotPIC) {
+    Reloc::Model R = Reloc::PIC_;
+    return R;
+  }
+  return None;
+}
+
+llvm::Optional<llvm::FPOpFusion::FPOpFusionMode>
+CompilationOrchestrator::getFPOpFusionMode()
+{
+  opt::Arg *arg = args_.getLastArg(gollvm::options::OPT_ffp_contract);
+  llvm::FPOpFusion::FPOpFusionMode res = FPOpFusion::Standard;
+  if (arg != nullptr) {
+    std::string val(arg->getValue());
+    if (val == "off")
+      res = FPOpFusion::Strict;
+    else if (val == "on")
+      res = FPOpFusion::Standard;
+    else if (val == "fast")
+      res = FPOpFusion::Fast;
+    else {
+      errs() << progname_ << ": invalid argument '"
+             << arg->getValue() << "' to '"
+             << arg->getAsString(args_) << "' option\n";
+      return None;
+    }
+  }
+  return res;
 }
 
 bool CompilationOrchestrator::parseCommandLine(int argc, char **argv)
@@ -533,8 +314,40 @@ bool CompilationOrchestrator::parseCommandLine(int argc, char **argv)
   ArrayRef<const char *> argvv(argvsmv);
 
   unsigned missingArgIndex, missingArgCount;
-  this->args_ =
-      opts_->ParseArgs(argvv.slice(1), missingArgIndex, missingArgCount);
+  args_ = opts_->ParseArgs(argvv.slice(1), missingArgIndex, missingArgCount);
+
+  // Honor --help first
+  if (args_.hasArg(gollvm::options::OPT_help))
+      opts_->PrintHelp(errs(), progname_, "Gollvm (LLVM-based Go compiler)",
+                       0, 0, false);
+
+  // Complain about missing arguments.
+  if (missingArgIndex != 0) {
+    errs() << "error: argument to '"
+           << args_.getArgString(missingArgIndex)
+           << "' option missing, espected "
+           << missingArgCount << " value(s)\n";
+    return false;
+  }
+
+  // Check for unsupported options.
+  for (const opt::Arg *arg : args_) {
+    if (arg->getOption().hasFlag(gollvm::options::Unsupported)) {
+      errs() << "error: unsupported command line option '"
+             << arg->getAsString(args_) << "'\n";
+      return false;
+    }
+  }
+
+  // Check for unknown options.
+  bool foundUnknown = false;
+  for (const opt::Arg *arg : args_.filtered(gollvm::options::OPT_UNKNOWN)) {
+    errs() << "error: unrecognized command line option '"
+             << arg->getAsString(args_) << "'\n";
+    foundUnknown = true;
+  }
+  if (foundUnknown)
+    return false;
 
   // Honor -mllvm
   auto llvmargs = args_.getAllArgValues(gollvm::options::OPT_mllvm);
@@ -548,9 +361,6 @@ bool CompilationOrchestrator::parseCommandLine(int argc, char **argv)
     llvm::cl::ParseCommandLineOptions(nargs + 1, args.get());
   }
 
-  // Temporary until we can migrate over to new parsing scheme.
-  cl::ParseCommandLineOptions(argc, argv, "gollvm driver\n");
-
   // Collect input file names
   for (opt::Arg *arg : args_) {
     if (arg->getOption().getKind() == opt::Option::InputClass) {
@@ -559,26 +369,37 @@ bool CompilationOrchestrator::parseCommandLine(int argc, char **argv)
     }
   }
 
+  // Set triple.
+  if (const opt::Arg *arg = args_.getLastArg(gollvm::options::OPT_target))
+    triple_ = Triple(Triple::normalize(arg->getValue()));
+  else
+    triple_ = Triple(sys::getDefaultTargetTriple());
+
+  // Support -march
+  std::string archStr;
+  opt::Arg *archarg = args_.getLastArg(gollvm::options::OPT_march);
+  if (archarg != nullptr) {
+    std::string val(archarg->getValue());
+    if (val == "native")
+      archStr = sys::getHostCPUName();
+    else
+      archStr = archarg->getValue();
+    triple_.setArchName(archStr);
+  }
+
   return phaseSuccessful();
 }
 
 bool CompilationOrchestrator::preamble()
 {
-  triple_ = Triple(Triple::normalize(TargetTriple));
-  if (triple_.getTriple().empty())
-    triple_.setTriple(sys::getDefaultTargetTriple());
-
   // Get the target specific parser.
   std::string Error;
   const Target *TheTarget =
-      TargetRegistry::lookupTarget(MArch, triple_, Error);
+      TargetRegistry::lookupTarget("", triple_, Error);
   if (!TheTarget) {
     errs() << progname_ << ": " << Error;
     return false;
   }
-
-  // FIXME: cpu, features not yet supported
-  std::string CPUStr = getCPUStr(), FeaturesStr = getFeaturesStr();
 
   // optimization level
   opt::Arg *oarg = args_.getLastArg(gollvm::options::OPT_O_Group);
@@ -590,37 +411,32 @@ bool CompilationOrchestrator::preamble()
       return false;
     }
     switch (lev[0]) {
-      case '0': {
+      case '0':
         olvl_ = 0;
         cgolvl_ = CodeGenOpt::None;
         break;
-      }
-      case '1': {
+      case '1':
         olvl_ = 1;
         cgolvl_ = CodeGenOpt::Less;
         break;
-      }
       case 's': // TODO: -Os same as -O for now.
-      case '2': {
+      case '2':
         olvl_ = 2;
         cgolvl_ = CodeGenOpt::Default;
         break;
-      }
-      case '3': {
+      case '3':
         olvl_ = 3;
         cgolvl_ = CodeGenOpt::Aggressive;
         break;
-      }
-      default: {
+      default:
         errs() << progname_ << ": invalid optimization level.\n";
         return false;
-      }
     }
   }
 
-  go_no_warn = NoWarn;
+  go_no_warn = args_.hasArg(gollvm::options::OPT_w);
 
-  TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
+  TargetOptions Options;
 
   // FIXME: turn off integrated assembler for now.
   Options.DisableIntegratedAS = true;
@@ -632,33 +448,63 @@ bool CompilationOrchestrator::preamble()
   // always what we want).
   Options.FunctionSections = true;
   Options.DataSections = true;
+  Options.UniqueSectionNames = true;
+
+  // FIXME: this needs to be dependent on target triple
+  Options.EABIVersion = llvm::EABI::Default;
+
+  // init array use
+  Options.UseInitArray =
+      reconcileOptionPair(gollvm::options::OPT_fuse_init_array,
+                          gollvm::options::OPT_fno_use_init_array,
+                          true);
 
   // FP trapping mode
-  Options.NoTrappingFPMath = !reconcileOptionPair(TrappingMath,
-                                                  NoTrappingMath,
-                                                  true);
+  Options.NoTrappingFPMath =
+      reconcileOptionPair(gollvm::options::OPT_ftrapping_math,
+                          gollvm::options::OPT_fno_trapping_math,
+                          false);
+
 
   // The -fno-math-errno option is essentially a no-op when compiling
   // Go code, but -fmath-errno does not make sense, since 'errno' is
   // not exposed in any meaningful way as part of the math package.
   // Allow users to set -fno-math-errno for compatibility reasons, but
   // issue an error if -fmath-errno is set.
-  bool mathErrno = reconcileOptionPair(MathErrno, NoMathErrno, false);
+  bool mathErrno = reconcileOptionPair(gollvm::options::OPT_fmath_errno,
+                                       gollvm::options::OPT_fno_math_errno,
+                                       false);
   if (mathErrno) {
     errs() << "error: -fmath-errno unsupported for Go code\n";
     return false;
   }
 
   // FP contract settings.
-  Options.AllowFPOpFusion = FuseFPOps;
+  auto dofuse = getFPOpFusionMode();
+  if (!dofuse)
+    return false;
+  Options.AllowFPOpFusion = *dofuse;
 
-  // FIXME: get rid of -fp-contract in favor of -ffp-contract
-  // FIXME: allow multiple -ffp-contract=XXX settings on the command line.
+  // Support -mcpu
+  std::string cpuStr;
+  opt::Arg *cpuarg = args_.getLastArg(gollvm::options::OPT_mcpu);
+  if (cpuarg != nullptr) {
+    std::string val(cpuarg->getValue());
+    if (val == "native")
+      cpuStr = sys::getHostCPUName();
+    else
+      cpuStr = cpuarg->getValue();
+  }
+
+  // Features
+  SubtargetFeatures features;
+  features.getDefaultSubtargetFeatures(triple_);
+  std::string featStr = features.getString();
 
   // Create target machine
   Optional<llvm::CodeModel::Model> CM = None;
   target_.reset(
-      TheTarget->createTargetMachine(triple_.getTriple(), CPUStr, FeaturesStr,
+      TheTarget->createTargetMachine(triple_.getTriple(), cpuStr, featStr,
                                      Options, reconcileRelocModel(),
                                      CM, cgolvl_));
   assert(target_.get() && "Could not allocate target machine!");
@@ -678,14 +524,6 @@ bool CompilationOrchestrator::initBridge()
   context_.setDiagnosticHandler(
       llvm::make_unique<BEDiagnosticHandler>(&this->hasError_));
 
-  // Vett relocation model.
-  if (RelocModel.getNumOccurrences() > 0 &&
-      (RelocModel != llvm::Reloc::Static &&
-       RelocModel != llvm::Reloc::PIC_)) {
-    errs() << "error: unsupported -relocation-model selection\n";
-    return false;
-  }
-
   // Construct linemap and module
   linemap_.reset(new Llvm_linemap());
   module_.reset(new llvm::Module("gomodule", context_));
@@ -693,13 +531,17 @@ bool CompilationOrchestrator::initBridge()
   // Add the target data from the target machine, if it exists
   module_->setTargetTriple(triple_.getTriple());
   module_->setDataLayout(target_->createDataLayout());
-  module_->setPICLevel(reconcilePicLevel());
+  module_->setPICLevel(getPicLevel());
 
   // Now construct Llvm_backend helper.
   bridge_.reset(new Llvm_backend(context_, module_.get(), linemap_.get()));
 
   // Honor inline, tracelevel cmd line options
-  bridge_->setTraceLevel(TraceLevel);
+  llvm::Optional<unsigned> tl =
+      getLastArgAsInteger(gollvm::options::OPT_tracelevel, 0u);
+  if (!tl)
+    return false;
+  bridge_->setTraceLevel(*tl);
   bridge_->setNoInline(args_.hasArg(gollvm::options::OPT_fno_inline));
 
   // Support -fgo-dump-ast
@@ -709,7 +551,6 @@ bool CompilationOrchestrator::initBridge()
   // Populate 'args' struct with various bits of information needed by
   // the front end, then pass it to the front end via go_create_gogo().
   struct go_create_gogo_args args;
-  memset(&args, '0', sizeof(args));
   unsigned bpi = target_->getPointerSize(0) * 8;
   args.int_type_size = bpi;
   args.pointer_size = bpi;
@@ -724,24 +565,21 @@ bool CompilationOrchestrator::initBridge()
   opt::Arg *chdr =
       args_.getLastArg(gollvm::options::OPT_fgo_c_header);
   args.c_header = (chdr == nullptr ? NULL : chdr->getValue());
-
   args.check_divide_by_zero =
-      reconcileOptionPair(args_,
-                          gollvm::options::OPT_fgo_check_divide_zero,
+      reconcileOptionPair(gollvm::options::OPT_fgo_check_divide_zero,
                           gollvm::options::OPT_fno_go_check_divide_zero,
                           true);
-
   args.check_divide_overflow =
-        reconcileOptionPair(args_,
-                          gollvm::options::OPT_fgo_check_divide_overflow,
-                          gollvm::options::OPT_fno_go_check_divide_overflow,
-                          true);
-
+        reconcileOptionPair(gollvm::options::OPT_fgo_check_divide_overflow,
+                            gollvm::options::OPT_fno_go_check_divide_overflow,
+                            true);
   args.compiling_runtime =
       args_.hasArg(gollvm::options::OPT_fgo_compiling_runtime);
-  if (! getLastArgAsInteger(gollvm::options::OPT_fgo_debug_escape,
-                            &args.debug_escape_level, 0))
+  llvm::Optional<int> del =
+      getLastArgAsInteger(gollvm::options::OPT_fgo_debug_escape, 0);
+  if (!del)
     return false;
+  args.debug_escape_level = *del;
   opt::Arg *hasharg =
       args_.getLastArg(gollvm::options::OPT_fgo_debug_escape_hash);
   args.debug_escape_hash = (hasharg != nullptr ? hasharg->getValue() : NULL);
@@ -757,8 +595,7 @@ bool CompilationOrchestrator::initBridge()
 
   // Escape analysis
   bool enableEscapeAnalysis =
-      reconcileOptionPair(args_,
-                          gollvm::options::OPT_fgo_optimize_allocs,
+      reconcileOptionPair(gollvm::options::OPT_fgo_optimize_allocs,
                           gollvm::options::OPT_fno_go_optimize_allocs,
                           true);
   go_enable_optimize("allocs", enableEscapeAnalysis ? 1 : 0);
@@ -896,13 +733,15 @@ bool CompilationOrchestrator::invokeFrontEnd()
   for (auto &fn : inputFileNames_)
     fns[idx++] = fn.c_str();
   go_parse_input_files(fns, nfiles, false, true);
-  if (! NoBackend)
+  if (!args_.hasArg(gollvm::options::OPT_nobackend))
     go_write_globals();
-  if (DumpIR)
+  if (args_.hasArg(gollvm::options::OPT_dump_ir))
     bridge_->dumpModule();
-  if (! NoVerify && !go_be_saw_errors())
+  if (!args_.hasArg(gollvm::options::OPT_noverify) && !go_be_saw_errors())
     bridge_->verifyModule();
-  if (TraceLevel)
+  llvm::Optional<unsigned> tl =
+      getLastArgAsInteger(gollvm::options::OPT_tracelevel, 0u);
+  if (*tl)
     std::cerr << "linemap stats:" << linemap_->statistics() << "\n";
 
   // Delete the bridge at this point. In the case that there were
@@ -942,7 +781,7 @@ void CompilationOrchestrator::createPasses(legacy::PassManager &MPM,
   pmb.PrepareForLTO = false;
 
   FPM.add(new TargetLibraryInfoWrapperPass(*tlii_));
-  if (! NoVerify)
+  if (! args_.hasArg(gollvm::options::OPT_noverify))
     FPM.add(createVerifierPass());
 
   pmb.populateFunctionPassManager(FPM);
@@ -974,14 +813,13 @@ bool CompilationOrchestrator::invokeBackEnd()
   // Codegen setup
   raw_pwrite_stream *OS = &asmout_->os();
   codeGenPasses.add(new TargetLibraryInfoWrapperPass(*tlii_));
-  if (target_->addPassesToEmitFile(codeGenPasses, *OS, FileType,
-                                   /*DisableVerify=*/ NoVerify)) {
+  bool noverify = args_.hasArg(gollvm::options::OPT_noverify);
+  TargetMachine::CodeGenFileType ft = TargetMachine::CGFT_AssemblyFile;
+  if (target_->addPassesToEmitFile(codeGenPasses, *OS, ft,
+                                   /*DisableVerify=*/ noverify)) {
     errs() << "error: unable to interface with target\n";
     return false;
   }
-
-  // Before executing passes, print the final values of the LLVM options.
-  cl::PrintOptionValues();
 
   // Here we go... first function passes
   functionPasses.doInitialization();
