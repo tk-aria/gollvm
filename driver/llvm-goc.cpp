@@ -23,8 +23,10 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
+#include "llvm/Bitcode/BitcodeWriterPass.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/DiagnosticPrinter.h"
+#include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Verifier.h"
@@ -179,6 +181,7 @@ class CompilationOrchestrator {
                            gollvm::options::ID noOption,
                            bool defaultVal);
   llvm::Optional<llvm::FPOpFusion::FPOpFusionMode> getFPOpFusionMode();
+  std::string firstFileBase();
 };
 
 CompilationOrchestrator::CompilationOrchestrator(const char *argvZero)
@@ -204,7 +207,8 @@ CompilationOrchestrator::~CompilationOrchestrator()
 TargetMachine::CodeGenFileType CompilationOrchestrator::getOutputFileType()
 {
   TargetMachine::CodeGenFileType ft;
-  if (args_.hasArg(gollvm::options::OPT_S))
+  if (args_.hasArg(gollvm::options::OPT_S) ||
+      args_.hasArg(gollvm::options::OPT_emit_llvm))
     ft = TargetMachine::CGFT_AssemblyFile;
   else
     ft = TargetMachine::CGFT_ObjectFile;
@@ -301,6 +305,14 @@ CompilationOrchestrator::getFPOpFusionMode()
     }
   }
   return res;
+}
+
+std::string CompilationOrchestrator::firstFileBase()
+{
+  std::string firstFile = inputFileNames_[0];
+  size_t dotindex = firstFile.find_last_of(".");
+  assert(dotindex != std::string::npos);
+  return firstFile.substr(0, dotindex);
 }
 
 bool CompilationOrchestrator::parseCommandLine(int argc, char **argv)
@@ -679,26 +691,40 @@ bool CompilationOrchestrator::resolveInputOutput()
   if (outFileArg) {
     outFileName_ = outFileArg->getValue();
   } else {
-    std::string firstFile = inputFileNames_[0];
-    size_t dotindex = firstFile.find_last_of(".");
-    assert(dotindex != std::string::npos);
-    outFileName_ = firstFile.substr(0, dotindex);
-    outFileName_ += (ft == TargetMachine::CGFT_AssemblyFile ? ".s" : ".o");
+    outFileName_ = firstFileBase();
+    if (ft == TargetMachine::CGFT_AssemblyFile) {
+      if (args_.hasArg(gollvm::options::OPT_emit_llvm)) {
+        if (args_.hasArg(gollvm::options::OPT_S)) {
+          outFileName_ += ".ll";
+        } else {
+          outFileName_ += ".bc";
+        }
+      } else {
+        outFileName_ += ".s";
+      }
+    } else {
+      outFileName_ += ".o";
+    }
   }
 
   // If we're not compiling to assembly, then we need an intermediate
   // output file into which we'll emit assembly code.
   if (ft != TargetMachine::CGFT_AssemblyFile) {
-    llvm::SmallString<128> tempFileName;
-    std::error_code tfcEC =
-        llvm::sys::fs::createTemporaryFile("asm", "s", tempFileName);
-    if (tfcEC) {
-      errs() << tfcEC.message() << "\n";
-      return false;
+    if (args_.hasArg(gollvm::options::OPT_save_temps)) {
+      asmOutFileName_ = firstFileBase();
+      asmOutFileName_ += ".s";
+    } else {
+      llvm::SmallString<128> tempFileName;
+      std::error_code tfcEC =
+          llvm::sys::fs::createTemporaryFile("asm", "s", tempFileName);
+      if (tfcEC) {
+        errs() << tfcEC.message() << "\n";
+        return false;
+      }
+      tmpCreated_ = true;
+      sys::RemoveFileOnSignal(tempFileName);
+      asmOutFileName_ = std::string(tempFileName.c_str());
     }
-    tmpCreated_ = true;
-    sys::RemoveFileOnSignal(tempFileName);
-    asmOutFileName_ = std::string(tempFileName.c_str());
   } else {
     asmOutFileName_ = outFileName_;
   }
@@ -761,6 +787,9 @@ bool CompilationOrchestrator::invokeFrontEnd()
 void CompilationOrchestrator::createPasses(legacy::PassManager &MPM,
                                            legacy::FunctionPassManager &FPM)
 {
+  if (args_.hasArg(gollvm::options::OPT_disable_llvm_passes))
+    return;
+
   // FIXME: support LTO, ThinLTO, PGO
 
   PassManagerBuilder pmb;
@@ -805,13 +834,27 @@ bool CompilationOrchestrator::invokeBackEnd()
       createTargetTransformInfoWrapperPass(target_->getTargetIRAnalysis()));
   createPasses(modulePasses, functionPasses);
 
+  // Add passes to emit bitcode or LLVM IR as appropriate. Here we mimic
+  // clang behavior, which is to emit bitcode when "-emit-llvm" is specified
+  // but an LLVM IR dump of "-S -emit-llvm" is used.
+  raw_pwrite_stream *OS = &asmout_->os();
+  if (args_.hasArg(gollvm::options::OPT_emit_llvm)) {
+    bool bitcode = !args_.hasArg(gollvm::options::OPT_S);
+    bool preserveUseLists =
+        reconcileOptionPair(gollvm::options::OPT_emit_llvm_uselists,
+                            gollvm::options::OPT_no_emit_llvm_uselists,
+                            false);
+    modulePasses.add(bitcode ?
+                     createBitcodeWriterPass(*OS, preserveUseLists) :
+                     createPrintModulePass(*OS, "", preserveUseLists));
+  }
+
   // Set up codegen passes
   legacy::PassManager codeGenPasses;
   codeGenPasses.add(
       createTargetTransformInfoWrapperPass(target_->getTargetIRAnalysis()));
 
   // Codegen setup
-  raw_pwrite_stream *OS = &asmout_->os();
   codeGenPasses.add(new TargetLibraryInfoWrapperPass(*tlii_));
   bool noverify = args_.hasArg(gollvm::options::OPT_noverify);
   TargetMachine::CodeGenFileType ft = TargetMachine::CGFT_AssemblyFile;
@@ -837,8 +880,33 @@ bool CompilationOrchestrator::invokeBackEnd()
   if (hasError_)
     return false;
 
-  // Keep the resulting output file if -S is in effect.
-  if (getOutputFileType() == TargetMachine::CGFT_AssemblyFile)
+  // If -v is in effect, print something to show the effect of the
+  // compilation. This is in some sense a fiction, because the top
+  // level driver is not invoking a tool to perform the compile, but
+  // there is an expectation with compilers that if you take the
+  // "-v" output and then execute each command shown by hand, you'll
+  // get the same effect as the original command that produced the
+  // "-v" output.
+  if (args_.hasArg(gollvm::options::OPT_v)) {
+    errs() << progname_ << " -S";
+    bool hasout = false;
+    for (auto arg : args_) {
+      if (arg->getOption().matches(gollvm::options::OPT_v) ||
+          arg->getOption().matches(gollvm::options::OPT_c) ||
+          arg->getOption().matches(gollvm::options::OPT_save_temps))
+        continue;
+      if (arg->getOption().matches(gollvm::options::OPT_o))
+        hasout = true;
+      errs() << " " << arg->getAsString(args_);
+    }
+    if (getOutputFileType() == TargetMachine::CGFT_ObjectFile && !hasout)
+      errs() << " -o " << asmOutFileName_;
+    errs() << "\n";
+  }
+
+  // Keep the resulting output file if -S or -save-temps are in effect.
+  if (getOutputFileType() == TargetMachine::CGFT_AssemblyFile ||
+      args_.hasArg(gollvm::options::OPT_save_temps))
     asmout_->keep();
 
   return phaseSuccessful();
@@ -867,6 +935,15 @@ bool CompilationOrchestrator::invokeAssembler()
   args.push_back("-o");
   args.push_back(outFileName_.c_str());
   args.push_back(nullptr);
+
+  if (args_.hasArg(gollvm::options::OPT_v)) {
+    bool first = true;
+    for (auto arg : args) {
+      errs() << (first ? "" : " ") << arg;
+      first = false;
+    }
+    errs() << "\n";
+  }
 
   std::string errMsg;
   bool rval = true;
