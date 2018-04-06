@@ -924,21 +924,38 @@ bool CompilationOrchestrator::invokeAssembler()
     return false;
   }
 
-  std::vector<const char *> args;
-  args.push_back("as");
+  // Note: ArgStringList is effectively a vector of "const char *".
+  opt::ArgStringList asmcmd;
+  asmcmd.push_back("as");
   if (compileMode_ == CompileAssemblyMode) {
     for (auto &fn : inputFileNames_)
-      args.push_back(fn.c_str());
+      asmcmd.push_back(fn.c_str());
   } else {
-    args.push_back(asmOutFileName_.c_str());
+    asmcmd.push_back(asmOutFileName_.c_str());
   }
-  args.push_back("-o");
-  args.push_back(outFileName_.c_str());
-  args.push_back(nullptr);
+  asmcmd.push_back("-o");
+  asmcmd.push_back(outFileName_.c_str());
+  opt::ArgStringList xargs;
+  args_.AddAllArgValues(asmcmd,
+                        gollvm::options::OPT_Wa_COMMA,
+                        gollvm::options::OPT_Xassembler);
+  opt::Arg *gzarg = args_.getLastArg(gollvm::options::OPT_gz,
+                                     gollvm::options::OPT_gz_EQ);
+  std::string cds;
+  if (gzarg != nullptr) {
+    if (gzarg->getOption().matches(gollvm::options::OPT_gz)) {
+      asmcmd.push_back("-compress-debug-sections");
+    } else {
+      cds = "-compress-debug-sections=";
+      cds += gzarg->getValue();
+      asmcmd.push_back(cds.c_str());
+    }
+  }
+  asmcmd.push_back(nullptr);
 
   if (args_.hasArg(gollvm::options::OPT_v)) {
     bool first = true;
-    for (auto arg : args) {
+    for (auto arg : asmcmd) {
       errs() << (first ? "" : " ") << arg;
       first = false;
     }
@@ -947,7 +964,7 @@ bool CompilationOrchestrator::invokeAssembler()
 
   std::string errMsg;
   bool rval = true;
-  int rc = sys::ExecuteAndWait(*aspath, args.data(),
+  int rc = sys::ExecuteAndWait(*aspath, asmcmd.data(),
                                /*env=*/nullptr, /*Redirects*/{},
                                /*secondsToWait=*/0,
                                /*memoryLimit=*/0, &errMsg);
