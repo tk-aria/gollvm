@@ -501,7 +501,7 @@ llvm::Value *Bfunction::genReturnSequence(Bexpression *toRet,
     BlockLIRBuilder bbuilder(function(), inamegen);
     uint64_t sz = tm->typeSize(fcnType_->resultType());
     uint64_t algn = tm->typeAlignment(fcnType_->resultType());
-    bbuilder.CreateMemCpy(rtnValueMem_, toRet->value(), sz, algn);
+    bbuilder.CreateMemCpy(rtnValueMem_, algn, toRet->value(), algn, sz);
     std::vector<llvm::Instruction*> instructions = bbuilder.instructions();
     for (auto i : instructions)
       retInstrs->appendInstruction(i);

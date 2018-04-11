@@ -737,7 +737,7 @@ llvm::Value *Llvm_backend::genStore(BlockLIRBuilder *builder,
   unsigned algn = typeAlignment(srcType);
 
   // Q: should we be using memmove here instead?
-  llvm::CallInst *call = builder->CreateMemCpy(dstLoc, srcVal, sz, algn);
+  llvm::CallInst *call = builder->CreateMemCpy(dstLoc, algn, srcVal, algn, sz);
 
   return call;
 }
