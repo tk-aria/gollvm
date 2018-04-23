@@ -20,6 +20,12 @@
 #include "mpfr.h"
 #include "GollvmOptions.h"
 
+#include "Compilation.h"
+#include "Driver.h"
+#include "ToolChain.h"
+#include "Tool.h"
+
+
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
