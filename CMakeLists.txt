@@ -74,12 +74,18 @@ set(GOFRONTEND_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gofrontend/go)
 # Location of bridge source code.
 set(BRIDGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bridge)
 
+# Location of driver utilities source code.
+set(DRIVER_UTILS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/driver)
+
 # Subdirectory for the middle layer that translates Backend method
 # calls into LLVM IR.
 add_subdirectory(bridge)
 
-# Subdirectory for compiler driver executable.
+# Subdirectory for compiler driver utilities library.
 add_subdirectory(driver)
+
+# Subdirectory for compiler driver executable.
+add_subdirectory(driver-main)
 
 # Go standard library
 add_subdirectory(libgo)
@@ -87,6 +93,6 @@ add_subdirectory(libgo)
 # Go tools (go, gofmt, etc)
 add_subdirectory(gotools)
 
-# Subdir for unit tests that test the middle layer
+# Subdir for unit tests
 add_subdirectory(unittests)
 
