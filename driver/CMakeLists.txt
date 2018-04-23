@@ -16,7 +16,14 @@ include_directories(${EXTINSTALLDIR}/include)
 
 # A library containing driver utility code.
 add_llvm_library(LLVMDriverUtils
+  Action.cpp
+  Artifact.cpp
+  Command.cpp
+  Compilation.cpp
+  Driver.cpp
   GollvmOptions.cpp
+  Tool.cpp
+  ToolChain.cpp
   DEPENDS
   GollvmDriverOptions
   )
