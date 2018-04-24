@@ -56,9 +56,7 @@ class Driver {
   std::unique_ptr<Compilation> buildCompilation(ToolChain &tc);
 
   // Build actions for compilation. Returns false if error.
-  // TEMPORARY: pass in asm out file from compiled Go.
-  bool buildActions(Compilation &compilation,
-                    const std::string &asmOutFile);
+  bool buildActions(Compilation &compilation);
 
   // Process the action list. This means:
   // - execute any non-dependent actions that don't require the
