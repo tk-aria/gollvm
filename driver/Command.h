@@ -49,7 +49,7 @@ class Command {
   int execute(std::string *errMsg);
 
   // Print to string
-  void print(llvm::raw_ostream &OS);
+  void print(llvm::raw_ostream &OS, bool quoteArgs);
 
   // Print for debugging
   void dbgPrint();

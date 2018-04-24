@@ -28,6 +28,11 @@ const char *Artifact::file() const
           u.arg->getValue() : u.file);
 }
 
+llvm::opt::Arg *Artifact::arg()
+{
+  return (type_ == A_Argument ? u.arg : nullptr);
+}
+
 std::string Artifact::toString()
 {
   std::stringstream ss;

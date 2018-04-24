@@ -68,26 +68,66 @@ std::string Compilation::firstFileBase()
 
 Artifact *Compilation::newArgArtifact(llvm::opt::Arg *arg)
 {
-  // to be implemented in a later patch
-  return nullptr;
+  ownedArtifacts_.push_back(std::unique_ptr<Artifact>(new Artifact(arg)));
+  return ownedArtifacts_.back().get();
 }
 
-Artifact *Compilation::newFileArtifact(const char *tempfilename)
+Artifact *Compilation::newFileArtifact(const char *path, bool isTempFile)
 {
-  // to be implemented in a later patch
-  return nullptr;
+  paths_.push_back(std::string(path));
+  const char *fn = paths_.back().c_str();
+  if (isTempFile)
+    tempFileNames_.push_back(fn);
+  ownedArtifacts_.push_back(std::unique_ptr<Artifact>(new Artifact(fn)));
+  return ownedArtifacts_.back().get();
 }
 
 Artifact *Compilation::createOutputFileArtifact(Action *act)
 {
-  // to be implemented in a later patch
-  return nullptr;
+  llvm::opt::InputArgList &args = driver_.args();
+
+  // Honor -o if present
+  llvm::opt::Arg *outf = args.getLastArg(gollvm::options::OPT_o);
+  if (outf)
+    return newArgArtifact(outf);
+
+  // No -o: construct output file name.
+  std::string ofn;
+  if (act->type() == Action::A_Link) {
+    assert(! args.hasArg(gollvm::options::OPT_emit_llvm));
+    ofn = "a.out";
+  } else {
+    ofn = firstFileBase();
+    if (args.hasArg(gollvm::options::OPT_emit_llvm)) {
+      if (args.hasArg(gollvm::options::OPT_S))
+        ofn += ".ll";
+      else
+        ofn += ".bc";
+    } else {
+      if (args.hasArg(gollvm::options::OPT_S))
+        ofn += ".s";
+      else
+        ofn += ".o";
+    }
+  }
+
+  outFileName_ = ofn;
+  return newFileArtifact(ofn.c_str(), false);
 }
 
 llvm::Optional<Artifact*> Compilation::createTemporaryFileArtifact(Action *act)
 {
-  // to be implemented in a later patch
-  return llvm::None;
+  llvm::SmallString<128> tempFileName;
+  std::error_code tfcEC =
+      llvm::sys::fs::createTemporaryFile(act->getName(),
+                                         act->resultFileSuffix(),
+                                         tempFileName);
+  if (tfcEC) {
+    llvm::errs() << driver_.progname() << ": error: "
+                 << tfcEC.message() << "\n";
+    return llvm::None;
+  }
+  return newFileArtifact(tempFileName.c_str(), true);
 }
 
 void Compilation::addCommand(const Action &srcAction,
@@ -104,8 +144,29 @@ void Compilation::addCommand(const Action &srcAction,
 
 bool Compilation::executeCommands()
 {
-  // to be implemented in a later patch
-  return false;
+  llvm::opt::ArgList &args = driver().args();
+
+  bool hashHashHash = args.hasArg(gollvm::options::OPT__HASH_HASH_HASH);
+  for (auto cmd : commands_) {
+
+    // Support -v and/or -###
+    if (hashHashHash || args.hasArg(gollvm::options::OPT_v))
+      cmd->print(llvm::errs(), hashHashHash);
+
+    // Support -###
+    if (hashHashHash)
+      continue;
+
+    // Execute.
+    std::string errMsg;
+    int rc = cmd->execute(&errMsg);
+    if (rc != 0) {
+      llvm::errs() << errMsg << "\n";
+      return false;
+    }
+  }
+
+  return true;
 }
 
 } // end namespace driver

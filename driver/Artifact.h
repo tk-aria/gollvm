@@ -55,6 +55,9 @@ class Artifact {
   // File for input
   const char *file() const;
 
+  // Return input argument if type is A_Argument, null otherwise.
+  llvm::opt::Arg *arg();
+
   // Debugging
   std::string toString();
   void dump();

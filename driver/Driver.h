@@ -35,6 +35,7 @@ namespace gollvm {
 namespace driver {
 
 class Compilation;
+class InternalTool;
 class ToolChain;
 
 // Driver class. Drives the process of translating a given command
@@ -55,7 +56,9 @@ class Driver {
   std::unique_ptr<Compilation> buildCompilation(ToolChain &tc);
 
   // Build actions for compilation. Returns false if error.
-  bool buildActions(Compilation &compilation);
+  // TEMPORARY: pass in asm out file from compiled Go.
+  bool buildActions(Compilation &compilation,
+                    const std::string &asmOutFile);
 
   // Process the action list. This means:
   // - execute any non-dependent actions that don't require the
@@ -111,6 +114,10 @@ class Driver {
   llvm::StringMap<std::unique_ptr<ToolChain>> toolchains_;
   // Maps non-input actions to output artifacts.
   std::unordered_map<Action *, Artifact*> artmap_;
+
+  bool processAction(Action *act, Compilation &compilation, bool lastAct);
+  ArtifactList collectInputArtifacts(Action *act, InternalTool *it);
+  void emitVersion();
 };
 
 template<typename IT>
