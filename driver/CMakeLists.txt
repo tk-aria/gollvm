@@ -21,6 +21,7 @@ add_llvm_library(LLVMDriverUtils
   Command.cpp
   Compilation.cpp
   Driver.cpp
+  GccUtils.cpp
   GollvmOptions.cpp
   Tool.cpp
   ToolChain.cpp
