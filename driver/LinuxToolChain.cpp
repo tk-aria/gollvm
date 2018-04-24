@@ -16,6 +16,7 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
 
+#include "CompileGo.h"
 #include "Driver.h"
 #include "GnuTools.h"
 #include "Tool.h"
@@ -60,8 +61,7 @@ Linux::~Linux()
 
 Tool *Linux::buildCompiler()
 {
-  // implementation to appear in a subsequent patch
-  return nullptr;
+  return new CompileGo(*this);
 }
 
 Tool *Linux::buildAssembler()
