@@ -43,12 +43,22 @@ class Compilation {
   // Return is true for success, false for error;
   bool executeCommands();
 
-  // Create a temp file and return as artifact.
+  // Generate a new temp file and return an artifact for it. Here
+  // llvm::Optional is used in case the temp file creation fails for
+  // some reason.
   llvm::Optional<Artifact*> createTemporaryFileArtifact(Action *act);
+
+    // Create new artifact based on file name. If 'isTempfile' is set,
+  // the file should be scheduled for deletion after compilation finishes.
+  Artifact *newFileArtifact(const char *path, bool isTempFile);
 
   // Return an artifact corresponding to the proper output file (depends
   // on action plus command line flags).
   Artifact* createOutputFileArtifact(Action *act);
+
+  // Temporary (for this patch only): create a dummy artifact for the
+  // specified file.
+  Artifact* createDummyAsmOutArtifact(const std::string &fileName);
 
   // Toolchain, driver
   ToolChain &toolchain() { return toolchain_; }
@@ -98,10 +108,8 @@ class Compilation {
   llvm::SmallVector<std::unique_ptr<Action>, 8> ownedActions_;
   llvm::SmallVector<std::unique_ptr<Artifact>, 8> ownedArtifacts_;
   llvm::SmallVector<std::unique_ptr<Command>, 8> ownedCommands_;
-  llvm::SmallVector<std::string, 8> tempFileNames_;
-
-  // Create new artifact based on temp file.
-  Artifact *newFileArtifact(const char *tempfilename);
+  llvm::SmallVector<const char *, 8> tempFileNames_;
+  llvm::SmallVector<std::string, 8> paths_;
 };
 
 } // end namespace driver

@@ -68,6 +68,7 @@
 #include <unistd.h>
 
 using namespace llvm;
+using namespace gollvm::driver;
 
 class CommandLineParser {
  public:
@@ -222,6 +223,9 @@ class CompilationOrchestrator {
 
   // Exit code to return if there was an error in one of the steps above.
   int errorReturnCode() const { return errorReturnCode_; }
+
+  // Temporary: return asm output file.
+  const std::string &asmOutFile() const { return asmOutFileName_; }
 
  private:
   Triple triple_;
@@ -1050,9 +1054,29 @@ int main(int argc, char **argv)
   if (! orchestrator.invokeBackEnd())
     return orchestrator.errorReturnCode();
 
-  // Invoke assembler if needed.
-  if (! orchestrator.invokeAssembler())
-    return orchestrator.errorReturnCode();
+  // Create driver.
+  Driver driver(clp.args(), opts.get(), argv[0]);
+
+  // Set up driver, select target and toolchain.
+  ToolChain *toolchain = driver.setup();
+  if (toolchain == nullptr)
+    return 1;
+
+  // Build compilation; construct actions for this compile.
+  std::unique_ptr<Compilation> compilation =
+      driver.buildCompilation(*toolchain);
+  if (!driver.buildActions(*compilation, orchestrator.asmOutFile()))
+    return 2;
+
+  // Process the action list. This will carry out actions that don't
+  // require use of an external tool, and will generate a list of
+  // commands for invoking external tools.
+  if (!driver.processActions(*compilation))
+    return 3;
+
+  // Execute the external-tool command list created above.
+  if (! compilation->executeCommands())
+    return 4;
 
   // We're done.
   return 0;

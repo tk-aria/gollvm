@@ -16,8 +16,9 @@
 #include "llvm/Support/Program.h"
 
 #include "Action.h"
-#include "Driver.h"
 #include "Compilation.h"
+#include "Driver.h"
+#include "LinuxToolChain.h"
 #include "ToolChain.h"
 
 using namespace llvm;
@@ -40,6 +41,16 @@ Driver::~Driver()
 {
 }
 
+// TODO: create a mechanism for capturing release tag/branch, and/or
+// git/svn revision for LLVM, gollvm, and so on.
+
+void Driver::emitVersion()
+{
+  // NB: the go build tool keys off the presence of the "experimental"
+  // keyword (hashes compiler binary if detected).
+  llvm::errs() << "gollvm version 1 (experimental)\n";
+}
+
 std::string Driver::getFilePath(llvm::StringRef name,
                                 ToolChain &toolchain)
 {
@@ -51,9 +62,32 @@ std::string Driver::getFilePath(llvm::StringRef name,
 std::string Driver::getProgramPath(llvm::StringRef name,
                                    ToolChain &toolchain)
 {
-  // to be implemented in a later patch
-  assert(false);
-  return "";
+  // TODO: add support for -Bprefix option.
+
+  // Include target-prefixed name in search.
+  SmallVector<std::string, 2> candidates;
+  candidates.push_back((triple_.str() + "-" + name).str());
+  candidates.push_back(name);
+
+  // Examine toolchain program paths.
+  for (auto &dir : toolchain.programPaths()) {
+    for (auto &cand : candidates) {
+      llvm::SmallString<256> candidate(dir);
+      llvm::sys::path::append(candidate, cand);
+      if (llvm::sys::fs::can_execute(llvm::Twine(candidate)))
+        return candidate.str();
+    }
+  }
+
+  // Search path.
+  for (auto &cand : candidates) {
+    llvm::ErrorOr<std::string> pcand =
+      llvm::sys::findProgramByName(cand);
+    if (pcand)
+      return *pcand;
+  }
+
+  return name;
 }
 
 // FIXME: some  platforms have PIE enabled by default; we don't
@@ -154,29 +188,275 @@ std::unique_ptr<Compilation> Driver::buildCompilation(ToolChain &tc)
 
 ToolChain *Driver::setup()
 {
-  // to be implemented in a later patch
-  return nullptr;
+   bool inputseen = false;
+
+  if (args_.hasArg(gollvm::options::OPT_v) ||
+      args_.hasArg(gollvm::options::OPT__HASH_HASH_HASH))
+    emitVersion();
+
+  // Check for existence of input files.
+  for (opt::Arg *arg : args_) {
+    if (arg->getOption().getKind() == opt::Option::InputClass) {
+
+      // Special case for "-" (always assumed to exist)
+      if (strcmp(arg->getValue(), "-")) {
+        std::string fn(arg->getValue());
+
+        // Check for existence of input file.
+        if (!sys::fs::exists(fn)) {
+          errs() << progname_ << ": error: input file '"
+                 << fn << "' does not exist\n";
+          return nullptr;
+        }
+      }
+      inputseen = true;
+    }
+  }
+
+  // Issue an error if no inputs.
+  if (! inputseen) {
+    errs() << progname_ << ": error: no inputs\n";
+    return nullptr;
+  }
+
+  // Set triple.
+  if (const opt::Arg *arg = args_.getLastArg(gollvm::options::OPT_target_EQ))
+    triple_ = Triple(Triple::normalize(arg->getValue()));
+  else
+    triple_ = Triple(sys::getDefaultTargetTriple());
+
+  // Support -march
+  std::string archStr;
+  opt::Arg *archarg = args_.getLastArg(gollvm::options::OPT_march_EQ);
+  if (archarg != nullptr) {
+    std::string val(archarg->getValue());
+    if (val == "native")
+      archStr = sys::getHostCPUName();
+    else
+      archStr = archarg->getValue();
+    triple_.setArchName(archStr);
+  }
+
+  // Look up toolchain.
+  auto &tc = toolchains_[triple_.str()];
+  if (!tc) {
+    switch (triple_.getOS()) {
+      case Triple::Linux:
+        tc = make_unique<toolchains::Linux>(*this, triple_);
+        break;
+      default:
+        errs() << progname_ << ": error: unsupported target "
+               << triple_.str() << ", unable to create toolchain\n";
+        return nullptr;
+    }
+  }
+
+  // FIXME: add code to weed out unknown architectures (ex:
+  // SomethingWeird-unknown-linux-gnu).
+
+  return tc.get();
 }
 
 ActionList Driver::createInputActions(const inarglist &ifargs,
                                       Compilation &compilation)
 {
-  // to be implemented in a later patch
-  return ActionList();
+  ActionList result;
+  for (auto ifarg : ifargs) {
+    InputAction *ia = new InputAction(compilation.newArgArtifact(ifarg));
+    compilation.recordAction(ia);
+    result.push_back(ia);
+  }
+  return result;
 }
 
-bool Driver::buildActions(Compilation &compilation)
+bool Driver::buildActions(Compilation &compilation,
+                          const std::string &asmOutFile)
 {
-  // to be implemented in a later patch
-  assert(false);
-  return false;
+  inarglist gofiles;
+  inarglist asmfiles;
+  inarglist linkerinputs;
+
+  // Examine inputs to see what sort of actions we need.
+  for (opt::Arg *arg : args_) {
+    if (arg->getOption().getKind() == opt::Option::InputClass) {
+      std::string fn(arg->getValue());
+
+      size_t dotindex = fn.find_last_of(".");
+      if (dotindex != std::string::npos) {
+        std::string extension = fn.substr(dotindex);
+        if (extension.compare(".s") == 0) {
+          asmfiles.push_back(arg);
+          continue;
+        } else if (extension.compare(".go") == 0) {
+          gofiles.push_back(arg);
+          continue;
+        } else if (extension.compare(".S") == 0) {
+          errs() << progname_ << ": warning: " << arg->getValue()
+                 << ": .S files (preprocessed assembler) not supported; "
+                 << "treating as linker input.\n";
+        }
+      }
+
+      // everything else assumed to be a linker input
+      linkerinputs.push_back(arg);
+      continue;
+    }
+  }
+
+  bool OPT_c = args_.hasArg(gollvm::options::OPT_c);
+  bool OPT_S = args_.hasArg(gollvm::options::OPT_S);
+  ActionList linkerInputs;
+
+  // For -c/-S compiles, a mix of Go and assembly currently not allowed.
+  if ((OPT_c || OPT_S) && !gofiles.empty() && !asmfiles.empty()) {
+    errs() << progname_ << ": error: cannot specify mix of "
+           << "Go and assembly inputs with -c/-S\n";
+    return false;
+  }
+
+  // Handle Go compilation action if needed.
+  if (!gofiles.empty()) {
+
+    // Build a list of input actions for the go files.
+    ActionList inacts = createInputActions(gofiles, compilation);
+
+    // Create action
+    Action *gocompact =
+        new Action(Action::A_Compile, inacts);
+    compilation.recordAction(gocompact);
+    compilation.addAction(gocompact);
+
+    // Temporary: at this point compilation is still being done
+    // by CompilationOrchestrator, so create a dummy output artifact
+    // corresponding to the asm output file.
+    artmap_[gocompact] = compilation.newFileArtifact(asmOutFile.c_str(), false);
+
+    // Schedule assemble action now if no -S.
+    if (!OPT_S) {
+      // Create action
+      Action *asmact =
+          new Action(Action::A_Assemble, gocompact);
+      compilation.recordAction(asmact);
+      compilation.addAction(asmact);
+      if (!OPT_c)
+        linkerInputs.push_back(asmact);
+    }
+  }
+
+  // Create actions to assemble any asm files appearing on the cmd line.
+  if (gofiles.empty() && !asmfiles.empty()) {
+
+    // Issue an error if -c in combination with multiple files.
+    if (OPT_c && asmfiles.size() > 1) {
+      errs() << progname_ << ": error: cannot specify multiple inputs "
+             << "in combination with -c\n";
+      return false;
+    }
+
+    for (auto asmf : asmfiles) {
+
+      // Input action.
+      InputAction *ia = new InputAction(compilation.newArgArtifact(asmf));
+      compilation.recordAction(ia);
+
+      // Assemble action.
+      Action *asmact =
+          new Action(Action::A_Assemble, ia);
+      compilation.recordAction(asmact);
+      compilation.addAction(asmact);
+      if (!OPT_c)
+        linkerInputs.push_back(asmact);
+    }
+  }
+
+  // If -S or -c, we are done at this point.
+  if (OPT_c || OPT_S)
+    return true;
+
+  // Create a linker action.
+  Action *linkact =
+          new Action(Action::A_Link, linkerInputs);
+  compilation.recordAction(linkact);
+  compilation.addAction(linkact);
+
+  return true;
+}
+
+ArtifactList Driver::collectInputArtifacts(Action *act, InternalTool *it)
+{
+  ArtifactList result;
+  for (auto &input : act->inputs()) {
+    InputAction *inact = input->castToInputAction();
+    if (inact != nullptr) {
+      result.push_back(inact->input());
+      continue;
+    }
+    // It is an error if an internal-tool action is receiving a result
+    // from an external tool (in the current model all internal-tool actions
+    // have to take place before any external-tool actions).
+    assert(it == nullptr);
+    auto it = artmap_.find(input);
+    assert(it != artmap_.end());
+    result.push_back(it->second);
+  }
+  return result;
+}
+
+bool Driver::processAction(Action *act, Compilation &compilation, bool lastAct)
+{
+  // Temporary: Go compilation has already been performed.
+  if (act->type() == Action::A_Compile)
+    return true;
+
+  // Select the result file for this action.
+  Artifact *result = nullptr;
+  if (!lastAct) {
+    auto tfa = compilation.createTemporaryFileArtifact(act);
+    if (!tfa)
+      return false;
+    result = *tfa;
+    artmap_[act] = result;
+  } else {
+    result = compilation.createOutputFileArtifact(act);
+  }
+
+  // Select tool to process the action.
+  Tool *tool = compilation.toolchain().getTool(act);
+  assert(tool != nullptr);
+  InternalTool *it = tool->castToInternalTool();
+
+  // Collect input artifacts for this
+  ArtifactList actionInputs = collectInputArtifacts(act, it);
+
+  // If internal tool, perform now.
+  if (it != nullptr) {
+    if (! it->performAction(compilation, *act, actionInputs, *result))
+      return false;
+    return true;
+  }
+
+  // External tool: build command
+  ExternalTool *et = tool->castToExternalTool();
+  if (! et->constructCommand(compilation, *act, actionInputs, *result))
+    return false;
+
+  return true;
 }
 
 bool Driver::processActions(Compilation &compilation)
 {
-  // to be implemented in a later patch
-  assert(false);
-  return false;
+  SmallVector<Action*, 8> actv;
+  for (Action *action : compilation.actions())
+    actv.push_back(action);
+
+  for (unsigned ai = 0; ai < actv.size(); ++ai) {
+    Action *act = actv[ai];
+    bool lastAction = (ai == actv.size()-1);
+    if (!processAction(act, compilation, lastAction))
+      return false;
+  }
+
+  return true;
 }
 
 } // end namespace driver
