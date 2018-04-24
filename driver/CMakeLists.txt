@@ -22,7 +22,9 @@ add_llvm_library(LLVMDriverUtils
   Compilation.cpp
   Driver.cpp
   GccUtils.cpp
+  GnuTools.cpp
   GollvmOptions.cpp
+  LinuxToolChain.cpp
   Tool.cpp
   ToolChain.cpp
   DEPENDS
