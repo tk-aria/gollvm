@@ -269,8 +269,7 @@ ActionList Driver::createInputActions(const inarglist &ifargs,
   return result;
 }
 
-bool Driver::buildActions(Compilation &compilation,
-                          const std::string &asmOutFile)
+bool Driver::buildActions(Compilation &compilation)
 {
   inarglist gofiles;
   inarglist asmfiles;
@@ -280,6 +279,13 @@ bool Driver::buildActions(Compilation &compilation,
   for (opt::Arg *arg : args_) {
     if (arg->getOption().getKind() == opt::Option::InputClass) {
       std::string fn(arg->getValue());
+
+      // At the moment the canonical "-" input (stdin) is assumed
+      // to be Go source.
+      if (!strcmp(arg->getValue(), "-")) {
+        gofiles.push_back(arg);
+        continue;
+      }
 
       size_t dotindex = fn.find_last_of(".");
       if (dotindex != std::string::npos) {
@@ -325,11 +331,6 @@ bool Driver::buildActions(Compilation &compilation,
         new Action(Action::A_Compile, inacts);
     compilation.recordAction(gocompact);
     compilation.addAction(gocompact);
-
-    // Temporary: at this point compilation is still being done
-    // by CompilationOrchestrator, so create a dummy output artifact
-    // corresponding to the asm output file.
-    artmap_[gocompact] = compilation.newFileArtifact(asmOutFile.c_str(), false);
 
     // Schedule assemble action now if no -S.
     if (!OPT_S) {
@@ -404,10 +405,6 @@ ArtifactList Driver::collectInputArtifacts(Action *act, InternalTool *it)
 
 bool Driver::processAction(Action *act, Compilation &compilation, bool lastAct)
 {
-  // Temporary: Go compilation has already been performed.
-  if (act->type() == Action::A_Compile)
-    return true;
-
   // Select the result file for this action.
   Artifact *result = nullptr;
   if (!lastAct) {
