@@ -41,12 +41,13 @@ int Command::execute(std::string *errMsg)
                                    errMsg);
 }
 
-void Command::print(llvm::raw_ostream &os)
+void Command::print(llvm::raw_ostream &os, bool quoteArgs)
 {
-  os << executable_;
+  os << " " << executable_;
+  const char *qu = (quoteArgs ? "\"" : "");
   for (auto arg : arguments_)
     if (arg != nullptr)
-      os << " "  << arg;
+      os << " "  << qu << arg << qu;
   os << "\n";
 }
 
