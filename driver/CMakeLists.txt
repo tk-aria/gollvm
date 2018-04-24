@@ -20,6 +20,7 @@ add_llvm_library(LLVMDriverUtils
   Artifact.cpp
   Command.cpp
   Compilation.cpp
+  CompileGo.cpp
   Driver.cpp
   GccUtils.cpp
   GnuTools.cpp
