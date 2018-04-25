@@ -522,6 +522,14 @@ set_target_properties(libgolibbegin PROPERTIES
 add_custom_target(libgo_all DEPENDS
   llvm-goc libgo_static libgo_shared libgobegin libgolibbegin)
 
+# Create a target-specific symlink to the Go library dir. This is
+# an interim solution; ideally we want to key off of CMAKE_INSTALL_PREFIX.
+execute_process(COMMAND ${CMAKE_COMMAND}
+  -E make_directory "${LLVM_BINARY_DIR}/libgo")
+execute_process(COMMAND ${CMAKE_COMMAND}
+  -E create_symlink "${libgo_binroot}"
+   "${LLVM_BINARY_DIR}/libgo/${LLVM_DEFAULT_TARGET_TRIPLE}")
+
 #........................................................................
 #
 # Check target generation.
