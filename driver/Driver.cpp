@@ -35,6 +35,18 @@ Driver::Driver(opt::InputArgList &args,
 {
   if (const opt::Arg *arg = args.getLastArg(gollvm::options::OPT_sysroot_EQ))
     sysroot_ = arg->getValue();
+
+  // Establish executable path and installation dir.
+  executablePath_ = argv0;
+  // Do a PATH lookup if argv0 is not a valid path.
+  if (!llvm::sys::fs::exists(executablePath_)) {
+    if (llvm::ErrorOr<std::string> path =
+        llvm::sys::findProgramByName(executablePath_))
+      executablePath_ = *path;
+  }
+  SmallString<128> abspath(executablePath_);
+  llvm::sys::fs::make_absolute(abspath);
+  installDir_ = llvm::sys::path::parent_path(abspath);
 }
 
 Driver::~Driver()
@@ -54,9 +66,17 @@ void Driver::emitVersion()
 std::string Driver::getFilePath(llvm::StringRef name,
                                 ToolChain &toolchain)
 {
-  // to be implemented in a later patch
-  assert(false);
-  return "";
+  // TODO: add support for -Bprefix option.
+
+  // Examine toolchain file paths.
+  for (const auto &dir : toolchain.filePaths()) {
+    llvm::SmallString<256> candidate(dir);
+    llvm::sys::path::append(candidate, name);
+    if (llvm::sys::fs::exists(llvm::Twine(candidate)))
+      return candidate.str();
+  }
+
+  return name;
 }
 
 std::string Driver::getProgramPath(llvm::StringRef name,
@@ -257,23 +277,23 @@ ToolChain *Driver::setup()
   return tc.get();
 }
 
-ActionList Driver::createInputActions(const inarglist &ifargs,
-                                      Compilation &compilation)
+void Driver::appendInputActions(const inarglist &ifargs,
+                                ActionList &result,
+                                Compilation &compilation)
 {
-  ActionList result;
   for (auto ifarg : ifargs) {
     InputAction *ia = new InputAction(compilation.newArgArtifact(ifarg));
     compilation.recordAction(ia);
     result.push_back(ia);
   }
-  return result;
 }
 
 bool Driver::buildActions(Compilation &compilation)
 {
   inarglist gofiles;
   inarglist asmfiles;
-  inarglist linkerinputs;
+  inarglist linkerinputfiles;
+  ActionList linkerInputActions;
 
   // Examine inputs to see what sort of actions we need.
   for (opt::Arg *arg : args_) {
@@ -304,14 +324,13 @@ bool Driver::buildActions(Compilation &compilation)
       }
 
       // everything else assumed to be a linker input
-      linkerinputs.push_back(arg);
+      linkerinputfiles.push_back(arg);
       continue;
     }
   }
 
   bool OPT_c = args_.hasArg(gollvm::options::OPT_c);
   bool OPT_S = args_.hasArg(gollvm::options::OPT_S);
-  ActionList linkerInputs;
 
   // For -c/-S compiles, a mix of Go and assembly currently not allowed.
   if ((OPT_c || OPT_S) && !gofiles.empty() && !asmfiles.empty()) {
@@ -324,7 +343,8 @@ bool Driver::buildActions(Compilation &compilation)
   if (!gofiles.empty()) {
 
     // Build a list of input actions for the go files.
-    ActionList inacts = createInputActions(gofiles, compilation);
+    ActionList inacts;
+    appendInputActions(gofiles, inacts, compilation);
 
     // Create action
     Action *gocompact =
@@ -340,7 +360,7 @@ bool Driver::buildActions(Compilation &compilation)
       compilation.recordAction(asmact);
       compilation.addAction(asmact);
       if (!OPT_c)
-        linkerInputs.push_back(asmact);
+        linkerInputActions.push_back(asmact);
     }
   }
 
@@ -366,7 +386,7 @@ bool Driver::buildActions(Compilation &compilation)
       compilation.recordAction(asmact);
       compilation.addAction(asmact);
       if (!OPT_c)
-        linkerInputs.push_back(asmact);
+        linkerInputActions.push_back(asmact);
     }
   }
 
@@ -375,8 +395,9 @@ bool Driver::buildActions(Compilation &compilation)
     return true;
 
   // Create a linker action.
+  appendInputActions(linkerinputfiles, linkerInputActions, compilation);
   Action *linkact =
-          new Action(Action::A_Link, linkerInputs);
+          new Action(Action::A_Link, linkerInputActions);
   compilation.recordAction(linkact);
   compilation.addAction(linkact);
 
