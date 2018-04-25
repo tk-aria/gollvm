@@ -87,6 +87,9 @@ class Driver {
   // Sysroot (or empty string if not present)
   std::string sysRoot() { return sysroot_; }
 
+  // Install directory of compiler binary.
+  std::string installDir() { return installDir_; }
+
   // Helpers related to command line options.
   llvm::PICLevel::Level getPicLevel();
   bool isPIE();
@@ -99,8 +102,9 @@ class Driver {
                            bool defaultVal);
   llvm::Optional<llvm::FPOpFusion::FPOpFusionMode> getFPOpFusionMode();
   typedef llvm::SmallVector<llvm::opt::Arg *, 8> inarglist;
-  ActionList createInputActions(const inarglist &infiles,
-                                Compilation &compilation);
+  void appendInputActions(const inarglist &infiles,
+                          ActionList &result,
+                          Compilation &compilation);
 
  private:
   llvm::Triple triple_;
@@ -108,6 +112,8 @@ class Driver {
   llvm::opt::OptTable *opts_;
   const char *progname_;
   std::string sysroot_;
+  std::string installDir_;
+  std::string executablePath_;
   // maps target to toolchain for that target
   llvm::StringMap<std::unique_ptr<ToolChain>> toolchains_;
   // Maps non-input actions to output artifacts.
