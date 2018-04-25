@@ -16,6 +16,7 @@
 
 #include <string>
 #include "llvm/ADT/Triple.h"
+#include "llvm/Option/ArgList.h"
 
 #include "Action.h"
 #include "Tool.h"
@@ -55,7 +56,9 @@ class ToolChain {
     return filePaths_;
   }
 
-  // Return driver.
+  virtual std::string getDynamicLinker(const llvm::opt::ArgList &args) = 0;
+
+  // Getters driver.
   Driver &driver() const { return driver_; }
 
   virtual ~ToolChain();
@@ -63,6 +66,7 @@ class ToolChain {
  protected:
   ToolChain(Driver &driver,
             const llvm::Triple &targetTriple);
+  llvm::Triple &triple() { return triple_; }
 
   // Build new tool of the appropriate type
   virtual Tool *buildCompiler() = 0;

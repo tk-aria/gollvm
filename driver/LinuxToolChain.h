@@ -30,6 +30,7 @@ class Linux : public gollvm::driver::ToolChain {
   gollvm::driver::Tool *buildCompiler() override;
   gollvm::driver::Tool *buildAssembler() override;
   gollvm::driver::Tool *buildLinker() override;
+  std::string getDynamicLinker(const llvm::opt::ArgList &args) override;
 
  private:
   gnutools::gccdetect::InspectRealFS inspectFS_;

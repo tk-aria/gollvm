@@ -159,7 +159,8 @@ bool Compilation::executeCommands()
     std::string errMsg;
     int rc = cmd->execute(&errMsg);
     if (rc != 0) {
-      llvm::errs() << errMsg << "\n";
+      if (!errMsg.empty())
+        llvm::errs() << errMsg << "\n";
       return false;
     }
   }
