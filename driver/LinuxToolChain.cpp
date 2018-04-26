@@ -85,7 +85,7 @@ Linux::~Linux()
 
 Tool *Linux::buildCompiler()
 {
-  return new CompileGo(*this);
+  return new CompileGo(*this, driver().executablePath());
 }
 
 Tool *Linux::buildAssembler()

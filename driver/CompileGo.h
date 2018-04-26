@@ -31,7 +31,7 @@ class CompileGoImpl;
 
 class CompileGo : public InternalTool {
  public:
-  CompileGo(ToolChain &tc);
+  CompileGo(ToolChain &tc, const std::string &executablePath);
   ~CompileGo();
 
   // Perform compilation.
