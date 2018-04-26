@@ -67,7 +67,7 @@ namespace driver {
 
 class CompileGoImpl {
  public:
-  CompileGoImpl(ToolChain &tc);
+  CompileGoImpl(ToolChain &tc, const std::string &executablePath);
 
   // Perform compilation.
   bool performAction(Compilation &compilation,
@@ -81,6 +81,7 @@ class CompileGoImpl {
   Driver &driver_;
   LLVMContext context_;
   const char *progname_;
+  std::string executablePath_;
   opt::InputArgList &args_;
   CodeGenOpt::Level cgolvl_;
   unsigned olvl_;
@@ -112,11 +113,12 @@ class CompileGoImpl {
                           const Artifact &output);
 };
 
-CompileGoImpl::CompileGoImpl(ToolChain &tc)
+CompileGoImpl::CompileGoImpl(ToolChain &tc, const std::string &executablePath)
     : triple_(tc.driver().triple()),
       toolchain_(tc),
       driver_(tc.driver()),
       progname_(tc.driver().progname()),
+      executablePath_(executablePath),
       args_(tc.driver().args()),
       cgolvl_(CodeGenOpt::Default),
       olvl_(2),
@@ -602,9 +604,9 @@ bool CompileGoImpl::invokeBackEnd()
 
 //......................................................................
 
-CompileGo::CompileGo(ToolChain &tc)
+CompileGo::CompileGo(ToolChain &tc, const std::string &executablePath)
     : InternalTool("gocompiler", tc),
-      impl_(new CompileGoImpl(tc))
+      impl_(new CompileGoImpl(tc, executablePath))
 {
 }
 
