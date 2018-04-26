@@ -51,6 +51,9 @@ flag_dryrun = False
 # gccgo only mode
 flag_nollvm = False
 
+# never invoke the real gccgo
+flag_alwaysllvm = False
+
 # trace llvm-goc invocations
 flag_trace_llinvoc = False
 
@@ -88,6 +91,17 @@ def perform():
   lines = u.docmdlines("which llvm-goc", True)
   if not lines:
     u.error("no 'llvm-goc' in PATH -- can't proceed")
+
+  # Bypass the whole mess if -A
+  if flag_alwaysllvm:
+    a = sys.argv
+    a[0] = "llvm-goc"
+    driver = "llvm-goc"
+    rc = subprocess.call(a)
+    if rc != 0:
+      u.verbose(1, "return code %d from %s" % (rc, " ".join(a)))
+      return 1
+    return 0
 
   # Perform a walk of the command line arguments looking for Go files.
   reg = re.compile(r"^(\S+)\.go$")
@@ -329,6 +343,7 @@ def usage(msgarg):
 def parse_env_options():
   """Option parsing from env var."""
   global flag_echo, flag_dryrun, flag_nollvm, flag_trace_llinvoc
+  global flag_alwaysllvm
 
   optstr = os.getenv("GOLLVM_WRAP_OPTIONS")
   if not optstr:
@@ -336,7 +351,7 @@ def parse_env_options():
   args = optstr.split()
 
   try:
-    optlist, _ = getopt.getopt(args, "detDG")
+    optlist, _ = getopt.getopt(args, "detDAG")
   except getopt.GetoptError as err:
     # unrecognized option
     usage(str(err))
@@ -352,6 +367,8 @@ def parse_env_options():
       flag_dryrun = True
     elif opt == "-G":
       flag_nollvm = True
+    elif opt == "-A":
+      flag_alwaysllvm = True
   u.verbose(1, "env var options parsing complete")
 
 
