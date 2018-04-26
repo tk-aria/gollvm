@@ -158,6 +158,9 @@ def target_EQ : Joined<["--"], "target=">, Flags<[DriverOption]>,
 def v : Flag<["-"], "v">,
   HelpText<"Show commands to run and use verbose output">;
 
+def x : JoinedOrSeparate<["-"], "x">, Flags<[DriverOption]>,
+  HelpText<"Treat subsequent input files as having type <language>">;
+
 def _HASH_HASH_HASH : Flag<["-"], "###">, Flags<[DriverOption]>,
     HelpText<"Print (but do not run) the commands to run for this compilation">;
 
