@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d68009b2_2b9168ba",
+        "filename": "driver/llvm-goc.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 481,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-04-26T22:26:47Z",
+      "side": 1,
+      "message": "I think this lines needs an \"else\" before the \"if\", if we honor -filetype first.",
+      "range": {
+        "startLine": 481,
+        "startChar": 2,
+        "endLine": 481,
+        "endChar": 4
+      },
+      "revId": "574799c3bd9062a60c2eda18576115873f9ca368",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "672638fd_e6e3dead",
+        "filename": "driver/llvm-goc.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 720,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-04-26T22:26:47Z",
+      "side": 1,
+      "message": "Not touched by this CL, just wonder why we use two different ways to tell whether it is a directory for -I args and -L args.",
+      "range": {
+        "startLine": 719,
+        "startChar": 0,
+        "endLine": 720,
+        "endChar": 61
+      },
+      "revId": "574799c3bd9062a60c2eda18576115873f9ca368",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
