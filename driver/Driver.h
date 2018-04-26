@@ -80,6 +80,7 @@ class Driver {
   llvm::opt::InputArgList &args() { return args_; }
   llvm::opt::OptTable &opts() { return *opts_; }
   const char *progname() const { return progname_; }
+  const std::string &executablePath() const { return executablePath_; }
 
   // Name of driver (program invoked)
   std::string name();
