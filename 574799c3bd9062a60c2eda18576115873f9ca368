@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "9eb973b9_baf8a7b2",
+        "filename": "driver/llvm-goc.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 481,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-04-27T12:59:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d68009b2_2b9168ba",
+      "range": {
+        "startLine": 481,
+        "startChar": 2,
+        "endLine": 481,
+        "endChar": 4
+      },
+      "revId": "574799c3bd9062a60c2eda18576115873f9ca368",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "672638fd_e6e3dead",
         "filename": "driver/llvm-goc.cpp",
         "patchSetId": 5
@@ -45,6 +69,30 @@
       "revId": "574799c3bd9062a60c2eda18576115873f9ca368",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0d2779d8_67a54a48",
+        "filename": "driver/llvm-goc.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 720,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-04-27T12:59:00Z",
+      "side": 1,
+      "message": "I\u0027ll clean this up-- I think the llvm::fs route is preferred.",
+      "parentUuid": "672638fd_e6e3dead",
+      "range": {
+        "startLine": 719,
+        "startChar": 0,
+        "endLine": 720,
+        "endChar": 61
+      },
+      "revId": "574799c3bd9062a60c2eda18576115873f9ca368",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
