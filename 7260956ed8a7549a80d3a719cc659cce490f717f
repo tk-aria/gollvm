@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "79f08f26_fdd56ee3",
+        "filename": "driver/GollvmOptions.td",
+        "patchSetId": 4
+      },
+      "lineNbr": 126,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-04-27T12:17:44Z",
+      "side": 1,
+      "message": "Correct. I thought about it and it seemed better to be clang-compatible than gcc-compatible here.",
+      "parentUuid": "49dea2db_a31b217a",
+      "revId": "7260956ed8a7549a80d3a719cc659cce490f717f",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "e6fa7bcf_df58bb51",
         "filename": "driver/GollvmOptions.td",
         "patchSetId": 4
@@ -33,6 +51,24 @@
       "revId": "7260956ed8a7549a80d3a719cc659cce490f717f",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "871a4c1a_499c3e77",
+        "filename": "driver/GollvmOptions.td",
+        "patchSetId": 4
+      },
+      "lineNbr": 175,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-04-27T12:17:44Z",
+      "side": 1,
+      "message": "No idea.  One can make an argument that I should do away with the CompileOnly group (since it isn\u0027t used for anything right now), but perhaps it might be needed later.",
+      "parentUuid": "e6fa7bcf_df58bb51",
+      "revId": "7260956ed8a7549a80d3a719cc659cce490f717f",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     },
     {
       "key": {
@@ -59,6 +95,30 @@
     },
     {
       "key": {
+        "uuid": "55aad333_22b31ee9",
+        "filename": "driver/GollvmOptions.td",
+        "patchSetId": 4
+      },
+      "lineNbr": 303,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-04-27T12:17:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3416fafa_a223bafc",
+      "range": {
+        "startLine": 303,
+        "startChar": 14,
+        "endLine": 303,
+        "endChar": 31
+      },
+      "revId": "7260956ed8a7549a80d3a719cc659cce490f717f",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "421a835c_85de5681",
         "filename": "driver/llvm-goc.cpp",
         "patchSetId": 4
@@ -82,6 +142,30 @@
     },
     {
       "key": {
+        "uuid": "f0adc7f0_f59741f9",
+        "filename": "driver/llvm-goc.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 487,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-04-27T12:17:44Z",
+      "side": 1,
+      "message": "Yes. I will post a patch to bring it into sync.",
+      "parentUuid": "421a835c_85de5681",
+      "range": {
+        "startLine": 487,
+        "startChar": 23,
+        "endLine": 487,
+        "endChar": 54
+      },
+      "revId": "7260956ed8a7549a80d3a719cc659cce490f717f",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "45808fb0_8fea5b04",
         "filename": "driver/llvm-goc.cpp",
         "patchSetId": 4
@@ -96,6 +180,24 @@
       "revId": "7260956ed8a7549a80d3a719cc659cce490f717f",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3a2ea1dc_9d9ef6eb",
+        "filename": "driver/llvm-goc.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 961,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-04-27T12:17:44Z",
+      "side": 1,
+      "message": "Thanks, yes, this does indeed look mangled. I will rewrite.",
+      "parentUuid": "45808fb0_8fea5b04",
+      "revId": "7260956ed8a7549a80d3a719cc659cce490f717f",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
