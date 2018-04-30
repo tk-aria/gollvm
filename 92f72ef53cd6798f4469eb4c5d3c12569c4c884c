@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6351adf5_686b4caa",
+        "filename": "driver/llvm-goc.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 938,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-04-30T22:20:37Z",
+      "side": 1,
+      "message": "This variable seems not used.",
+      "revId": "92f72ef53cd6798f4469eb4c5d3c12569c4c884c",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
