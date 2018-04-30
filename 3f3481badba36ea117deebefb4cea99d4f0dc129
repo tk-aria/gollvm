@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "01370bba_3c64172c",
+        "filename": "driver/llvm-goc.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 322,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-04-30T18:35:05Z",
+      "side": 1,
+      "message": "Good point-- I\u0027ll fix that up.",
+      "parentUuid": "85f4902e_785e939b",
+      "revId": "3f3481badba36ea117deebefb4cea99d4f0dc129",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "7dfbcb37_0a8a15ab",
         "filename": "driver/llvm-goc.cpp",
         "patchSetId": 5
@@ -42,6 +60,30 @@
     },
     {
       "key": {
+        "uuid": "75562ba9_5357f79a",
+        "filename": "driver/llvm-goc.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 328,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-04-30T18:35:05Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7dfbcb37_0a8a15ab",
+      "range": {
+        "startLine": 328,
+        "startChar": 33,
+        "endLine": 328,
+        "endChar": 41
+      },
+      "revId": "3f3481badba36ea117deebefb4cea99d4f0dc129",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "907a8ba0_45a1e888",
         "filename": "driver/llvm-goc.cpp",
         "patchSetId": 5
@@ -56,6 +98,24 @@
       "revId": "3f3481badba36ea117deebefb4cea99d4f0dc129",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ede58c59_68c7353a",
+        "filename": "driver/llvm-goc.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 464,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-04-30T18:35:05Z",
+      "side": 1,
+      "message": "Thanks for catching that. Fixed.",
+      "parentUuid": "907a8ba0_45a1e888",
+      "revId": "3f3481badba36ea117deebefb4cea99d4f0dc129",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
