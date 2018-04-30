@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "611bd603_501a559b",
+        "filename": "driver/llvm-goc.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 850,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-04-30T19:39:43Z",
+      "side": 1,
+      "message": "Thanks, yes, I think this needs attention.\n\nThe way clang currently works, if you do:\n\n clang -emit-llvm -o file.bc -O2 foo.c\n\nit will run the LLVM passes up until the target-specific portion, then stop (equivalent of \"opt\" but not \"llc\"). If you want to turn off all optimizations passes and get post-FE bitcode you have to do:\n\n  clang -Xclang -disable-llvm-passes -emit-llvm -o file.bc -O2 foo.c\n\nI think what I will do is add in \"-disable-llvm-passes\" as a top level option to try to be as consistent with clang as I can.",
+      "parentUuid": "a458cbdc_3cf7394d",
+      "revId": "a11d6ca6c23a984669f7c8c425daad34603ab98f",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "27dae444_448ed317",
         "filename": "driver/llvm-goc.cpp",
         "patchSetId": 5
@@ -33,6 +51,24 @@
       "revId": "a11d6ca6c23a984669f7c8c425daad34603ab98f",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ba6fb529_8220e008",
+        "filename": "driver/llvm-goc.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 899,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-04-30T19:39:43Z",
+      "side": 1,
+      "message": "Fixed.",
+      "parentUuid": "27dae444_448ed317",
+      "revId": "a11d6ca6c23a984669f7c8c425daad34603ab98f",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
