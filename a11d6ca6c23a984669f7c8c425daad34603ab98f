@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a458cbdc_3cf7394d",
+        "filename": "driver/llvm-goc.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 850,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-04-30T19:08:17Z",
+      "side": 1,
+      "message": "If -emit-llvm is set, we should stop adding backend passes, right?",
+      "revId": "a11d6ca6c23a984669f7c8c425daad34603ab98f",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "27dae444_448ed317",
+        "filename": "driver/llvm-goc.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 899,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-04-30T19:08:17Z",
+      "side": 1,
+      "message": "If we are emitting object file and -o is set, it looks like it will print something like\nllvm-goc -S x.go -o x.o ?\nSeems a little weird that -S emits a .o file.\n\nProbably we should -o in the command line, and always print -o asmOutFileName_.",
+      "revId": "a11d6ca6c23a984669f7c8c425daad34603ab98f",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
