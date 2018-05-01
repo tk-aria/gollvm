@@ -16,6 +16,24 @@
       "revId": "92f72ef53cd6798f4469eb4c5d3c12569c4c884c",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b9c166c4_05950770",
+        "filename": "driver/llvm-goc.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 938,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-05-01T12:00:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6351adf5_686b4caa",
+      "revId": "92f72ef53cd6798f4469eb4c5d3c12569c4c884c",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
