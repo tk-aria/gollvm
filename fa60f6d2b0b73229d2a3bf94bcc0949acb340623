@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "dae62541_a791422a",
+        "filename": "driver/GnuTools.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 159,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2018-05-01T22:00:20Z",
+      "side": 1,
+      "message": "This code is ELF-specific, which is likely fine for now.  For example, Darwin support would require some changes.",
+      "revId": "fa60f6d2b0b73229d2a3bf94bcc0949acb340623",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "dfd72f4e_28272746",
+        "filename": "driver/GnuTools.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 221,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2018-05-01T22:00:20Z",
+      "side": 1,
+      "message": "There should be a way to set the dynamic linker from the gollvm command line.",
+      "revId": "fa60f6d2b0b73229d2a3bf94bcc0949acb340623",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4ffcb0a9_6b84e289",
+        "filename": "driver/LinuxToolChain.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2018-05-01T22:00:20Z",
+      "side": 1,
+      "message": "Note that the go tool now expects the driver to support the -### option.  You should implement that if you haven\u0027t already.  See gccgoToolID in cmd/go/internal/work/buildid.go.",
+      "revId": "fa60f6d2b0b73229d2a3bf94bcc0949acb340623",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
