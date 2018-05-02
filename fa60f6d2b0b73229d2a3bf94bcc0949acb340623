@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "33cd6596_e497e633",
+        "filename": "driver/GnuTools.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 159,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-05-02T11:47:42Z",
+      "side": 1,
+      "message": "Agreed. Clang has a whole separate Tool subclass for handling linking on Darwin, FWIW.",
+      "parentUuid": "dae62541_a791422a",
+      "revId": "fa60f6d2b0b73229d2a3bf94bcc0949acb340623",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "dfd72f4e_28272746",
         "filename": "driver/GnuTools.cpp",
         "patchSetId": 3
@@ -30,6 +48,24 @@
       "writtenOn": "2018-05-01T22:00:20Z",
       "side": 1,
       "message": "There should be a way to set the dynamic linker from the gollvm command line.",
+      "revId": "fa60f6d2b0b73229d2a3bf94bcc0949acb340623",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1b517b13_6aaad614",
+        "filename": "driver/GnuTools.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 221,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-05-02T11:47:42Z",
+      "side": 1,
+      "message": "Yes, that is on my list. I will see about putting it in now.",
+      "parentUuid": "dfd72f4e_28272746",
       "revId": "fa60f6d2b0b73229d2a3bf94bcc0949acb340623",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
@@ -50,6 +86,24 @@
       "revId": "fa60f6d2b0b73229d2a3bf94bcc0949acb340623",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f446a311_db350af9",
+        "filename": "driver/LinuxToolChain.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-05-02T11:47:42Z",
+      "side": 1,
+      "message": "Yes, -### support is part of this collection of patches.",
+      "parentUuid": "4ffcb0a9_6b84e289",
+      "revId": "fa60f6d2b0b73229d2a3bf94bcc0949acb340623",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
