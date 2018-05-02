@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "ecca3083_4e474352",
+        "filename": "driver/GccUtils.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-05-02T11:01:49Z",
+      "side": 1,
+      "message": "Thanks, fixed.",
+      "parentUuid": "c214e616_3294bcb4",
+      "revId": "3097135bf6e2cb0984d8d2c865e605344385abd0",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "e141786e_d8f6676e",
         "filename": "driver/GccUtils.cpp",
         "patchSetId": 2
@@ -30,6 +48,24 @@
       "writtenOn": "2018-05-02T00:39:00Z",
       "side": 1,
       "message": "I guess Debian uses this /32 approach, but some other distros put the 32-bit libraries in lib32, a sibling of lib64.  Are you allowed to execute the GCC binary?  You could run it with -print-search-dirs to find the directories.",
+      "revId": "3097135bf6e2cb0984d8d2c865e605344385abd0",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "dfc80b07_a08c746f",
+        "filename": "driver/GccUtils.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 168,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-05-02T11:01:49Z",
+      "side": 1,
+      "message": "Hmm, ok. I had hoped to avoid writing a full-blown \"Which linux distro is this\" detector, but it sounds like something is needed here. I\u0027ll convert \"suffix\" into a set of suffix options for starters (we can look for /32 and then /lib32).\n\nInvoking gcc with -print-search-dirs: that\u0027s an interesting idea, I will think about that.",
+      "parentUuid": "e141786e_d8f6676e",
       "revId": "3097135bf6e2cb0984d8d2c865e605344385abd0",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
@@ -50,6 +86,24 @@
       "revId": "3097135bf6e2cb0984d8d2c865e605344385abd0",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4c77f4d0_490766b0",
+        "filename": "driver/GccUtils.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 152,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-05-02T11:01:49Z",
+      "side": 1,
+      "message": "Fixed. LLVM code does tend to use override (not religiously, but frequently).",
+      "parentUuid": "f3661d44_c9d1555d",
+      "revId": "3097135bf6e2cb0984d8d2c865e605344385abd0",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
