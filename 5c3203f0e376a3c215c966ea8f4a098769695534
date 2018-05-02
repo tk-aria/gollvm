@@ -16,6 +16,24 @@
       "revId": "5c3203f0e376a3c215c966ea8f4a098769695534",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "27d1ad8e_53216843",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 4
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-05-02T11:51:01Z",
+      "side": 1,
+      "message": "You are right, in fact. I think the \"fixes\" wound up getting incorporated into an earlier patch (with a big collection of commits I sometimes lose track of which thing is in which patch). I\u0027ll update the comment.",
+      "parentUuid": "0bdb520e_012007e9",
+      "revId": "5c3203f0e376a3c215c966ea8f4a098769695534",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
