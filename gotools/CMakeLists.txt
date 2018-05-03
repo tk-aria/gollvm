@@ -11,15 +11,10 @@ include(GoVars)
 
 message(STATUS "starting gotools configuration.")
 
-# FIXME: rewrite this to locate llvm-goc in a more official way
-# set(driver "${bin}/../bin/llvm-goc")
+# Driver for compiling *.go files. 
 get_target_property(driverdir llvm-goc RUNTIME_OUTPUT_DIRECTORY)
 set(gollvm_driver "${driverdir}/llvm-goc")
-#set(gocompiler ${gollvm_driver})
-
-# FIXME: still need to use wrapper for compilation, since
-# llvm-goc functionality not yet complete.
-set(gocompiler "gccgo")
+set(gocompiler ${gollvm_driver})
 
 set(cmd_srcroot "${GOLLVM_SOURCE_DIR}/gofrontend/libgo/go/cmd")
 set(libgo_srcroot "${GOLLVM_SOURCE_DIR}/gofrontend/libgo")
