@@ -10,7 +10,7 @@ include(ExternalProject)
 include(ProcessorCount)
 include(LLVMExternalProjectUtils)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
 include(CmakeUtils)
 
