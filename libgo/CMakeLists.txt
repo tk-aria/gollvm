@@ -222,7 +222,7 @@ copy_if_different(${zstdpkglisttmp} ${zstdpkglistdotgo})
 # Rules for zdefaultcc.go
 set(zdefaultccdotgo "${libgo_binroot}/zdefaultcc.go")
 set(zdefaultcctmp "${libgo_binroot}/zdefaultcc.go.tmp")
-mkzdefaultcc("cfg" ${zdefaultcctmp} ${gollvm_driver}
+mkzdefaultcc("cfg" ${zdefaultcctmp} 
              ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER} EXPORT)
 copy_if_different(${zdefaultcctmp} ${zdefaultccdotgo})
 
@@ -456,7 +456,7 @@ target_include_directories(libgo_c_nonpiclib PUBLIC
 add_dependencies(libgo_c_nonpiclib runtimeinctarg)
 
 # Static libgo -- combines non-pic C objects and non-pic Go objects
-add_library(libgo_static STATIC
+add_gollvm_library(libgo_static STATIC
   $<TARGET_OBJECTS:libgo_c_nonpiclib>
   ${libgo_go_nonpicobjects}
   $<TARGET_OBJECTS:libbacktrace_nonpiclib>
@@ -470,7 +470,7 @@ string(REPLACE "-Wl,-z,defs" "" CMAKE_SHARED_LINKER_FLAGS
     "${CMAKE_SHARED_LINKER_FLAGS}")
 
 # Shared libgo -- combines pic C objects and non-pic Go objects.
-add_library(libgo_shared SHARED
+add_gollvm_library(libgo_shared SHARED
   $<TARGET_OBJECTS:libgo_c_piclib>
   ${libgo_go_picobjects}
   $<TARGET_OBJECTS:libbacktrace_piclib>
@@ -484,7 +484,7 @@ target_link_libraries(libgo_shared PUBLIC "-fsplit-stack;-lpthread;-lm")
 set(libgobegincfiles
   "${libgo_csrcroot}/runtime/go-main.c")
 # libgobegin.a (static library only)
-add_library(libgobegin STATIC
+add_gollvm_library(libgobegin STATIC
   ${libgobegincfiles})
 add_dependencies(libgobegin runtimeinctarg)
 target_include_directories(libgobegin PUBLIC
@@ -500,7 +500,7 @@ set_target_properties(libgobegin PROPERTIES
 set(libgolibbegincfiles
   "${libgo_csrcroot}/runtime/go-libmain.c")
 # libgolibbegin.a (static library only)
-add_library(libgolibbegin STATIC
+add_gollvm_library(libgolibbegin STATIC
   ${libgolibbegincfiles})
 add_dependencies(libgolibbegin runtimeinctarg)
 target_include_directories(libgolibbegin PUBLIC
@@ -516,6 +516,7 @@ set_target_properties(libgolibbegin PROPERTIES
 # Pseudo-target for all libgo buildables.
 add_custom_target(libgo_all DEPENDS
   llvm-goc libgo_static libgo_shared libgobegin libgolibbegin)
+add_dependencies(gollvm libgo_all)
 
 # Create a target-specific symlink to the Go library dir. This is
 # an interim solution; ideally we want to key off of CMAKE_INSTALL_PREFIX.

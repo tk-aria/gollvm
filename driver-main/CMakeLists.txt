@@ -30,7 +30,7 @@ include_directories("${gollvm_binroot}/driver")
 include_directories(${EXTINSTALLDIR}/include)
 
 # The llvm-goc executable itself
-add_llvm_tool(llvm-goc
+add_gollvm_tool(llvm-goc
   llvm-goc.cpp)
 
 # Record the fact that llvm-goc depends on these libs
@@ -47,7 +47,7 @@ set(llvm_goc_build ${CMAKE_CURRENT_BINARY_DIR}/llvm-goc.built)
 add_custom_command(
   OUTPUT ${llvm_goc_build}
   COMMAND  ${CMAKE_COMMAND} -E touch ${llvm_goc_build}
-  DEPENDS llvm-goc
+  DEPENDS llvm-goc 
   COMMENT "Create 'build-performed' file for llvm-goc"
   VERBATIM)
 
@@ -59,4 +59,15 @@ copy_if_different(${llvm_goc_build} ${llvm_goc_token})
 
 # Token target.
 add_custom_target(llvm-goc-token ALL DEPENDS ${llvm_goc_token})
+
+# For compatibility, add a symlink to llvm-goc named "gccgo" in install dir.
+install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink \"llvm-goc\" \"${CMAKE_INSTALL_PREFIX}/bin/gccgo\")"
+  COMPONENT llvm-goc)
+
+
+
+
+    
+
+
 

@@ -13,6 +13,7 @@ include(LLVMExternalProjectUtils)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
 include(CmakeUtils)
+include(AddGollvm)
 
 # So that we can issue "make -jN" cmds in externalproject_add
 processorcount(PROCESSOR_COUNT)
@@ -67,9 +68,13 @@ externalproject_add(libmpc
   LOG_INSTALL 1
   )
 
+# Top level targets for building, installing
+add_custom_target(gollvm ALL)
+add_custom_target(install-gollvm)
+
 # In most use cases, we want to force a rebuild of all objects built
 # from Go source if the compiler changes.
-set(gocdep llvm-goc)
+set(gocdep llvm-goc llvm-goc-token)
 
 # For compiler developers, however, the dependence this can be a
 # hassle-- when hacking on the compiler, it is annoying to have each

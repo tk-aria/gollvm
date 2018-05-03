@@ -16,6 +16,7 @@
 #include "Compilation.h"
 #include "Driver.h"
 #include "ToolChain.h"
+#include "GollvmConfig.h"
 
 #include "llvm/Option/ArgList.h"
 #include "llvm/Support/Path.h"
@@ -302,7 +303,8 @@ bool Linker::constructCommand(Compilation &compilation,
   }
 
   // Pick up correct directory for Go libraries.
-  std::string golib(llvm::Twine("-L" + compilation.driver().installDir() + "/../libgo/" + toolchain().driver().triple().str()).str());
+  std::string golib("-L");
+  golib += GOLLVM_INSTALL_LIBDIR;
   cmdArgs.push_back(args.MakeArgString(golib.c_str()));
 
   // Incorporate linker arguments needed for Go.
