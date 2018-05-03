@@ -27,7 +27,7 @@ set(libgotool_archive "${libgo_binroot}/libgotool.a")
 # Cgo needs a copy of the defaultCC function in the "main" package.
 set(cgozdefaultccdotgo "${gotools_binroot}/zdefaultcc.go")
 set(cgozdefaultcctmp "${gotools_binroot}/zdefaultcc.go.tmp")
-mkzdefaultcc("main" ${cgozdefaultcctmp} ${gollvm_driver}
+mkzdefaultcc("main" ${cgozdefaultcctmp}
              ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER})
 copy_if_different(${cgozdefaultcctmp} ${cgozdefaultccdotgo})
 
@@ -73,17 +73,24 @@ foreach(tool ${tools})
       list(APPEND toolfiles "${${tool}_extra_go_files}")
     endif()
 
+    set(isubdir "tools")
+    if("${tool}" STREQUAL "go")
+      set(isubdir "bin")
+    endif()
+
     # Create target for program.
     add_go_program(${tool} ${tool_target}
       ${libgo_binroot} ${gotools_binroot}
       GOSRC ${toolfiles}
       GOLIB ${libgotool_archive}
+      ISUBDIR ${isubdir}
       GODEP libgotool libgo_shared libgo_static)
     list(APPEND allgotools ${tool_target})
   endif()
 endforeach()
 
 add_custom_target(gotools_all DEPENDS ${allgotools})
+add_dependencies(gollvm gotools_all)
 
 message(STATUS "gotools: generating check targets")
 
