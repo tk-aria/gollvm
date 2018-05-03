@@ -12,6 +12,8 @@ include(LLVMExternalProjectUtils)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+include(CmakeUtils)
+
 # So that we can issue "make -jN" cmds in externalproject_add
 processorcount(PROCESSOR_COUNT)
 
@@ -64,6 +66,20 @@ externalproject_add(libmpc
   LOG_BUILD 1
   LOG_INSTALL 1
   )
+
+# In most use cases, we want to force a rebuild of all objects built
+# from Go source if the compiler changes.
+set(gocdep llvm-goc)
+
+# For compiler developers, however, the dependence this can be a
+# hassle-- when hacking on the compiler, it is annoying to have each
+# tiny change force a library rebuild, so the DISABLE_LIBGO_GOC_DEP can
+# be set as an (unsafe) escape hatch to break the dependence from golibs
+# to compiler. In this case we still need to insure that the compiler
+# exists, but we don't care whether it is up to date or not.
+if (DISABLE_LIBGO_GOC_DEP)
+  set(gocdep llvm-goc-token)
+endif()
 
 # Root of gollvm source code.
 set(GOLLVM_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})

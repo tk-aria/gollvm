@@ -60,7 +60,7 @@ function(add_go_package pkgpath dest)
     OUTPUT ${package_ofile}
     COMMAND ${CMAKE_COMMAND} -E make_directory "./${pdir}"
     COMMAND "${gocompiler}" "-c" "-o" ${package_ofile} "-fgo-pkgpath=${pkgpath}" ${ARG_GOCFLAGS} -I . ${ARG_GOSRC}
-    DEPENDS ${ARG_GOSRC} ${godeps}
+    DEPENDS ${ARG_GOSRC} ${godeps} ${gocdep}
     COMMENT "Building Go package '${pkgpath}' (non-PIC)"
     VERBATIM)
   list(APPEND pkg_outputs "${package_ofile}")
@@ -71,7 +71,7 @@ function(add_go_package pkgpath dest)
       OUTPUT "${package_picofile}"
       COMMAND ${CMAKE_COMMAND} -E make_directory "./${pdir}/.pic"
       COMMAND "${gocompiler}" "-c" "-o" ${package_picofile} -fPIC "-fgo-pkgpath=${pkgpath}" ${ARG_GOCFLAGS} -I . ${ARG_GOSRC}
-      DEPENDS ${ARG_GOSRC} ${godeps}
+      DEPENDS ${ARG_GOSRC} ${godeps} ${gocdep}
       COMMENT "Building Go package '${pkgpath}' (PIC)"
       VERBATIM)
     list(APPEND pkg_outputs "${package_picofile}")
