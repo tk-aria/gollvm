@@ -1,4 +1,4 @@
-//===-- CompileGo.cpp ------------------------------------------------------===//
+//===-- CompileGo.cpp -----------------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -19,6 +19,7 @@
 #include "go-c.h"
 #include "mpfr.h"
 #include "GollvmOptions.h"
+#include "GollvmConfig.h"
 
 #include "Action.h"
 #include "Artifact.h"
@@ -29,6 +30,7 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Bitcode/BitcodeWriterPass.h"
+#include "llvm/Config/llvm-config.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/IR/IRPrintingPasses.h"
@@ -59,6 +61,8 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
+
+#include <sstream>
 
 using namespace llvm;
 
@@ -458,14 +462,27 @@ bool CompileGoImpl::initBridge()
       go_add_search_path(dir.c_str());
   }
 
-  // Library dirs
-  // TODO: add version, architecture dirs
+  // Start with list of user-provided -L directories, then append an
+  // entry corresponing to the lib dir for the install.
   std::vector<std::string> libargs =
       args_.getAllArgValues(gollvm::options::OPT_L);
+  libargs.push_back(GOLLVM_INSTALL_LIBDIR);
+
+  // Populate Go package search path based on -L options.
   for (auto &dir : libargs) {
-    struct stat st;
-    if (stat (dir.c_str(), &st) == 0 && S_ISDIR (st.st_mode))
-      go_add_search_path(dir.c_str());
+    if (!sys::fs::is_directory(dir))
+      continue;
+
+    std::stringstream b1;
+    b1 << dir << sys::path::get_separator().str() << "go"
+       << sys::path::get_separator().str() << GOLLVM_LIBVERSION;
+    if (sys::fs::is_directory(b1.str()))
+      go_add_search_path(b1.str().c_str());
+
+    std::stringstream b2;
+    b2 << b1.str() << sys::path::get_separator().str() << triple_.str();
+    if (sys::fs::is_directory(b2.str()))
+      go_add_search_path(b2.str().c_str());
   }
 
   return true;
