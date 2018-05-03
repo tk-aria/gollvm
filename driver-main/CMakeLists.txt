@@ -41,3 +41,22 @@ target_link_libraries(llvm-goc
   PRIVATE
   "-L${EXTLIBDIR}" "-lmpc" "-lmpfr" "-lgmp"
   )
+
+# Create a "compiler built" file each time llvm-goc is built.
+set(llvm_goc_build ${CMAKE_CURRENT_BINARY_DIR}/llvm-goc.built)
+add_custom_command(
+  OUTPUT ${llvm_goc_build}
+  COMMAND  ${CMAKE_COMMAND} -E touch ${llvm_goc_build}
+  DEPENDS llvm-goc
+  COMMENT "Create 'build-performed' file for llvm-goc"
+  VERBATIM)
+
+# Copy the build file to the token file if different. The intent here
+# is that the token file gets created in the process of building
+# llvm-goc, but does NOT get updated each time llvm-goc is rebuilt.
+set(llvm_goc_token ${CMAKE_CURRENT_BINARY_DIR}/llvm-goc.token)
+copy_if_different(${llvm_goc_build} ${llvm_goc_token})
+
+# Token target.
+add_custom_target(llvm-goc-token ALL DEPENDS ${llvm_goc_token})
+
