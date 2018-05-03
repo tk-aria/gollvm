@@ -105,12 +105,27 @@ function(add_go_package pkgpath dest)
   # Create target
   add_custom_target(${pkgtarget} ALL DEPENDS ${pkg_outputs})
   set_target_properties(${pkgtarget} PROPERTIES FOLDER "Object Libraries")
+  add_dependencies(gollvm ${pkgtarget})
 
   # Caller needs to know these.
   set(package_ofile ${package_ofile} PARENT_SCOPE)
   set(package_picofile ${package_picofile} PARENT_SCOPE)
   set(package_goxfile ${package_goxfile} PARENT_SCOPE)
 
-  # TODO: add install rules
+  # *.gox files are installed in <lib>/go/<ver>/<triple>
+  set(goxinstalldest "lib${library_suffix}/go/${libversion}/${LLVM_DEFAULT_TARGET_TRIPLE}/${pdir}")
+
+  # Configure for install.
+  install(PROGRAMS ${package_goxfile}
+    COMPONENT ${pkgtarget}
+    DESTINATION ${goxinstalldest})
+
+  # Add an install target.
+  add_custom_target(install-${pkgtarget}
+    DEPENDS ${pkgtarget}
+    COMMAND "${CMAKE_COMMAND}"
+    -DCMAKE_INSTALL_COMPONENT=${pkgtarget}
+    -P "${CMAKE_BINARY_DIR}/cmake_install.cmake")
+  add_dependencies(install-gollvm install-${pkgtarget})
 
 endfunction()
