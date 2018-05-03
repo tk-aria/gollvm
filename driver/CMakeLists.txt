@@ -7,6 +7,10 @@ set(LLVM_TARGET_DEFINITIONS GollvmOptions.td)
 tablegen(LLVM GollvmOptions.inc -gen-opt-parser-defs)
 add_public_tablegen_target(GollvmDriverOptions)
 
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/GollvmConfig.h.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/GollvmConfig.h)
+
 # Include directories needed for this lib.
 include_directories(${GOFRONTEND_SOURCE_DIR})
 include_directories(${BRIDGE_SOURCE_DIR})

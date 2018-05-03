@@ -20,9 +20,10 @@
 # GOLIB     Libraries to link against.
 # GODEP     Targets on which this program should be dependent.
 # GOCFLAGS  Additional arguments passed to Go compiler.
+# ISUBDIR   Installation subdir (e.g. "tools" or "bin")
 
 function(add_go_program progname target libgodir destdir)
-  CMAKE_PARSE_ARGUMENTS(ARG "" "" "GOSRC;GOLIB;GODEP;GOCFLAGS" ${ARGN})
+  CMAKE_PARSE_ARGUMENTS(ARG "" "" "GOSRC;GOLIB;GODEP;GOCFLAGS;ISUBDIR" ${ARGN})
 
   set(object "${progname}_.o")
 
@@ -38,7 +39,7 @@ function(add_go_program progname target libgodir destdir)
     OUTPUT ${object}
     COMMAND "${gocompiler}" "-c" "-o" ${object} ${ARG_GOSRC} ${ARG_GOCFLAGS}
             -I ${libgodir} -L ${libgodir}
-    DEPENDS ${deps}
+    DEPENDS ${deps} ${gocdep}
     COMMENT "Building object for go program ${progname}"
     VERBATIM)
 
@@ -53,8 +54,20 @@ function(add_go_program progname target libgodir destdir)
 
   # Create target
   add_custom_target(${target} ALL DEPENDS ${program_exe})
-  set_target_properties(${target} PROPERTIES FOLDER "Tools")
 
-  # TODO: add install rules
+  # Configure for install.
+  install(PROGRAMS ${program_exe}
+    COMPONENT ${target}
+    DESTINATION ${ARG_ISUBDIR})
+
+  # Add an install target.
+  add_custom_target(install-${target}
+    DEPENDS ${target}
+    COMMAND "${CMAKE_COMMAND}"
+    -DCMAKE_INSTALL_COMPONENT=${target}
+    -P "${CMAKE_BINARY_DIR}/cmake_install.cmake")
+  add_dependencies(install-gollvm install-${target})
+
+  set_target_properties(${target} PROPERTIES FOLDER "Gollvm gotools")
 
 endfunction()
