@@ -18,13 +18,14 @@ function(mkversion goos goarch outfile bindir srcroot scriptroot)
   file(REMOVE ${outfile})
   file(WRITE ${outfile} "package sys\n")
 
-  # FIXME: normally DefaultGoRoot is set to the --prefix option used
-  # when configuring (assuming that "configure" is run), but with
-  # cmake it's possible to do a build first and then later on install
-  # that build with a second run of cmake. For this reason looking at
-  # things like CMAKE_INSTALL_PREFIX doesn't make much sense (it will
-  # simply be set to /usr/local). This area needs some work.
-  file(APPEND ${outfile} "func init() { DefaultGoroot = \"${bindir}\" }\n")
+  # FIXME: typical LLVM usage allows for performing a build without
+  # CMAKE_INSTALL_PREFIX set, then doing an install from the build
+  # using a newly chosen CMAKE_INSTALL_PREFIX value. This mode is
+  # not currently supported -- the install prefix has to be set properly
+  # as part of the original build.
+
+  # Tools subdir within the install.
+  file(APPEND ${outfile} "func init() { DefaultGoroot = \"${CMAKE_INSTALL_PREFIX}\" }\n")
 
   # Compiler version
   file(STRINGS "${srcroot}/../VERSION" rawver)
@@ -39,7 +40,7 @@ function(mkversion goos goarch outfile bindir srcroot scriptroot)
   # executables. Where things like "cgo" will live hasn't been ironed
   # out yet, so just pick a spot in the bin directory for now. See also
   # 'DefaultGoRoot' above.
-  file(APPEND ${outfile} "const GccgoToolDir = \"${bindir}\"\n")
+  file(APPEND ${outfile} "const GccgoToolDir = \"${CMAKE_INSTALL_PREFIX}/tools\"\n")
 
   # FIXME: add a real switch base on configuration params here.
 
@@ -200,9 +201,7 @@ function(mkobjabi outfile binroot srcroot)
   file(WRITE ${outfile} "package objabi\n\n")
   file(APPEND ${outfile} "import \"runtime\"\n")
 
-  # FIXME: see the comment in mkversion above relating to the GoRoot
-  # setting (we may not know installation dir at time of cmake run).
-  file(APPEND ${outfile} "func init() { defaultGOROOT = \"${binroot}\" }\n")
+  file(APPEND ${outfile} "func init() { defaultGOROOT = \"${GOLLVM_INSTALL_DIR}\" }\n")
 
   file(APPEND ${outfile} "const defaultGO386 = `sse2`\n")
   file(APPEND ${outfile} "const defaultGOARM = `5`\n")
@@ -245,7 +244,6 @@ endfunction()
 #
 #   * package to use for generated Go code
 #   * output file to target
-#   * path to gollvm driver binary
 #   * C compiler path
 #   * C++ compiler path
 #
@@ -253,16 +251,14 @@ endfunction()
 #
 # EXPORT    Generated public functions (ex: DefaultCC not defaultCC).
 #
-function(mkzdefaultcc package outfile driverpath ccpath cxxpath)
+function(mkzdefaultcc package outfile ccpath cxxpath)
   CMAKE_PARSE_ARGUMENTS(ARG "EXPORT" "" "" ${ARGN})
+
+  # Construct default driver path
+  set(driverpath "${GOLLVM_INSTALL_DIR}/bin/llvm-goc")
 
   file(REMOVE ${outfile})
   file(WRITE ${outfile} "package ${package}\n\n")
-
-  # FIXME: once again, this is a problematic function since in theory
-  # we don't yet know yet where things are going to be installed. For
-  # the time being, just use that paths of the host build C/C++
-  # compiler and the gollvm driver executable.
 
   set(f1 "defaultGCCGO")
   set(f2 "defaultCC")
