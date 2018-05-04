@@ -241,6 +241,54 @@ void Linker::addFilePathArgs(llvm::opt::ArgStringList &cmdArgs)
       cmdArgs.push_back(args.MakeArgString(llvm::StringRef("-L") + fp));
 }
 
+void Linker::addSysLibsStatic(llvm::opt::ArgList &args,
+                              llvm::opt::ArgStringList &cmdArgs)
+{
+  // Go and pthread related libs.
+  cmdArgs.push_back("-lgobegin");
+  cmdArgs.push_back("-lgo");
+  cmdArgs.push_back("-lm");
+  cmdArgs.push_back("-u");
+  cmdArgs.push_back("pthread_create");
+  cmdArgs.push_back("--wrap=pthread_create");
+
+  // Libgcc and libc.
+  cmdArgs.push_back("--start-group");
+  cmdArgs.push_back("-lgcc");
+  cmdArgs.push_back("-lgcc_eh");
+  cmdArgs.push_back("-lpthread");
+  cmdArgs.push_back("-lc");
+  cmdArgs.push_back("--end-group");
+}
+
+void Linker::addSysLibsShared(llvm::opt::ArgList &args,
+                              llvm::opt::ArgStringList &cmdArgs)
+{
+  bool isStaticLibgo = args.hasArg(gollvm::options::OPT_static_libgo);
+  bool havePthreadFlag = args.hasArg(gollvm::options::OPT_pthreads);
+  cmdArgs.push_back("-lgobegin");
+  if (isStaticLibgo)
+    cmdArgs.push_back("-Bstatic");
+  cmdArgs.push_back("-lgo");
+  if (isStaticLibgo)
+    cmdArgs.push_back("-Bdynamic");
+
+  cmdArgs.push_back("-lm");
+  cmdArgs.push_back("--wrap=pthread_create");
+
+  // Libgcc and libc.
+  bool isShared = args.hasArg(gollvm::options::OPT_shared);
+  cmdArgs.push_back("-lgcc_s");
+  if (!isShared)
+    cmdArgs.push_back("-lgcc");
+  if (isStaticLibgo || havePthreadFlag)
+    cmdArgs.push_back("-lpthread");
+  cmdArgs.push_back("-lc");
+  cmdArgs.push_back("-lgcc_s");
+  if (!isShared)
+    cmdArgs.push_back("-lgcc");
+}
+
 bool Linker::constructCommand(Compilation &compilation,
                               const Action &jobAction,
                               const ArtifactList &inputArtifacts,
@@ -277,8 +325,6 @@ bool Linker::constructCommand(Compilation &compilation,
                            gollvm::options::OPT_Xlinker,
                            inputArtifacts, args, cmdArgs);
 
-  // FIXME: add "-dynamic-linker /lib64/ld-linux-x86-64.so.2"
-
   // Incorporate any -L, -l options from the user
   args.AddAllArgs(cmdArgs, gollvm::options::OPT_L, gollvm::options::OPT_l);
 
@@ -308,37 +354,11 @@ bool Linker::constructCommand(Compilation &compilation,
   cmdArgs.push_back(args.MakeArgString(golib.c_str()));
 
   // Incorporate linker arguments needed for Go.
-  cmdArgs.push_back("-lgobegin");
-  cmdArgs.push_back("-lgo");
-
-  // Pull in pthread and math library.
   bool isStatic = args.hasArg(gollvm::options::OPT_static);
   if (isStatic)
-    cmdArgs.push_back("-lpthread");
-  cmdArgs.push_back("-lm");
-  if (isStatic) {
-    cmdArgs.push_back("-u");
-    cmdArgs.push_back("pthread_create");
-  }
-  cmdArgs.push_back("--wrap=pthread_create");
-
-  // Libgcc and libc.
-  bool isShared = args.hasArg(gollvm::options::OPT_shared);
-  if (isStatic) {
-    cmdArgs.push_back("--start-group");
-    cmdArgs.push_back("-lgcc");
-    cmdArgs.push_back("-lgcc_eh");
-    cmdArgs.push_back("-lc");
-    cmdArgs.push_back("--end-group");
-  } else {
-    cmdArgs.push_back("-lgcc_s");
-    if (!isShared)
-      cmdArgs.push_back("-lgcc");
-    cmdArgs.push_back("-lc");
-    cmdArgs.push_back("-lgcc_s");
-    if (!isShared)
-      cmdArgs.push_back("-lgcc");
-  }
+    addSysLibsStatic(args, cmdArgs);
+  else
+    addSysLibsShared(args, cmdArgs);
 
   // crtend files.
   addEndFiles(cmdArgs);
