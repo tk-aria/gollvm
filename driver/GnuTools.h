@@ -58,6 +58,10 @@ class Linker : public ExternalTool {
   void addBeginFiles(llvm::opt::ArgStringList &cmdArgs);
   void addEndFiles(llvm::opt::ArgStringList &cmdArgs);
   void addLDM(llvm::opt::ArgStringList &cmdArgs);
+  void addSysLibsStatic(llvm::opt::ArgList &args,
+                        llvm::opt::ArgStringList &cmdArgs);
+  void addSysLibsShared(llvm::opt::ArgList &args,
+                        llvm::opt::ArgStringList &cmdArgs);
   void addSharedAndOrStaticFlags(llvm::opt::ArgStringList &cmdArgs);
   void addFilePathArgs(llvm::opt::ArgStringList &cmdArgs);
 };
