@@ -1,9 +1,9 @@
 
 # gollvm
 
-Gollvm is an LLVM-based Go compiler. It incorporates "gofrontend" (a Go language front end written in C++ and shared with GCCGO), a bridge components (which translates from gofrontend IR to LLVM IR), and a driver that sends the resulting IR through the LLVM back end. Gollvm is still at an early stage of development.
+Gollvm is an LLVM-based Go compiler. It incorporates "gofrontend" (a Go language front end written in C++ and shared with GCCGO), a bridge component (which translates from gofrontend IR to LLVM IR), and a driver that sends the resulting IR through the LLVM back end.
 
-Gollvm (name still not finalized) is set up to be a subprojects within the LLVM tools directory, similar to how things work for "clang" or "compiler-rt": you check out a copy of the LLVM source tree and then within that tree you check out additional git repos.
+Gollvm (name still not finalized) is set up to be a subproject within the LLVM tools directory, similar to how things work for "clang" or "compiler-rt": you check out a copy of the LLVM source tree, then within the LLVM tree you check out additional git repos.
 
 You'll need to have an up-to-date copy of cmake on your system (3.6 vintage).
 
@@ -30,13 +30,48 @@ You'll need to have an up-to-date copy of cmake on your system (3.6 vintage).
 ...
 %
 
-// Create a build directory and run cmake
+// Create a build directory, and run cmake
 % mkdir build.opt
 % cd build.opt
 % cmake -DCMAKE_BUILD_TYPE=Debug -DLLVM_USE_LINKER=gold -G Ninja ../llvm
 
 // Build
 ninja <gollvm target(s)>
+```
+
+## Installing gollvm
+
+A gollvm installation will contain 'llvm-goc', the Gollvm compiler, the libgo standard Go libraries, and the standard Go tools ("go", "vet", "cgo", etc).
+
+The installation directory for gollvm needs to be specified when invoking cmake prior to the build:
+
+```
+% mkdir build.rel
+% cd build.rel
+% cmake -DCMAKE_INSTALL_PREFIX=/my/install/dir -DCMAKE_BUILD_TYPE=Release -DLLVM_USE_LINKER=gold -G Ninja ../llvm
+
+// Build all of gollvm
+% ninja gollvm
+...
+
+// Install gollvm
+% ninja install-gollvm
+
+```
+
+## Using an installed copy of gollvm
+
+Programs build with the Gollvm Go compiler default to shared linkage, meaning that they need to pick up the Go runtime library via LD_LIBRARY_PATH:
+
+```
+
+// Root of Gollvm install is /tmp/gollvm-install
+% export LD_LIBRARY_PATH=/tmp/gollvm-install/lib64
+% export PATH=/tmp/gollvm-install/bin:$PATH
+% go run himom.go
+hi mom!
+%
+
 ```
 
 ## Source code structure
@@ -48,7 +83,8 @@ Within <workarea>/llvm/tools/gollvm, the following directories are of interest:
  * contains rules to build third party libraries needed for gollvm,
    along with common definitions for subdirs.
 
-.../llvm/tools/gollvm/driver:
+.../llvm/tools/gollvm/driver,
+.../llvm/tools/gollvm/driver-main:
 
  * contains build rules and source code for llvm-goc
 
@@ -66,12 +102,13 @@ Within <workarea>/llvm/tools/gollvm, the following directories are of interest:
 
 ## Building and running llvm-goc
 
-The executable llvm-goc is the main compiler driver for gollvm; it functions as a compiler (consuming source for a Go package and producing an object file) and will eventually include any necessary invocations of the linker or assembler. This program not fully usable on its own at the moment; using it requries a companion gccgo installation.
+The executable llvm-goc is the main compiler driver for gollvm; it functions as a compiler (consuming source for a Go package and producing an object file), an assembler, and/or a linker.  While it is possible to build and run llvm-goc directly from the command line, in practice there is little point in doing this (better to build using "go build", which will invoke llvm-goc on your behalf.
 
 ```
 // From within <workarea>/build.opt:
 
 % ninja llvm-goc
+...
 % cat micro.go
 package foo
 func Bar() int {
@@ -81,38 +118,6 @@ func Bar() int {
 %
 ```
 
-## Using llvm-goc in combination with a GCCGO installation
-
-At the moment the CMake build/install support for libgo is not entirely on line, which makes it difficult/unwieldy to use for running actual Go programs. As an interim workaround, I've written a shim/wrapper script that allows you to use llvm-goc in combination with an existing GCCGO installation, using gccgo for the runtime/libraries and the linking step, but llvm-goc for any compilation.
-
-The wrapper script can be found in the tools/ subdir. To use it, build a copy of GCCGO and run "make install" to copy the bits into an install directory. From the GCCGO install directory, you can insert the wrapper by running it with the "--install" option:
-
-```
- % cd /my/gccgo/install
- % /my/gollvm/sandbox/tools/gollvm-wrap.py --install
- executing: mv bin/gccgo bin/gccgo.real
- executing: chmod 0755 bin/gccgo
- executing: cp /my/gollvm/sandbox/tools/gollvm-wrap.py bin
- executing: cp /my/gollvm/sandbox/tools/script_utils.py bin
- wrapper installed successfully
- %
-
-```
-
-At this point you can now run "go build", "go run", etc using GCCGO -- the compilation steps will be performed by llvm-goc, and the remainder (linking, incorporation of runtime) will be done by gccgo. Example:
-
-```
-% cd $GOPATH/src/himom
-% go run himom.go
-hi mom!
-% go run -compiler gccgo himom.go
-hi mom!
-% GOLLVM_WRAP_OPTIONS=-t go run -compiler gccgo himom.go
-# command-line-arguments
-+ llvm-goc -I $WORK -c -g -m64 -fgo-relative-import-path=_/mygopath/src/himom -o $WORK/command-line-arguments/_obj/_go_.o.s ./himom.go -L /my/gccgo/install/lib64/go/8.0.0/x86_64-pc-linux-gnu
-hi mom
-%
-```
 
 ## Building and running the unit tests
 
@@ -186,3 +191,5 @@ To build the Go runtime and standard libraries, use the following:
 ```
 
 This will compile static (*.a) and dynamic (*.so) versions of the library.
+
+
