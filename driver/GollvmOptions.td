@@ -196,6 +196,13 @@ def no_pie : Flag<["-"], "no-pie">, Alias<nopie>;
 def shared : Flag<["-", "--"], "shared">;
 def static : Flag<["-", "--"], "static">;
 
+def static_libgo : Flag<["-", "--"], "static-libgo">;
+
+def pthreads : Flag<["-"], "pthreads">, 
+  HelpText<"Support POSIX threads in generated code">;
+def pthread : Flag<["-"], "pthread">, Alias<pthreads>,
+  HelpText<"Support POSIX threads in generated code">;
+
 // Target-independent "-f" options.
 
 def fPIC : Flag<["-"], "fPIC">, Group<f_Group>;
