@@ -53,6 +53,7 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Program.h"
+#include "llvm/Support/Regex.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
@@ -115,6 +116,10 @@ class CompileGoImpl {
   bool resolveInputOutput(const Action &jobAction,
                           const ArtifactList &inputArtifacts,
                           const Artifact &output);
+
+  // Helpers for -### output
+  void dumpArg(opt::Arg &arg, bool doquote);
+  void quoteDump(const std::string &str, bool doquote);
 };
 
 CompileGoImpl::CompileGoImpl(ToolChain &tc, const std::string &executablePath)
@@ -184,6 +189,23 @@ class BEDiagnosticHandler : public DiagnosticHandler {
   }
 };
 
+void CompileGoImpl::quoteDump(const std::string &str, bool doquote)
+{
+  Regex qureg("^[-_/A-Za-z0-9_\\.]+$");
+  errs() << " ";
+  if (doquote)
+    doquote = !qureg.match(str);
+  errs() << (doquote ? "\"" : "") << str << (doquote ? "\"" : "");
+}
+
+void CompileGoImpl::dumpArg(opt::Arg &arg, bool doquote)
+{
+  if (arg.getOption().getKind() != opt::Option::InputClass)
+    quoteDump(arg.getSpelling(), doquote);
+  for (auto &val : arg.getValues())
+    quoteDump(val, doquote);
+}
+
 bool CompileGoImpl::preamble(const Artifact &output)
 {
   // If -v is in effect, print something to show the effect of the
@@ -194,20 +216,27 @@ bool CompileGoImpl::preamble(const Artifact &output)
   // you'll get the same effect as the original command that produced
   // the "-v" output.
   bool hashHashHash = args_.hasArg(gollvm::options::OPT__HASH_HASH_HASH);
-  const char *qu = (hashHashHash ? "\"" : "");
   if (args_.hasArg(gollvm::options::OPT_v) || hashHashHash) {
-    errs() << " " << executablePath_ << " " << qu << "-S" << qu;
+    errs() << "Target: " << triple_.str() << "\n";
+    errs() << " " << executablePath_;
+    if (!args_.hasArg(gollvm::options::OPT_S))
+      errs() << " " << "-S";
     for (auto arg : args_) {
+      if (arg->getOption().getGroup().isValid() &&
+          (arg->getOption().getGroup().getID() ==
+           gollvm::options::OPT_Link_Group))
+        continue;
       if (arg->getOption().matches(gollvm::options::OPT_v) ||
           arg->getOption().matches(gollvm::options::OPT_c) ||
           arg->getOption().matches(gollvm::options::OPT_o) ||
           arg->getOption().matches(gollvm::options::OPT__HASH_HASH_HASH) ||
           arg->getOption().matches(gollvm::options::OPT_save_temps))
         continue;
-      errs() << " " << qu << arg->getAsString(args_) << qu;
+      dumpArg(*arg, hashHashHash);
     }
-    errs() << " " << qu << "-o" << qu << " " << qu << output.file() << qu
-           << "\n";
+    errs() << " " << "-L" << GOLLVM_INSTALL_LIBDIR << " " << "-o";
+    quoteDump(output.file(), hashHashHash);
+    errs() << "\n";
   }
 
   return hashHashHash;
