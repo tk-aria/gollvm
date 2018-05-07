@@ -202,6 +202,8 @@ def no_pie : Flag<["-"], "no-pie">, Alias<nopie>;
 def shared : Flag<["-", "--"], "shared">;
 def static : Flag<["-", "--"], "static">;
 
+def nostdlib : Flag<["-"], "nostdlib">;
+
 def static_libgo : Flag<["-", "--"], "static-libgo">;
 
 def pthreads : Flag<["-"], "pthreads">,
