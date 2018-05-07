@@ -45,9 +45,15 @@ void Command::print(llvm::raw_ostream &os, bool quoteArgs)
 {
   os << " " << executable_;
   const char *qu = (quoteArgs ? "\"" : "");
-  for (auto arg : arguments_)
+  bool first = true;
+  for (auto arg : arguments_) {
+    if (first) {
+      first = false;
+      continue;
+    }
     if (arg != nullptr)
       os << " "  << qu << arg << qu;
+  }
   os << "\n";
 }
 
