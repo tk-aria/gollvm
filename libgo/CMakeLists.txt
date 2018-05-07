@@ -79,6 +79,10 @@ get_target_property(driverdir llvm-goc RUNTIME_OUTPUT_DIRECTORY)
 set(gollvm_driver "${driverdir}/llvm-goc")
 set(gocompiler ${gollvm_driver})
 
+# Pick up any extra Go compiler flags specified via
+# "cmake -DGOLLVM_EXTRA_GOCFLAGS=..."
+set(libgo_extra_gocflags ${GOLLVM_EXTRA_GOCFLAGS})
+
 # Read in list of all libgo packages
 file(STRINGS "${libgo_srcroot}/libgo-packages.txt" libpackages)
 file(STRINGS "${libgo_srcroot}/gotool-packages.txt" toolpackages)
@@ -333,7 +337,7 @@ foreach( pack ${allpackages})
   endif()
 
   # Call into helper to create rules for package.
-  add_go_package("${pack}" "${libgo_binroot}" GOSRC ${packsrcs} GODEP ${packdeps} GOCFLAGS ${packopts} ${nopic})
+  add_go_package("${pack}" "${libgo_binroot}" GOSRC ${packsrcs} GODEP ${packdeps} GOCFLAGS ${packopts} ${libgo_extra_gocflags} ${nopic})
 
   # Accumulate libgo objects.
   if(${found} EQUAL -1)
