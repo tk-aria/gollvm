@@ -12,6 +12,6 @@
 #cmakedefine GOLLVM_LIBVERSION "@GOLLVM_LIBVERSION@"
 
 // Compiler version. Same as library version currently. 
-#cmakedefine GOLLVM_COMPILERVERSION "@GOLLVM_LIBVERSION@"
+#define GOLLVM_COMPILERVERSION GOLLVM_LIBVERSION
 
 #endif // GOLLVM_CONFIG_H

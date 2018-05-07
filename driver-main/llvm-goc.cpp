@@ -19,6 +19,7 @@
 #include "go-c.h"
 #include "mpfr.h"
 #include "GollvmOptions.h"
+#include "GollvmConfig.h"
 
 #include "Compilation.h"
 #include "Driver.h"
@@ -97,6 +98,12 @@ bool CommandLineParser::parseCommandLine(int argc, char **argv)
   if (args_.hasArg(gollvm::options::OPT_help)) {
     opts_->PrintHelp(errs(), progname, "Gollvm (LLVM-based Go compiler)",
                      0, 0, false);
+    exit(0);
+  }
+
+  // Honor -dumpversion
+  if (args_.hasArg(gollvm::options::OPT_dumpversion)) {
+    llvm::outs() << GOLLVM_COMPILERVERSION << "\n";
     exit(0);
   }
 
