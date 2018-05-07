@@ -164,6 +164,9 @@ def x : JoinedOrSeparate<["-"], "x">, Flags<[DriverOption]>,
 def _HASH_HASH_HASH : Flag<["-"], "###">, Flags<[DriverOption]>,
     HelpText<"Print (but do not run) the commands to run for this compilation">;
 
+def dumpversion : Flag<["-"], "dumpversion">,
+  HelpText<"Emit version number and exit.">;
+
 def w : Flag<["-"], "w">,
   HelpText<"Suppress warning messages">;
 def no_warn : Flag<["-"], "no-warm">, Alias<w>;
