@@ -397,8 +397,14 @@ public:
   void setTargetCpuAttr(const std::string &cpu);
   void setTargetFeaturesAttr(const std::string &attrs);
 
+  // Set GC strategy
+  void setGCStrategy(std::string s) { gcStrategy_ = s; };
+
   // Personality function
   llvm::Function *personalityFunction();
+
+  // Dummy personality function
+  llvm::Function *dummyPersonalityFunction();
 
  private:
   Bexpression *errorExpression() const { return errorExpression_; }
@@ -830,10 +836,14 @@ public:
 
   // Personality function
   llvm::Function *personalityFunction_;
+  llvm::Function *dummyPersonalityFunction_;
 
   // Target cpu and attributes to be attached to any generated fcns.
   std::string targetCpuAttr_;
   std::string targetFeaturesAttr_;
+
+  // GC strategy
+  std::string gcStrategy_;
 };
 
 #endif
