@@ -214,6 +214,30 @@ ToolChain *Driver::setup()
       args_.hasArg(gollvm::options::OPT__HASH_HASH_HASH))
     emitVersion();
 
+  // Set triple.
+  if (const opt::Arg *arg = args_.getLastArg(gollvm::options::OPT_target_EQ))
+    triple_ = Triple(Triple::normalize(arg->getValue()));
+  else
+    triple_ = Triple(sys::getDefaultTargetTriple());
+
+  // Support -march
+  std::string archStr;
+  opt::Arg *archarg = args_.getLastArg(gollvm::options::OPT_march_EQ);
+  if (archarg != nullptr) {
+    std::string val(archarg->getValue());
+    if (val == "native")
+      archStr = sys::getHostCPUName();
+    else
+      archStr = archarg->getValue();
+    triple_.setArchName(archStr);
+  }
+
+  // Honor -dumpmachine
+  if (args_.hasArg(gollvm::options::OPT_dumpmachine)) {
+    llvm::outs() << triple_.str() << "\n";
+    exit(0);
+  }
+
   // Check for existence of input files.
   for (opt::Arg *arg : args_) {
     if (arg->getOption().getKind() == opt::Option::InputClass) {
@@ -237,24 +261,6 @@ ToolChain *Driver::setup()
   if (! inputseen) {
     errs() << progname_ << ": error: no inputs\n";
     return nullptr;
-  }
-
-  // Set triple.
-  if (const opt::Arg *arg = args_.getLastArg(gollvm::options::OPT_target_EQ))
-    triple_ = Triple(Triple::normalize(arg->getValue()));
-  else
-    triple_ = Triple(sys::getDefaultTargetTriple());
-
-  // Support -march
-  std::string archStr;
-  opt::Arg *archarg = args_.getLastArg(gollvm::options::OPT_march_EQ);
-  if (archarg != nullptr) {
-    std::string val(archarg->getValue());
-    if (val == "native")
-      archStr = sys::getHostCPUName();
-    else
-      archStr = archarg->getValue();
-    triple_.setArchName(archStr);
   }
 
   // Look up toolchain.
