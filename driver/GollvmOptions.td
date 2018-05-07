@@ -428,3 +428,6 @@ def disable_llvm_passes : Flag<["-"], "disable-llvm-passes">,
 
 def gcc_toolchain_EQ : Joined<["--"], "gcc-toolchain=">, Flags<[DriverOption]>,
   HelpText<"Use the gcc toolchain at the given directory">;
+
+def enable_gc_EQ : Joined<["-"], "enable-gc=">,
+  HelpText<"Enable stack map generation">;
