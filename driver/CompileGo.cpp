@@ -19,6 +19,7 @@
 #include "mpfr.h"
 #include "GollvmOptions.h"
 #include "GollvmConfig.h"
+#include "GollvmPasses.h"
 
 #include "Action.h"
 #include "Artifact.h"
@@ -34,6 +35,8 @@ namespace gollvm { namespace arch {
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Bitcode/BitcodeWriterPass.h"
 #include "llvm/Config/llvm-config.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/IR/IRPrintingPasses.h"
@@ -46,6 +49,7 @@ namespace gollvm { namespace arch {
 #include "llvm/Option/OptTable.h"
 #include "llvm/Option/Option.h"
 #include "llvm/Passes/PassBuilder.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
@@ -104,6 +108,7 @@ class CompileGoImpl {
   std::unique_ptr<TargetLibraryInfoImpl> tlii_;
   std::string targetCpuAttr_;
   std::string targetFeaturesAttr_;
+  bool enable_gc_;
 
   void createPasses(legacy::PassManager &MPM,
                     legacy::FunctionPassManager &FPM);
@@ -137,7 +142,8 @@ CompileGoImpl::CompileGoImpl(ToolChain &tc, const std::string &executablePath)
       args_(tc.driver().args()),
       cgolvl_(CodeGenOpt::Default),
       olvl_(2),
-      hasError_(false)
+      hasError_(false),
+      enable_gc_(false)
 {
   InitializeAllTargets();
   InitializeAllTargetMCs();
@@ -225,8 +231,7 @@ bool CompileGoImpl::preamble(const Artifact &output)
   if (args_.hasArg(gollvm::options::OPT_v) || hashHashHash) {
     errs() << "Target: " << triple_.str() << "\n";
     errs() << " " << executablePath_;
-    if (!args_.hasArg(gollvm::options::OPT_S) &&
-        !args_.hasArg(gollvm::options::OPT_emit_llvm))
+    if (!args_.hasArg(gollvm::options::OPT_S))
       errs() << " " << "-S";
     for (auto arg : args_) {
       // Special case for -L. Here even if the user said "-L /x"
@@ -495,6 +500,14 @@ bool CompileGoImpl::initBridge()
   for (const auto &arg : driver_.args().getAllArgValues(gollvm::options::OPT_fdebug_prefix_map_EQ))
     bridge_->addDebugPrefix(llvm::StringRef(arg).split('='));
 
+  llvm::Optional<unsigned> enable_gc =
+      driver_.getLastArgAsInteger(gollvm::options::OPT_enable_gc_EQ, 0u);
+  if (enable_gc && *enable_gc) {
+    enable_gc_ = true;
+    bridge_->setGCStrategy("go");
+    linkGoGC();
+    linkGoGCPrinter();
+  }
   // Support -fgo-dump-ast
   if (args_.hasArg(gollvm::options::OPT_fgo_dump_ast))
     go_enable_dump("ast");
@@ -719,6 +732,11 @@ bool CompileGoImpl::invokeBackEnd()
       createTargetTransformInfoWrapperPass(target_->getTargetIRAnalysis()));
   createPasses(modulePasses, functionPasses);
 
+  // Add statepoint insertion pass to the end of optimization pipeline,
+  // right before lowering to machine IR.
+  if (enable_gc_)
+    modulePasses.add(createGoStatepointsLegacyPass());
+
   legacy::PassManager codeGenPasses;
   bool noverify = args_.hasArg(gollvm::options::OPT_noverify);
   TargetMachine::CodeGenFileType ft = TargetMachine::CGFT_AssemblyFile;
@@ -745,10 +763,30 @@ bool CompileGoImpl::invokeBackEnd()
 
   // Codegen setup
   codeGenPasses.add(new TargetLibraryInfoWrapperPass(*tlii_));
-  if (target_->addPassesToEmitFile(codeGenPasses, *OS, nullptr, ft,
-                                   /*DisableVerify=*/ noverify)) {
-    errs() << "error: unable to interface with target\n";
-    return false;
+
+  // Add stackmap machine IR pass to the end of the machine passes,
+  // right before AsmPrinter.
+  // FIXME: the code below is essentially duplicate of
+  // LLVMTargetMachine::addPassesToEmitFile (and its callee).
+  // TODO: error check.
+  {
+    LLVMTargetMachine *lltm = (LLVMTargetMachine*)(target_.get()); // FIXME: TargetMachine doesn't support llvm::cast?
+    TargetPassConfig *passConfig = lltm->createPassConfig(codeGenPasses);
+    // Set PassConfig options provided by TargetMachine.
+    passConfig->setDisableVerify(noverify);
+    codeGenPasses.add(passConfig);
+    MachineModuleInfo *MMI = new MachineModuleInfo(lltm);
+    codeGenPasses.add(MMI);
+    passConfig->addISelPasses();
+    passConfig->addMachinePasses();
+    passConfig->setInitialized();
+
+    if (enable_gc_)
+      codeGenPasses.add(createGoStackMapPass());
+
+    lltm->addAsmPrinter(codeGenPasses, *OS, nullptr, ft, MMI->getContext());
+
+    codeGenPasses.add(createFreeMachineFunctionPass());
   }
 
 run:
