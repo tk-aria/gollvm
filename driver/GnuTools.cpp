@@ -152,7 +152,6 @@ void Linker::addBeginFiles(llvm::opt::ArgStringList &cmdArgs)
 {
   llvm::opt::ArgList &args = toolchain().driver().args();
 
-  // FIXME: no support yet for --nostdlib or --nostartfiles
   bool isPIE = toolchain().driver().isPIE();
   const char *crt1 = nullptr;
   if (!args.hasArg(gollvm::options::OPT_shared)) {
@@ -183,7 +182,6 @@ void Linker::addEndFiles(llvm::opt::ArgStringList &cmdArgs)
 {
   llvm::opt::ArgList &args = toolchain().driver().args();
 
-  // FIXME: no support yet for --nostdlib or --nostartfiles
   const char *crtend = nullptr;
   if (args.hasArg(gollvm::options::OPT_shared) ||
       toolchain().driver().isPIE())
@@ -313,12 +311,17 @@ bool Linker::constructCommand(Compilation &compilation,
   cmdArgs.push_back("-o");
   cmdArgs.push_back(output.file());
 
-  // Select proper options depending on presence of -static/-shared, etc.
-  // Dynamic linker selection is also done here.
-  addSharedAndOrStaticFlags(cmdArgs);
+  bool useStdLib = !args.hasArg(gollvm::options::OPT_nostdlib);
 
-  // Add crtbegin*.
-  addBeginFiles(cmdArgs);
+  if (useStdLib) {
+
+    // Select proper options depending on presence of -static/-shared, etc.
+    // Dynamic linker selection is also done here.
+    addSharedAndOrStaticFlags(cmdArgs);
+
+    // Add crtbegin*.
+    addBeginFiles(cmdArgs);
+  }
 
   // Incorporate inputs with -Wl,.. and -Xlinker args, in correct order.
   combineInputsWithEscapes(gollvm::options::OPT_Wl_COMMA,
@@ -353,15 +356,18 @@ bool Linker::constructCommand(Compilation &compilation,
   golib += GOLLVM_INSTALL_LIBDIR;
   cmdArgs.push_back(args.MakeArgString(golib.c_str()));
 
-  // Incorporate linker arguments needed for Go.
-  bool isStatic = args.hasArg(gollvm::options::OPT_static);
-  if (isStatic)
-    addSysLibsStatic(args, cmdArgs);
-  else
-    addSysLibsShared(args, cmdArgs);
+  if (useStdLib) {
 
-  // crtend files.
-  addEndFiles(cmdArgs);
+    // Incorporate linker arguments needed for Go.
+    bool isStatic = args.hasArg(gollvm::options::OPT_static);
+    if (isStatic)
+      addSysLibsStatic(args, cmdArgs);
+    else
+      addSysLibsShared(args, cmdArgs);
+
+    // crtend files.
+    addEndFiles(cmdArgs);
+  }
 
   // end of args.
   cmdArgs.push_back(nullptr);
