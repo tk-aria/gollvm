@@ -64,6 +64,8 @@ Llvm_backend::Llvm_backend(llvm::LLVMContext &context,
     , builtinTable_(new BuiltinTable(typeManager(), false))
     , errorFunction_(nullptr)
     , personalityFunction_(nullptr)
+    , dummyPersonalityFunction_(nullptr)
+    , gcStrategy_("")
 {
   // If nobody passed in a linemap, create one for internal use (unit testing)
   if (!linemap_) {
@@ -366,6 +368,22 @@ llvm::Function *Llvm_backend::personalityFunction()
   personalityFunction_ =
       llvm::Function::Create(pft, plinkage, pfn, module_);
   return personalityFunction_;
+}
+
+llvm::Function *Llvm_backend::dummyPersonalityFunction()
+{
+  if (gcStrategy_.empty())
+    // GC is not enabled, no need to attach dummy personality function.
+    return nullptr;
+  if (dummyPersonalityFunction_)
+    return dummyPersonalityFunction_;
+
+  llvm::FunctionType *pft = personalityFunctionType();
+  llvm::GlobalValue::LinkageTypes plinkage = llvm::GlobalValue::ExternalLinkage;
+  const char *pfn = "__gccgo_personality_dummy";
+  dummyPersonalityFunction_ =
+      llvm::Function::Create(pft, plinkage, pfn, module_);
+  return dummyPersonalityFunction_;
 }
 
 Bfunction *Llvm_backend::createIntrinsicFcn(const std::string &name,
@@ -2438,6 +2456,7 @@ Bvariable *Llvm_backend::immutable_struct_reference(const std::string &name,
   llvm::Constant *init = nullptr;
   glob = new llvm::GlobalVariable(module(), btype->type(), isConstant,
                                   linkage, init, gname);
+
   Bvariable *bv =
       new Bvariable(btype, location, name, GlobalVar, false, glob);
   assert(valueVarMap_.find(bv->value()) == valueVarMap_.end());
@@ -2558,6 +2577,9 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
 
     llvm::Twine fnt(fns);
     llvm::Function *fcn = llvm::Function::Create(fty, linkage, fnt, module_);
+
+    if (!gcStrategy_.empty())
+      fcn->setGC(gcStrategy_);
 
     fcn->addFnAttr("disable-tail-calls", "true");
 
@@ -2766,6 +2788,11 @@ GenBlocks::GenBlocks(llvm::LLVMContext &context,
 void GenBlocks::finishFunction(llvm::BasicBlock *entry)
 {
   function_->fixupProlog(entry, newTemporaries_);
+
+  llvm::Function *func = function_->function();
+  if (! func->hasPersonalityFn())
+    func->setPersonalityFn(be_->dummyPersonalityFunction());
+
   if (dibuildhelper_)
     dibuildhelper_->endFunction(function_);
 }
