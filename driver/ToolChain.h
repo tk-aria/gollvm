@@ -79,12 +79,15 @@ class ToolChain {
   std::unique_ptr<Tool> compiler_;
   std::unique_ptr<Tool> assembler_;
   std::unique_ptr<Tool> linker_;
+  std::unique_ptr<Tool> stdinReader_;
 
   // List of places to look for tools (ld, as, etc)
   pathlist programPaths_;
 
   // List of places to look for object files (ex: crt0.o)
   pathlist filePaths_;
+
+  Tool *getStdinReader(bool mustBeEmpty);
 
   ToolChain &thisToolChain() {
     ToolChain *tc = const_cast<ToolChain*>(this);
