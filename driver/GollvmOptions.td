@@ -213,6 +213,8 @@ def pthread : Flag<["-"], "pthread">, Alias<pthreads>,
 
 // Target-independent "-f" options.
 
+def fsplit_stack : Flag<["-"], "fsplit-stack">, Group<f_Group>;
+
 def fPIC : Flag<["-"], "fPIC">, Group<f_Group>;
 def fno_PIC : Flag<["-"], "fno-PIC">, Group<f_Group>;
 def fpic : Flag<["-"], "fpic">, Group<f_Group>;
