@@ -30,6 +30,7 @@ add_llvm_library(LLVMDriverUtils
   GnuTools.cpp
   GollvmOptions.cpp
   LinuxToolChain.cpp
+  ReadStdin.cpp
   Tool.cpp
   ToolChain.cpp
   DEPENDS
