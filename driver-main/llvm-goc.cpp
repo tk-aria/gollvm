@@ -147,10 +147,17 @@ bool CommandLineParser::parseCommandLine(int argc, char **argv)
     llvm::cl::ParseCommandLineOptions(nargs + 1, args.get());
   }
 
-  // Vett the -x option if present. At the moment only "-x go" is accepted
-  // (assembler not allowed, but it could conceivably be added later).
+  // HACK: the go tool likes to invoke the C and Go compiler drivers
+  // at various points to detect whether a given command line flag is
+  // supported (ex: "gcc -x c - -someflag < /dev/null"), and tends to
+  // pass "-x c" even when the driver is gccgo. Gccgo is (mirabile
+  // dictu) a functional C compiler, but gollvm is not. For the time
+  // being we will "fake it" by allowing "-x ... -" but then requiring
+  // that standard input be empty (so as to support the Go tool, but
+  // not act as a general-purposes C compiler).
   opt::Arg *xarg = args_.getLastArg(gollvm::options::OPT_x);
   if (xarg != nullptr &&
+      ! llvm::StringRef(xarg->getValue()).equals("c") &&
       ! llvm::StringRef(xarg->getValue()).equals("go")) {
     errs() << progname << ": invalid argument '"
            << xarg->getValue() << "' to '"
