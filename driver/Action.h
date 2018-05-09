@@ -22,6 +22,7 @@ namespace driver {
 class Action;
 class Artifact;
 class InputAction;
+class ReadStdinAction;
 
 // Action lists contain pointers to actions owned by a Compilation.
 typedef llvm::SmallVector<Action*, 3> ActionList;
@@ -38,7 +39,8 @@ class Action {
 
   // Type of action
   enum Type {
-    A_Input,
+    A_InputFile,
+    A_ReadStdin,
     A_Compile,
     A_Assemble,
     A_Link
@@ -55,6 +57,8 @@ class Action {
 
   inline InputAction *castToInputAction();
   inline const InputAction *castToInputAction() const;
+  inline ReadStdinAction *castToReadStdinAction();
+  inline const ReadStdinAction *castToReadStdinAction() const;
 
   const char *getName() const;
   const char *resultFileSuffix() const;
@@ -72,18 +76,43 @@ class Action {
 class InputAction : public Action {
  public:
   explicit InputAction(Artifact *input)
-      : Action(Action::A_Input),
+      : Action(Action::A_InputFile),
         input_(input) { }
   Artifact *input() const { return input_; }
  private:
   Artifact *input_;
 };
 
-inline InputAction *Action::castToInputAction() {
-  return type_ == A_Input ? static_cast<InputAction*>(this) : nullptr;
+// An input action that corresponds to the reading stdin.
+
+class ReadStdinAction : public Action {
+ public:
+  explicit ReadStdinAction(const char *suffix)
+      : Action(Action::A_ReadStdin),
+        suffix_(suffix) { }
+  const char *suffix() const { return suffix_; }
+ private:
+  const char *suffix_;
+};
+
+inline InputAction *Action::castToInputAction()
+{
+  return type_ == A_InputFile ? static_cast<InputAction*>(this) : nullptr;
 }
-inline const InputAction *Action::castToInputAction() const {
-  return type_ == A_Input ? static_cast<const InputAction*>(this) : nullptr;
+
+inline const InputAction *Action::castToInputAction() const
+{
+  return type_ == A_InputFile ? static_cast<const InputAction*>(this) : nullptr;
+}
+
+inline ReadStdinAction *Action::castToReadStdinAction()
+{
+  return type_ == A_ReadStdin ? static_cast<ReadStdinAction*>(this) : nullptr;
+}
+
+inline const ReadStdinAction *Action::castToReadStdinAction() const
+{
+  return type_ == A_ReadStdin ? static_cast<const ReadStdinAction*>(this) : nullptr;
 }
 
 } // end namespace driver

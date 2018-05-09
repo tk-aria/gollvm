@@ -282,9 +282,23 @@ void Driver::appendInputActions(const inarglist &ifargs,
                                 Compilation &compilation)
 {
   for (auto ifarg : ifargs) {
-    InputAction *ia = new InputAction(compilation.newArgArtifact(ifarg));
-    compilation.recordAction(ia);
-    result.push_back(ia);
+    bool schedAction = false;
+    Action *act = nullptr;
+    if (!strcmp(ifarg->getValue(), "-")) {
+      opt::Arg *xarg = args_.getLastArg(gollvm::options::OPT_x);
+      assert(xarg);
+      const char *suf =
+          (llvm::StringRef(xarg->getValue()).equals("c") ? "c" :
+           (llvm::StringRef(xarg->getValue()).equals("go") ? "go" : "?"));
+      act = new ReadStdinAction(suf);
+      schedAction = true;
+    } else {
+      act = new InputAction(compilation.newArgArtifact(ifarg));
+    }
+    compilation.recordAction(act);
+    if (schedAction)
+      compilation.addAction(act);
+    result.push_back(act);
   }
 }
 
@@ -416,7 +430,7 @@ ArtifactList Driver::collectInputArtifacts(Action *act, InternalTool *it)
     // It is an error if an internal-tool action is receiving a result
     // from an external tool (in the current model all internal-tool actions
     // have to take place before any external-tool actions).
-    assert(it == nullptr);
+    assert(it == nullptr || input->castToReadStdinAction() != nullptr);
     auto it = artmap_.find(input);
     assert(it != artmap_.end());
     result.push_back(it->second);

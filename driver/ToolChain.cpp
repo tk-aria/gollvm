@@ -17,6 +17,7 @@
 #include "Driver.h"
 #include "Tool.h"
 #include "ToolChain.h"
+#include "ReadStdin.h"
 
 namespace gollvm {
 namespace driver {
@@ -53,6 +54,13 @@ Tool *ToolChain::getLinker()
   return linker_.get();
 }
 
+Tool *ToolChain::getStdinReader(bool mustBeEmpty)
+{
+  if (stdinReader_.get() == nullptr)
+    stdinReader_.reset(new ReadStdin(*this, mustBeEmpty));
+  return stdinReader_.get();
+}
+
 Tool *ToolChain::getTool(Action *act)
 {
   assert(act != nullptr);
@@ -63,6 +71,10 @@ Tool *ToolChain::getTool(Action *act)
       return getAssembler();
     case Action::A_Link:
       return getLinker();
+    case Action::A_ReadStdin: {
+      ReadStdinAction *rsia = act->castToReadStdinAction();
+      return getStdinReader(strcmp(rsia->suffix(), "go"));
+    }
     default:
       assert(false);
       return nullptr;
