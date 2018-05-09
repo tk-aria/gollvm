@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "84ec4f6d_1566d339",
+        "filename": "driver/GnuTools.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 314,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2018-05-09T17:04:39Z",
+      "side": 1,
+      "message": "You could avoid the double negative if you wrote\n\nbool useStdlib \u003d true;\nif args.hasArg(...)\n  useStdlib \u003d false;\n\nand then you can write\n  if (useStdlib)\nbelow.",
+      "revId": "03953dbe303cbd73cf0efe5d052f634aa2790edb",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
