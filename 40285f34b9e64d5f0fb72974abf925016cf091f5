@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "beabf84b_d017c538",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 5385
+      },
+      "writtenOn": "2018-05-09T15:25:29Z",
+      "side": 1,
+      "message": "Typo (README.md)",
+      "range": {
+        "startLine": 9,
+        "startChar": 8,
+        "endLine": 9,
+        "endChar": 17
+      },
+      "revId": "40285f34b9e64d5f0fb72974abf925016cf091f5",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
