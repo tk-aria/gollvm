@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f19a555f_6f619898",
+        "filename": "driver/Action.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2018-05-09T15:27:24Z",
+      "side": 1,
+      "message": "An input action that corresponds to reading stdin.\n\n?",
+      "revId": "113ad51684be8a5727b42ca571ac0bbe4d0fa5e0",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fa1c0925_48fa2f5e",
+        "filename": "driver/ReadStdin.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2018-05-09T15:27:24Z",
+      "side": 1,
+      "message": "Is the trailing backslash a mistake?",
+      "range": {
+        "startLine": 27,
+        "startChar": 38,
+        "endLine": 27,
+        "endChar": 39
+      },
+      "revId": "113ad51684be8a5727b42ca571ac0bbe4d0fa5e0",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "93873d61_f27f3201",
+        "filename": "driver/ReadStdin.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2018-05-09T15:27:24Z",
+      "side": 1,
+      "message": "s/actoin/action/\nAlso missing period at end.",
+      "range": {
+        "startLine": 41,
+        "startChar": 13,
+        "endLine": 41,
+        "endChar": 19
+      },
+      "revId": "113ad51684be8a5727b42ca571ac0bbe4d0fa5e0",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
