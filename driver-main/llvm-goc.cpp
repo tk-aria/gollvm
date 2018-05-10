@@ -107,6 +107,12 @@ bool CommandLineParser::parseCommandLine(int argc, char **argv)
     exit(0);
   }
 
+  // Honor --print-multi-lib. FIXME: add real multilib support.
+  if (args_.hasArg(gollvm::options::OPT_print_multi_lib)) {
+    llvm::outs() << ".;@m64\n";
+    exit(0);
+  }
+
   // Complain about missing arguments.
   if (missingArgIndex != 0) {
     errs() << progname << ": error: argument to '"
