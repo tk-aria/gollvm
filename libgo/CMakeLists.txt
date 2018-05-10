@@ -100,7 +100,7 @@ set(runtime_matchargs "--tag=libffi")
 # that <pkg>_extra_go_files holds the additional sources for <pkg>.
 set(runtime_extra_go_files "runtime_sysinfo.go" "sigtab.go")
 set(cmd_internal_objabi_extra_go_files "objabi.go")
-set(cmd_go_internal_load_extra_go_files "zstdpkglist.go")
+set(go_build_extra_go_files "zstdpkglist.go")
 set(cmd_go_internal_cfg_extra_go_files "zdefaultcc.go")
 set(runtime_internal_sys_extra_go_files "version.go")
 set(go_types_extra_go_files "gccgosizes.go")
@@ -221,7 +221,7 @@ copy_if_different(${objabitmp} ${objabidotgo})
 # Rules for zstdpkglist.go
 set(zstdpkglistdotgo "${libgo_binroot}/zstdpkglist.go")
 set(zstdpkglisttmp "${libgo_binroot}/zstdpkglist.go.tmp")
-mkzstdpkglist("load" ${zstdpkglisttmp} "${libpackages}")
+mkzstdpkglist("build" ${zstdpkglisttmp} "${libpackages}")
 copy_if_different(${zstdpkglisttmp} ${zstdpkglistdotgo})
 
 # Rules for zdefaultcc.go
