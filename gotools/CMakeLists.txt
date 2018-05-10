@@ -35,13 +35,6 @@ mkzdefaultcc("main" ${cgozdefaultcctmp}
              ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER})
 copy_if_different(${cgozdefaultcctmp} ${cgozdefaultccdotgo})
 
-# Go package test needs a copy of the std package list.
-file(STRINGS "${libgo_srcroot}/libgo-packages.txt" libpackages)
-set(gozstdpkglistdotgo "${gotools_binroot}/zstdpkglist.go")
-set(gozstdpkglisttmp "${gotools_binroot}/zstdpkglist.go.tmp")
-mkzstdpkglist("load" ${gozstdpkglisttmp} ${libpackages})
-copy_if_different(${gozstdpkglisttmp} ${gozstdpkglistdotgo})
-
 set(libgo_scriptroot "${GOLLVM_SOURCE_DIR}/gofrontend/libgo")
 set(matchdotsh "${libgo_scriptroot}/match.sh")
 
@@ -160,7 +153,6 @@ add_custom_target(
        "${cmd_srcroot}/internal:src/cmd"
        "${cmd_srcroot}/go/testdata:src/cmd/go"
     "COPYFILES"
-       "${libgo_binroot}/zstdpkglist.go:src/cmd/go/internal/load"
        "${libgo_binroot}/zdefaultcc.go:src/cmd/go/internal/cfg/"
        "${libgo_binroot}/objabi.go:src/cmd/internal/objabi"
     "TIMEOUT" 200
