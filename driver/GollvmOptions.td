@@ -170,6 +170,10 @@ def dumpversion : Flag<["-"], "dumpversion">,
 def dumpmachine : Flag<["-"], "dumpmachine">,
   HelpText<"Emit target machine and exit.">;
 
+def print_multi_lib : Flag<["--"], "print-multi-lib">,
+  HelpText<"Emit the mapping from multilib directory names to compiler "
+           "flags that enable them">;
+
 def w : Flag<["-"], "w">,
   HelpText<"Suppress warning messages">;
 def no_warn : Flag<["-"], "no-warm">, Alias<w>;
@@ -320,6 +324,38 @@ def xassembler_with_cpp : Flag<["-"], "xassembler-with-cpp">,
 def fno_toplevel_reorder : Flag<["-"], "fno-toplevel-reorder">,
     Flags<[Ignored]>, HelpText<"This option is ignored">;
 
+def fno_diagnostics_show_caret : Flag<["-"], "fno-diagnostics-show-caret">,
+    Flags<[Ignored]>, HelpText<"This option is ignored">;
+
+def fno_show_column : Flag<["-"], "fno-show-column">,
+    Flags<[Ignored]>, HelpText<"This option is ignored">;
+
+def fbounds_check : Flag<["-"], "fbounds-check">,
+    Flags<[Ignored]>, HelpText<"This option is ignored">;
+
+def finline_functions : Flag<["-"], "finline-functions">,
+    Flags<[Ignored]>, HelpText<"This option is ignored">;
+
+def fomit_frame_pointer : Flag<["-"], "fomit-frame-pointer">,
+    Flags<[Ignored]>, HelpText<"This option is ignored">;
+
+def funroll_loops : Flag<["-"], "funroll-loops">,
+    Flags<[Ignored]>, HelpText<"This option is ignored">;
+
+def pedantic_errors : Flag<["-"], "pedantic-errors">,
+    Flags<[Ignored]>, HelpText<"This option is ignored">;
+
+def fdiagnostics_color_EQ : Joined<["-"], "fdiagnostics-color=">,
+    Flags<[Ignored]>, HelpText<"This option is ignored">;
+
+// Currently unsupported or not-yet-supported.
+
+def flto : Flag<["-"], "flto">,
+    Flags<[Ignored]>, HelpText<"This option is not yet supported">;
+
+def fuse_linker_plugin : Flag<["-"], "fuse-linker-plugin">,
+    Flags<[Ignored]>, HelpText<"This option is not yet supported">;
+
 // Debugging options for gollvm developers.
 
 def fgo_dump_ast : Flag<["-"], "fgo-dump-ast">,
@@ -364,4 +400,3 @@ def no_emit_llvm_uselists : Flag<["-"], "no-emit-llvm-uselists">,
 def disable_llvm_passes : Flag<["-"], "disable-llvm-passes">,
   HelpText<"Use together with -emit-llvm to get pristine LLVM IR from the "
            "frontend by not running any LLVM passes at all">;
-
