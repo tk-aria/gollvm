@@ -45,11 +45,12 @@ namespace gnutools {
 // out the corresponding "escaped" arguments and mixes them in with
 // any args that appear in the input list.
 
-static void combineInputsWithEscapes(gollvm::options::ID escape1,
-                                     gollvm::options::ID escape2,
-                                     const ArtifactList &inputArtifacts,
-                                     llvm::opt::ArgList &args,
-                                     llvm::opt::ArgStringList &cmdArgs)
+static void
+combineInputsWithEscapes(const std::set<unsigned> &escapes,
+                         const std::set<unsigned> &flags,
+                         const ArtifactList &inputArtifacts,
+                         llvm::opt::ArgList &args,
+                         llvm::opt::ArgStringList &cmdArgs)
 {
   // Collect the args mentioned in the input artifacts.
   std::set<llvm::opt::Arg *> argset;
@@ -71,10 +72,16 @@ static void combineInputsWithEscapes(gollvm::options::ID escape1,
     }
 
     // If this matches one of our escape options, then add its value(s) now.
-    if (arg->getOption().matches(escape1) ||
-        arg->getOption().matches(escape2))
+    auto foundEscape = escapes.find(arg->getOption().getID());
+    if (foundEscape != escapes.end())
       for (auto &av : arg->getValues())
         cmdArgs.push_back(av);
+
+    // If this is part of the applicable flags set for the tool,
+    // add the flag now.
+    auto foundFlag = flags.find(arg->getOption().getID());
+    if (foundFlag != flags.end())
+      arg->render(args, cmdArgs);
   }
 }
 
@@ -118,8 +125,11 @@ bool Assembler::constructCommand(Compilation &compilation,
   cmdArgs.push_back(output.file());
 
   // Incorporate inputs with -Wa,.. and -Xassembler args, in correct order.
-  combineInputsWithEscapes(gollvm::options::OPT_Wa_COMMA,
-                           gollvm::options::OPT_Xassembler,
+  std::set<unsigned> asFlags;
+  std::set<unsigned> asEscapes;
+  asEscapes.insert(gollvm::options::OPT_Wa_COMMA);
+  asEscapes.insert(gollvm::options::OPT_Xassembler);
+  combineInputsWithEscapes(asEscapes, asFlags,
                            inputArtifacts, args, cmdArgs);
 
   // Support for compressed debug.
@@ -323,13 +333,16 @@ bool Linker::constructCommand(Compilation &compilation,
     addBeginFiles(cmdArgs);
   }
 
-  // Incorporate inputs with -Wl,.. and -Xlinker args, in correct order.
-  combineInputsWithEscapes(gollvm::options::OPT_Wl_COMMA,
-                           gollvm::options::OPT_Xlinker,
+  // Incorporate inputs and -l/-L flags with -Wl,.. and -Xlinker args, in
+  // correct order.
+  std::set<unsigned> ldFlags;
+  ldFlags.insert(gollvm::options::OPT_l);
+  ldFlags.insert(gollvm::options::OPT_L);
+  std::set<unsigned> ldEscapes;
+  ldEscapes.insert(gollvm::options::OPT_Wl_COMMA);
+  ldEscapes.insert(gollvm::options::OPT_Xlinker);
+  combineInputsWithEscapes(ldEscapes, ldFlags,
                            inputArtifacts, args, cmdArgs);
-
-  // Incorporate any -L, -l options from the user
-  args.AddAllArgs(cmdArgs, gollvm::options::OPT_L, gollvm::options::OPT_l);
 
   // Add each thing in the toolchain filepath as an -L option.
   addFilePathArgs(cmdArgs);
