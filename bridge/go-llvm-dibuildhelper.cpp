@@ -183,6 +183,7 @@ void DIBuildHelper::insertVarDecl(Bvariable *var,
 
 void DIBuildHelper::endFunction(Bfunction *function)
 {
+  cleanFileScope();
   llvm::DISubprogram *fscope = llvm::cast<llvm::DISubprogram>(currentDIScope());
 
   // Create debug meta-data for parameter variables.
@@ -212,6 +213,7 @@ void DIBuildHelper::endFunction(Bfunction *function)
     function->function()->setSubprogram(fscope);
 
   // Done with this scope
+  cleanFileScope();
   popDIScope();
   assert(diScopeStack_.size() == 1);
 
@@ -264,6 +266,8 @@ void DIBuildHelper::endLexicalBlock(Bblock *block)
   if (! interestingBlock(block))
     return;
 
+  cleanFileScope();
+
   // In the case of the top block, we still want to process any local
   // variables it contains, but we'll want to insure that they are
   // parented by the function itself.
@@ -274,13 +278,19 @@ void DIBuildHelper::endLexicalBlock(Bblock *block)
   processVarsInBLock(block->vars(), scope);
 }
 
-void DIBuildHelper::processExprInst(Bexpression *expr, llvm::Instruction *inst)
+void DIBuildHelper::processExprInst(Bstatement *stmt,
+                                    Bexpression *expr,
+                                    llvm::Instruction *inst)
 {
-  Location eloc = expr->location();
-  // && !linemap()->is_predeclared(eloc)) {
-  if (! linemap()->is_unknown(eloc)) {
+  Location loc = expr->location();
+  if (linemap()->is_unknown(loc)) {
+    Location sloc = stmt->location();
+    if (!linemap()->is_unknown(sloc))
+      loc = sloc;
+  }
+  if (! linemap()->is_unknown(loc)) {
     known_locations_ += 1;
-    inst->setDebugLoc(debugLocFromLocation(eloc));
+    inst->setDebugLoc(debugLocFromLocation(loc));
   }
 }
 
@@ -312,6 +322,19 @@ llvm::DIFile *DIBuildHelper::diFileFromLocation(Location location)
 llvm::DebugLoc DIBuildHelper::debugLocFromLocation(Location loc)
 {
   llvm::LLVMContext &context = typemanager()->context();
+
+  // In the (somewhat unusual) case of a file/line directive, create a new
+  // pseudo-scope to capture the fact that the file has changed. Pop off
+  // any previously created file scope prior to doing this.
+  llvm::DIFile *curFile = currentDIScope()->getFile();
+  llvm::DIFile *locFile = diFileFromLocation(loc);
+  if (curFile != locFile) {
+    cleanFileScope();
+    llvm::DILexicalBlockFile *dilbf =
+        dibuilder().createLexicalBlockFile(currentDIScope(), locFile);
+    pushDIScope(dilbf);
+  }
+
   return llvm::DILocation::get(context, linemap()->location_line(loc),
                                linemap()->location_column(loc),
                                currentDIScope());
@@ -335,4 +358,11 @@ void DIBuildHelper::pushDIScope(llvm::DIScope *scope)
 {
   assert(scope);
   diScopeStack_.push_back(scope);
+}
+
+void DIBuildHelper::cleanFileScope()
+{
+  assert(diScopeStack_.size());
+  if (llvm::dyn_cast<llvm::DILexicalBlockFile>(diScopeStack_.back()) != nullptr)
+    diScopeStack_.pop_back();
 }

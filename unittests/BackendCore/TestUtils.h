@@ -108,6 +108,7 @@ llvm::Type *mkLLFuncTyp(llvm::LLVMContext *context, ...);
 Bfunction *mkFunci32o64(Backend *be, const char *fname, bool mkParams = true);
 
 // Returns function created from type
+
 Bfunction *mkFuncFromType(Backend *be, const char *fname,
                           BFunctionType *befty, Location loc = Location());
 

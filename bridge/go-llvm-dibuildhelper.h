@@ -36,6 +36,7 @@ class Type;
 class Bnode;
 class Bblock;
 class Bexpression;
+class Bstatement;
 class Bfunction;
 class Btype;
 class Bvariable;
@@ -64,7 +65,9 @@ class DIBuildHelper {
 
   llvm::DIFile *diFileFromLocation(Location location);
 
-  void processExprInst(Bexpression *expr, llvm::Instruction *inst);
+  void processExprInst(Bstatement *containingStmt,
+                       Bexpression *expr,
+                       llvm::Instruction *inst);
 
   // Support for -fdebug-prefix
   void addDebugPrefix(std::pair<llvm::StringRef, llvm::StringRef>);
@@ -78,6 +81,10 @@ class DIBuildHelper {
   // Push / pop scope
   llvm::DIScope *popDIScope();
   void pushDIScope(llvm::DIScope *);
+
+  // If there is a "set file" pseudo scope at the top of
+  // the scope stack, remove it.
+  void cleanFileScope();
 
   // Various getters
   llvm::DIBuilder &dibuilder() { return *dibuilder_.get(); }
