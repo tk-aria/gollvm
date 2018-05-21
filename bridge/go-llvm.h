@@ -342,11 +342,11 @@ public:
   // DI build helper. Will be NULL if debug meta-data generation disabled.
   DIBuildHelper *dibuildhelper() { return dibuildhelper_.get(); }
 
+  // Support for -fdebug-prefix=
+  void addDebugPrefix(std::pair<llvm::StringRef, llvm::StringRef> prefix);
+
   // Bnode builder
   BnodeBuilder &nodeBuilder() { return nbuilder_; }
-
-  // Return top-level debug meta data object for module
-  llvm::DICompileUnit *getDICompUnit();
 
   // Finalize export data for the module. Exposed for unit testing.
   void finalizeExportData();

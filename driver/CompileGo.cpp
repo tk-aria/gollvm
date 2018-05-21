@@ -427,6 +427,10 @@ bool CompileGoImpl::initBridge()
   bridge_->setTraceLevel(*tl);
   bridge_->setNoInline(args_.hasArg(gollvm::options::OPT_fno_inline));
 
+  // Honor -fdebug-prefix=... option.
+  for (const auto &arg : driver_.args().getAllArgValues(gollvm::options::OPT_fdebug_prefix_map_EQ))
+    bridge_->addDebugPrefix(llvm::StringRef(arg).split('='));
+
   // Support -fgo-dump-ast
   if (args_.hasArg(gollvm::options::OPT_fgo_dump_ast))
     go_enable_dump("ast");

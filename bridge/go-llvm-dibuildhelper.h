@@ -66,6 +66,9 @@ class DIBuildHelper {
 
   void processExprInst(Bexpression *expr, llvm::Instruction *inst);
 
+  // Support for -fdebug-prefix
+  void addDebugPrefix(std::pair<llvm::StringRef, llvm::StringRef>);
+
   // Return module scope
   llvm::DIScope *moduleScope() const { return moduleScope_; }
 
@@ -94,6 +97,7 @@ class DIBuildHelper {
   std::unique_ptr<llvm::DIBuilder> dibuilder_;
   std::vector<llvm::DIScope*> diScopeStack_;
   std::unordered_map<Btype *, llvm::DIType*> typeCache_;
+  std::unordered_map<std::string, std::string> debugPrefixMap_;
   std::vector<std::pair<Bvariable *, bool> > globalsToProcess_;
 
   // The following items are specific to the current function we're visiting.
@@ -110,6 +114,7 @@ class DIBuildHelper {
   void processVarsInBLock(const std::vector<Bvariable*> &vars,
                           llvm::DIScope *scope);
   void markBlocks(Bnode *node);
+  std::string applyDebugPrefix(llvm::StringRef path);
 };
 
 #endif // !defined(GO_LLVM_DIBUILDHELPER_H)
