@@ -2554,7 +2554,10 @@ class GenBlocks {
             Bfunction *function, Bnode *topNode,
             DIBuildHelper *diBuildHelper, llvm::BasicBlock *entryBlock);
 
-  llvm::BasicBlock *walk(Bnode *node, llvm::BasicBlock *curblock);
+  // Here 'stmt' is the containing stmt, or null if node itself is a stmt.
+  llvm::BasicBlock *walk(Bnode *node,
+                         Bstatement *stmt,
+                         llvm::BasicBlock *curblock);
   void finishFunction(llvm::BasicBlock *entry);
 
   Bfunction *function() { return function_; }
@@ -2574,7 +2577,9 @@ class GenBlocks {
                             unsigned expl = Llvm_backend::ChooseVer);
   llvm::BasicBlock *eraseBlockIfUnused(llvm::BasicBlock *bb);
   llvm::BasicBlock *getBlockForLabel(Blabel *lab);
-  llvm::BasicBlock *walkExpr(llvm::BasicBlock *curblock, Bexpression *expr);
+  llvm::BasicBlock *walkExpr(llvm::BasicBlock *curblock,
+                             Bstatement *containingStmt,
+                             Bexpression *expr);
   std::pair<llvm::Instruction*, llvm::BasicBlock *>
   rewriteToMayThrowCall(llvm::CallInst *call,
                         llvm::BasicBlock *curblock);
@@ -2586,7 +2591,9 @@ class GenBlocks {
   llvm::BasicBlock *populateFinallyBlock(llvm::BasicBlock *finBB,
                                          Bvariable *finvar,
                                          llvm::Value *extmp);
-  void walkReturn(llvm::BasicBlock *curblock, Bexpression *re);
+  void walkReturn(llvm::BasicBlock *curblock,
+                  Bstatement *stmt,
+                  Bexpression *re);
   void appendLifetimeIntrinsic(llvm::Value *alloca,
                                llvm::Instruction *insertBefore,
                                llvm::BasicBlock *curBlock,
@@ -2828,6 +2835,7 @@ GenBlocks::postProcessInst(llvm::Instruction *inst,
 }
 
 llvm::BasicBlock *GenBlocks::walkExpr(llvm::BasicBlock *curblock,
+                                      Bstatement *containingStmt,
                                       Bexpression *expr)
 {
   // Delete dead instructions before visiting the children,
@@ -2839,7 +2847,7 @@ llvm::BasicBlock *GenBlocks::walkExpr(llvm::BasicBlock *curblock,
   // Visit children first
   const std::vector<Bnode *> &kids = expr->children();
   for (auto &child : kids)
-    curblock = walk(child, curblock);
+    curblock = walk(child, containingStmt, curblock);
 
   // In case it becomes dead after visiting some child...
   if (!curblock)
@@ -2858,7 +2866,7 @@ llvm::BasicBlock *GenBlocks::walkExpr(llvm::BasicBlock *curblock,
     if (inst != originst)
       changed = true;
     if (dibuildhelper_)
-      dibuildhelper_->processExprInst(expr, inst);
+      dibuildhelper_->processExprInst(containingStmt, expr, inst);
     curblock->getInstList().push_back(inst);
     curblock = pair.second;
     newinsts.push_back(inst);
@@ -2879,7 +2887,7 @@ llvm::BasicBlock *GenBlocks::genIf(Bstatement *ifst,
   Bstatement *falseStmt = ifst->getIfStmtFalseBlock();
 
   // Walk condition first
-  curblock = walkExpr(curblock, cond);
+  curblock = walkExpr(curblock, ifst, cond);
 
   // Create true block
   llvm::BasicBlock *tblock = curblock ? mkLLVMBlock("then") : nullptr;
@@ -2899,13 +2907,13 @@ llvm::BasicBlock *GenBlocks::genIf(Bstatement *ifst,
   }
 
   // Visit true block
-  llvm::BasicBlock *tsucc = walk(trueStmt, tblock);
+  llvm::BasicBlock *tsucc = walk(trueStmt, nullptr, tblock);
   if (tsucc && ! tsucc->getTerminator())
     llvm::BranchInst::Create(ft, tsucc);
 
   // Walk false block if present
   if (falseStmt) {
-    llvm::BasicBlock *fsucc = walk(falseStmt, fblock);
+    llvm::BasicBlock *fsucc = walk(falseStmt, nullptr, fblock);
     if (fsucc && ! fsucc->getTerminator())
       llvm::BranchInst::Create(ft, fsucc);
   }
@@ -2923,7 +2931,7 @@ llvm::BasicBlock *GenBlocks::genSwitch(Bstatement *swst,
 
   // Walk switch value first
   Bexpression *swval = swst->getSwitchStmtValue();
-  curblock = walkExpr(curblock, swval);
+  curblock = walkExpr(curblock, swst, swval);
 
   // Unpack switch
   unsigned ncases = swst->getSwitchStmtNumCases();
@@ -2953,7 +2961,7 @@ llvm::BasicBlock *GenBlocks::genSwitch(Bstatement *swst,
   // Walk statement/block
   for (unsigned idx = 0; idx < ncases; ++idx) {
     Bstatement *st = swst->getSwitchStmtNthStmt(idx);
-    llvm::BasicBlock *newblock = walk(st, blocks[idx]);
+    llvm::BasicBlock *newblock = walk(st, nullptr, blocks[idx]);
     if (newblock && newblock->getTerminator() == nullptr) {
       // The front end inserts a goto statement at the end for
       // non-fallthrough cases. Fall through to the next case
@@ -3002,9 +3010,11 @@ llvm::BasicBlock *GenBlocks::eraseBlockIfUnused(llvm::BasicBlock *bb)
   return bb;
 }
 
-void GenBlocks::walkReturn(llvm::BasicBlock *curblock, Bexpression *re)
+void GenBlocks::walkReturn(llvm::BasicBlock *curblock,
+                           Bstatement *stmt,
+                           Bexpression *re)
 {
-  llvm::BasicBlock *bb = walkExpr(curblock, re);
+  llvm::BasicBlock *bb = walkExpr(curblock, stmt, re);
   assert(curblock == bb);
   if (curblock) {
     llvm::Instruction *term = curblock->getTerminator();
@@ -3051,7 +3061,7 @@ llvm::BasicBlock *GenBlocks::genReturn(Bstatement *rst,
     llvm::BranchInst::Create(finallyBlock_, curblock);
   } else {
     // Walk return expression
-    walkReturn(curblock, re);
+    walkReturn(curblock, rst, re);
   }
 
   // A return terminates the current block
@@ -3095,7 +3105,7 @@ llvm::BasicBlock *GenBlocks::genDefer(Bstatement *defst,
   padBlockStack_.push_back(padbb);
 
   // Walk the undcall expression.
-  curblock = walkExpr(curblock, undcallex);
+  curblock = walkExpr(curblock, defst, undcallex);
 
   // Pop the pad block stack.
   padBlockStack_.pop_back();
@@ -3111,7 +3121,7 @@ llvm::BasicBlock *GenBlocks::genDefer(Bstatement *defst,
 
   // Catch block containing defer call.
   curblock = catchbb;
-  auto bb = walkExpr(curblock, defcallex);
+  auto bb = walkExpr(curblock, defst, defcallex);
   assert(bb == curblock);
   llvm::BranchInst::Create(finbb, catchbb);
 
@@ -3189,7 +3199,7 @@ llvm::BasicBlock *GenBlocks::populateFinallyBlock(llvm::BasicBlock *finBB,
   if (cachedReturn_ != nullptr) {
     llvm::BasicBlock *curblock = finRetBB;
     Bexpression *re = cachedReturn_->getReturnStmtExpr();
-    walkReturn(curblock, re);
+    walkReturn(curblock, cachedReturn_, re);
     cachedReturn_ = nullptr;
     finRetBB = nullptr;
   }
@@ -3314,7 +3324,7 @@ llvm::BasicBlock *GenBlocks::genExcep(Bstatement *excepst,
   padBlockStack_.push_back(padbb);
 
   // Walk the body statement.
-  curblock = walk(body, curblock);
+  curblock = walk(body, nullptr, curblock);
 
   // Pop the pad block stack.
   padBlockStack_.pop_back();
@@ -3347,7 +3357,7 @@ llvm::BasicBlock *GenBlocks::genExcep(Bstatement *excepst,
 
   // Push second pad, walk exception stmt, then pop the pad.
   padBlockStack_.push_back(catchpadbb);
-  auto bb = walk(ifexception, catchbb);
+  auto bb = walk(ifexception, nullptr, catchbb);
   if (bb)
     llvm::BranchInst::Create(finokBB, bb);
   padBlockStack_.pop_back();
@@ -3365,7 +3375,7 @@ llvm::BasicBlock *GenBlocks::genExcep(Bstatement *excepst,
   // Handle finally statement where applicable.
   curblock = contBB;
   if (finally != nullptr) {
-    curblock = walk(finally, curblock);
+    curblock = walk(finally, nullptr, curblock);
 
     // Augment the end of the finally block with an if/jump to
     // return or resume, and populate the return/resume blocks.
@@ -3376,16 +3386,17 @@ llvm::BasicBlock *GenBlocks::genExcep(Bstatement *excepst,
 }
 
 llvm::BasicBlock *GenBlocks::walk(Bnode *node,
+                                  Bstatement *containingStmt,
                                   llvm::BasicBlock *curblock)
 {
   Bexpression *expr = node->castToBexpression();
   if (expr)
-    return walkExpr(curblock, expr);
+    return walkExpr(curblock, containingStmt, expr);
   Bstatement *stmt = node->castToBstatement();
   assert(stmt);
   switch (stmt->flavor()) {
     case N_ExprStmt: {
-      curblock = walkExpr(curblock, stmt->getExprStmtExpr());
+      curblock = walkExpr(curblock, stmt, stmt->getExprStmtExpr());
       break;
     }
     case N_BlockStmt: {
@@ -3396,7 +3407,7 @@ llvm::BasicBlock *GenBlocks::walk(Bnode *node,
       if (dibuildhelper_)
         dibuildhelper_->beginLexicalBlock(bblock);
       for (auto &st : stmt->getChildStmts())
-        curblock = walk(st, curblock);
+        curblock = walk(st, nullptr, curblock);
       if (dibuildhelper_)
         dibuildhelper_->endLexicalBlock(bblock);
       if (curblock)
@@ -3507,7 +3518,7 @@ bool Llvm_backend::function_set_body(Bfunction *function,
   // Walk the code statements
   GenBlocks gb(context_, this, function, code_stmt,
                dibh, entryBlock);
-  llvm::BasicBlock *block = gb.walk(code_stmt, entryBlock);
+  llvm::BasicBlock *block = gb.walk(code_stmt, nullptr, entryBlock);
   gb.finishFunction(entryBlock);
 
   // Fix up epilog block if needed

@@ -232,7 +232,8 @@ Bfunction *mkFunci32o64(Backend *be, const char *fname, bool mkParams) {
   return func;
 }
 
-Bfunction *mkFuncFromType(Backend *be, const char *fname, BFunctionType *befty, Location loc)
+Bfunction *mkFuncFromType(Backend *be, const char *fname, BFunctionType *befty,
+                          Location loc)
 {
   bool visible = true;
   bool is_declaration = false;
@@ -423,6 +424,7 @@ Location FcnTestHarness::newloc()
   loc_ = be_->linemap()->get_location(++lineNum_);
   return loc_;
 }
+
 Location FcnTestHarness::newFileLineLoc(const char *file, unsigned line)
 {
   lineNum_ = line;

@@ -172,10 +172,10 @@ TEST(BackendDebugEmit, TestDeadLocalVar) {
   h.mkLocal("x", bu32t);
 
   const char *exp = R"RAW_RESULT(
-    define void @foo(i8* nest %nest.0) #0 {
+    define void @foo(i8* nest %nest.0) #0 !dbg !3 {
     entry:
       %x = alloca i32
-      ret void
+      ret void, !dbg !8
     }
   )RAW_RESULT";
 
@@ -231,10 +231,46 @@ TEST(BackendDebugEmit, TestDebugPrefixMap) {
   bool broken = h.finish(PreserveDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
 
-  be->dumpModule();
-
   // Check for remapped source file.
   bool ok = h.expectModuleDumpContains("!DIFile(filename: \"barcode.go\", directory: \"/something/another\")");
+  EXPECT_TRUE(ok);
+}
+
+TEST(BackendDebugEmit, TestFileLineDirectives) {
+
+  FcnTestHarness h;
+  Llvm_backend *be = h.be();
+  Btype *bi64t = be->integer_type(false, 64);
+  BFunctionType *befty = mkFuncTyp(be, L_PARM, bi64t, L_RES, bi64t, L_END);
+  Bfunction *func = h.mkFunction("bar", befty);
+  Bvariable *p0 = func->getNthParamVar(0);
+
+  Location loc = h.newFileLineLoc("watermelon.go", 43);
+  Bexpression *vex1 = be->var_expression(p0, loc);
+  Bvariable *xv = h.mkLocal("x", bi64t, vex1);
+
+  loc = h.newFileLineLoc("kiwifruit.go", 43);
+  Bexpression *vex2 = be->var_expression(p0, loc);
+  Bexpression *vex3 = be->var_expression(xv, loc);
+  h.mkAssign(vex2, vex3);
+
+  loc = h.newFileLineLoc("apple.go", 11);
+  Bexpression *vex4 = be->var_expression(p0, loc);
+  h.mkReturn(std::vector<Bexpression*>{vex4});
+
+  bool broken = h.finish(PreserveDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+
+  be->dumpModule();
+
+  // Three of the constructs above had different files applied to them
+  // (equivalent of Go //line directive); make sure that the files
+  // appear in the meta-data.
+  bool ok = h.expectModuleDumpContains("!DIFile(filename: \"watermelon.go\", directory: \"\")");
+  EXPECT_TRUE(ok);
+  ok = h.expectModuleDumpContains("!DIFile(filename: \"kiwifruit.go\", directory: \"\")");
+  EXPECT_TRUE(ok);
+  ok = h.expectModuleDumpContains("!DIFile(filename: \"apple.go\", directory: \"\")");
   EXPECT_TRUE(ok);
 }
 
