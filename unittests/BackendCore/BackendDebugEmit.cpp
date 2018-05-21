@@ -36,7 +36,7 @@ TEST(BackendDebugEmit, TestSimpleDecl) {
         %x = alloca i32
         store i32 0, i32* %x
         call void @llvm.dbg.declare(metadata i32* %x, metadata !3,
-                                    metadata !DIExpression()), !dbg !11
+                                    metadata !DIExpression()), !dbg !10
         ret void
       }
   )RAW_RESULT";
@@ -69,7 +69,7 @@ TEST(BackendDebugEmit, TestSimpleDecl2) {
     define void @foo(i8* nest %nest.0, { i64, i64, i64 }* byval %p0) #0 {
     entry:
       call void @llvm.dbg.declare(metadata { i64, i64, i64 }* %p0, metadata !3,
-                                  metadata !DIExpression()), !dbg !15
+                                  metadata !DIExpression()), !dbg !16
       ret void
     }
   )RAW_RESULT";
@@ -209,6 +209,33 @@ TEST(BackendVarTests, TestGlobalVarDebugEmit) {
   bool ok = h.expectModuleDumpContains("!DIGlobalVariable(name: \"bar\",");
   EXPECT_TRUE(ok);
 
+}
+
+TEST(BackendDebugEmit, TestDebugPrefixMap) {
+
+  FcnTestHarness h;
+  Llvm_backend *be = h.be();
+  Btype *bi64t = be->integer_type(false, 64);
+  BFunctionType *befty = mkFuncTyp(be, L_PARM, bi64t, L_RES, bi64t, L_END);
+
+  llvm::StringRef from2("/bar");
+  llvm::StringRef to2("/something");
+  be->addDebugPrefix(std::make_pair(from2, to2));
+
+  Location loc = h.newFileLineLoc("/bar/another/barcode.go", 11);
+  Bfunction *func = h.mkFunction("bar", befty);
+  Bvariable *p0 = func->getNthParamVar(0);
+  Bexpression *vec = be->var_expression(p0, loc);
+  h.mkReturn(std::vector<Bexpression*>{vec});
+
+  bool broken = h.finish(PreserveDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+
+  be->dumpModule();
+
+  // Check for remapped source file.
+  bool ok = h.expectModuleDumpContains("!DIFile(filename: \"barcode.go\", directory: \"/something/another\")");
+  EXPECT_TRUE(ok);
 }
 
 }

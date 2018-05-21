@@ -232,7 +232,8 @@ Bfunction *mkFunci32o64(Backend *be, const char *fname, bool mkParams) {
   return func;
 }
 
-Bfunction *mkFuncFromType(Backend *be, const char *fname, BFunctionType *befty)
+Bfunction *mkFuncFromType(Backend *be, const char *fname,
+                          BFunctionType *befty, Location loc)
 {
   bool visible = true;
   bool is_declaration = false;
@@ -240,7 +241,6 @@ Bfunction *mkFuncFromType(Backend *be, const char *fname, BFunctionType *befty)
   bool split_stack = true;
   bool unique_sec = false;
   bool no_ret = false;
-  Location loc;
   Bfunction *func = be->function(befty, fname, fname, visible,
                                  is_declaration, is_inl,
                                  split_stack, no_ret, unique_sec, loc);
@@ -425,9 +425,17 @@ Location FcnTestHarness::newloc()
   return loc_;
 }
 
+Location FcnTestHarness::newFileLineLoc(const char *file, unsigned line)
+{
+  lineNum_ = line;
+  be_->linemap()->start_file(file, lineNum_);
+  loc_ = be_->linemap()->get_location(lineNum_);
+  return loc_;
+}
+
 Bfunction *FcnTestHarness::mkFunction(const char *fcnName, BFunctionType *befty)
 {
-  func_ = mkFuncFromType(be(), fcnName, befty);
+  func_ = mkFuncFromType(be(), fcnName, befty, loc_);
   entryBlock_ = be()->block(func_, nullptr, emptyVarList_, loc_, loc_);
   curBlock_ = be()->block(func_, nullptr, emptyVarList_, loc_, loc_);
   return func_;
