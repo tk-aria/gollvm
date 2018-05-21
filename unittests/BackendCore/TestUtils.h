@@ -108,7 +108,8 @@ llvm::Type *mkLLFuncTyp(llvm::LLVMContext *context, ...);
 Bfunction *mkFunci32o64(Backend *be, const char *fname, bool mkParams = true);
 
 // Returns function created from type
-Bfunction *mkFuncFromType(Backend *be, const char *fname, BFunctionType *befty);
+Bfunction *mkFuncFromType(Backend *be, const char *fname,
+                          BFunctionType *befty, Location loc = Location());
 
 // Manufacture an unsigned 64-bit integer constant
 Bexpression *mkUint64Const(Backend *be, uint64_t val);
@@ -167,6 +168,9 @@ class FcnTestHarness {
 
   // Update the dummy location to something new, then return it.
   Location newloc();
+
+  // New location with specified file and line.
+  Location newFileLineLoc(const char *file, unsigned line);
 
   // Return current function
   Bfunction *func() const { return func_; }

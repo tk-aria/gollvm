@@ -135,6 +135,11 @@ void Llvm_backend::setTraceLevel(unsigned level)
   setTypeManagerTraceLevel(level);
 }
 
+void Llvm_backend::addDebugPrefix(std::pair<llvm::StringRef, llvm::StringRef> prefix)
+{
+  dibuildhelper_->addDebugPrefix(prefix);
+}
+
 void
 Llvm_backend::verifyModule()
 {
@@ -3494,7 +3499,7 @@ bool Llvm_backend::function_set_body(Bfunction *function,
   // Create and populate entry block
   llvm::BasicBlock *entryBlock = genEntryBlock(function);
 
-  // Avoid debug meta-generation if errors seen
+  // Avoid debug metadata generation if errors seen
   DIBuildHelper *dibh = nullptr;
   if (createDebugMetaData_ && errorCount_ == 0 && !go_be_saw_errors())
     dibh = dibuildhelper();

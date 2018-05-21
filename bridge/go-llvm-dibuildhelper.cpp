@@ -43,8 +43,8 @@ void DIBuildHelper::createCompileUnitIfNeeded()
   // Create compile unit
   llvm::SmallString<256> currentDir;
   llvm::sys::fs::current_path(currentDir);
-  auto primaryFile =
-      dibuilder_->createFile(linemap_->get_initial_file(), currentDir);
+  std::string filestr = applyDebugPrefix(linemap_->get_initial_file());
+  auto primaryFile = dibuilder_->createFile(filestr, currentDir);
   bool isOptimized = true;
   std::string compileFlags; // FIXME
   unsigned runtimeVersion = 0; // not sure what would be for Go
@@ -284,9 +284,24 @@ void DIBuildHelper::processExprInst(Bexpression *expr, llvm::Instruction *inst)
   }
 }
 
+void DIBuildHelper::addDebugPrefix(std::pair<llvm::StringRef, llvm::StringRef> pref)
+{
+  std::string from(pref.first);
+  std::string to(pref.second);
+  debugPrefixMap_[from] = to;
+}
+
+std::string DIBuildHelper::applyDebugPrefix(llvm::StringRef path) {
+  for (const auto &remap : debugPrefixMap_)
+    if (path.startswith(remap.first))
+      return (llvm::Twine(remap.second) +
+              path.substr(remap.first.size())).str();
+  return path.str();
+}
+
 llvm::DIFile *DIBuildHelper::diFileFromLocation(Location location)
 {
-  std::string locfile = linemap()->location_file(location);
+  std::string locfile = applyDebugPrefix(linemap()->location_file(location));
   llvm::StringRef locdir = llvm::sys::path::parent_path(locfile);
   llvm::StringRef locfilename = llvm::sys::path::filename(locfile);
   if (linemap()->is_predeclared(location))
