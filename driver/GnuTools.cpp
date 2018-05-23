@@ -241,6 +241,8 @@ void Linker::addSharedAndOrStaticFlags(llvm::opt::ArgStringList &cmdArgs)
   }
 }
 
+// Adds each thing in the toolchain filepath as an -L option.
+
 void Linker::addFilePathArgs(llvm::opt::ArgStringList &cmdArgs)
 {
   llvm::opt::ArgList &args = toolchain().driver().args();
@@ -255,6 +257,7 @@ void Linker::addSysLibsStatic(llvm::opt::ArgList &args,
   // Go and pthread related libs.
   cmdArgs.push_back("-lgobegin");
   cmdArgs.push_back("-lgo");
+  addFilePathArgs(cmdArgs);
   cmdArgs.push_back("-lm");
   cmdArgs.push_back("-u");
   cmdArgs.push_back("pthread_create");
@@ -281,6 +284,7 @@ void Linker::addSysLibsShared(llvm::opt::ArgList &args,
   if (isStaticLibgo)
     cmdArgs.push_back("-Bdynamic");
 
+  addFilePathArgs(cmdArgs);
   cmdArgs.push_back("-lm");
   cmdArgs.push_back("--wrap=pthread_create");
 
@@ -343,9 +347,6 @@ bool Linker::constructCommand(Compilation &compilation,
   ldEscapes.insert(gollvm::options::OPT_Xlinker);
   combineInputsWithEscapes(ldEscapes, ldFlags,
                            inputArtifacts, args, cmdArgs);
-
-  // Add each thing in the toolchain filepath as an -L option.
-  addFilePathArgs(cmdArgs);
 
   // Add -m flag.
   addLDM(cmdArgs);
