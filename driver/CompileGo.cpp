@@ -623,7 +623,7 @@ bool CompileGoImpl::invokeBackEnd()
   codeGenPasses.add(new TargetLibraryInfoWrapperPass(*tlii_));
   bool noverify = args_.hasArg(gollvm::options::OPT_noverify);
   TargetMachine::CodeGenFileType ft = TargetMachine::CGFT_AssemblyFile;
-  if (target_->addPassesToEmitFile(codeGenPasses, *OS, ft,
+  if (target_->addPassesToEmitFile(codeGenPasses, *OS, nullptr, ft,
                                    /*DisableVerify=*/ noverify)) {
     errs() << "error: unable to interface with target\n";
     return false;
