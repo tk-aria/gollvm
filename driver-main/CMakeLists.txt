@@ -39,7 +39,7 @@ add_dependencies(llvm-goc libmpfr libmpc libgmp)
 # Add in the libraries for the llvm-goc dependencies.
 target_link_libraries(llvm-goc
   PRIVATE
-  "-L${EXTLIBDIR}" "-lmpc" "-lmpfr" "-lgmp"
+  "-L${EXTLIBDIR}" "-Wl,--push-state" "-Wl,-Bstatic" "-lmpc" "-lmpfr" "-lgmp" "-Wl,--pop-state"
   )
 
 # Create a "compiler built" file each time llvm-goc is built.
