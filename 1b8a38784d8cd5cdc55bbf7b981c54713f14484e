@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a6b6e7fa_56321972",
+        "filename": "bridge/go-llvm-dibuildhelper.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 216,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-05-25T20:51:42Z",
+      "side": 1,
+      "message": "Is it necessary to clean the file scope twice in this function? (Line 186 also does it.) Or it is needed because generating DI info of arguments may create file scope?",
+      "revId": "1b8a38784d8cd5cdc55bbf7b981c54713f14484e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "86f4fdb7_e1e3aad3",
+        "filename": "unittests/BackendCore/BackendDebugEmit.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 264,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-05-25T20:51:42Z",
+      "side": 1,
+      "message": "Remove?",
+      "revId": "1b8a38784d8cd5cdc55bbf7b981c54713f14484e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
