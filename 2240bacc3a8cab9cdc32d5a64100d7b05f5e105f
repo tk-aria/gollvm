@@ -16,6 +16,24 @@
       "revId": "2240bacc3a8cab9cdc32d5a64100d7b05f5e105f",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "41a8ef48_b8ab9502",
+        "filename": "driver/Driver.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 151,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-05-29T17:57:23Z",
+      "side": 1,
+      "message": "I agree, although at the moment from what I can see from inspecting the clang sources (assuming I read them correctly), -fPIC and -fPIE are treated identically in terms of how the LLVM back end is configured and executed. Obviously for C++ compilers there is a distinction in that they each define a different preprocessor symbol, but for Go that doesn\u0027t seem like an issue.\n\nAre you aware of cases/scenarios where -fPIC and -fPIE would result in different code coming out of the compiler?  Mainly asking out of curiosity.",
+      "parentUuid": "4abbb5c6_844336fd",
+      "revId": "2240bacc3a8cab9cdc32d5a64100d7b05f5e105f",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
