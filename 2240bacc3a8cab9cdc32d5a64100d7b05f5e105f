@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "4abbb5c6_844336fd",
+        "filename": "driver/Driver.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 151,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2018-05-29T17:36:33Z",
+      "side": 1,
+      "message": "I suppose eventually we may want to distinguish -fPIC and -fPIE.",
+      "revId": "2240bacc3a8cab9cdc32d5a64100d7b05f5e105f",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
