@@ -127,24 +127,70 @@ bool Driver::isPIE()
   return (arg ? arg->getOption().matches(options::OPT_pie) : false);
 }
 
-// Return any settings from the -fPIC/-fpic options, if present. The
-// intent of the code below is to support "rightmost on the command
-// line wins" (compatible with clang and other compilers), so if you
-// specify "-fPIC -fpic" you get small PIC, whereas "-fPIC -fpic
-// -fPIC" this will give you large PIC.
+// Return any settings from the -fPIC/-fpic/-fPIE/-fpie options, if
+// present. The intent of the code below is to support "rightmost
+// on the command line wins" (compatible with clang and other
+// compilers), so if you specify "-fPIC -fpic" you get small PIC,
+// whereas "-fPIC -fpic -fPIC" will give you large PIC.
+// Similarly the presence of a "-fno-pic" to the right of "-fPIE"
+// will disable use of the PIE code model.
+
 PICLevel::Level Driver::getPicLevel()
 {
   opt::Arg *arg = args_.getLastArg(gollvm::options::OPT_fpic,
                                    gollvm::options::OPT_fno_pic,
                                    gollvm::options::OPT_fPIC,
-                                   gollvm::options::OPT_fno_PIC);
+                                   gollvm::options::OPT_fno_PIC,
+                                   gollvm::options::OPT_fpie,
+                                   gollvm::options::OPT_fno_pie,
+                                   gollvm::options::OPT_fPIE,
+                                   gollvm::options::OPT_fno_PIE);
   if (arg == nullptr)
     return PICLevel::NotPIC;
-  if (arg->getOption().matches(gollvm::options::OPT_fpic))
+  if (arg->getOption().matches(gollvm::options::OPT_fpic) ||
+      arg->getOption().matches(gollvm::options::OPT_fpie))
     return PICLevel::SmallPIC;
-  else if (arg->getOption().matches(gollvm::options::OPT_fPIC))
+  else if (arg->getOption().matches(gollvm::options::OPT_fPIC) ||
+           arg->getOption().matches(gollvm::options::OPT_fPIE))
     return PICLevel::BigPIC;
   return PICLevel::NotPIC;
+}
+
+// Similar to the routine above, but for -fPIE/-fpie etc.
+
+PIELevel::Level Driver::getPieLevel()
+{
+  opt::Arg *arg = args_.getLastArg(gollvm::options::OPT_fpie,
+                                   gollvm::options::OPT_fno_pie,
+                                   gollvm::options::OPT_fPIE,
+                                   gollvm::options::OPT_fno_PIE);
+  if (arg == nullptr)
+    return PIELevel::Default;
+  if (arg->getOption().matches(gollvm::options::OPT_fpie))
+    return PIELevel::Small;
+  else if (arg->getOption().matches(gollvm::options::OPT_fPIE))
+    return PIELevel::Large;
+  return PIELevel::Default;
+}
+
+// Returns TRUE if the rightmost enable -fpic/-fpie command line option is
+// PIE as opposed to PIC.
+
+bool Driver::picIsPIE()
+{
+  opt::Arg *lpa = args_.getLastArg(gollvm::options::OPT_fPIC,
+                              gollvm::options::OPT_fno_PIC,
+                              gollvm::options::OPT_fpic,
+                              gollvm::options::OPT_fno_pic,
+                              gollvm::options::OPT_fPIE,
+                              gollvm::options::OPT_fno_PIE,
+                              gollvm::options::OPT_fpie,
+                              gollvm::options::OPT_fno_pie);
+  if (!lpa)
+    return false;
+  opt::Option opt = lpa->getOption();
+  return (opt.matches(gollvm::options::OPT_fPIE) ||
+          opt.matches(gollvm::options::OPT_fpie));
 }
 
 // Given a pair of llvm::opt options (presumably corresponding to

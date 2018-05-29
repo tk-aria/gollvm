@@ -223,6 +223,11 @@ def fPIC : Flag<["-"], "fPIC">, Group<f_Group>;
 def fno_PIC : Flag<["-"], "fno-PIC">, Group<f_Group>;
 def fpic : Flag<["-"], "fpic">, Group<f_Group>;
 def fno_pic : Flag<["-"], "fno-pic">, Group<f_Group>;
+def fPIE : Flag<["-"], "fPIE">, Group<f_Group>;
+def fno_PIE : Flag<["-"], "fno-PIE">, Group<f_Group>;
+def fpie : Flag<["-"], "fpie">, Group<f_Group>;
+def fno_pie : Flag<["-"], "fno-pie">, Group<f_Group>;
+
 
 def fno_inline : Flag<["-"], "fno-inline">, Group<f_Group>,
   HelpText<"Disable inlining">;

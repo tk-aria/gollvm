@@ -415,6 +415,8 @@ bool CompileGoImpl::initBridge()
   module_->setTargetTriple(triple_.getTriple());
   module_->setDataLayout(target_->createDataLayout());
   module_->setPICLevel(driver_.getPicLevel());
+  if (driver_.picIsPIE())
+    module_->setPIELevel(driver_.getPieLevel());
 
   // Now construct Llvm_backend helper.
   bridge_.reset(new Llvm_backend(context_, module_.get(), linemap_.get()));
