@@ -261,8 +261,6 @@ TEST(BackendDebugEmit, TestFileLineDirectives) {
   bool broken = h.finish(PreserveDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
 
-  be->dumpModule();
-
   // Three of the constructs above had different files applied to them
   // (equivalent of Go //line directive); make sure that the files
   // appear in the meta-data.
