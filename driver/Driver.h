@@ -93,6 +93,8 @@ class Driver {
 
   // Helpers related to command line options.
   llvm::PICLevel::Level getPicLevel();
+  llvm::PIELevel::Level getPieLevel();
+  bool picIsPIE();
   bool isPIE();
   template<typename IT>
   llvm::Optional<IT> getLastArgAsInteger(gollvm::options::ID id,
