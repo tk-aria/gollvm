@@ -209,6 +209,7 @@ def static : Flag<["-", "--"], "static">;
 def nostdlib : Flag<["-"], "nostdlib">;
 
 def static_libgo : Flag<["-", "--"], "static-libgo">;
+def static_libgcc : Flag<["-", "--"], "static-libgcc">;
 
 def pthreads : Flag<["-"], "pthreads">,
   HelpText<"Support POSIX threads in generated code">;
