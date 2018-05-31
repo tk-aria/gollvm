@@ -138,6 +138,11 @@ set(runner "${CMAKE_CURRENT_SOURCE_DIR}/gotestprogram.sh")
 # List containing all the check targets.
 set(checktargets)
 
+# Timeouts for check targets. The cmd/go test is large and complex; needs
+# a longer timeout than the other targets.
+set(cmdgo_check_timeout 500)
+set(default_check_timeout 250)
+
 # This test target runs `go test cmd/go` within the build environment.
 set(targetname "check_go_tool")
 add_custom_target(
@@ -155,7 +160,7 @@ add_custom_target(
     "COPYFILES"
        "${libgo_binroot}/zdefaultcc.go:src/cmd/go/internal/cfg/"
        "${libgo_binroot}/objabi.go:src/cmd/internal/objabi"
-    "TIMEOUT" 200
+    "TIMEOUT" ${cmdgo_check_timeout}
     "GOC" "${rungoc}"
     "BINDIR" ${gotools_binroot}
     "LIBDIR" ${libgo_binroot}
@@ -175,7 +180,7 @@ add_custom_target(
     "LOGFILE" "${gotools_binroot}/cmd_vet-testlog"
     "SETENV" "GOPATH=${gotools_binroot}/check-vet-dir"
     "COPYDIRS" "${cmd_srcroot}/vet:src/cmd"
-    "TIMEOUT" 100
+    "TIMEOUT" ${default_check_timeout}
     "GOC" "${rungoc}"
     "BINDIR" ${gotools_binroot}
     "LIBDIR" ${libgo_binroot}
@@ -193,7 +198,7 @@ add_custom_target(
     "SUBDIR" "misc/cgo/test"
     "LOGFILE" "${gotools_binroot}/cmd_cgo-testlog"
     "COPYDIRS" "${libgo_srcroot}/misc/cgo/test:misc/cgo"
-    "TIMEOUT" 100
+    "TIMEOUT" ${default_check_timeout}
     "GOC" "${rungoc}"
     "SETENV" "GOTRACEBACK=2"
     "BINDIR" ${gotools_binroot}
@@ -212,7 +217,7 @@ add_custom_target(
     "SUBDIR" "misc/cgo/testcarchive"
     "LOGFILE" "${gotools_binroot}/cmd_carchive-testlog"
     "COPYDIRS" "${libgo_srcroot}/misc/cgo/testcarchive:misc/cgo"
-    "TIMEOUT" 100
+    "TIMEOUT" ${default_check_timeout}
     "GOC" "${rungoc}"
     "CC" "${runcc}"
     "TESTARG" "carchive_test.go"
@@ -248,7 +253,5 @@ add_custom_target(
 list(APPEND checktargets ${targetname})
 
 add_custom_target(check-gotools DEPENDS ${checktargets})
-
-# FIXME: add install rules
 
 message(STATUS "gotools configuration complete.")
