@@ -258,6 +258,7 @@ void Linker::addSysLibsStatic(llvm::opt::ArgList &args,
   cmdArgs.push_back("-lgobegin");
   cmdArgs.push_back("-lgo");
   addFilePathArgs(cmdArgs);
+  cmdArgs.push_back("-lpthread");
   cmdArgs.push_back("-lm");
   cmdArgs.push_back("-u");
   cmdArgs.push_back("pthread_create");
@@ -265,9 +266,7 @@ void Linker::addSysLibsStatic(llvm::opt::ArgList &args,
 
   // Libgcc and libc.
   cmdArgs.push_back("--start-group");
-  cmdArgs.push_back("-lgcc");
-  cmdArgs.push_back("-lgcc_eh");
-  cmdArgs.push_back("-lpthread");
+  addLibGcc(args, cmdArgs);
   cmdArgs.push_back("-lc");
   cmdArgs.push_back("--end-group");
 }
@@ -285,17 +284,30 @@ void Linker::addSysLibsShared(llvm::opt::ArgList &args,
     cmdArgs.push_back("-Bdynamic");
 
   addFilePathArgs(cmdArgs);
+  if (isStaticLibgo || havePthreadFlag)
+    cmdArgs.push_back("-lpthread");
   cmdArgs.push_back("-lm");
   cmdArgs.push_back("--wrap=pthread_create");
 
   // Libgcc and libc.
-  bool isShared = args.hasArg(gollvm::options::OPT_shared);
-  cmdArgs.push_back("-lgcc_s");
-  if (!isShared)
-    cmdArgs.push_back("-lgcc");
-  if (isStaticLibgo || havePthreadFlag)
-    cmdArgs.push_back("-lpthread");
+  addLibGcc(args, cmdArgs);
   cmdArgs.push_back("-lc");
+  addLibGcc(args, cmdArgs);
+}
+
+void Linker::addLibGcc(llvm::opt::ArgList &args,
+                       llvm::opt::ArgStringList &cmdArgs)
+{
+  bool isStaticLibgcc = args.hasArg(gollvm::options::OPT_static_libgcc);
+  bool isStatic = args.hasArg(gollvm::options::OPT_static);
+  bool isShared = args.hasArg(gollvm::options::OPT_shared);
+
+  if (isStatic || isStaticLibgcc) {
+    cmdArgs.push_back("-lgcc");
+    cmdArgs.push_back("-lgcc_eh");
+    return;
+  }
+
   cmdArgs.push_back("-lgcc_s");
   if (!isShared)
     cmdArgs.push_back("-lgcc");

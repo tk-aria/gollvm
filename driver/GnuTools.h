@@ -62,6 +62,8 @@ class Linker : public ExternalTool {
                         llvm::opt::ArgStringList &cmdArgs);
   void addSysLibsShared(llvm::opt::ArgList &args,
                         llvm::opt::ArgStringList &cmdArgs);
+  void addLibGcc(llvm::opt::ArgList &args,
+                 llvm::opt::ArgStringList &cmdArgs);
   void addSharedAndOrStaticFlags(llvm::opt::ArgStringList &cmdArgs);
   void addFilePathArgs(llvm::opt::ArgStringList &cmdArgs);
 };
