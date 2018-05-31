@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1943cf3e_7f37b18b",
+        "filename": "driver/GnuTools.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 311,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2018-05-31T19:46:48Z",
+      "side": 1,
+      "message": "You just checked for isStaticLibgcc 6 lines up.  It\u0027s sure to be false here.",
+      "revId": "ae728e7f4e24abcfd66f0f9fe4be9b0dbecd26a5",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
