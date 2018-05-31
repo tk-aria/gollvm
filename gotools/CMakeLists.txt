@@ -155,7 +155,7 @@ add_custom_target(
     "COPYFILES"
        "${libgo_binroot}/zdefaultcc.go:src/cmd/go/internal/cfg/"
        "${libgo_binroot}/objabi.go:src/cmd/internal/objabi"
-    "TIMEOUT" 200
+    "TIMEOUT" 500
     "GOC" "${rungoc}"
     "BINDIR" ${gotools_binroot}
     "LIBDIR" ${libgo_binroot}
