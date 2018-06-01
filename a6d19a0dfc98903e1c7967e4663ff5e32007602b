@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7dcd201b_a64c846b",
+        "filename": "driver/CompileGo.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 511,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2018-06-01T17:53:50Z",
+      "side": 1,
+      "message": "Just a note that this may be correct for LLVM, but it isn\u0027t necessarily correct for gccgo.  GCC can have multiple different install directories that require the additional \"go\" subdirectory searching.",
+      "revId": "a6d19a0dfc98903e1c7967e4663ff5e32007602b",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    }
+  ]
+}
