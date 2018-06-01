@@ -102,6 +102,7 @@ class CompileGoImpl {
 
   void createPasses(legacy::PassManager &MPM,
                     legacy::FunctionPassManager &FPM);
+  void setupGoSearchPath();
 
   // This routine emits output for -### and/or -v, then returns TRUE
   // of the compilation should be stubbed out (-###) or FALSE otherwise.
@@ -489,6 +490,44 @@ bool CompileGoImpl::initBridge()
                                   true);
   go_enable_optimize("allocs", enableEscapeAnalysis ? 1 : 0);
 
+  // Set up the search path to use for locating Go packages.
+  setupGoSearchPath();
+
+  return true;
+}
+
+// The Go search path (dirs in which to search for package objects,
+// *.gox files, archives, etc) is populated based on command line
+// options (-L, -B, -I) and on the installation directory/prefix. For
+// an example command line of the form
+//
+//    <compiler> mumble.go -c -I /I1 -I /I2 -L /L1 -B /B1
+//
+// the Go package search path will start out with the include dirs
+// (/I1 and /I2). We then walk through each of the remaining dirs (-L
+// args, -B args, and system install dirs) and if the dir D in
+// question contains a "go" subdir we add D/go/<version> and
+// D/go/<version>/<triple>. Finally we add each of the -L/-I/install
+// dirs directly to the search path.
+//
+// With this in mind, assuming that the install dir is /install,
+// version is 7.0.0, and the target triple x86_64-pc-linux-gnu, for
+// the args above we would get a search path of
+//
+//       /I1
+//       /I2
+//       /L1/go/7.0.0
+//       /L1/go/7.0.0/x86_64-pc-linux-gnu
+//       /B1/go/7.0.0
+//       /B1/go/7.0.0/x86_64-pc-linux-gnu
+//       /install/go/7.0.0
+//       /install/go/7.0.0/x86_64-pc-linux-gnu
+//       /L1
+//       /B1
+//       /install
+
+void CompileGoImpl::setupGoSearchPath()
+{
   // Include dirs
   std::vector<std::string> incargs =
       args_.getAllArgValues(gollvm::options::OPT_I);
@@ -497,30 +536,37 @@ bool CompileGoImpl::initBridge()
       go_add_search_path(dir.c_str());
   }
 
-  // Start with list of user-provided -L directories, then append an
-  // entry corresponing to the lib dir for the install.
-  std::vector<std::string> libargs =
-      args_.getAllArgValues(gollvm::options::OPT_L);
-  libargs.push_back(GOLLVM_INSTALL_LIBDIR);
-
-  // Populate Go package search path based on -L options.
-  for (auto &dir : libargs) {
+  // Make up a list of dirs starting with -L args, then -B args,
+  // and finally the installation dir.
+  std::vector<std::string> dirs;
+  for (auto &dir : args_.getAllArgValues(gollvm::options::OPT_L)) {
     if (!sys::fs::is_directory(dir))
       continue;
+    dirs.push_back(dir);
+  }
 
+  // FIXME: add -B args here
+
+  // Finish up with system install dir.
+  dirs.push_back(GOLLVM_INSTALL_LIBDIR);
+
+  // First pass to add go/<version> and go/<version>/triple variants
+  for (auto &dir : dirs) {
     std::stringstream b1;
     b1 << dir << sys::path::get_separator().str() << "go"
        << sys::path::get_separator().str() << GOLLVM_LIBVERSION;
-    if (sys::fs::is_directory(b1.str()))
+    if (sys::fs::is_directory(b1.str())) {
       go_add_search_path(b1.str().c_str());
-
-    std::stringstream b2;
-    b2 << b1.str() << sys::path::get_separator().str() << triple_.str();
-    if (sys::fs::is_directory(b2.str()))
-      go_add_search_path(b2.str().c_str());
+      std::stringstream b2;
+      b2 << b1.str() << sys::path::get_separator().str() << triple_.str();
+      if (sys::fs::is_directory(b2.str()))
+        go_add_search_path(b2.str().c_str());
+    }
   }
 
-  return true;
+  // Second pass with raw dir.
+  for (auto &dir : dirs)
+    go_add_search_path(dir.c_str());
 }
 
 bool CompileGoImpl::invokeFrontEnd()
