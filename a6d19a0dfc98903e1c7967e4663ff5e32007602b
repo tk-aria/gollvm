@@ -34,6 +34,24 @@
       "revId": "a6d19a0dfc98903e1c7967e4663ff5e32007602b",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "521d7ae4_beb464ce",
+        "filename": "driver/CompileGo.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 511,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2018-06-01T20:08:22Z",
+      "side": 1,
+      "message": "It probably doesn\u0027t apply to LLVM, but for GCC we should look for \"go\" subdirectories in any directory passed in a -B option, anything that comes from the LIBRARY_PATH environment variable, and a couple of directories that are found by walking up from the directory where the compiler binary is found.  It will also search system directories though those are less interesting.  E.g., when I install gccgo in /home/iant/gcc/go-install/bin, the following directories are checked for a \"go\" subdirectory:\n\n/home/iant/gcc/go-install/lib/gcc/x86_64-pc-linux-gnu/9.0.0\n/home/iant/gcc/go-install/lib/gcc/x86_64-pc-linux-gnu/9.0.0/../../../../lib64\n/lib/x86_64-linux-gnu\n/lib/../lib64\n/usr/lib/x86_64-linux-gnu\n/home/iant/gcc/go-install/lib/gcc/x86_64-pc-linux-gnu/9.0.0/../../..\n\nIn this case the actual go subdirectory is found using the second path.",
+      "parentUuid": "5a35e955_b9a3f9f4",
+      "revId": "a6d19a0dfc98903e1c7967e4663ff5e32007602b",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
