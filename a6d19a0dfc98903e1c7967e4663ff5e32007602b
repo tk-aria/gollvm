@@ -16,6 +16,24 @@
       "revId": "a6d19a0dfc98903e1c7967e4663ff5e32007602b",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5a35e955_b9a3f9f4",
+        "filename": "driver/CompileGo.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 511,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-06-01T18:52:34Z",
+      "side": 1,
+      "message": "Can you give an example? Not sure what you mean here. Thanks-",
+      "parentUuid": "7dcd201b_a64c846b",
+      "revId": "a6d19a0dfc98903e1c7967e4663ff5e32007602b",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
