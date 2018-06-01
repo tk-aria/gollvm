@@ -497,28 +497,29 @@ bool CompileGoImpl::initBridge()
       go_add_search_path(dir.c_str());
   }
 
-  // Start with list of user-provided -L directories, then append an
-  // entry corresponing to the lib dir for the install.
+  // Start by populating the package search path with list of
+  // user-provided -L directories.
   std::vector<std::string> libargs =
       args_.getAllArgValues(gollvm::options::OPT_L);
-  libargs.push_back(GOLLVM_INSTALL_LIBDIR);
-
-  // Populate Go package search path based on -L options.
   for (auto &dir : libargs) {
     if (!sys::fs::is_directory(dir))
       continue;
-
-    std::stringstream b1;
-    b1 << dir << sys::path::get_separator().str() << "go"
-       << sys::path::get_separator().str() << GOLLVM_LIBVERSION;
-    if (sys::fs::is_directory(b1.str()))
-      go_add_search_path(b1.str().c_str());
-
-    std::stringstream b2;
-    b2 << b1.str() << sys::path::get_separator().str() << triple_.str();
-    if (sys::fs::is_directory(b2.str()))
-      go_add_search_path(b2.str().c_str());
+    go_add_search_path(dir.c_str());
   }
+
+  // Then add in paths based on the install directory.
+  std::string installdir(GOLLVM_INSTALL_LIBDIR);
+
+  std::stringstream b1;
+  b1 << installdir << sys::path::get_separator().str() << "go"
+     << sys::path::get_separator().str() << GOLLVM_LIBVERSION;
+  if (sys::fs::is_directory(b1.str()))
+    go_add_search_path(b1.str().c_str());
+
+  std::stringstream b2;
+  b2 << b1.str() << sys::path::get_separator().str() << triple_.str();
+  if (sys::fs::is_directory(b2.str()))
+    go_add_search_path(b2.str().c_str());
 
   return true;
 }
