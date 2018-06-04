@@ -105,6 +105,10 @@ def Developer_Group : OptionGroup<"<dev group>">, DocName<"Developer flags">,
 def help : Flag<["-", "--"], "help">,
   HelpText<"Display available options">;
 
+def B : JoinedOrSeparate<["-"], "B">,
+    Flags<[DriverOption]>, MetaVarName<"<prefix>">,
+    HelpText<"Add prefix for searching binaries and libraries">;
+
 def I : JoinedOrSeparate<["-"], "I">,
     Flags<[DriverOption]>, MetaVarName<"<dir>">,
     HelpText<"Add include directory to be searched for packages">;
