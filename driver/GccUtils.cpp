@@ -124,9 +124,11 @@ std::string GCCVersion::toString() const
 
 GCCInstallationDetector::
 GCCInstallationDetector(const llvm::Triple &targetTriple,
+                        const std::string &gccToolchainDir,
                         const std::string &sysroot,
                         InspectFS &inspector)
     : triple_(targetTriple),
+      gccToolchainDir_(gccToolchainDir),
       sysroot_(sysroot),
       inspector_(inspector),
       version_(new GCCVersion())
@@ -245,8 +247,11 @@ void GCCInstallationDetector::init()
   if (!selectLibDirs(s))
     return;
 
-  // If sysroot is non-empty, then perform a search there first.
-  if (!sysroot_.empty()) {
+  if (!gccToolchainDir_.empty())
+    scanPrefix(s, gccToolchainDir_);
+
+  if (!s.version.valid() && !sysroot_.empty()) {
+    // If sysroot is non-empty, then perform a search there first.
     std::string srp(sysroot_);
     srp += "/usr";
     scanPrefix(s, srp);

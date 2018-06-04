@@ -57,6 +57,7 @@ class InspectFS;
 class GCCInstallationDetector {
  public:
   GCCInstallationDetector(const llvm::Triple &targetTriple,
+                          const std::string &gccToolchainDir,
                           const std::string &sysroot,
                           InspectFS &inspector);
 
@@ -89,6 +90,7 @@ class GCCInstallationDetector {
  private:
   llvm::Triple triple_; // target for which we looked
   llvm::Triple foundTriple_; // target we found (taking into account aliases)
+  std::string gccToolchainDir_;
   std::string sysroot_;
   InspectFS &inspector_;
   std::unique_ptr<GCCVersion> version_;
