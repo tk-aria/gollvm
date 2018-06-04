@@ -47,6 +47,7 @@ Driver::Driver(opt::InputArgList &args,
   SmallString<128> abspath(executablePath_);
   llvm::sys::fs::make_absolute(abspath);
   installDir_ = llvm::sys::path::parent_path(abspath);
+  prefixes_ = args.getAllArgValues(gollvm::options::OPT_B);
 }
 
 Driver::~Driver()
@@ -66,7 +67,14 @@ void Driver::emitVersion()
 std::string Driver::getFilePath(llvm::StringRef name,
                                 ToolChain &toolchain)
 {
-  // TODO: add support for -Bprefix option.
+  // Include -Bprefixed name in search.
+  SmallVector<std::string, 2> candidates;
+  for (auto p : prefixes_)
+    candidates.push_back((p + name).str());
+  for (auto &cand : candidates) {
+    if (llvm::sys::fs::exists(llvm::Twine(cand)))
+      return cand;
+  }
 
   // Examine toolchain file paths.
   for (const auto &dir : toolchain.filePaths()) {
@@ -82,10 +90,10 @@ std::string Driver::getFilePath(llvm::StringRef name,
 std::string Driver::getProgramPath(llvm::StringRef name,
                                    ToolChain &toolchain)
 {
-  // TODO: add support for -Bprefix option.
-
-  // Include target-prefixed name in search.
-  SmallVector<std::string, 2> candidates;
+  // Include -Bprefixed and target-prefixed name in search.
+  SmallVector<std::string, 3> candidates;
+  for (auto p : prefixes_)
+    candidates.push_back((p + name).str());
   candidates.push_back((triple_.str() + "-" + name).str());
   candidates.push_back(name);
 

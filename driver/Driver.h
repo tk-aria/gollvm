@@ -121,6 +121,7 @@ class Driver {
   llvm::StringMap<std::unique_ptr<ToolChain>> toolchains_;
   // Maps non-input actions to output artifacts.
   std::unordered_map<Action *, Artifact*> artmap_;
+  std::vector<std::string> prefixes_;
 
   bool processAction(Action *act, Compilation &compilation, bool lastAct);
   ArtifactList collectInputArtifacts(Action *act, InternalTool *it);
