@@ -52,6 +52,24 @@
       "revId": "a6d19a0dfc98903e1c7967e4663ff5e32007602b",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "970b8e8c_b9176ea7",
+        "filename": "driver/CompileGo.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 511,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-06-04T13:57:25Z",
+      "side": 1,
+      "message": "OK, thanks for the clarification. If \"-B\" dirs need be searched for \"go\" subdirs then I think my previous patch to add \"-B\" support needs to be revised. I will do that in a separate CL however.",
+      "parentUuid": "521d7ae4_beb464ce",
+      "revId": "a6d19a0dfc98903e1c7967e4663ff5e32007602b",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
