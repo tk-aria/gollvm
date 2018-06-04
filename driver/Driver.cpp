@@ -35,6 +35,8 @@ Driver::Driver(opt::InputArgList &args,
 {
   if (const opt::Arg *arg = args.getLastArg(gollvm::options::OPT_sysroot_EQ))
     sysroot_ = arg->getValue();
+  if (const opt::Arg *arg = args.getLastArg(gollvm::options::OPT_gcc_toolchain_EQ))
+    gccToolchainDir_ = arg->getValue();
 
   // Establish executable path and installation dir.
   executablePath_ = argv0;

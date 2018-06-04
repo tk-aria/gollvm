@@ -410,3 +410,6 @@ def no_emit_llvm_uselists : Flag<["-"], "no-emit-llvm-uselists">,
 def disable_llvm_passes : Flag<["-"], "disable-llvm-passes">,
   HelpText<"Use together with -emit-llvm to get pristine LLVM IR from the "
            "frontend by not running any LLVM passes at all">;
+
+def gcc_toolchain_EQ : Joined<["--"], "gcc-toolchain=">, Flags<[DriverOption]>,
+  HelpText<"Use the gcc toolchain at the given directory">;

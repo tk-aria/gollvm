@@ -45,6 +45,7 @@ Linux::Linux(gollvm::driver::Driver &driver,
     : ToolChain(driver, targetTriple),
       inspectFS_(gnutools::gccdetect::InspectRealFS()),
       gccDetector_(targetTriple,
+                   driver.gccToolchainDir(),
                    driver.sysRoot(),
                    inspectFS_)
 {
