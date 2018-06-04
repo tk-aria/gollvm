@@ -337,6 +337,10 @@ bool Linker::constructCommand(Compilation &compilation,
   cmdArgs.push_back("-o");
   cmdArgs.push_back(output.file());
 
+  // Pass --sysroot to the linker.
+  if (!toolchain().driver().sysRoot().empty())
+    cmdArgs.push_back(args.MakeArgString(llvm::StringRef("--sysroot=") + toolchain().driver().sysRoot()));
+
   bool useStdLib = !args.hasArg(gollvm::options::OPT_nostdlib);
 
   if (useStdLib) {

@@ -61,10 +61,13 @@ Linux::Linux(gollvm::driver::Driver &driver,
   // File paths
   pathlist &fpaths = filePaths();
   addIfPathExists(fpaths, gccDetector_.getLibPath());
-  const std::string osLibDir = getOSLibDir(targetTriple);
+  std::string osLibDir = getOSLibDir(targetTriple);
+  if (!driver.sysRoot().empty())
+    osLibDir = driver.sysRoot() + "/" + osLibDir;
   addIfPathExists(fpaths, llvm::Twine(gccDetector_.getParentLibPath() +
                                       "/../" + ftrip).str());
-  addIfPathExists(fpaths, llvm::Twine(osLibDir + ftrip).str());
+  addIfPathExists(fpaths, llvm::Twine(osLibDir).str());
+  addIfPathExists(fpaths, llvm::Twine(osLibDir + "/" + ftrip).str());
 
   // Include program and file paths in verbose output.
   if (driver.args().hasArg(gollvm::options::OPT_v)) {
