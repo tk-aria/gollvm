@@ -162,6 +162,7 @@ bool GCCInstallationDetector::selectLibDirs(state &s)
     case llvm::Triple::x86:
     case llvm::Triple::x86_64:
       s.tripleAliases = {
+        triple_.str(),
         "x86_64-linux-gnu",       "x86_64-unknown-linux-gnu",
         "x86_64-pc-linux-gnu",    "x86_64-redhat-linux6E",
         "x86_64-redhat-linux",    "x86_64-suse-linux"
