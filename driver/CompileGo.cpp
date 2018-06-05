@@ -539,13 +539,17 @@ void CompileGoImpl::setupGoSearchPath()
   // Make up a list of dirs starting with -L args, then -B args,
   // and finally the installation dir.
   std::vector<std::string> dirs;
+
+  // First -L args.
   for (auto &dir : args_.getAllArgValues(gollvm::options::OPT_L)) {
     if (!sys::fs::is_directory(dir))
       continue;
     dirs.push_back(dir);
   }
 
-  // FIXME: add -B args here
+  // Add in -B args.
+  for (const std::string &pdir : driver_.prefixes())
+    dirs.push_back(pdir);
 
   // Finish up with system install dir.
   dirs.push_back(GOLLVM_INSTALL_LIBDIR);
