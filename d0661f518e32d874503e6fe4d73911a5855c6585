@@ -16,6 +16,24 @@
       "revId": "d0661f518e32d874503e6fe4d73911a5855c6585",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e8963e19_563b79f3",
+        "filename": "driver/CompileGo.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 552,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-06-05T19:42:04Z",
+      "side": 1,
+      "message": "Mmm. yes, this is a good idea. Will revise.",
+      "parentUuid": "259c9a2c_a894f66d",
+      "revId": "d0661f518e32d874503e6fe4d73911a5855c6585",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
