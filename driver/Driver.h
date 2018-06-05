@@ -94,6 +94,9 @@ class Driver {
   // Install directory of compiler binary.
   std::string installDir() { return installDir_; }
 
+  // Prefix directories (supplied via -B args)
+  const std::vector<std::string> &prefixes() const { return prefixes_; }
+
   // Helpers related to command line options.
   llvm::PICLevel::Level getPicLevel();
   llvm::PIELevel::Level getPieLevel();
