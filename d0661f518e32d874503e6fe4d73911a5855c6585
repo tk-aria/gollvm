@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "259c9a2c_a894f66d",
+        "filename": "driver/CompileGo.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 552,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-06-05T19:39:24Z",
+      "side": 1,
+      "message": "Should we also have the is_directory check?",
+      "revId": "d0661f518e32d874503e6fe4d73911a5855c6585",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
