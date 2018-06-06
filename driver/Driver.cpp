@@ -56,6 +56,13 @@ Driver::~Driver()
 {
 }
 
+std::string Driver::installedLibDir()
+{
+  llvm::SmallString<256> ldir(installDir_);
+  llvm::sys::path::append(ldir, "../lib64");
+  return std::string(ldir.str());
+}
+
 // TODO: create a mechanism for capturing release tag/branch, and/or
 // git/svn revision for LLVM, gollvm, and so on.
 

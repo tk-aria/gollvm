@@ -223,6 +223,11 @@ bool CompileGoImpl::preamble(const Artifact &output)
     if (!args_.hasArg(gollvm::options::OPT_S))
       errs() << " " << "-S";
     for (auto arg : args_) {
+      // Special case for -L. Here even if the user said "-L /x"
+      // we render it as -L/x so as to be compatible with existing
+      // code in the imported that expects the former and not the latter.
+      if (arg->getOption().matches(gollvm::options::OPT_L))
+        errs() << " -L" << arg->getValue();
       if (arg->getOption().getGroup().isValid() &&
           (arg->getOption().getGroup().getID() ==
            gollvm::options::OPT_Link_Group))
@@ -235,7 +240,8 @@ bool CompileGoImpl::preamble(const Artifact &output)
         continue;
       dumpArg(*arg, hashHashHash);
     }
-    errs() << " " << "-L" << GOLLVM_INSTALL_LIBDIR << " " << "-o";
+
+    errs() << " " << "-L" << driver_.installedLibDir() << " " << "-o";
     quoteDump(output.file(), hashHashHash);
     errs() << "\n";
   }
@@ -554,8 +560,8 @@ void CompileGoImpl::setupGoSearchPath()
     dirs.push_back(pdir);
   }
 
-  // Finish up with system install dir.
-  dirs.push_back(GOLLVM_INSTALL_LIBDIR);
+  // Finish up with the library dir from the install.
+  dirs.push_back(driver_.installedLibDir());
 
   // First pass to add go/<version> and go/<version>/triple variants
   for (auto &dir : dirs) {

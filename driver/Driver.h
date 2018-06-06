@@ -94,6 +94,9 @@ class Driver {
   // Install directory of compiler binary.
   std::string installDir() { return installDir_; }
 
+  // Installed lib dir (binary dir above plus ../lib64)
+  std::string installedLibDir();
+
   // Prefix directories (supplied via -B args)
   const std::vector<std::string> &prefixes() const { return prefixes_; }
 
