@@ -37,3 +37,6 @@ add_llvm_library(LLVMDriverUtils
   GollvmDriverOptions
   )
 
+# Add dependencies for these libs because it needs the
+# headers to be installed.
+add_dependencies(LLVMDriverUtils libmpfr libmpc libgmp)
