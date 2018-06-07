@@ -383,7 +383,7 @@ bool Linker::constructCommand(Compilation &compilation,
 
   // Pick up correct directory for Go libraries.
   std::string golib("-L");
-  golib += GOLLVM_INSTALL_LIBDIR;
+  golib += toolchain().driver().installedLibDir();
   cmdArgs.push_back(args.MakeArgString(golib.c_str()));
 
   if (useStdLib) {
