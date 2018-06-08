@@ -93,6 +93,12 @@ std::string Driver::getFilePath(llvm::StringRef name,
       return candidate.str();
   }
 
+  // System install dir
+  llvm::SmallString<256> installed(installedLibDir());
+  llvm::sys::path::append(installed, name);
+  if (llvm::sys::fs::exists(llvm::Twine(installed)))
+    return installed.str();
+
   return name;
 }
 
@@ -301,6 +307,34 @@ ToolChain *Driver::setup()
     exit(0);
   }
 
+  // Look up toolchain.
+  auto &tc = toolchains_[triple_.str()];
+  if (!tc) {
+    switch (triple_.getOS()) {
+      case Triple::Linux:
+        tc = make_unique<toolchains::Linux>(*this, triple_);
+        break;
+      default:
+        errs() << progname_ << ": error: unsupported target "
+               << triple_.str() << ", unable to create toolchain\n";
+        return nullptr;
+    }
+  }
+
+  // Honor -print-file-name=...
+  opt::Arg *pfnarg = args_.getLastArg(gollvm::options::OPT_print_file_name_EQ);
+  if (pfnarg) {
+    llvm::outs() << getFilePath(pfnarg->getValue(), *tc) << "\n";
+    exit(0);
+  }
+
+  // Honor -print-prog-name=...
+  opt::Arg *ppnarg = args_.getLastArg(gollvm::options::OPT_print_prog_name_EQ);
+  if (ppnarg) {
+    llvm::outs() << getProgramPath(ppnarg->getValue(), *tc) << "\n";
+    exit(0);
+  }
+
   // Check for existence of input files.
   for (opt::Arg *arg : args_) {
     if (arg->getOption().getKind() == opt::Option::InputClass) {
@@ -324,20 +358,6 @@ ToolChain *Driver::setup()
   if (! inputseen) {
     errs() << progname_ << ": error: no inputs\n";
     return nullptr;
-  }
-
-  // Look up toolchain.
-  auto &tc = toolchains_[triple_.str()];
-  if (!tc) {
-    switch (triple_.getOS()) {
-      case Triple::Linux:
-        tc = make_unique<toolchains::Linux>(*this, triple_);
-        break;
-      default:
-        errs() << progname_ << ": error: unsupported target "
-               << triple_.str() << ", unable to create toolchain\n";
-        return nullptr;
-    }
   }
 
   // FIXME: add code to weed out unknown architectures (ex:

@@ -174,6 +174,12 @@ def dumpversion : Flag<["-"], "dumpversion">,
 def dumpmachine : Flag<["-"], "dumpmachine">,
   HelpText<"Emit target machine and exit.">;
 
+def print_file_name_EQ : Joined<["-", "--"], "print-file-name=">,
+  HelpText<"Print the full library path of <file>">, MetaVarName<"<file>">;
+
+def print_prog_name_EQ : Joined<["-", "--"], "print-prog-name=">,
+  HelpText<"Print the full program path of <name>">, MetaVarName<"<name>">;
+
 def print_multi_lib : Flag<["--"], "print-multi-lib">,
   HelpText<"Emit the mapping from multilib directory names to compiler "
            "flags that enable them">;
