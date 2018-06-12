@@ -141,6 +141,16 @@ void Llvm_backend::addDebugPrefix(std::pair<llvm::StringRef, llvm::StringRef> pr
   dibuildhelper_->addDebugPrefix(prefix);
 }
 
+void Llvm_backend::setTargetCpuAttr(const std::string &cpu)
+{
+  targetCpuAttr_ = cpu;
+}
+
+void Llvm_backend::setTargetFeaturesAttr(const std::string &attrs)
+{
+  targetFeaturesAttr_ = attrs;
+}
+
 void
 Llvm_backend::verifyModule()
 {
@@ -2455,6 +2465,10 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
     // no-return
     if (no_return)
       fcn->addFnAttr(llvm::Attribute::NoReturn);
+
+    // attributes for target CPU and features
+    fcn->addFnAttr("target-cpu", targetCpuAttr_);
+    fcn->addFnAttr("target-features", targetFeaturesAttr_);
 
     fcnValue = fcn;
 
