@@ -26,6 +26,10 @@
 #include "Driver.h"
 #include "ToolChain.h"
 
+namespace gollvm { namespace arch {
+#include "ArchCpusAttrs.h"
+} }
+
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
@@ -99,6 +103,8 @@ class CompileGoImpl {
   std::string asmOutFileName_;
   std::unique_ptr<ToolOutputFile> asmout_;
   std::unique_ptr<TargetLibraryInfoImpl> tlii_;
+  std::string targetCpuAttr_;
+  std::string targetFeaturesAttr_;
 
   void createPasses(legacy::PassManager &MPM,
                     legacy::FunctionPassManager &FPM);
@@ -374,9 +380,9 @@ bool CompileGoImpl::setup()
     return false;
   Options.AllowFPOpFusion = *dofuse;
 
-  // Support -mcpu
+  // Support -march
   std::string cpuStr;
-  opt::Arg *cpuarg = args_.getLastArg(gollvm::options::OPT_mcpu_EQ);
+  opt::Arg *cpuarg = args_.getLastArg(gollvm::options::OPT_march_EQ);
   if (cpuarg != nullptr) {
     std::string val(cpuarg->getValue());
     if (val == "native")
@@ -385,16 +391,45 @@ bool CompileGoImpl::setup()
       cpuStr = cpuarg->getValue();
   }
 
-  // Features.
-  // FIXME: incorporate command line flags.
-  SubtargetFeatures features;
-  features.getDefaultSubtargetFeatures(triple_);
-  std::string featStr = features.getString();
+  // Locate correct entry in architectures table for this triple
+  const gollvm::arch::CpuAttrs *cpuAttrs = nullptr;
+  for (unsigned i = 0; gollvm::arch::triples[i].cpuattrs != nullptr; i += 1) {
+    if (!strcmp(triple_.str().c_str(), gollvm::arch::triples[i].triple)) {
+      cpuAttrs = gollvm::arch::triples[i].cpuattrs;
+      break;
+    }
+  }
+  if (cpuAttrs == nullptr) {
+    errs() << progname_ << ": unable to determine target CPU features for "
+           << "target " << triple_.str() << "\n";
+    return false;
+  }
+
+  // If no CPU specified, use first entry. Otherwise look for CPU name.
+  if (!cpuStr.empty()) {
+    bool found = false;
+    while (strlen(cpuAttrs->cpu) != 0) {
+      if (!strcmp(cpuAttrs->cpu, cpuStr.c_str())) {
+        // found
+        found = true;
+        break;
+      }
+      cpuAttrs++;
+    }
+    if (!found) {
+      errs() << progname_ << ": invalid setting for -march:"
+             << " -- unable to identify CPU '" << cpuStr << "'\n";
+      return false;
+    }
+  }
+  targetCpuAttr_ = cpuAttrs->cpu;
+  targetFeaturesAttr_ = cpuAttrs->attrs;
 
   // Create target machine
   Optional<llvm::CodeModel::Model> CM = None;
   target_.reset(
-      TheTarget->createTargetMachine(triple_.getTriple(), cpuStr, featStr,
+      TheTarget->createTargetMachine(triple_.getTriple(),
+                                     targetCpuAttr_, targetFeaturesAttr_,
                                      Options, driver_.reconcileRelocModel(),
                                      CM, cgolvl_));
   assert(target_.get() && "Could not allocate target machine!");
@@ -435,6 +470,8 @@ bool CompileGoImpl::initBridge()
     return false;
   bridge_->setTraceLevel(*tl);
   bridge_->setNoInline(args_.hasArg(gollvm::options::OPT_fno_inline));
+  bridge_->setTargetCpuAttr(targetCpuAttr_);
+  bridge_->setTargetFeaturesAttr(targetFeaturesAttr_);
 
   // -f[no-]omit-frame-pointer
   bool omitFp =

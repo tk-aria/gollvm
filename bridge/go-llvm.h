@@ -397,6 +397,10 @@ public:
   // Disable frame pointer elimination if set to true.
   void setNoFpElim(bool b) { noFpElim_ = b; };
 
+  // Target CPU and features
+  void setTargetCpuAttr(const std::string &cpu);
+  void setTargetFeaturesAttr(const std::string &attrs);
+
   // Personality function
   llvm::Function *personalityFunction();
 
@@ -818,6 +822,10 @@ public:
 
   // Personality function
   llvm::Function *personalityFunction_;
+
+  // Target cpu and attributes to be attached to any generated fcns.
+  std::string targetCpuAttr_;
+  std::string targetFeaturesAttr_;
 };
 
 #endif
