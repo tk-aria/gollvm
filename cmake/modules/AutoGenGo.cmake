@@ -414,6 +414,10 @@ function(mkgensysinfo tmpfile outfile macrofile objfile godumpspec sysinfoc)
   CMAKE_PARSE_ARGUMENTS(ARG "" "" "DEPS;CFLAGS" ${ARGN})
 
   set(ccomp ${CMAKE_C_COMPILER})
+  set(cflags ${ARG_CFLAGS})
+  if(NOT "${CMAKE_SYSROOT}" STREQUAL "")
+    set(cflags ${cflags} "--sysroot=${CMAKE_SYSROOT}")
+  endif()
 
   # Run the host C compiler to generate the object. NB: clang will
   # accept -fno-eliminate-unused-debug-types but does not actually
@@ -421,7 +425,7 @@ function(mkgensysinfo tmpfile outfile macrofile objfile godumpspec sysinfoc)
   add_custom_command(
     OUTPUT ${objfile}
     COMMAND ${ccomp} "-g3" "-c" "-fno-eliminate-unused-debug-types"
-            ${sysinfoc} -o ${objfile} ${ARG_CFLAGS}
+            ${sysinfoc} -o ${objfile} ${cflags}
     DEPENDS ${sysinfoc} ${ARG_DEPS}
     COMMENT "Building sysinfo.o "
     VERBATIM)
@@ -430,7 +434,7 @@ function(mkgensysinfo tmpfile outfile macrofile objfile godumpspec sysinfoc)
   add_custom_command(
     OUTPUT ${macrofile}
     COMMAND ${ccomp} "-E" "-dM"
-            ${sysinfoc} -o ${macrofile} ${ARG_CFLAGS}
+            ${sysinfoc} -o ${macrofile} ${cflags}
     DEPENDS ${sysinfoc} ${ARG_DEPS}
     COMMENT "Building sysinfo.c macro temp file"
     VERBATIM)

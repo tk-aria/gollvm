@@ -277,9 +277,13 @@ generate_go_from_script(${libcallsdotgo} ${mklibcallssh} ${goos} ${goarch}
 set(errnoi "${libgo_binroot}/errno.i")
 set(errnoitmp "${libgo_binroot}/tmp-errno.i")
 set(mkerrnoish "${CMAKE_CURRENT_SOURCE_DIR}/mkerrnoi.sh")
+set(cflags ${CMAKE_C_FLAGS})
+if(NOT "${CMAKE_SYSROOT}" STREQUAL "")
+  set(cflags "--sysroot=${CMAKE_SYSROOT}")
+endif()
 generate_go_from_script(${errnoi} ${mkerrnoish} ${goos} ${goarch}
                         ${libgo_binroot} SCRIPTARGS "${CMAKE_C_COMPILER}"
-                        ${errnoitmp} ${CMAKE_C_FLAGS})
+                        ${errnoitmp} ${cflags})
 
 # Generated file sysinfo.go
 set(sysinfodotgo "${libgo_binroot}/sysinfo.go")
