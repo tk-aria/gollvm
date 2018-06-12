@@ -289,18 +289,6 @@ ToolChain *Driver::setup()
   else
     triple_ = Triple(sys::getDefaultTargetTriple());
 
-  // Support -march
-  std::string archStr;
-  opt::Arg *archarg = args_.getLastArg(gollvm::options::OPT_march_EQ);
-  if (archarg != nullptr) {
-    std::string val(archarg->getValue());
-    if (val == "native")
-      archStr = sys::getHostCPUName();
-    else
-      archStr = archarg->getValue();
-    triple_.setArchName(archStr);
-  }
-
   // Honor -dumpmachine
   if (args_.hasArg(gollvm::options::OPT_dumpmachine)) {
     llvm::outs() << triple_.str() << "\n";
