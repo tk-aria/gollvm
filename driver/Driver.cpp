@@ -85,6 +85,12 @@ std::string Driver::getFilePath(llvm::StringRef name,
       return cand;
   }
 
+  // Examine install dir
+  llvm::SmallString<256> installed(installedLibDir());
+  llvm::sys::path::append(installed, name);
+  if (llvm::sys::fs::exists(llvm::Twine(installed)))
+    return installed.str();
+
   // Examine toolchain file paths.
   for (const auto &dir : toolchain.filePaths()) {
     llvm::SmallString<256> candidate(dir);
@@ -92,12 +98,6 @@ std::string Driver::getFilePath(llvm::StringRef name,
     if (llvm::sys::fs::exists(llvm::Twine(candidate)))
       return candidate.str();
   }
-
-  // System install dir
-  llvm::SmallString<256> installed(installedLibDir());
-  llvm::sys::path::append(installed, name);
-  if (llvm::sys::fs::exists(llvm::Twine(installed)))
-    return installed.str();
 
   return name;
 }
