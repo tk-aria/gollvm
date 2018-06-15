@@ -394,6 +394,9 @@ public:
   // Disable inlining if set to true.
   void setNoInline(bool b) { noInline_ = b; };
 
+  // Disable frame pointer elimination if set to true.
+  void setNoFpElim(bool b) { noFpElim_ = b; };
+
   // Personality function
   llvm::Function *personalityFunction();
 
@@ -726,6 +729,9 @@ public:
 
   // Whether to disable inlining.
   bool noInline_;
+
+  // Whether to disable frame pointer elimination.
+  bool noFpElim_;
 
   // Whether to check for unexpected node sharing (e.g. same Bexpression
   // or statement pointed to by multiple parents).
