@@ -53,6 +53,7 @@ Llvm_backend::Llvm_backend(llvm::LLVMContext &context,
     , addressSpace_(0)
     , traceLevel_(0)
     , noInline_(false)
+    , noFpElim_(false)
     , checkIntegrity_(true)
     , createDebugMetaData_(true)
     , exportDataStarted_(false)
@@ -2447,6 +2448,9 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
     // split-stack or nosplit
     if (! disable_split_stack)
       fcn->addFnAttr("split-stack");
+
+    // allow elim frame pointer or not
+    fcn->addFnAttr("no-frame-pointer-elim", noFpElim_ ? "true" : "false");
 
     // no-return
     if (no_return)

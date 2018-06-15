@@ -436,6 +436,13 @@ bool CompileGoImpl::initBridge()
   bridge_->setTraceLevel(*tl);
   bridge_->setNoInline(args_.hasArg(gollvm::options::OPT_fno_inline));
 
+  // -f[no-]omit-frame-pointer
+  bool omitFp =
+      driver_.reconcileOptionPair(gollvm::options::OPT_fomit_frame_pointer,
+                                  gollvm::options::OPT_fno_omit_frame_pointer,
+                                  true);
+  bridge_->setNoFpElim(!omitFp);
+
   // Honor -fdebug-prefix=... option.
   for (const auto &arg : driver_.args().getAllArgValues(gollvm::options::OPT_fdebug_prefix_map_EQ))
     bridge_->addDebugPrefix(llvm::StringRef(arg).split('='));

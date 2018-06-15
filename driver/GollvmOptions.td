@@ -262,11 +262,17 @@ def fmath_errno : Flag<["-"], "fmath-errno">, Group<f_Group>,
 def fno_math_errno : Flag<["-"], "fno-math-errno">, Group<f_Group>,
   HelpText<"Do not require math functions to indicate errors by setting errno">;
 
+def fuse_init_array : Flag<["-"], "fuse-init-array">, Group<f_Group>,
+  HelpText<"Use .init_array instead of .ctors">;
+
 def fno_use_init_array : Flag<["-"], "fno-use-init-array">, Group<f_Group>,
   HelpText<"Don't use .init_array instead of .ctors">;
 
-def fuse_init_array : Flag<["-"], "fuse-init-array">, Group<f_Group>,
-  HelpText<"Use .init_array instead of .ctors">;
+def fomit_frame_pointer : Flag<["-"], "fomit-frame-pointer">, Group<f_Group>,
+  HelpText<"Allow elimination of frame pointer">;
+
+def fno_omit_frame_pointer : Flag<["-"], "fno-omit-frame-pointer">, Group<f_Group>,
+  HelpText<"Disallow elimination of frame pointer">;
 
 def fuse_ld_EQ : Joined<["-"], "fuse-ld=">, Group<f_Group>;
 
@@ -350,9 +356,6 @@ def fbounds_check : Flag<["-"], "fbounds-check">,
     Flags<[Ignored]>, HelpText<"This option is ignored">;
 
 def finline_functions : Flag<["-"], "finline-functions">,
-    Flags<[Ignored]>, HelpText<"This option is ignored">;
-
-def fomit_frame_pointer : Flag<["-"], "fomit-frame-pointer">,
     Flags<[Ignored]>, HelpText<"This option is ignored">;
 
 def funroll_loops : Flag<["-"], "funroll-loops">,
