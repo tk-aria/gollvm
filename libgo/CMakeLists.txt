@@ -443,7 +443,10 @@ endforeach()
 
 # Compiler flags for C files in the runtime.
 set(baseopts "-Wno-zero-length-array -fsplit-stack ")
-string(APPEND baseopts ${basedefines})
+foreach(def ${basedefines})
+  string(APPEND baseopts "${def} ")
+endforeach()
+string(APPEND baseopts "${GOLLVM_EXTRA_CFLAGS} ")
 
 # Object library based on libgo C code, PIC-compiled
 add_library(libgo_c_piclib OBJECT EXCLUDE_FROM_ALL ${runtimecpaths})
