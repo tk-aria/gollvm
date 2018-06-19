@@ -2,6 +2,29 @@
   "comments": [
     {
       "key": {
+        "uuid": "2f15eb61_28d0b0e2",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-06-19T15:31:07Z",
+      "side": 1,
+      "message": "This initially sounds to me that we will invoke clang and the helper program on the fly, on each invocation of llvm-goc with -march. Probably make it clearer that clang and the helper Go program is only used to generate the cpu feature table.",
+      "range": {
+        "startLine": 18,
+        "startChar": 0,
+        "endLine": 21,
+        "endChar": 74
+      },
+      "revId": "76d6e1c95261d722daf53c1e9a63be00b9fe7707",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "e1d92413_a74b1007",
         "filename": "driver/capture-fcn-attributes.go",
         "patchSetId": 3
@@ -13,6 +36,52 @@
       "writtenOn": "2018-06-19T14:03:26Z",
       "side": 1,
       "message": "Not related to this CL, but looking at this new file makes me wonder about copyright headers.  Do the files in this repo use an appropriate copyright header?",
+      "revId": "76d6e1c95261d722daf53c1e9a63be00b9fe7707",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f65758e4_bd53ed22",
+        "filename": "driver/capture-fcn-attributes.go",
+        "patchSetId": 3
+      },
+      "lineNbr": 80,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-06-19T15:31:07Z",
+      "side": 1,
+      "message": "Probably group in a var (...) block.",
+      "range": {
+        "startLine": 74,
+        "startChar": 0,
+        "endLine": 80,
+        "endChar": 24
+      },
+      "revId": "76d6e1c95261d722daf53c1e9a63be00b9fe7707",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0a28cd3d_47bf9902",
+        "filename": "driver/capture-fcn-attributes.go",
+        "patchSetId": 3
+      },
+      "lineNbr": 96,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-06-19T15:31:07Z",
+      "side": 1,
+      "message": "log.Fatalf",
+      "range": {
+        "startLine": 96,
+        "startChar": 1,
+        "endLine": 96,
+        "endChar": 22
+      },
       "revId": "76d6e1c95261d722daf53c1e9a63be00b9fe7707",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
@@ -219,6 +288,29 @@
       "writtenOn": "2018-06-19T14:03:26Z",
       "side": 1,
       "message": "Check scanner.Err().",
+      "revId": "76d6e1c95261d722daf53c1e9a63be00b9fe7707",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5107e3b9_e7fc728f",
+        "filename": "driver/capture-fcn-attributes.go",
+        "patchSetId": 3
+      },
+      "lineNbr": 458,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-06-19T15:31:07Z",
+      "side": 1,
+      "message": "Seems we only use variant 2, since if triple is not specified, we\u0027ll attach a default triple to it (line 542)?",
+      "range": {
+        "startLine": 454,
+        "startChar": 0,
+        "endLine": 458,
+        "endChar": 2
+      },
       "revId": "76d6e1c95261d722daf53c1e9a63be00b9fe7707",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
