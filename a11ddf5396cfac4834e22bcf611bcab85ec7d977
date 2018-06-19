@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "46958a49_5d5ff0b2",
+        "filename": "driver/capture-fcn-attributes.go",
+        "patchSetId": 5
+      },
+      "lineNbr": 207,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-06-19T20:07:12Z",
+      "side": 1,
+      "message": "This line seems no longer needed.",
+      "revId": "a11ddf5396cfac4834e22bcf611bcab85ec7d977",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0c743b6a_6e7e1816",
+        "filename": "driver/capture-fcn-attributes.go",
+        "patchSetId": 5
+      },
+      "lineNbr": 379,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-06-19T20:07:12Z",
+      "side": 1,
+      "message": "Now there is only one variant. Calling it \"Variant2\" is a bit weird. Maybe it\u0027s ok...",
+      "range": {
+        "startLine": 379,
+        "startChar": 12,
+        "endLine": 379,
+        "endChar": 20
+      },
+      "revId": "a11ddf5396cfac4834e22bcf611bcab85ec7d977",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
