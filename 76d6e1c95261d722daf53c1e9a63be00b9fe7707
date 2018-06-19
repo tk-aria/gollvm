@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "aadf931e_c1f41fb3",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-06-19T18:59:15Z",
+      "side": 1,
+      "message": "Agreed, this needs clarifying. I will update the commit msg and comments in the src.",
+      "parentUuid": "2f15eb61_28d0b0e2",
+      "range": {
+        "startLine": 18,
+        "startChar": 0,
+        "endLine": 21,
+        "endChar": 74
+      },
+      "revId": "76d6e1c95261d722daf53c1e9a63be00b9fe7707",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "e1d92413_a74b1007",
         "filename": "driver/capture-fcn-attributes.go",
         "patchSetId": 3
@@ -83,6 +107,30 @@
     },
     {
       "key": {
+        "uuid": "6908f551_b1edde6e",
+        "filename": "driver/capture-fcn-attributes.go",
+        "patchSetId": 3
+      },
+      "lineNbr": 80,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-06-19T18:59:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f65758e4_bd53ed22",
+      "range": {
+        "startLine": 74,
+        "startChar": 0,
+        "endLine": 80,
+        "endChar": 24
+      },
+      "revId": "76d6e1c95261d722daf53c1e9a63be00b9fe7707",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "0a28cd3d_47bf9902",
         "filename": "driver/capture-fcn-attributes.go",
         "patchSetId": 3
@@ -103,6 +151,30 @@
       "revId": "76d6e1c95261d722daf53c1e9a63be00b9fe7707",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fbe64740_e88a1610",
+        "filename": "driver/capture-fcn-attributes.go",
+        "patchSetId": 3
+      },
+      "lineNbr": 96,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-06-19T18:59:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0a28cd3d_47bf9902",
+      "range": {
+        "startLine": 96,
+        "startChar": 1,
+        "endLine": 96,
+        "endChar": 22
+      },
+      "revId": "76d6e1c95261d722daf53c1e9a63be00b9fe7707",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     },
     {
       "key": {
@@ -548,6 +620,30 @@
       "revId": "76d6e1c95261d722daf53c1e9a63be00b9fe7707",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a4990d7d_c73eabf0",
+        "filename": "driver/capture-fcn-attributes.go",
+        "patchSetId": 3
+      },
+      "lineNbr": 458,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-06-19T18:59:15Z",
+      "side": 1,
+      "message": "Fair enough. I\u0027ll remove the first variant... if for some reason things change later on and we need to revisit I can always revive it.",
+      "parentUuid": "5107e3b9_e7fc728f",
+      "range": {
+        "startLine": 454,
+        "startChar": 0,
+        "endLine": 458,
+        "endChar": 2
+      },
+      "revId": "76d6e1c95261d722daf53c1e9a63be00b9fe7707",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     },
     {
       "key": {
