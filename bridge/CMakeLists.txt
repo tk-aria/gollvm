@@ -1,4 +1,8 @@
 
+# Copyright 2018 The Go Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file.
+
 # Rules for building LLVMCppGoFrontEnd library, which incorporates
 # both the Go frontend and the frontend -> LLVM-IR bridge component.
 

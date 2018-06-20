@@ -1,37 +1,24 @@
-/* go-c.h -- Header file for go frontend gcc C interface.
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+//===-- go-c.h ------------------------------------------------------------===//
+//
+// Copyright 2018 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+//
+//===----------------------------------------------------------------------===//
+//
+// Header file included by gofrontend; provides definitions for FE routines such
+// as 'go_add_search_path', as well as the struct go_create_gogo_args.
 
-This file is part of GCC.
-
-GCC is free software; you can redistribute it and/or modify it under
-the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 3, or (at your option) any later
-version.
-
-GCC is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-for more details.
-
-You should have received a copy of the GNU General Public License
-along with GCC; see the file COPYING3.  If not see
-<http://www.gnu.org/licenses/>.  */
-
-#ifndef GO_GO_C_H
-#define GO_GO_C_H
+#ifndef LLVMGOFRONTEND_GO_C_H
+#define LLVMGOFRONTEND_GO_C_H
 
 #define GO_EXTERN_C
 
 class Linemap;
 class Backend;
 
-/* Functions defined in the Go frontend proper called by the GCC
-   interface.  */
-
-extern int go_enable_dump (const char*);
-extern int go_enable_optimize (const char*, int);
-
-extern void go_add_search_path (const char*);
+// Struct used to initialize gofrontend. Bridge creates an instance of this
+// struct and passes it to gofrontend as part of setup.
 
 struct go_create_gogo_args
 {
@@ -51,28 +38,20 @@ struct go_create_gogo_args
   int64_t nil_check_size_threshold;
 };
 
-extern void go_create_gogo (const struct go_create_gogo_args*);
-
-extern void go_parse_input_files (const char**, unsigned int,
-				  bool only_check_syntax,
-				  bool require_return_statement);
-extern void go_write_globals (void);
-
-/* Functions defined in the GCC interface called by the Go frontend
-   proper.  */
-
-// extern void go_preserve_from_gc (tree);
-
-extern bool saw_errors (void);
-
-extern const char *go_localize_identifier (const char*);
-
-// extern unsigned int go_field_alignment (tree);
-
-extern void go_imported_unsafe (void);
-
+// These are defined in gofrontend and called from the bridge.
+extern bool saw_errors(void);
+extern const char *go_localize_identifier(const char *);
 extern const char *go_read_export_data (int, off_t, char **, size_t *, int *);
+extern int go_enable_dump (const char*);
+extern int go_enable_optimize (const char*, int);
+extern void go_add_search_path(const char *);
+extern void go_create_gogo(const struct go_create_gogo_args *);
+extern void go_parse_input_files(const char **, unsigned int,
+                                 bool only_check_syntax,
+                                 bool require_return_statement);
+extern void go_write_globals(void);
 
-// extern GTY(()) tree go_non_zero_struct;
+// Defined in the bridge; called by gofrontend.
+extern void go_imported_unsafe(void);
 
-#endif /* !defined(GO_GO_C_H) */
+#endif /* !defined(LLVMGOFRONTEND_GO_C_H) */
