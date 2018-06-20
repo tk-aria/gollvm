@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "d969af87_04bfe676",
+        "filename": "driver/capture-fcn-attributes.go",
+        "patchSetId": 5
+      },
+      "lineNbr": 207,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-06-20T12:08:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "46958a49_5d5ff0b2",
+      "revId": "a11ddf5396cfac4834e22bcf611bcab85ec7d977",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "0c743b6a_6e7e1816",
         "filename": "driver/capture-fcn-attributes.go",
         "patchSetId": 5
@@ -39,6 +57,30 @@
       "revId": "a11ddf5396cfac4834e22bcf611bcab85ec7d977",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ee27e349_197a9cb7",
+        "filename": "driver/capture-fcn-attributes.go",
+        "patchSetId": 5
+      },
+      "lineNbr": 379,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-06-20T12:08:57Z",
+      "side": 1,
+      "message": "Fixed. I collapsed this into genCPUs().",
+      "parentUuid": "0c743b6a_6e7e1816",
+      "range": {
+        "startLine": 379,
+        "startChar": 12,
+        "endLine": 379,
+        "endChar": 20
+      },
+      "revId": "a11ddf5396cfac4834e22bcf611bcab85ec7d977",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
