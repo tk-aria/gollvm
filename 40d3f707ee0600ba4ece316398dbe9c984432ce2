@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9830d1d0_09b0aa36",
+        "filename": "LICENSE",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2018-06-20T16:45:59Z",
+      "side": 1,
+      "message": "You don\u0027t have to make this change, though it doesn\u0027t hurt.  It\u0027s up to you.  For example, the gc repository LICENSE file still says just 2009.",
+      "revId": "40d3f707ee0600ba4ece316398dbe9c984432ce2",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
