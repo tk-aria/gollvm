@@ -123,6 +123,10 @@ def D : JoinedOrSeparate<["-"], "D">, Group<CompileOnly_Group>,
     Flags<[Ignored]>, MetaVarName<"<macro>=<value>">,
     HelpText<"This option is ignored">;
 
+def isystem : JoinedOrSeparate<["-"], "isystem">, Group<CompileOnly_Group>,
+  Flags<[Ignored]>,
+  HelpText<"This option is ignored">, MetaVarName<"<directory>">;
+
 def O : Joined<["-"], "O">, Group<O_Group>,
     HelpText<"Set optimization level">;
 
