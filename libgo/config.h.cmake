@@ -43,7 +43,6 @@
 #cmakedefine HAVE_SYS_USER_H
 #cmakedefine HAVE_SYS_UTSNAME_H
 #cmakedefine HAVE_SYS_VFS_H
-#cmakedefine HAVE_USTAT_H
 #cmakedefine HAVE_UTIME_H
 
 /* Define to 1 if you have the `accept4' function. */
