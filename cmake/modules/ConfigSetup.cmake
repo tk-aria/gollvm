@@ -106,7 +106,6 @@ check_include_file(sys/user.h HAVE_SYS_USER_H)
 check_include_file(sys/utsname.h HAVE_SYS_UTSNAME_H)
 check_include_file(sys/vfs.h HAVE_SYS_VFS_H)
 check_include_file(syscall.h HAVE_SYSCALL_H)
-check_include_file(ustat.h HAVE_USTAT_H)
 check_include_file(utime.h HAVE_UTIME_H)
 
 # Checks for libraries
