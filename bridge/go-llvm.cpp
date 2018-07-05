@@ -3614,7 +3614,7 @@ void Llvm_backend::write_export_data(const char *bytes, unsigned int size)
 
   if (! exportDataStarted_) {
     exportDataStarted_ = true;
-    const char *preamble = "\t.section \".go_export\",\"e\",@progbits";
+    const char *preamble = "\t.section \".go_export\",\"\",@progbits";
     module().appendModuleInlineAsm(preamble);
   }
 
