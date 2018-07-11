@@ -31,9 +31,14 @@ Command::Command(const Action &srcAction,
 
 int Command::execute(std::string *errMsg)
 {
+  std::vector<llvm::StringRef> argv;
+  size_t n = arguments_.size() - 1;
+  argv.reserve(n);
+  for (size_t i = 0; i < n; ++i)
+    argv.push_back(arguments_[i]);
   return llvm::sys::ExecuteAndWait(executable_,
-                                   arguments_.data(),
-                                   /*env=*/nullptr,
+                                   argv,
+                                   /*env=*/llvm::None,
                                    /*Redirects*/{},
                                    /*secondsToWait=*/0,
                                    /*memoryLimit=*/0,
