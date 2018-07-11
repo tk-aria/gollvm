@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9ffdb623_0b69dc4d",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 28326
+      },
+      "writtenOn": "2018-07-11T23:33:04Z",
+      "side": 1,
+      "message": "Given the check below, this --sysroot flag is redundant, right?",
+      "revId": "ca8dc1f2b24c0f8ebf1d97a0b3a94690797c4fc9",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
