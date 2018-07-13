@@ -1449,7 +1449,8 @@ Llvm_backend::convertForAssignment(Btype *srcBType,
   bool dstCircFunc = isCircularFunctionType(dstToType);
   bool srcCircFunc = isCircularFunctionType(srcType);
   bool srcFuncPtr = isPtrToFuncType(srcType);
-  if ((srcPtrToFD || srcFuncPtr || srcCircFunc) && dstCircFunc) {
+  if (((srcPtrToFD || srcFuncPtr || srcCircFunc) && dstCircFunc) ||
+       (srcCircFunc && dstPtrToFD)) {
     std::string tag(namegen("cast"));
     llvm::Value *bitcast = builder->CreateBitCast(srcVal, dstToType, tag);
     return bitcast;
