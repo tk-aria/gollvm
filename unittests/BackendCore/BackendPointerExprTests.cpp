@@ -595,6 +595,7 @@ TEST(BackEndPointerExprTests, TestCircularFunctionTypes)
                                     L_RES, bi64t,
                                     L_END);
   Btype *pbefty2 = be->pointer_type(befty2);
+  be->set_placeholder_pointer_type(cft2, pbefty2);
   be->set_placeholder_pointer_type(pht2, cft2);
   BFunctionType *befty1 = mkFuncTyp(be,
                                     L_PARM, bi64t,
@@ -604,6 +605,7 @@ TEST(BackEndPointerExprTests, TestCircularFunctionTypes)
                                     L_RES, bi64t,
                                     L_END);
   Btype *pbefty1 = be->pointer_type(befty1);
+  be->set_placeholder_pointer_type(cft1, pbefty1);
   be->set_placeholder_pointer_type(pht1, cft1);
 
   // Local vars
