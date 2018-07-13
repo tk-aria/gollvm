@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "61756f06_5f0d118b",
+        "filename": "driver/GollvmOptions.td",
+        "patchSetId": 1
+      },
+      "lineNbr": 281,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-07-13T16:41:45Z",
+      "side": 1,
+      "message": "I think you\u0027ll want to get rid of the ignored flag here and below for -fno-show-column.",
+      "range": {
+        "startLine": 281,
+        "startChar": 4,
+        "endLine": 281,
+        "endChar": 20
+      },
+      "revId": "450d96b58622a93c87bb3f55d512da222bbba146",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
