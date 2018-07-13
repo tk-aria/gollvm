@@ -343,6 +343,9 @@ ToolChain *Driver::setup()
 
   // Issue an error if no inputs.
   if (! inputseen) {
+    if (args_.hasArg(gollvm::options::OPT_v) ||
+        args_.hasArg(gollvm::options::OPT__HASH_HASH_HASH))
+      exit(0);
     errs() << progname_ << ": error: no inputs\n";
     return nullptr;
   }
