@@ -351,9 +351,6 @@ class TypeManager {
   // function types created from placeholders.
   std::unordered_set<llvm::Type *> circularFunctionTypes_;
 
-  // Stack used to help with creation of circular function types.
-  std::vector<Btype *> circularFunctionStack_;
-
   // Name generation helper
   NameGen *nametags_;
 

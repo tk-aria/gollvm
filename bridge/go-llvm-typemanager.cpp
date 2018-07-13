@@ -676,49 +676,6 @@ TypeManager::functionType(const Btyped_identifier &receiver,
   // Install in cache
   anonTypes_.insert(rval);
 
-  // Handling for circular function types. The recipe used by the front
-  // end is something along the lines of
-  //
-  //     ph = backend()->placeholder_pointer_type(...)
-  //     cpt = backend()->circular_pointer_type(ph, true)
-  //     ft = <create function type involving cpt>
-  //     backend()->set_placeholder_pointer_type(ph, cpt)
-  //
-  // In the sequence above, the placeholder type ("ph") gets pushed
-  // onto the stack below during the call to circular_pointer_type(),
-  // then when the function type is created here in this routine, we
-  // pop the stack and retarget the placeholder to the new function.
-  //
-  if (circularFunctionStack_.size()) {
-    Btype *marker = circularFunctionStack_.back();
-    circularFunctionStack_.pop_back();
-    Btype *pht = circularFunctionStack_.back();
-    circularFunctionStack_.pop_back();
-
-    if (traceLevel() > 1) {
-      std::cerr << "\n^ finalizing placeholder pointer type "
-              << ((void*)pht) << " [llvm type "
-                << ((void*)pht->type()) << "]"
-                << " to point to circular function type "
-                       << ((void*) rval) << " [llvm type "
-                       << ((void*)llft) << "]\n";
-    }
-    Btype *pft = pointerType(rval);
-
-    // This placeholder type most likely has been redirected already,
-    // so re-insert it in the placeholder set (this is somewhat
-    // hacky).  The rationale for calling the general-purpose routine
-    // (setPlaceholderPointerType) here instead of just mutating the
-    // target of the pointer type is that there may be unresolved
-    // placeholders elsewhere in the function type (so we want to use
-    // the more general routine so as to get placeholder reference
-    // tracking).
-    placeholders_.insert(pht);
-    setPlaceholderPointerType(pht, pft);
-    placeholders_.insert(marker);
-    setPlaceholderPointerType(marker, pft);
-  }
-
   return rval;
 }
 
@@ -1277,8 +1234,6 @@ Btype *TypeManager::circularPointerType(Btype *placeholder, bool isfunc) {
     // update them when the appropriate function type is created.
     circularFunctionPlaceholderTypes_.insert(placeholder);
     circularFunctionTypes_.insert(rval->type());
-    circularFunctionStack_.push_back(placeholder);
-    circularFunctionStack_.push_back(rval);
   } else {
     // Set up to start tracking the types that will make up the
     // loop involved in the cycle.
