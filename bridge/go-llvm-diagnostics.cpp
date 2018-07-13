@@ -21,12 +21,8 @@
 //   since diagnostics are designed to be filtered or suppressed in
 //   many cases.
 
-static llvm::cl::opt<bool>
-NoColumn("fno-show-column",
-         llvm::cl::desc("Do not print column numbers in diagnostics."),
-         llvm::cl::init(false));
-
 bool go_no_warn = false;
+bool go_loc_show_column = true;
 
 static unsigned error_count = 0;
 
@@ -59,7 +55,7 @@ static void emitLoc(const Location loc)
   else {
     llvm::errs() << lm->location_file(loc) << ":"
                  << lm->location_line(loc);
-    if (!NoColumn)
+    if (go_loc_show_column)
       llvm::errs() << ":" << lm->location_column(loc);
   }
 }

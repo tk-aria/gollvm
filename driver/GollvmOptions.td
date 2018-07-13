@@ -277,10 +277,16 @@ def fomit_frame_pointer : Flag<["-"], "fomit-frame-pointer">, Group<f_Group>,
 def fno_omit_frame_pointer : Flag<["-"], "fno-omit-frame-pointer">, Group<f_Group>,
   HelpText<"Disallow elimination of frame pointer">;
 
+def fshow_column : Flag<["-"], "fshow-column">, Group<f_Group>,
+  HelpText<"Print column numbers in diagnostics">;
+
+def fno_show_column : Flag<["-"], "fno-show-column">, Group<f_Group>,
+  HelpText<"Do not print column numbers in diagnostics">;
+
 def fuse_ld_EQ : Joined<["-"], "fuse-ld=">, Group<f_Group>;
 
 def fdebug_prefix_map_EQ : Joined<["-"], "fdebug-prefix-map=">, Group<f_Group>,
-    HelpText<"remap file source paths in debug info">;
+  HelpText<"remap file source paths in debug info">;
 
 // Target-dependent "-m" options.
 
@@ -350,9 +356,6 @@ def fno_toplevel_reorder : Flag<["-"], "fno-toplevel-reorder">,
     Flags<[Ignored]>, HelpText<"This option is ignored">;
 
 def fno_diagnostics_show_caret : Flag<["-"], "fno-diagnostics-show-caret">,
-    Flags<[Ignored]>, HelpText<"This option is ignored">;
-
-def fno_show_column : Flag<["-"], "fno-show-column">,
     Flags<[Ignored]>, HelpText<"This option is ignored">;
 
 def fbounds_check : Flag<["-"], "fbounds-check">,

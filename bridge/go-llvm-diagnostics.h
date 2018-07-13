@@ -15,5 +15,6 @@
 
 extern bool go_be_saw_errors();
 extern bool go_no_warn;
+extern bool go_loc_show_column;
 
 #endif // !defined(GO_LLVM_DIAGNOSTICS_H)

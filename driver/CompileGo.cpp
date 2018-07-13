@@ -328,6 +328,10 @@ bool CompileGoImpl::setup()
   }
 
   go_no_warn = args_.hasArg(gollvm::options::OPT_w);
+  go_loc_show_column =
+      driver_.reconcileOptionPair(gollvm::options::OPT_fshow_column,
+                                  gollvm::options::OPT_fno_show_column,
+                                  true);
 
   TargetOptions Options;
 
