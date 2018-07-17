@@ -101,6 +101,7 @@ TEST(GoDumpSpecParserTests, MacroDefCycle) {
 TEST(GoDumpSpecParserTests, FunctionMacros) {
 
   const char *input = R"RAW_RESULT(
+    #define ISFUNC() 99
     #define FOO(x,y) x+y
     #define BLIX (7.8e-2*9.01e-8+.00001)<<4u
     #define GLIX() FOO(3,4)

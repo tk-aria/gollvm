@@ -37,6 +37,11 @@ int MacroParser::visitMacroLine(const std::string &line, unsigned lno)
   d.name = mac.substr(0, spos);
   d.body = mac.substr(spos+1);
 
+  // Don't try to process functions.
+  auto ppos = d.name.find('(');
+  if (ppos != std::string::npos)
+    return 0;
+
   // A collision here typically indicates that we have
   // a clash between a macro and an enum literal.
   auto it = macros_.find(d);
