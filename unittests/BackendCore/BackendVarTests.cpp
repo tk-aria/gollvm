@@ -725,7 +725,7 @@ TEST(BackendVarTests, MakeLocalWithDeclVar) {
   // Expect to see only one lifetime start, since A) loc1 is at the top
   // level, and B) loc2 uses loc1 as declVar.
   const char *expected = "@llvm.lifetime.start.p0i8(i64";
-  EXPECT_EQ(h.countInstancesInModuleDump(expected), 1);
+  EXPECT_EQ(h.countInstancesInModuleDump(expected), 1u);
 }
 
 }

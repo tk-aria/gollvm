@@ -264,7 +264,7 @@ class DetectorHarness {
       : triple_(trip),
         fs_(fileSystemContents),
         sysroot_(sysroot),
-        detector_(triple_, sysroot_, fs_)
+        detector_(triple_, "", sysroot_, fs_)
   {
     detector_.init();
   }
