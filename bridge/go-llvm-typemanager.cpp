@@ -976,7 +976,6 @@ bool TypeManager::setPlaceholderPointerType(Btype *placeholder,
   if (placeholder == errorType_ || to_type == errorType_)
     return false;
   assert(to_type->type()->isPointerTy());
-  assert(anonTypes_.find(placeholder) == anonTypes_.end());
   assert(placeholders_.find(placeholder) != placeholders_.end());
 
   // This function may be called by the frontend multiple times on the same
@@ -989,6 +988,8 @@ bool TypeManager::setPlaceholderPointerType(Btype *placeholder,
       circularPointerTypes_.find(placeholder->type()) == circularPointerTypes_.end() &&
       circularFunctionTypes_.find(placeholder->type()) == circularFunctionTypes_.end())
     return true;
+
+  assert(anonTypes_.find(placeholder) == anonTypes_.end());
 
   // For circular types, intercept the cycle with the marker type, so we
   // won't generate a self-referential type.
@@ -1033,7 +1034,8 @@ bool TypeManager::setPlaceholderPointerType(Btype *placeholder,
 
   // Update the target type for the pointer
   BPointerType *bpt = placeholder->castToBPointerType();
-  bpt->setToType(to_type);
+  BPointerType *ttpt = to_type->castToBPointerType();
+  bpt->setToType(ttpt->toType());
   bpt->setType(to_type->type());
 
   // Decide what to do next.
