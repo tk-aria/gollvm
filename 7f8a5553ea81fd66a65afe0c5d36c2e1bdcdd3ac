@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a9a28d48_b5f1f683",
+        "filename": "bridge/go-llvm-materialize.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 612,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-07-18T20:16:37Z",
+      "side": 1,
+      "message": "Might want to revise the comment -- the new clause 4 is more widely applicable, at least from my reading (applies to non-circular pointers as well).",
+      "revId": "7f8a5553ea81fd66a65afe0c5d36c2e1bdcdd3ac",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}

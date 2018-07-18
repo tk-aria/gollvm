@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f5749312_23e72fae",
+        "filename": "bridge/go-llvm-typemanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1802,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-07-18T20:16:37Z",
+      "side": 0,
+      "message": "It\u0027s good to see that you can get rid of this -- I had assumed that dibuilder.createReplaceableCompositeType was more or less required for circular pointer types, but it looks as though that was not in fact the case.",
+      "revId": "1e218f75042853a66c955751e6cd79cfeb9e4f38",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    }
+  ]
+}
