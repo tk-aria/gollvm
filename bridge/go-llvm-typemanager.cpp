@@ -1000,7 +1000,8 @@ bool TypeManager::setPlaceholderPointerType(Btype *placeholder,
       // Link the marker type with the concrete type.
       BPointerType *bpt = cpt->castToBPointerType();
       BPointerType *ttpt = to_type->castToBPointerType();
-      bpt->setToType(ttpt->toType());
+      Btype *elt = ttpt->toType();
+      bpt->setToType(elt);
 
       if (traceLevel() > 1) {
         std::cerr << "\n^ link circular pointer type "
@@ -1012,6 +1013,10 @@ bool TypeManager::setPlaceholderPointerType(Btype *placeholder,
         std::cerr << "marker: "; cpt->dump();
         std::cerr << "redir: "; to_type->dump();
       }
+
+      // Circular pointer type handling
+      circularConversionLoadMap_[cpt->type()] = elt;
+      circularConversionAddrMap_[elt->type()] = cpt;
 
       return setPlaceholderPointerType(placeholder, cpt);
     }
@@ -1049,44 +1054,6 @@ bool TypeManager::setPlaceholderPointerType(Btype *placeholder,
     // might refer to this one.
     placeholder->setPlaceholder(false);
     postProcessResolvedPlaceholder(placeholder);
-  }
-
-  // Circular pointer type handling
-
-  unsigned nct = circularPointerLoop_.size();
-  if (nct != 0) {
-    btpair p = circularPointerLoop_[0];
-    Btype *cplTT = p.second;
-    if (to_type == cplTT) {
-      // We've come to the end of a cycle of circular types (in the
-      // sense that we're back visiting the placeholder that initiated
-      // the loop). Record proper values for inserting conversions when
-      // we have operations on this this (load, addr).
-      btpair adPair = circularPointerLoop_[nct == 1 ? 0 : 1];
-      Btype *adConvPH = adPair.first;
-      Btype *adConvTT = adPair.second;
-      btpair loadPair = circularPointerLoop_.back();
-      Btype *loadConvTT = loadPair.second;
-      circularConversionLoadMap_[to_type] = loadConvTT;
-      circularConversionLoadMap_[placeholder] = loadConvTT;
-      circularConversionAddrMap_[adConvPH] = to_type;
-      circularConversionAddrMap_[adConvTT] = to_type;
-
-      if (traceLevel() > 1) {
-        std::cerr << "\n^ finished circular type loop of size " << nct
-                  << ": [" << ((void*) loadConvTT)
-                  << "," << ((void*) adConvPH)
-                  << "," << ((void*) adConvTT)
-                  << "] for to_type: [load, addrPH, addrTT]:\n";
-        loadConvTT->dump();
-        adConvPH->dump();
-        adConvTT->dump();
-      }
-      circularPointerLoop_.clear();
-    } else {
-      if (! isCircularFunctionType(placeholder))
-        circularPointerLoop_.push_back(std::make_pair(placeholder, to_type));
-    }
   }
 
   return true;
@@ -1266,8 +1233,6 @@ Btype *TypeManager::circularPointerType(Btype *placeholder, bool isfunc) {
     // Set up to start tracking the types that will make up the
     // loop involved in the cycle.
     circularPointerTypes_.insert(circ_typ);
-    assert(circularPointerLoop_.size() == 0);
-    circularPointerLoop_.push_back(std::make_pair(placeholder, rval));
   }
 
   if (traceLevel() > 1) {
@@ -1313,12 +1278,12 @@ bool TypeManager::isCircularPointerType(llvm::Type *typ) {
 }
 
 Btype *TypeManager::circularTypeLoadConversion(Btype *typ) {
-  auto it = circularConversionLoadMap_.find(typ);
+  auto it = circularConversionLoadMap_.find(typ->type());
   return it != circularConversionLoadMap_.end()  ? it->second : nullptr;
 }
 
 Btype *TypeManager::circularTypeAddrConversion(Btype *typ) {
-  auto it = circularConversionAddrMap_.find(typ);
+  auto it = circularConversionAddrMap_.find(typ->type());
   if (it != circularConversionAddrMap_.end())
     return it->second;
   return nullptr;
@@ -1799,49 +1764,6 @@ TypeManager::typToStringRec(Btype *typ, std::map<Btype *, std::string> &smap)
   return ss.str();
 }
 
-llvm::DIType *TypeManager::buildCircularPointerDIType(Btype *typ,
-                                                      DIBuildHelper &helper)
-{
-  auto rnit = revNames_.find(typ);
-  if (rnit != revNames_.end())
-    typ = rnit->second;
-
-  std::unordered_map<Btype *, llvm::DIType*> &typeCache = helper.typeCache();
-  auto tcit = typeCache.find(typ);
-  if (tcit != typeCache.end() && tcit->second != nullptr)
-    return tcit->second;
-
-  // Create replaceable placeholder
-  llvm::DIBuilder &dibuilder = helper.dibuilder();
-  unsigned tag = llvm::dwarf::DW_TAG_structure_type;
-  llvm::DIScope *scope = helper.moduleScope();
-  llvm::DIFile *file = helper.diFileFromLocation(typ->location());
-  unsigned lineNumber = helper.linemap()->location_line(typ->location());
-  llvm::DICompositeType *placeholder =
-      dibuilder.createReplaceableCompositeType(tag, typToString(typ),
-                                               scope, file, lineNumber);
-  typeCache[typ] = placeholder;
-
-  // Convert what it points to
-  Btype *toType = circularTypeLoadConversion(typ);
-  if (!toType)
-    toType = typ->castToBPointerType()->toType();
-  llvm::DIType *toDIType = buildCircularPointerDIType(toType, helper);
-
-  // Now create final pointer type.
-  uint64_t bits = datalayout_->getPointerSizeInBits();
-  llvm::DIType *result = dibuilder.createPointerType(toDIType, bits);
-
-  // Replace the temp
-  dibuilder.replaceTemporary(llvm::TempDIType(placeholder), result);
-
-  // Update cache
-  typeCache[typ] = result;
-
-  // Done.
-  return result;
-}
-
 llvm::DIType *TypeManager::buildStructDIType(BStructType *bst,
                                              DIBuildHelper &helper)
 {
@@ -1986,15 +1908,9 @@ llvm::DIType *TypeManager::buildDIType(Btype *typ, DIBuildHelper &helper)
       if (bpt->isPlaceholder())
         return buildDIType(pointerType(voidType()), helper);
 
-      // Special case for circular pointer types
-      auto cpit = circularPointerTypes_.find(typ->type());
-      if (cpit != circularPointerTypes_.end()) {
-        rval = buildCircularPointerDIType(typ, helper);
-        break;
-      }
       assert(bpt->toType() != nullptr);
 
-      // Similarly, if we're pointing to something unresolved, be
+      // If we're pointing to something unresolved, be
       // conservative.
       if (bpt->toType()->isPlaceholder())
         return buildDIType(pointerType(voidType()), helper);

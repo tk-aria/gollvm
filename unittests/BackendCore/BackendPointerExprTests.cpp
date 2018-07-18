@@ -248,7 +248,8 @@ TEST(BackEndPointerExprTests, CircularPointerExpressions1) {
   // Create circular pointer type
   Btype *pht = be->placeholder_pointer_type("ph", loc, false);
   Btype *cpt = be->circular_pointer_type(pht, false);
-  be->set_placeholder_pointer_type(pht, cpt);
+  Btype *pcpt = be->pointer_type(cpt);
+  be->set_placeholder_pointer_type(pht, pcpt);
   EXPECT_EQ(pht->type(), cpt->type());
 
   // Local vars
@@ -325,18 +326,18 @@ TEST(BackEndPointerExprTests, CircularPointerExpressions1) {
   %icmp.0 = icmp eq %CPT.0* %cpv1.ld.0, %.ld.0
   %zext.0 = zext i1 %icmp.0 to i8
   store i8 %zext.0, i8* %b1
-  %cast.3 = bitcast %CPT.0** %cpv1 to %CPT.0*
   %cpv2.ld.1 = load %CPT.0*, %CPT.0** %cpv2
-  %icmp.1 = icmp eq %CPT.0* %cast.3, %cpv2.ld.1
+  %cast.3 = bitcast %CPT.0* %cpv2.ld.1 to %CPT.0**
+  %icmp.1 = icmp eq %CPT.0** %cpv1, %cast.3
   %zext.1 = zext i1 %icmp.1 to i8
   store i8 %zext.1, i8* %b2
   %cpv1.ld.1 = load %CPT.0*, %CPT.0** %cpv1
-  %cast.5 = bitcast %CPT.0** %cpv2 to %CPT.0***
-  %cpv2.ld.2 = load %CPT.0**, %CPT.0*** %cast.5
-  %cast.6 = bitcast %CPT.0** %cpv2.ld.2 to %CPT.0***
-  %deref.ld.0 = load %CPT.0**, %CPT.0*** %cast.6
-  %cast.7 = bitcast %CPT.0** %deref.ld.0 to %CPT.0***
-  %deref.ld.1 = load %CPT.0**, %CPT.0*** %cast.7
+  %cast.4 = bitcast %CPT.0** %cpv2 to %CPT.0***
+  %cpv2.ld.2 = load %CPT.0**, %CPT.0*** %cast.4
+  %cast.5 = bitcast %CPT.0** %cpv2.ld.2 to %CPT.0***
+  %deref.ld.0 = load %CPT.0**, %CPT.0*** %cast.5
+  %cast.6 = bitcast %CPT.0** %deref.ld.0 to %CPT.0***
+  %deref.ld.1 = load %CPT.0**, %CPT.0*** %cast.6
   %.ld.1 = load %CPT.0*, %CPT.0** %deref.ld.1
   %icmp.2 = icmp eq %CPT.0* %cpv1.ld.1, %.ld.1
   %zext.2 = zext i1 %icmp.2 to i8
@@ -372,8 +373,9 @@ TEST(BackEndPointerExprTests, CircularPointerExpressions2) {
   Btype *pht1 = be->placeholder_pointer_type("ph1", loc, false);
   Btype *pht2 = be->placeholder_pointer_type("ph2", loc, false);
   Btype *cpt = be->circular_pointer_type(pht1, false);
-  be->set_placeholder_pointer_type(pht2, be->pointer_type(cpt));
-  be->set_placeholder_pointer_type(pht1, cpt);
+  Btype *pcpt = be->pointer_type(cpt);
+  be->set_placeholder_pointer_type(pht2, pcpt);
+  be->set_placeholder_pointer_type(pht1, be->pointer_type(pcpt));
 
   // Local vars
   Bvariable *cpv1 = h.mkLocal("x", pht1);
