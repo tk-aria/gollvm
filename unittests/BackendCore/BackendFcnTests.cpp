@@ -195,7 +195,7 @@ TEST(BackendFcnTests, MakeFuncWithRecursiveTypeParam) {
   // type P *P
   Btype *cpht = be->placeholder_pointer_type("ph", loc, false);
   Btype *cpt = be->circular_pointer_type(cpht, false);
-  be->set_placeholder_pointer_type(cpht, cpt);
+  be->set_placeholder_pointer_type(cpht, be->pointer_type(cpt));
 
   // struct A { f2 bool, fn *A }
   Btype *php = be->placeholder_pointer_type("ph", loc, false);

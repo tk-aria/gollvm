@@ -610,23 +610,17 @@ Llvm_backend::convertForBinary(Operator op,
   }
 
   // Case 4: circular pointer type (ex: type T *T; var p, q T; p == &q)
+  // We check that if both are pointer types and pointing to the same type,
+  // insert a cast (it doesn't matter we cast which one).
   if (leftType->isPointerTy() && rightType->isPointerTy()) {
     BPointerType *lbpt = left->btype()->castToBPointerType();
-    Btype *lctypconv = circularTypeAddrConversion(lbpt->toType());
-    if (lctypconv != nullptr) {
-      std::string tag(namegen("cast"));
-      BexprLIRBuilder builder(context_, left);
-      llvm::Value *bitcast = builder.CreateBitCast(leftVal, lctypconv->type(), tag);
-      rval.first = bitcast;
-    }
-
     BPointerType *rbpt = right->btype()->castToBPointerType();
-    Btype *rctypconv = circularTypeAddrConversion(rbpt->toType());
-    if (rctypconv != nullptr) {
-      std::string tag(namegen("cast"));
+    if (lbpt->toType()->type() == rbpt->toType()->type()) {
       BexprLIRBuilder builder(context_, right);
-      llvm::Value *bitcast = builder.CreateBitCast(rightVal, rctypconv->type(), tag);
+      std::string tag(namegen("cast"));
+      llvm::Value *bitcast = builder.CreateBitCast(rightVal, leftType, tag);
       rval.second = bitcast;
+      return rval;
     }
   }
 

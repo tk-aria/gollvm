@@ -262,8 +262,6 @@ class TypeManager {
 
   llvm::DIType *buildStructDIType(BStructType *bst, DIBuildHelper &helper);
 
-  llvm::DIType *buildCircularPointerDIType(Btype *typ, DIBuildHelper &helper);
-
   std::vector<Btyped_identifier>
   sanitizeFields(const std::vector<Btyped_identifier> &fields);
 
@@ -335,13 +333,8 @@ class TypeManager {
   std::unordered_map<Btype *, Btype *> circularPointerTypeMap_;
 
   // Maps for inserting conversions involving circular pointers.
-  std::unordered_map<Btype *, Btype *> circularConversionLoadMap_;
-  std::unordered_map<Btype *, Btype *> circularConversionAddrMap_;
-
-  // For storing the pointers involved in a circular pointer type loop.
-  // Temporary; filled in only during processing of the loop.
-  typedef std::pair<Btype *, Btype *> btpair;
-  std::vector<btpair> circularPointerLoop_;
+  std::unordered_map<llvm::Type *, Btype *> circularConversionLoadMap_;
+  std::unordered_map<llvm::Type *, Btype *> circularConversionAddrMap_;
 
   // Set of top-level circular function types.
   std::unordered_set<Btype *> circularFunctionPlaceholderTypes_;
