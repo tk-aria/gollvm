@@ -16,6 +16,24 @@
       "revId": "1e218f75042853a66c955751e6cd79cfeb9e4f38",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f812887c_b4623c0a",
+        "filename": "bridge/go-llvm-typemanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1802,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-07-19T16:31:15Z",
+      "side": 0,
+      "message": "Using dibuilder.createReplaceableCompositeType will build an actual circular data structure for the type representation, like\n\n!9 \u003d distinct !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !9, size: 64)\n\nwhich crashes gdb. (You are probably right that dibuilder.createReplaceableCompositeType is needed in order to do that.)",
+      "parentUuid": "f5749312_23e72fae",
+      "revId": "1e218f75042853a66c955751e6cd79cfeb9e4f38",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }

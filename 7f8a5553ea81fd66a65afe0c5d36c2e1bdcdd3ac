@@ -16,6 +16,24 @@
       "revId": "7f8a5553ea81fd66a65afe0c5d36c2e1bdcdd3ac",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ab484532_36425f31",
+        "filename": "bridge/go-llvm-materialize.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 612,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-07-19T16:31:15Z",
+      "side": 1,
+      "message": "Done.\n\nThis probably happens mostly only with circular types, since with acyclic types the two sides\u0027 types would likely be equal at first place.",
+      "parentUuid": "a9a28d48_b5f1f683",
+      "revId": "7f8a5553ea81fd66a65afe0c5d36c2e1bdcdd3ac",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
