@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c1107953_6249f648",
+        "filename": "README.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2018-08-01T18:42:05Z",
+      "side": 1,
+      "message": "/3.6 vintage/3.6 or later/ ?",
+      "range": {
+        "startLine": 69,
+        "startChar": 68,
+        "endLine": 69,
+        "endChar": 75
+      },
+      "revId": "02a0d3dbdb8ebac24f45119e71b01bf92bef077d",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "493a9249_0f2bae90",
+        "filename": "README.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 142,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2018-08-01T18:42:05Z",
+      "side": 1,
+      "message": "Trailing space.\n\nAlso below.",
+      "revId": "02a0d3dbdb8ebac24f45119e71b01bf92bef077d",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
