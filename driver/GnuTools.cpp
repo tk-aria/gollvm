@@ -366,20 +366,6 @@ bool Linker::constructCommand(Compilation &compilation,
   // Add -m flag.
   addLDM(cmdArgs);
 
-  // FIXME: common this up with the assembler sequence above.
-  // Support for compressed debug.
-  llvm::opt::Arg *gzarg = args.getLastArg(gollvm::options::OPT_gz,
-                                          gollvm::options::OPT_gz_EQ);
-  if (gzarg != nullptr) {
-    if (gzarg->getOption().matches(gollvm::options::OPT_gz)) {
-      cmdArgs.push_back("-compress-debug-sections");
-    } else {
-      std::string cds("-compress-debug-sections=");
-      cds += gzarg->getValue();
-      cmdArgs.push_back(args.MakeArgString(cds));
-    }
-  }
-
   // Pick up correct directory for Go libraries.
   std::string golib("-L");
   golib += toolchain().driver().installedLibDir();
