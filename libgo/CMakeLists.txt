@@ -196,6 +196,8 @@ set(runtime_internal_atomic_check_gocflags "-fgo-compiling-runtime")
 set(runtime_internal_sys_gocflags "-fgo-compiling-runtime")
 set(runtime_internal_sys_check_gocflags "-fgo-compiling-runtime")
 
+set(runtime_pprof_check_gocflags "-fno-inline" "-static-libgo")
+
 #........................................................................
 
 # Rules for version.go
