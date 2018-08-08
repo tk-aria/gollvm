@@ -1235,7 +1235,8 @@ static int visitObjectFile(const std::string &infile,
     return 1;
   }
 
-  DWARFCompileUnit *cu = ostate.dwctxt_->getCompileUnitAtIndex(0);
+  DWARFCompileUnit *cu =
+      cast<DWARFCompileUnit>(ostate.dwctxt_->getUnitAtIndex(0));
   state.readDwarf(cu);
 
   return 0;
