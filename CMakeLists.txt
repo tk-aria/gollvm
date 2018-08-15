@@ -128,3 +128,5 @@ add_subdirectory(gotools)
 # Subdir for unit tests
 add_subdirectory(unittests)
 
+# Top-level check target for gollvm
+add_custom_target(check-gollvm DEPENDS check-libgo check-gotools)
