@@ -68,6 +68,7 @@ TEST(BackendCABIOracleTests, Extended) {
   Btype *bi16t = be->integer_type(false, 16);
   Btype *bf32t = be->float_type(32);
   Btype *bf64t = be->float_type(64);
+  Btype *bpu64t = be->pointer_type(bu64t);
   Btype *bpf64t = be->pointer_type(bf64t);
   Btype *st0 = mkBackendStruct(be, nullptr);
   Btype *st1 = mkBackendStruct(be, bi8t, "a", bu8t, "b", bf32t, "c", nullptr);
@@ -79,6 +80,10 @@ TEST(BackendCABIOracleTests, Extended) {
                                bu64t, "c", nullptr);
   Btype *st7 = mkBackendStruct(be, bf32t, "f1", bu32t, "f2", nullptr);
   Btype *st8 = mkBackendStruct(be, bi8t, "f1", bi16t, "f2", st7, "f3", nullptr);
+  Btype *stii = mkBackendStruct(be, bu64t, "a", bu64t, "b", nullptr);
+  Btype *stip = mkBackendStruct(be, bu64t, "a", bpu64t, "b", nullptr);
+  Btype *stpi = mkBackendStruct(be, bpu64t, "a", bu64t, "b", nullptr);
+  Btype *stpp = mkBackendStruct(be, bpu64t, "a", bpu64t, "b", nullptr);
   Btype *at0 = be->array_type(bu32t, mkInt64Const(be, int64_t(0)));
   Btype *at1 = be->array_type(bu32t, mkInt64Const(be, int64_t(1)));
   Btype *at2 = be->array_type(bu32t, mkInt64Const(be, int64_t(3)));
@@ -182,6 +187,16 @@ TEST(BackendCABIOracleTests, Extended) {
              "Param 1: Direct AttrNest { i8* } sigOffset: 0 "
              "Param 2: Direct { i64, i64 } sigOffset: 1",
              "{ i64, i32 } (i8*, i64, i64)"),
+
+    // 12
+    // Make sure pointerness is preserved.
+    FcnItem( { stip }, { stii, stpp, stpi },
+             "Return: Direct { { i64, i8* } } sigOffset: -1 "
+             "Param 1: Direct AttrNest { i8* } sigOffset: 0 "
+             "Param 2: Direct { i64, i64 } sigOffset: 1 "
+             "Param 3: Direct { i8*, i8* } sigOffset: 3 "
+             "Param 4: Direct { i8*, i64 } sigOffset: 5",
+             "{ i64, i8* } (i8*, i64, i64, i8*, i8*, i8*, i64)"),
   };
 
   unsigned count = 1;

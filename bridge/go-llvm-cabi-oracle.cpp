@@ -372,13 +372,20 @@ void EightByteInfo::determineABITypes()
       unsigned bytes = ebr.offsets[nel-1] - ebr.offsets[0] +
           tm()->llvmTypeSize(ebr.types[nel-1]);
       assert(bytes && bytes <= 8);
-      ebr.abiDirectType = tm()->llvmArbitraryIntegerType(bytes);
+      // Preserve pointerness for the use of GC.
+      // TODO: this assumes pointer is 8 byte, so we never pack pointer
+      // and other stuff together.
+      if (ebr.types[0]->isPointerTy())
+        ebr.abiDirectType = tm()->llvmPtrType();
+      else
+        ebr.abiDirectType = tm()->llvmArbitraryIntegerType(bytes);
       intRegions += 1;
     }
   }
 
   // See the example above for more on why this is needed.
-  if (intRegions == 2)
+  if (intRegions == 2 &&
+      ebrs_[0].abiDirectType->isIntegerTy())
     ebrs_[0].abiDirectType = tm()->llvmArbitraryIntegerType(8);
   else if (floatRegions == 2 &&
            ebrs_[0].abiDirectType == tm()->llvmFloatType())
