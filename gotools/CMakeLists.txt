@@ -107,7 +107,8 @@ file(REMOVE ${rungoctmp})
 file(WRITE ${rungoctmp} "#!/bin/sh\n")
 file(APPEND ${rungoctmp} "exec ${gocompiler} \"$@\"")
 file(APPEND ${rungoctmp} " -I ${libgo_binroot}")
-file(APPEND ${rungoctmp} " -L ${libgo_binroot}\n")
+file(APPEND ${rungoctmp} " -L ${libgo_binroot}")
+file(APPEND ${rungoctmp} " ${gotools_extra_gocflags}\n")
 
 # Copy with correct perms.
 file(COPY ${rungoctmp}
