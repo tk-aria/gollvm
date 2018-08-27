@@ -582,7 +582,7 @@ foreach( pack ${checkpackages})
     "FILES" ${packsrcs}
     "GOOS" ${goos}
     "GOARCH" ${goarch}
-    "GC" ${gocompiler} "-L" ${libgo_binroot} ${packopts}
+    "GC" ${gocompiler} "-L" ${libgo_binroot} ${packopts} ${libgo_extra_gocflags}
     "GOLIBS" ${packlibs} ${extralibs}
     "BINDIR" "${libgo_binroot}"
     "BASEDIR" "${libgo_srcroot}"
