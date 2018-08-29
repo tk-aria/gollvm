@@ -598,6 +598,8 @@ TEST(BackendStmtTests, TestExceptionHandlingStmt) {
   Bfunction *func = h.mkFunction("baz", befty);
   Btype *bi64t = be->integer_type(false, 64);
   Bvariable *loc1 = h.mkLocal("x", bi64t);
+  Btype *bi8t = be->integer_type(false, 8);
+  Bvariable *loc2 = h.mkLocal("y", bi8t);
   BFunctionType *befty2 = mkFuncTyp(be,
                                     L_PARM, bi64t,
                                     L_RES, bi64t,
@@ -606,10 +608,10 @@ TEST(BackendStmtTests, TestExceptionHandlingStmt) {
   bool is_decl = true; bool is_inl = false;
   bool is_vis = true; bool is_split = true;
   bool is_noret = false; bool is_uniqsec = false;
-  const char *fnames[] = { "plark", "plix", "ohstopit" };
-  Bfunction *fcns[4];
-  Bexpression *calls[4];
-  for (unsigned ii = 0; ii < 3; ++ii)  {
+  const char *fnames[] = { "plark", "plix" };
+  Bfunction *fcns[3];
+  Bexpression *calls[3];
+  for (unsigned ii = 0; ii < 2; ++ii)  {
     fcns[ii] = be->function(befty, fnames[ii], fnames[ii],
                             is_vis, is_decl, is_inl, is_split,
                             is_noret, is_uniqsec, h.newloc());
@@ -618,13 +620,13 @@ TEST(BackendStmtTests, TestExceptionHandlingStmt) {
     calls[ii] = be->call_expression(func, pfn, args,
                                     nullptr, h.newloc());
   }
-  fcns[3] = be->function(befty2, "id", "id",
+  fcns[2] = be->function(befty2, "id", "id",
                          is_vis, is_decl, is_inl, is_split,
                          is_noret, is_uniqsec, h.newloc());
-  Bexpression *idfn = be->function_code_expression(fcns[3], h.newloc());
+  Bexpression *idfn = be->function_code_expression(fcns[2], h.newloc());
   std::vector<Bexpression *> iargs;
   iargs.push_back(mkInt64Const(be, 99));
-  calls[3] = be->call_expression(func, idfn, iargs,
+  calls[2] = be->call_expression(func, idfn, iargs,
                                  nullptr, h.newloc());
 
   // body:
@@ -633,7 +635,7 @@ TEST(BackendStmtTests, TestExceptionHandlingStmt) {
   // x = 123
   Bexpression *ve1 = be->var_expression(loc1, h.newloc());
   Bstatement *as1 =
-      be->assignment_statement(func, ve1, calls[3], h.newloc());
+      be->assignment_statement(func, ve1, calls[2], h.newloc());
   Bblock *bb1 = mkBlockFromStmt(be, func, as1);
   addStmtToBlock(be, bb1, h.mkExprStmt(calls[0], FcnTestHarness::NoAppend));
   Bexpression *ve2 = be->var_expression(loc1, h.newloc());
@@ -647,8 +649,8 @@ TEST(BackendStmtTests, TestExceptionHandlingStmt) {
   Bstatement *catchst = h.mkExprStmt(calls[1], FcnTestHarness::NoAppend);
 
   // finally:
-  // ohstopit()
-  Bstatement *finally = h.mkExprStmt(calls[2], FcnTestHarness::NoAppend);
+  // defer statement like above
+  Bstatement *finally = CreateDeferStmt(be, h, func, loc2);
 
   // Now exception statement
   Bstatement *est =
@@ -664,54 +666,73 @@ define void @baz(i8* nest %nest.0) #0 personality i32 (i32, i32, i64, i8*, i8*)*
 entry:
   %ehtmp.0 = alloca { i8*, i32 }
   %x = alloca i64
+  %y = alloca i8
   %finvar.0 = alloca i8
   store i64 0, i64* %x
+  store i8 0, i8* %y
   %call.0 = invoke i64 @id(i8* nest undef, i64 99)
-          to label %cont.0 unwind label %pad.0
+          to label %cont.1 unwind label %pad.1
 
-finok.0:                                          ; preds = %cont.2, %cont.1
+finok.0:                                          ; preds = %cont.3
   store i8 1, i8* %finvar.0
   br label %finally.0
 
 finally.0:                                        ; preds = %catchpad.0, %finok.0
-  call void @ohstopit(i8* nest undef)
-  %fload.0 = load i8, i8* %finvar.0
-  %icmp.0 = icmp eq i8 %fload.0, 1
-  br i1 %icmp.0, label %finret.0, label %finres.0
+  br label %finish.0
 
-pad.0:                                            ; preds = %cont.0, %entry
+pad.0:                                            ; preds = %cont.2, %finish.0
   %ex.0 = landingpad { i8*, i32 }
           catch i8* null
   br label %catch.0
 
-cont.0:                                           ; preds = %entry
-  store i64 %call.0, i64* %x
-  invoke void @plark(i8* nest undef)
-          to label %cont.1 unwind label %pad.0
+catch.0:                                          ; preds = %pad.0
+  call void @checkdefer(i8* nest undef, i8* %y)
+  br label %finish.0
 
-cont.1:                                           ; preds = %cont.0
-  store i64 123, i64* %x
-  br label %finok.0
+finish.0:                                         ; preds = %catch.0, %finally.0
+  invoke void @deferreturn(i8* nest undef, i8* %y)
+          to label %cont.0 unwind label %pad.0
 
-catchpad.0:                                       ; preds = %catch.0
+cont.0:                                           ; preds = %cont.2, %finish.0
+  %fload.0 = load i8, i8* %finvar.0
+  %icmp.0 = icmp eq i8 %fload.0, 1
+  br i1 %icmp.0, label %finret.0, label %finres.0
+
+pad.1:                                            ; preds = %cont.1, %entry
+  %ex.1 = landingpad { i8*, i32 }
+          catch i8* null
+  br label %catch.1
+
+catch.1:                                          ; preds = %pad.1
+  invoke void @plix(i8* nest undef)
+          to label %cont.3 unwind label %catchpad.0
+
+catchpad.0:                                       ; preds = %catch.1
   %ex2.0 = landingpad { i8*, i32 }
           cleanup
   store { i8*, i32 } %ex2.0, { i8*, i32 }* %ehtmp.0
   store i8 0, i8* %finvar.0
   br label %finally.0
 
-catch.0:                                          ; preds = %pad.0
-  invoke void @plix(i8* nest undef)
-          to label %cont.2 unwind label %catchpad.0
+cont.1:                                           ; preds = %entry
+  store i64 %call.0, i64* %x
+  invoke void @plark(i8* nest undef)
+          to label %cont.2 unwind label %pad.1
 
-cont.2:                                           ; preds = %catch.0
+cont.2:                                           ; preds = %cont.1
+  store i64 123, i64* %x
+  store i8 1, i8* %finvar.0
+  invoke void @deferreturn(i8* nest undef, i8* %y)
+          to label %cont.0 unwind label %pad.0
+
+cont.3:                                           ; preds = %catch.1
   br label %finok.0
 
-finres.0:                                         ; preds = %finally.0
+finres.0:                                         ; preds = %cont.0
   %excv.0 = load { i8*, i32 }, { i8*, i32 }* %ehtmp.0
   resume { i8*, i32 } %excv.0
 
-finret.0:                                         ; preds = %finally.0
+finret.0:                                         ; preds = %cont.0
   ret void
 }
    )RAW_RESULT";
@@ -758,6 +779,8 @@ TEST(BackendStmtTests, TestExceptionHandlingStmtWithReturns) {
                                 is_vis, is_decl, is_inl, is_split,
                                 is_noret, is_uniqsec, h.newloc());
   Bexpression *splfn = be->function_code_expression(sfn, h.newloc());
+  Btype *bi8t = be->integer_type(false, 8);
+  Bvariable *loc1 = h.mkLocal("x", bi8t);
 
   // body:
   // if splat(99) == 88 {
@@ -789,37 +812,19 @@ TEST(BackendStmtTests, TestExceptionHandlingStmtWithReturns) {
   }
 
   // catch:
-  // return splat(13)
+  // splat(13)
   Bstatement *catchst = nullptr;
   {
     std::vector<Bexpression *> args;
     args.push_back(mkInt64Const(be, 13));
     Bexpression *splcall = be->call_expression(func, splfn, args,
                                                nullptr, h.newloc());
-    catchst = mkMemReturn(be, func, rtmp, splcall);
+    catchst = h.mkExprStmt(splcall, FcnTestHarness::NoAppend);
   }
 
   // finally:
-  // if splat(987) == 2 {
-  //   return 9
-  // }
-  Bstatement *finally = nullptr;
-  {
-    std::vector<Bexpression *> args;
-    args.push_back(mkInt64Const(be, 987));
-    Bexpression *splcall = be->call_expression(func, splfn, args,
-                                               nullptr, h.newloc());
-    Bexpression *eq = be->binary_expression(OPERATOR_EQEQ,
-                                            splcall,
-                                            mkInt64Const(be, 2),
-                                            h.loc());
-    Bstatement *ret9 = mkMemReturn(be, func, rtmp, mkInt64Const(be, 9));
-    Bblock *thenblock = mkBlockFromStmt(be, func, ret9);
-    Bblock *elseblock = nullptr;
-    Bstatement *ifst = be->if_statement(func, eq,
-                                      thenblock, elseblock, h.newloc());
-    finally = ifst;
-  }
+  // defer statement like above
+  Bstatement *finally = CreateDeferStmt(be, h, func, loc1);
 
   // Now exception statement
   Bstatement *est =
@@ -835,76 +840,82 @@ entry:
   %ehtmp.0 = alloca { i8*, i32 }
   %p0.addr = alloca i64
   %ret = alloca i64
+  %x = alloca i8
   %finvar.0 = alloca i8
   store i64 %p0, i64* %p0.addr
   store i64 0, i64* %ret
+  store i8 0, i8* %x
   %call.0 = invoke i64 @splat(i8* nest undef, i64 99)
-          to label %cont.0 unwind label %pad.0
+          to label %cont.1 unwind label %pad.1
 
-finok.0:                                          ; preds = %cont.1, %else.0, %then.0
+finok.0:                                          ; preds = %cont.2
   store i8 1, i8* %finvar.0
   br label %finally.0
 
 finally.0:                                        ; preds = %catchpad.0, %finok.0
-  %call.2 = call i64 @splat(i8* nest undef, i64 987)
-  %icmp.1 = icmp eq i64 %call.2, 2
-  %zext.1 = zext i1 %icmp.1 to i8
-  %trunc.1 = trunc i8 %zext.1 to i1
-  br i1 %trunc.1, label %then.1, label %else.1
+  br label %finish.0
 
-pad.0:                                            ; preds = %entry
+pad.0:                                            ; preds = %else.0, %then.0, %finish.0
   %ex.0 = landingpad { i8*, i32 }
           catch i8* null
   br label %catch.0
 
-cont.0:                                           ; preds = %entry
-  %icmp.0 = icmp eq i64 %call.0, 88
-  %zext.0 = zext i1 %icmp.0 to i8
-  %trunc.0 = trunc i8 %zext.0 to i1
-  br i1 %trunc.0, label %then.0, label %else.0
+catch.0:                                          ; preds = %pad.0
+  call void @checkdefer(i8* nest undef, i8* %x)
+  br label %finish.0
 
-then.0:                                           ; preds = %cont.0
-  store i64 22, i64* %ret
-  br label %finok.0
+finish.0:                                         ; preds = %catch.0, %finally.0
+  invoke void @deferreturn(i8* nest undef, i8* %x)
+          to label %cont.0 unwind label %pad.0
 
-else.0:                                           ; preds = %cont.0
-  %p0.ld.0 = load i64, i64* %p0.addr
-  store i64 %p0.ld.0, i64* %ret
-  br label %finok.0
+cont.0:                                           ; preds = %else.0, %then.0, %finish.0
+  %fload.0 = load i8, i8* %finvar.0
+  %icmp.1 = icmp eq i8 %fload.0, 1
+  br i1 %icmp.1, label %finret.0, label %finres.0
 
-catchpad.0:                                       ; preds = %catch.0
+pad.1:                                            ; preds = %entry
+  %ex.1 = landingpad { i8*, i32 }
+          catch i8* null
+  br label %catch.1
+
+catch.1:                                          ; preds = %pad.1
+  %call.1 = invoke i64 @splat(i8* nest undef, i64 13)
+          to label %cont.2 unwind label %catchpad.0
+
+catchpad.0:                                       ; preds = %catch.1
   %ex2.0 = landingpad { i8*, i32 }
           cleanup
   store { i8*, i32 } %ex2.0, { i8*, i32 }* %ehtmp.0
   store i8 0, i8* %finvar.0
   br label %finally.0
 
-catch.0:                                          ; preds = %pad.0
-  %call.1 = invoke i64 @splat(i8* nest undef, i64 13)
-          to label %cont.1 unwind label %catchpad.0
+cont.1:                                           ; preds = %entry
+  %icmp.0 = icmp eq i64 %call.0, 88
+  %zext.0 = zext i1 %icmp.0 to i8
+  %trunc.0 = trunc i8 %zext.0 to i1
+  br i1 %trunc.0, label %then.0, label %else.0
 
-cont.1:                                           ; preds = %catch.0
-  store i64 %call.1, i64* %ret
+then.0:                                           ; preds = %cont.1
+  store i64 22, i64* %ret
+  store i8 1, i8* %finvar.0
+  invoke void @deferreturn(i8* nest undef, i8* %x)
+          to label %cont.0 unwind label %pad.0
+
+else.0:                                           ; preds = %cont.1
+  %p0.ld.0 = load i64, i64* %p0.addr
+  store i64 %p0.ld.0, i64* %ret
+  store i8 1, i8* %finvar.0
+  invoke void @deferreturn(i8* nest undef, i8* %x)
+          to label %cont.0 unwind label %pad.0
+
+cont.2:                                           ; preds = %catch.1
   br label %finok.0
 
-then.1:                                           ; preds = %finally.0
-  store i64 9, i64* %ret
-  %ret.ld.3 = load i64, i64* %ret
-  ret i64 %ret.ld.3
-
-fallthrough.1:                                    ; preds = %else.1
-  %fload.0 = load i8, i8* %finvar.0
-  %icmp.2 = icmp eq i8 %fload.0, 1
-  br i1 %icmp.2, label %finret.0, label %finres.0
-
-else.1:                                           ; preds = %finally.0
-  br label %fallthrough.1
-
-finres.0:                                         ; preds = %fallthrough.1
+finres.0:                                         ; preds = %cont.0
   %excv.0 = load { i8*, i32 }, { i8*, i32 }* %ehtmp.0
   resume { i8*, i32 } %excv.0
 
-finret.0:                                         ; preds = %fallthrough.1
+finret.0:                                         ; preds = %cont.0
   %ret.ld.1 = load i64, i64* %ret
   ret i64 %ret.ld.1
 }
