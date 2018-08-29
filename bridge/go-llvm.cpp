@@ -2600,6 +2600,7 @@ class GenBlocks {
   llvm::BasicBlock *populateFinallyBlock(llvm::BasicBlock *finBB,
                                          Bvariable *finvar,
                                          llvm::Value *extmp);
+  void genDeferReturn(llvm::BasicBlock *curblock);
   void walkReturn(llvm::BasicBlock *curblock,
                   Bstatement *stmt,
                   Bexpression *re);
@@ -3058,7 +3059,6 @@ llvm::BasicBlock *GenBlocks::genReturn(Bstatement *rst,
   Bexpression *re = rst->getReturnStmtExpr();
 
   if (finallyBlock_) {
-    // Rewrite the return to a jump into the 'finally' block (see above).
     // Here we also cache away a return statement so as to relocate
     // it after the 'finally' block.
     if (cachedReturn_ == nullptr) {
@@ -3067,7 +3067,7 @@ llvm::BasicBlock *GenBlocks::genReturn(Bstatement *rst,
     } else {
       be_->nodeBuilder().destroy(re, DelInstructions);
     }
-    llvm::BranchInst::Create(finallyBlock_, curblock);
+    genDeferReturn(curblock);
   } else {
     // Walk return expression
     walkReturn(curblock, rst, re);
@@ -3075,6 +3075,40 @@ llvm::BasicBlock *GenBlocks::genReturn(Bstatement *rst,
 
   // A return terminates the current block
   return nullptr;
+}
+
+// Generate the DEFERRETURN call for return statement in functions
+// that has defer.
+// We could simply ewrite the return to a jump into the 'finally'
+// block (see above). However, for the GC support each return
+// path may have different set of live variables. We need to
+// "unshare" the DEFERRETURN calls.
+// We do this by copying the instructions from 'finally' block.
+// By the construction we need to copy up to the first invoke
+// instruction (DEFERRETURN).
+void GenBlocks::genDeferReturn(llvm::BasicBlock *curblock)
+{
+  llvm::BasicBlock *blockToClone = finallyBlock_;
+  assert(blockToClone);
+  while (1) {
+    llvm::Instruction *term = blockToClone->getTerminator();
+    for (llvm::Instruction &inst : *blockToClone) {
+      if (&inst == term)
+        break; // terminator is handled below
+      llvm::Instruction *c = inst.clone();
+      curblock->getInstList().push_back(c);
+    }
+    if (llvm::isa<llvm::InvokeInst>(term)) {
+      // This is the call to DEFERRETURN. Copy this then we're done.
+      llvm::Instruction *c = term->clone();
+      curblock->getInstList().push_back(c);
+      break;
+    }
+    // By construction it should be linear code.
+    // No need to copy the jump instruction.
+    blockToClone = blockToClone->getSingleSuccessor();
+    assert(blockToClone);
+  }
 }
 
 llvm::BasicBlock *GenBlocks::genDefer(Bstatement *defst,
@@ -3313,41 +3347,19 @@ llvm::BasicBlock *GenBlocks::genExcep(Bstatement *excepst,
     llvm::BranchInst::Create(contBB, finokBB);
   }
 
+  // Handle finally statement where applicable.
+  llvm::BasicBlock *bodyBB = curblock; // record where we're going to emit the body
+  curblock = contBB;
+  llvm::BasicBlock *finishBB = nullptr; // record where we're going to emit the finishing code
+  if (finally != nullptr) {
+    curblock = walk(finally, nullptr, curblock);
+    finishBB = curblock;
+  }
+
   // Create a landing pad block. This pad will be where control
   // will arrive if an exception is thrown within the "body" code.
   llvm::BasicBlock *padbb =
       llvm::BasicBlock::Create(context_, be_->namegen("pad"), func);
-
-  // Not expecting to see nested exception statements, assert if this
-  // crops up.
-  assert(padBlockStack_.empty());
-
-  // If there is a finally block, then record the block for purposes
-  // of return handling.
-  finallyBlock_ = (finally ? finokBB : nullptr);
-  assert(!cachedReturn_);
-
-  // Push first pad block onto stack. The presence of a non-empty pad
-  // block stack will be an indication that any call in the body
-  // subtree should be converted into an invoke using the pad.
-  padBlockStack_.push_back(padbb);
-
-  // Walk the body statement.
-  curblock = walk(body, nullptr, curblock);
-
-  // Pop the pad block stack.
-  padBlockStack_.pop_back();
-
-  // If the body block ended without a return, then insert a jump
-  // to the continue / or finally clause.
-  if (curblock)
-    llvm::BranchInst::Create(finokBB, curblock);
-
-  // Create second pad block. Here the idea is that if an exception
-  // is thrown as a result of any call within the catch ("ifexception" code)
-  // it will wind up at this pad.
-  llvm::BasicBlock *catchpadbb =
-      llvm::BasicBlock::Create(context_, be_->namegen("catchpad"), func);
 
   // Block containing catch code
   llvm::BasicBlock *catchbb =
@@ -3364,6 +3376,46 @@ llvm::BasicBlock *GenBlocks::genExcep(Bstatement *excepst,
     llvm::BranchInst::Create(catchbb, padbb);
   }
 
+  // Create second pad block. Here the idea is that if an exception
+  // is thrown as a result of any call within the catch ("ifexception" code)
+  // it will wind up at this pad.
+  llvm::BasicBlock *catchpadbb =
+      llvm::BasicBlock::Create(context_, be_->namegen("catchpad"), func);
+
+  // Create landing pad instruction in the second pad block. For this
+  // landing pad, we want to capture the exception object into a
+  // temporary, and set "finally = false" to indicate that an exception
+  // was thrown.
+  llvm::Value *extmp = populateCatchPadBlock(catchpadbb, finvar);
+  llvm::BranchInst::Create(contBB, catchpadbb);
+
+  // Now we are going to emit the body.
+
+  // Not expecting to see nested exception statements, assert if this
+  // crops up.
+  assert(padBlockStack_.empty());
+
+  // If there is a finally block, then record the block for purposes
+  // of return handling.
+  finallyBlock_ = (finally ? finokBB : nullptr);
+  assert(!cachedReturn_);
+
+  // Push first pad block onto stack. The presence of a non-empty pad
+  // block stack will be an indication that any call in the body
+  // subtree should be converted into an invoke using the pad.
+  padBlockStack_.push_back(padbb);
+
+  // Walk the body statement.
+  curblock = bodyBB;
+  curblock = walk(body, nullptr, curblock);
+
+  // Pop the pad block stack.
+  padBlockStack_.pop_back();
+
+  // If the body block ended without a return, then insert a deferreturn;
+  if (curblock)
+    genDeferReturn(curblock);
+
   // Push second pad, walk exception stmt, then pop the pad.
   padBlockStack_.push_back(catchpadbb);
   auto bb = walk(ifexception, nullptr, catchbb);
@@ -3374,22 +3426,12 @@ llvm::BasicBlock *GenBlocks::genExcep(Bstatement *excepst,
   // Return handling now complete.
   finallyBlock_ = nullptr;
 
-  // Create landing pad instruction in the second pad block. For this
-  // landing pad, we want to capture the exception object into a
-  // temporary, and set "finally = false" to indicate that an exception
-  // was thrown.
-  llvm::Value *extmp = populateCatchPadBlock(catchpadbb, finvar);
-  llvm::BranchInst::Create(contBB, catchpadbb);
-
   // Handle finally statement where applicable.
-  curblock = contBB;
-  if (finally != nullptr) {
-    curblock = walk(finally, nullptr, curblock);
-
+  curblock = finishBB;
+  if (curblock)
     // Augment the end of the finally block with an if/jump to
     // return or resume, and populate the return/resume blocks.
     curblock = populateFinallyBlock(curblock, finvar, extmp);
-  }
 
   return curblock;
 }
