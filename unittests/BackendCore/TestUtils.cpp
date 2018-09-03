@@ -445,7 +445,7 @@ Bvariable *FcnTestHarness::mkLocal(const char *name,
                                    Bexpression *init)
 {
   assert(func_);
-  Bvariable *v = be()->local_variable(func_, name, typ, nullptr, true, loc_);
+  Bvariable *v = be()->local_variable(func_, name, typ, nullptr, false, loc_);
   if (!init)
     init = be()->zero_expression(typ);
   Bstatement *is = be()->init_statement(func_, v, init);
