@@ -251,6 +251,8 @@ Bvariable *Bfunction::localVariable(const std::string &name,
   } else {
     inst = addAlloca(btype->type(), name);
   }
+  if (is_address_taken)
+    inst->setMetadata("go_addrtaken", llvm::MDNode::get(inst->getContext(), {}));
   Bvariable *bv =
       new Bvariable(btype, location, name, LocalVar, is_address_taken, inst);
   localVariables_.push_back(bv);
