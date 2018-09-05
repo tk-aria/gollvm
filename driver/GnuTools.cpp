@@ -320,12 +320,30 @@ bool Linker::constructCommand(Compilation &compilation,
   llvm::opt::ArgList &args = compilation.driver().args();
   llvm::opt::ArgStringList cmdArgs;
 
-  // Honor -fuse-ld=XXX
-  const char *executable = "ld.gold";
+  // Honor -fuse-ld=XXX. NB: there is an inconsistency between clang
+  // and GCC here -- with GCC if you supply -fuse-ld=ABC, the driver
+  // will always look for "ld.ABC" on the path. With clang, however,
+  // you can supply a full path (e.g. "-fuse-ld=/my/path/to/ld"). This
+  // code is intended to be consistent with clang.
+  const char *variant = "gold";
+  const char *linker = nullptr;
   llvm::opt::Arg *ldarg = args.getLastArg(gollvm::options::OPT_fuse_ld_EQ);
-  if (ldarg != nullptr)
-    executable = ldarg->getValue();
-
+  const char *executable = nullptr;
+  if (ldarg != nullptr) {
+    if (llvm::sys::path::is_absolute(ldarg->getValue()))
+      linker = executable = args.MakeArgString(ldarg->getValue());
+    else
+      variant = args.MakeArgString(ldarg->getValue());
+  }
+  if (linker == nullptr)
+    linker = args.MakeArgString(llvm::StringRef("ld.") + variant);
+  if (executable == nullptr)
+    executable = args.MakeArgString(toolchain().getProgramPath(linker));
+  if (! executable) {
+    llvm::errs() << "error: unable to locate path for linker '"
+                 << linker << "\n";
+    return false;
+  }
   cmdArgs.push_back(executable);
 
   // Perform program path lookup if needed.
