@@ -7,6 +7,7 @@
 set(LLVM_LINK_COMPONENTS
   DriverUtils
   CppGoFrontEnd
+  CppGoPasses
   ${LLVM_TARGETS_TO_BUILD}
   CodeGen
   Core
