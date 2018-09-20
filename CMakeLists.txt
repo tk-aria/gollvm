@@ -108,12 +108,18 @@ set(GOFRONTEND_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gofrontend/go)
 # Location of bridge source code.
 set(BRIDGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bridge)
 
+# Location of gollvm specific passes source code.
+set(PASSES_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/passes)
+
 # Location of driver utilities source code.
 set(DRIVER_UTILS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/driver)
 
 # Subdirectory for the middle layer that translates Backend method
 # calls into LLVM IR.
 add_subdirectory(bridge)
+
+# Subdirectory for gollvm specific backend passes.
+add_subdirectory(passes)
 
 # Subdirectory for compiler driver utilities library.
 add_subdirectory(driver)

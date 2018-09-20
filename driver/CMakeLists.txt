@@ -18,6 +18,7 @@ configure_file(
 # Include directories needed for this lib.
 include_directories(${GOFRONTEND_SOURCE_DIR})
 include_directories(${BRIDGE_SOURCE_DIR})
+include_directories(${PASSES_SOURCE_DIR})
 
 # Gofrontend headers use headers from these packages.
 include_directories(${EXTINSTALLDIR}/include)
