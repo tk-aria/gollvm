@@ -8,4 +8,5 @@
 
 add_llvm_library(LLVMCppGoPasses
   GoStackMap.cpp
+  GoStatepoints.cpp
 )
