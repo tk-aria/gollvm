@@ -8,4 +8,6 @@
 
 add_llvm_library(LLVMCppGoPasses
   GoAnnotation.cpp
+  GoStatepoints.cpp
+  Util.cpp
 )
