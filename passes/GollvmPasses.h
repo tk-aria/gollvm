@@ -13,10 +13,13 @@ namespace llvm {
 
 class PassRegistry;
 class FunctionPass;
+class ModulePass;
 
 void initializeGoStackMapPass(PassRegistry&);
+void initializeGoStatepointsLegacyPassPass(PassRegistry&);
 
 FunctionPass *createGoStackMapPass();
+ModulePass *createGoStatepointsLegacyPass();
 
 } // namespace llvm
 
