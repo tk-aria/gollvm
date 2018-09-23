@@ -7,6 +7,7 @@
 # gollvm specific backend passes.
 
 add_llvm_library(LLVMCppGoPasses
+  GC.cpp
   GoStackMap.cpp
   GoStatepoints.cpp
 )
