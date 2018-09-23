@@ -21,6 +21,9 @@ void initializeGoStatepointsLegacyPassPass(PassRegistry&);
 FunctionPass *createGoStackMapPass();
 ModulePass *createGoStatepointsLegacyPass();
 
+void linkGoGC();
+void linkGoGCPrinter();
+
 } // namespace llvm
 
 #endif
