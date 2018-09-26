@@ -1254,7 +1254,7 @@ TEST(BackendExprTests, TestComplexExpressions) {
     store double 0.000000e+00, double* %b
     %cast.0 = bitcast { double, double }* %x to i8*
     %cast.1 = bitcast { double, double }* @const.0 to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 16, i1 false)
+    call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 16, i1 false)
     %field.0 = getelementptr inbounds { double, double }, { double, double }* %x, i32 0, i32 0
     %x.real.ld.0 = load double, double* %field.0
     store double %x.real.ld.0, double* %a
@@ -1670,7 +1670,7 @@ TEST(BackendExprTests, TestCallArgConversions) {
   h.mkExprStmt(call1);
 
   const char *exp = R"RAW_RESULT(
-     call void @foo(i8* nest undef, i8* null, i32* null, i64* null)
+     call addrspace(0) void @foo(i8* nest undef, i8* null, i32* null, i64* null)
     )RAW_RESULT";
 
   // Note that this

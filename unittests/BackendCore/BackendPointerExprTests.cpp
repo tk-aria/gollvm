@@ -17,7 +17,7 @@ using namespace goBackendUnitTests;
 
 namespace {
 
-TEST(BackEndPointerExprTests, TestAddrAndIndirection) {
+TEST(BackendPointerExprTests, TestAddrAndIndirection) {
   FcnTestHarness h("foo");
   Llvm_backend *be = h.be();
   Bfunction *func = h.func();
@@ -77,7 +77,7 @@ TEST(BackEndPointerExprTests, TestAddrAndIndirection) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackEndPointerExprTests, CreateFunctionCodeExpression) {
+TEST(BackendPointerExprTests, CreateFunctionCodeExpression) {
 
   FcnTestHarness h("foo");
   Llvm_backend *be = h.be();
@@ -120,7 +120,7 @@ TEST(BackEndPointerExprTests, CreateFunctionCodeExpression) {
   const char *exp = R"RAW_RESULT(
   %cast.0 = bitcast { i64 }* %fdloc1 to i8*
   %cast.1 = bitcast { i64 }* @const.0 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 8, i1 false)
+  call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 8, i1 false)
   store { i64 }* %fdloc1, { i64 }** %fploc1
   store { i64 (i8*, i32, i32, i64*)* }* null, { i64 (i8*, i32, i32, i64*)* }** %fploc2
   %fploc1.ld.0 = load { i64 }*, { i64 }** %fploc1
@@ -138,7 +138,7 @@ TEST(BackEndPointerExprTests, CreateFunctionCodeExpression) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackEndPointerExprTests, CreateNilPointerExpression) {
+TEST(BackendPointerExprTests, CreateNilPointerExpression) {
 
   FcnTestHarness h("foo");
   Llvm_backend *be = h.be();
@@ -196,7 +196,7 @@ TEST(BackEndPointerExprTests, CreateNilPointerExpression) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackEndPointerExprTests, TestDerefNilPointer) {
+TEST(BackendPointerExprTests, TestDerefNilPointer) {
   FcnTestHarness h("foo");
   Llvm_backend *be = h.be();
   Location loc;
@@ -217,7 +217,7 @@ TEST(BackEndPointerExprTests, TestDerefNilPointer) {
     store i32 %deref.ld.0, i32* %x
     %cast.2 = bitcast { i32, i32 }* %y to i8*
     %cast.3 = bitcast { i32, i32 }* null to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.2, i8* align 4 %cast.3, i64 8, i1 false)
+    call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.2, i8* align 4 %cast.3, i64 8, i1 false)
   )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);
@@ -227,7 +227,7 @@ TEST(BackEndPointerExprTests, TestDerefNilPointer) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackEndPointerExprTests, CircularPointerExpressions1) {
+TEST(BackendPointerExprTests, CircularPointerExpressions1) {
 
   // This testpoint is intended to verify handling of expressions
   // involving circular pointer types. Go code:
@@ -351,7 +351,7 @@ TEST(BackEndPointerExprTests, CircularPointerExpressions1) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackEndPointerExprTests, CircularPointerExpressions2) {
+TEST(BackendPointerExprTests, CircularPointerExpressions2) {
 
   // More tests for circular pointers, this time
   // with multiple levels. Go code:
@@ -432,7 +432,7 @@ TEST(BackEndPointerExprTests, CircularPointerExpressions2) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackEndPointerExprTests, CreatePointerOffsetExprs) {
+TEST(BackendPointerExprTests, CreatePointerOffsetExprs) {
 
   FcnTestHarness h("foo");
   Llvm_backend *be = h.be();
@@ -483,7 +483,7 @@ TEST(BackEndPointerExprTests, CreatePointerOffsetExprs) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackEndPointerExprTests, TestAddrDerefFold) {
+TEST(BackendPointerExprTests, TestAddrDerefFold) {
 
   FcnTestHarness h("foo");
   Llvm_backend *be = h.be();
@@ -516,7 +516,7 @@ TEST(BackEndPointerExprTests, TestAddrDerefFold) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackEndPointerExprTests, TestDerefPointerConstantLHS)
+TEST(BackendPointerExprTests, TestDerefPointerConstantLHS)
 {
   FcnTestHarness h("foo");
   Llvm_backend *be = h.be();
@@ -570,7 +570,7 @@ TEST(BackEndPointerExprTests, TestDerefPointerConstantLHS)
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackEndPointerExprTests, TestCircularFunctionTypes)
+TEST(BackendPointerExprTests, TestCircularFunctionTypes)
 {
   // Make sure we can handle circular function types, especially
   // those in which the cycle extends across multiple types. Example:
