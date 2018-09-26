@@ -70,7 +70,7 @@ TEST(BackendArrayStructTests, TestStructFieldExprs) {
   const char *exp = R"RAW_RESULT(
       %cast.0 = bitcast { i8*, i32 }* %loc1 to i8*
       %cast.1 = bitcast { i8*, i32 }* @const.0 to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 16, i1 false)
+      call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 16, i1 false)
       store { i8*, i32 }* %loc1, { i8*, i32 }** %loc2
       store i32 0, i32* %x
       %field.0 = getelementptr inbounds { i8*, i32 }, { i8*, i32 }* %loc1, i32 0, i32 1
@@ -295,10 +295,10 @@ TEST(BackendArrayStructTests, CreateArrayConstructionExprs) {
   const char *exp = R"RAW_RESULT(
     %cast.0 = bitcast [4 x i64]* %aa to i8*
     %cast.1 = bitcast [4 x i64]* @const.0 to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 32, i1 false)
+    call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 32, i1 false)
     %cast.2 = bitcast [4 x i64]* %ab to i8*
     %cast.3 = bitcast [4 x i64]* @const.1 to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.2, i8* align 8 %cast.3, i64 32, i1 false)
+    call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.2, i8* align 8 %cast.3, i64 32, i1 false)
     store i64 0, i64* %z
     %z.ld.0 = load i64, i64* %z
     %index.0 = getelementptr [4 x i64], [4 x i64]* %ac, i32 0, i32 0
@@ -358,7 +358,7 @@ TEST(BackendArrayStructTests, CreateStructConstructionExprs) {
   const char *exp = R"RAW_RESULT(
       %cast.0 = bitcast { i32*, i32 }* %loc1 to i8*
       %cast.1 = bitcast { i32*, i32 }* @const.0 to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 16, i1 false)
+      call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 16, i1 false)
       %field.0 = getelementptr inbounds { i32*, i32 }, { i32*, i32 }* %loc1, i32 0, i32 1
       %loc1.field.ld.0 = load i32, i32* %field.0
       %field.1 = getelementptr inbounds { i32*, i32 }, { i32*, i32 }* %loc2, i32 0, i32 0
@@ -416,7 +416,7 @@ TEST(BackendArrayStructTests, CreateNestedStructConstructionExprs) {
   const char *exp = R"RAW_RESULT(
   %cast.0 = bitcast { { i32*, i32 }, float }* %loc1 to i8*
   %cast.1 = bitcast { { i32*, i32 }, float }* @const.0 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 24, i1 false)
+  call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 24, i1 false)
   %field.0 = getelementptr inbounds { i32*, i32 }, { i32*, i32 }* %tmp.0, i32 0, i32 0
   store i32* %param1.addr, i32** %field.0
   %field.1 = getelementptr inbounds { i32*, i32 }, { i32*, i32 }* %tmp.0, i32 0, i32 1
@@ -424,7 +424,7 @@ TEST(BackendArrayStructTests, CreateNestedStructConstructionExprs) {
   %field.2 = getelementptr inbounds { { i32*, i32 }, float }, { { i32*, i32 }, float }* %loc1, i32 0, i32 0
   %cast.2 = bitcast { i32*, i32 }* %field.2 to i8*
   %cast.3 = bitcast { i32*, i32 }* %tmp.0 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.2, i8* align 8 %cast.3, i64 16, i1 false)
+  call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.2, i8* align 8 %cast.3, i64 16, i1 false)
   %field.3 = getelementptr inbounds { { i32*, i32 }, float }, { { i32*, i32 }, float }* %loc1, i32 0, i32 1
   store float 3.000000e+00, float* %field.3
   )RAW_RESULT";
@@ -573,7 +573,7 @@ TEST(BackendArrayStructTests, CreateArrayIndexingExprs) {
   const char *exp = R"RAW_RESULT(
   %cast.0 = bitcast [4 x i64]* %aa to i8*
   %cast.1 = bitcast [4 x i64]* @const.0 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 32, i1 false)
+  call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 32, i1 false)
   %index.0 = getelementptr [4 x i64], [4 x i64]* %aa, i32 0, i32 1
   %aa.index.ld.0 = load i64, i64* %index.0
   %index.1 = getelementptr [4 x i64], [4 x i64]* %aa, i32 0, i64 %aa.index.ld.0
@@ -643,7 +643,7 @@ TEST(BackendArrayStructTests, CreateComplexIndexingAndFieldExprs) {
   const char *exp = R"RAW_RESULT(
       %cast.0 = bitcast [10 x { i8, [4 x { i64, i64 }*], i8 }*]* %t1 to i8*
       %cast.1 = bitcast [10 x { i8, [4 x { i64, i64 }*], i8 }*]* @const.0 to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 80, i1 false)
+      call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 80, i1 false)
       %index.0 = getelementptr [10 x { i8, [4 x { i64, i64 }*], i8 }*], [10 x { i8, [4 x { i64, i64 }*], i8 }*]* %t1, i32 0, i32 7
       %t1.index.ld.0 = load { i8, [4 x { i64, i64 }*], i8 }*, { i8, [4 x { i64, i64 }*], i8 }** %index.0
       %field.0 = getelementptr inbounds { i8, [4 x { i64, i64 }*], i8 }, { i8, [4 x { i64, i64 }*], i8 }* %t1.index.ld.0, i32 0, i32 1
@@ -726,22 +726,22 @@ TEST(BackendArrayStructTests, TestStructAssignment) {
   const char *exp = R"RAW_RESULT(
 %cast.0 = bitcast { i8* }* %x1 to i8*
   %cast.1 = bitcast { i8* }* @const.0 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 8, i1 false)
+  call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 8, i1 false)
   %cast.2 = bitcast { i8* }* %y1 to i8*
   %cast.3 = bitcast { i8* }* @const.0 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.2, i8* align 8 %cast.3, i64 8, i1 false)
+  call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.2, i8* align 8 %cast.3, i64 8, i1 false)
   %cast.4 = bitcast { i64, i64, i64, i64, i64, i64 }* %x2 to i8*
   %cast.5 = bitcast { i64, i64, i64, i64, i64, i64 }* @const.1 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.4, i8* align 8 %cast.5, i64 48, i1 false)
+  call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.4, i8* align 8 %cast.5, i64 48, i1 false)
   %cast.6 = bitcast { i64, i64, i64, i64, i64, i64 }* %y2 to i8*
   %cast.7 = bitcast { i64, i64, i64, i64, i64, i64 }* @const.1 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.6, i8* align 8 %cast.7, i64 48, i1 false)
+  call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.6, i8* align 8 %cast.7, i64 48, i1 false)
   %cast.8 = bitcast { i8* }* %x1 to i8*
   %cast.9 = bitcast { i8* }* %y1 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.8, i8* align 8 %cast.9, i64 8, i1 false)
+  call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.8, i8* align 8 %cast.9, i64 8, i1 false)
   %cast.10 = bitcast { i64, i64, i64, i64, i64, i64 }* %x2 to i8*
   %cast.11 = bitcast { i64, i64, i64, i64, i64, i64 }* %y2 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.10, i8* align 8 %cast.11, i64 48, i1 false)
+  call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.10, i8* align 8 %cast.11, i64 48, i1 false)
    )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);
@@ -786,7 +786,7 @@ TEST(BackendArrayStructTests, TestStructFieldAddressExpr) {
   const char *exp = R"RAW_RESULT(
     %cast.0 = bitcast { i32 }* %t1 to i8*
     %cast.1 = bitcast { i32 }* @const.0 to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.0, i8* align 4 %cast.1, i64 4, i1 false)
+    call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.0, i8* align 4 %cast.1, i64 4, i1 false)
     %field.0 = getelementptr inbounds { i32 }, { i32 }* %t1, i32 0, i32 0
     store i32* %field.0, i32** %a1
     store i32* getelementptr inbounds ({ i32 }, { i32 }* @t2, i32 0, i32 0), i32** %a2

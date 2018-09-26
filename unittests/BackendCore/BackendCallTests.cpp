@@ -36,7 +36,7 @@ TEST(BackendCallTests, TestSimpleCall) {
   h.mkReturn(be->var_expression(x, loc));
 
   const char *exp = R"RAW_RESULT(
-      %call.0 = call i64 @foo(i8* nest undef, i32 3, i32 6, i64* null)
+      %call.0 = call addrspace(0) i64 @foo(i8* nest undef, i32 3, i32 6, i64* null)
       store i64 %call.0, i64* %x
       %x.ld.0 = load i64, i64* %x
       ret i64 %x.ld.0
@@ -72,7 +72,7 @@ TEST(BackendCallTests, CallToVoid) {
   h.mkExprStmt(call);
 
   const char *exp = R"RAW_RESULT(
-     call void @bar(i8* nest undef)
+     call addrspace(0) void @bar(i8* nest undef)
     )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);
@@ -113,7 +113,7 @@ TEST(BackendCallTests, MultiReturnCall) {
     const char *exp = R"RAW_RESULT(
      %cast.0 = bitcast { i8*, i32*, i64*, i64 }* %sret.formal.0 to i8*
      %cast.1 = bitcast { i8*, i32*, i64*, i64 }* @const.0 to i8*
-     call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 32, i1 false)
+     call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 32, i1 false)
      ret void
     )RAW_RESULT";
 
@@ -147,7 +147,7 @@ TEST(BackendCallTests, MultiReturnCall) {
   store i64 101, i64* %field.3
   %cast.3 = bitcast { i8*, i32*, i64*, i64 }* %sret.formal.0 to i8*
   %cast.4 = bitcast { i8*, i32*, i64*, i64 }* %tmp.0 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.3, i8* align 8 %cast.4, i64 32, i1 false)
+  call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.3, i8* align 8 %cast.4, i64 32, i1 false)
   ret void
     )RAW_RESULT";
 
