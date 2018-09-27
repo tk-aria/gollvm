@@ -22,6 +22,30 @@
       "revId": "fb65dd67d15ac7e44ea0d6f7e432b3bbd0c49611",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c4e6ad01_a96a6f8f",
+        "filename": "driver/GnuTools.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 352,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-09-27T16:59:25Z",
+      "side": 1,
+      "message": "Good point. I will turn it into an assert.",
+      "parentUuid": "3515b0ff_ce4d6872",
+      "range": {
+        "startLine": 349,
+        "startChar": 0,
+        "endLine": 352,
+        "endChar": 0
+      },
+      "revId": "fb65dd67d15ac7e44ea0d6f7e432b3bbd0c49611",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
