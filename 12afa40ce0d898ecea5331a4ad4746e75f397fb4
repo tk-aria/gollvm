@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6ca1dd80_76da9a88",
+        "filename": "passes/GoStackMap.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-09-28T15:57:39Z",
+      "side": 1,
+      "message": "Maybe a different name would be more descriptive? \"go-stackmap\" implies that the pass actually computes the maps, which is not true (really all it is doing is tagging a function to indicate that stack maps are present).",
+      "revId": "12afa40ce0d898ecea5331a4ad4746e75f397fb4",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "058b0f34_f73af49e",
+        "filename": "passes/GoStackMap.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-09-28T15:57:39Z",
+      "side": 1,
+      "message": "\"as\" ?",
+      "range": {
+        "startLine": 57,
+        "startChar": 41,
+        "endLine": 57,
+        "endChar": 43
+      },
+      "revId": "12afa40ce0d898ecea5331a4ad4746e75f397fb4",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3401e5c2_c990b676",
+        "filename": "passes/GoStackMap.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-09-28T15:57:39Z",
+      "side": 1,
+      "message": "maybe this could go into a header file somewhere (eventually)?",
+      "range": {
+        "startLine": 79,
+        "startChar": 40,
+        "endLine": 79,
+        "endChar": 50
+      },
+      "revId": "12afa40ce0d898ecea5331a4ad4746e75f397fb4",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
