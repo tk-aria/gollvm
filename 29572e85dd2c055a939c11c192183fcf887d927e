@@ -1,0 +1,288 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6122fb33_3bcd3211",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 96,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-09-28T16:12:49Z",
+      "side": 1,
+      "message": "Agree that it would nice to have this working eventually.",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d1cd8895_e452b331",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 101,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-09-28T16:12:49Z",
+      "side": 1,
+      "message": "this might be better off as a static member of the GoStatepoints class  (as is \"ID\" is easily confused with the pass identification ID). Also, I assume that statepoint IDs only have to be unique within the scope of a given function, is this correct? So we should zero at start of each func?",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a50a4c52_e61a903a",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 124,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-09-28T16:12:49Z",
+      "side": 1,
+      "message": "Move to a header file if possible? Otherwise add note to keep in sync with other definitions?",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9aba3bdc_68149b40",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-09-28T16:12:49Z",
+      "side": 1,
+      "message": "This b,lob of code looks like a duplicate of the code at line 184 -- common them up into helper?",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7603eeb4_a83e56ee",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1351,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-09-28T16:12:49Z",
+      "side": 1,
+      "message": "Wasn\u0027t clear to me if this was code you wrote? If so, what is a \"fused\" statepoint?",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "eb83851d_3c61f040",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1366,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-09-28T16:12:49Z",
+      "side": 1,
+      "message": "Define in header if possible?",
+      "range": {
+        "startLine": 1366,
+        "startChar": 29,
+        "endLine": 1366,
+        "endChar": 43
+      },
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "318002a6_4ab4cf3d",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1366,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-09-28T16:12:49Z",
+      "side": 1,
+      "message": "Would it make sense to ULEB encode, instead of rendering as text? Or would that potentially cause issues with the assembler?",
+      "range": {
+        "startLine": 1366,
+        "startChar": 47,
+        "endLine": 1366,
+        "endChar": 67
+      },
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "54ce02e9_4549b7c1",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1471,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-09-28T16:12:49Z",
+      "side": 1,
+      "message": "Cool. Didn\u0027t know that this was possible, but LGTM.",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fa8ade8d_1f97aab5",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1618,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-09-28T16:12:49Z",
+      "side": 1,
+      "message": "Is there any way this (or some of this) could be done in the front end? Or is it the case that these situations can arise or be \"manufactured\" as a result of optimizations?",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "605a2a9d_d83348a9",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1944,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-09-28T16:12:49Z",
+      "side": 1,
+      "message": "what exactly is our working definition of a GC leaf function? I see this: https://lists.llvm.org/pipermail/llvm-dev/2015-January/080801.html ... wondering if there are things we could mark as gc-leaf in the bridge.",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d63b1f5f_ea2b03ca",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1954,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-09-28T16:12:49Z",
+      "side": 1,
+      "message": "seems like we should definitely be doing this in the bridge/frontend, I would think (since it will improve other optimizations too)?  I\u0027m kind of confused that this doesn\u0027t happen already.",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1aad425e_66ffe46d",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2108,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-09-28T16:12:49Z",
+      "side": 1,
+      "message": "This comment wasn\u0027t written by you (was in the previous code), but in fact I totally agree with it, and it might be more important for Go given that for a JIT you\u0027d applying rewriting to only very hot functions, whereas gollvm is applying it to every function \u003d\u003e more compile time cost.",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ab90586c_be6f7a34",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2180,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-09-28T16:12:49Z",
+      "side": 1,
+      "message": "maybe also Intrinsic::sideeffect or Intrinsic::assume?",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1e0f9da3_5f458fec",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2229,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-09-28T16:12:49Z",
+      "side": 1,
+      "message": "what about things like runtime.typedmemmove?",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "65a114a4_b5e44ab9",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2385,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-09-28T16:12:49Z",
+      "side": 1,
+      "message": "This looks to be under \"#if NDEBUG\" which I don\u0027t think is right.\n\nFor this code, I wonder whether there is more we can do in the front end or bridge to help...",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "782b8959_2b9cdbe5",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2702,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-09-28T16:12:49Z",
+      "side": 1,
+      "message": "I\u0027d recommend extracting all this stuff (from here until the end of the file) out into a separate file, since it doesn\u0027t really depend on anything in lowering. That way it could be unit tested separately as well.",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
