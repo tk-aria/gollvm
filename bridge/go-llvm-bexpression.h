@@ -54,6 +54,11 @@ public:
 
   void clear() { instructions_.clear(); }
 
+  // Locate 'inst' within the instructions vector, then remove 'inst' and all
+  // subsequent instructions from the list and return them as a vector. Will
+  // assert if 'inst' is not found in the list.
+  std::vector<llvm::Instruction *> extractInstsAfter(llvm::Instruction *inst);
+
 private:
   std::vector<llvm::Instruction *> instructions_;
 

@@ -166,4 +166,62 @@ TEST(BackendCallTests, MultiReturnCall) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
+TEST(BackendCallTests, CallToNoReturnFunction) {
+
+  FcnTestHarness h;
+  Llvm_backend *be = h.be();
+  BFunctionType *befty = mkFuncTyp(be, L_END);
+  Bfunction *func = h.mkFunction("foo", befty);
+  Location loc;
+
+  // Declare a function 'noret' with no args and no return.
+  bool is_decl = true; bool is_inl = false;
+  bool is_vis = true; bool is_split = true;
+  bool is_noret = true; bool is_uniqsec = false;
+  Bfunction *nrfcn = be->function(befty, "noret", "noret",
+                                  is_vis, is_decl, is_inl, is_split,
+                                  is_noret, is_uniqsec, loc);
+
+  // Create a block containing two no-return calls. The intent here is to make
+  // sure that the bridge detects and deletes instructions appearing downstream
+  // of a no-return call.
+  std::vector<Bexpression *> args;
+  Bexpression *fn1 = be->function_code_expression(nrfcn, loc);
+  Bexpression *call1 = be->call_expression(nrfcn, fn1, args, nullptr, loc);
+  Bstatement *cs1 = h.mkExprStmt(call1, FcnTestHarness::NoAppend);
+  Bblock *nrcblock = mkBlockFromStmt(be, func, cs1);
+  Bexpression *fn2 = be->function_code_expression(nrfcn, loc);
+  Bexpression *call2 = be->call_expression(nrfcn, fn2, args, nullptr, loc);
+  Bstatement *cs2 = h.mkExprStmt(call2, FcnTestHarness::NoAppend);
+  addStmtToBlock(be, nrcblock, cs2);
+
+  // Create an "if" statement branching to the block above
+  Bexpression *cond = be->boolean_constant_expression(true);
+  h.mkIf(cond, be->block_statement(nrcblock), nullptr,
+         FcnTestHarness::YesAppend);
+
+  const char *exp = R"RAW_RESULT(
+    define void @foo(i8* nest %nest.0) #0 {
+    entry:
+      br i1 true, label %then.0, label %else.0
+
+    then.0:                                           ; preds = %entry
+      call void @noret(i8* nest undef)
+      unreachable
+
+    fallthrough.0:                                    ; preds = %else.0
+      ret void
+
+    else.0:                                           ; preds = %entry
+      br label %fallthrough.0
+    }
+    )RAW_RESULT";
+
+  bool broken = h.finish(StripDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+
+  bool isOK = h.expectValue(func->function(), exp);
+  EXPECT_TRUE(isOK && "Function does not have expected contents");
+}
+
 }
