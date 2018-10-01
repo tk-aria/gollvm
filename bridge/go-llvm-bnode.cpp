@@ -1008,16 +1008,31 @@ const std::vector<unsigned long> *BnodeBuilder::getIndices(Bexpression *expr) co
 void BnodeBuilder::updateInstructions(Bexpression *expr,
                                       std::vector<llvm::Instruction*> newinsts)
 {
-  assert(expr->instructions().size() == newinsts.size());
+  assert(expr->instructions().size() >= newinsts.size());
+  llvm::Instruction *deleteAfter = nullptr;
+  unsigned newSize = newinsts.size();
   unsigned idx = 0;
+
   for (auto originst : expr->instructions()) {
-    llvm::Instruction *newinst = newinsts[idx];
-    if (originst != newinst) {
+    if (idx == newSize)
+      deleteAfter = originst;
+    else if (idx >= newSize)
       integrityVisitor_->unsetParent(originst, expr, idx);
-      integrityVisitor_->setParent(newinst, expr, idx);
-      if (expr->value() == originst)
-        expr->setValue(newinst);
+    else {
+      llvm::Instruction *newinst = newinsts[idx];
+      if (originst != newinst) {
+        integrityVisitor_->unsetParent(originst, expr, idx);
+        integrityVisitor_->setParent(newinst, expr, idx);
+        if (expr->value() == originst)
+          expr->setValue(newinst);
+      }
     }
     idx++;
+  }
+  if (deleteAfter != nullptr) {
+    std::vector<llvm::Instruction *> todel =
+        expr->extractInstsAfter(deleteAfter);
+    for (auto victim : todel)
+      victim->deleteValue();
   }
 }

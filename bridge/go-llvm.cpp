@@ -2843,6 +2843,17 @@ GenBlocks::postProcessInst(llvm::Instruction *inst,
   return std::make_pair(inst, curblock);
 }
 
+static bool isNoReturnCall(llvm::Instruction *inst)
+{
+  if (!llvm::isa<llvm::CallInst>(inst))
+    return false;
+  llvm::CallInst *call = llvm::cast<llvm::CallInst>(inst);
+  llvm::Function *func = call->getCalledFunction();
+  if (func != nullptr && func->hasFnAttribute(llvm::Attribute::NoReturn))
+    return true;
+  return false;
+}
+
 llvm::BasicBlock *GenBlocks::walkExpr(llvm::BasicBlock *curblock,
                                       Bstatement *containingStmt,
                                       Bexpression *expr)
@@ -2862,14 +2873,14 @@ llvm::BasicBlock *GenBlocks::walkExpr(llvm::BasicBlock *curblock,
   if (!curblock)
     be_->nodeBuilder().destroy(expr, DelInstructions, false);
 
-  // Now visit instructions for this expr
-  // TODO: currently the control flow won't change from
-  // live to dead in this loop. Handle it, especially
-  // deallocate part of the instruction list, if it
-  // becomes necessary.
+  // Now visit instructions for this expr. Note: if as part of this loop a
+  // no-return call is encountered, we'll wind up changing from live code to
+  // dead code; handle this case appropriately.
   bool changed = false;
+  unsigned idx = 0;
   std::vector<llvm::Instruction*> newinsts;
   for (auto originst : expr->instructions()) {
+    llvm::BasicBlock *origblock = curblock;
     auto pair = postProcessInst(originst, curblock);
     auto inst = pair.first;
     if (inst != originst)
@@ -2879,6 +2890,18 @@ llvm::BasicBlock *GenBlocks::walkExpr(llvm::BasicBlock *curblock,
     curblock->getInstList().push_back(inst);
     curblock = pair.second;
     newinsts.push_back(inst);
+
+    // Check for no-return call
+    if (isNoReturnCall(inst)) {
+      // Insert 'unreachable' inst into current block, then end
+      // current block.
+      LIRBuilder builder(context_, llvm::ConstantFolder());
+      llvm::Instruction *unreachable = builder.CreateUnreachable();
+      curblock->getInstList().push_back(unreachable);
+      curblock = nullptr;
+      break;
+    }
+    idx++;
   }
   if (changed)
     be_->nodeBuilder().updateInstructions(expr, newinsts);
