@@ -351,7 +351,8 @@ class BnodeBuilder {
   // Bnodes but not instructions), or DelBoth (gets rid of nodes and
   // instructions).
   // If recursive is true, also delete its children recursively.
-  void destroy(Bnode *node, WhichDel which = DelWrappers, bool recursive = true);
+  void destroy(Bnode *node, WhichDel which = DelWrappers,
+               bool recursive = true);
 
   // Clone an expression subtree.
   Bexpression *cloneSubtree(Bexpression *expr);
@@ -370,9 +371,13 @@ class BnodeBuilder {
   // children).
   std::vector<Bnode *> extractChildNodesAndDestroy(Bnode *node);
 
-  // Update the instructions of an expression node, mostly for updating
-  // references in the integrity checker. Used when the instructions
-  // are post-processed.
+  // Update the instructions of an expression node after we've finished
+  // walking its instruction list. During the walk it's possible that
+  // A) one or more existing instructions were converted into new
+  // instructions, or B) some instructions were thrown away because
+  // they appeared after a no-return call in the list. This helper
+  // fixes up the instruction list and updates ownership info
+  // in the integrity checker.
   void updateInstructions(Bexpression *expr,
                           std::vector<llvm::Instruction*> newinsts);
 
