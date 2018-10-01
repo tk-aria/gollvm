@@ -31,6 +31,17 @@ bool Binstructions::isValidInst(llvm::Instruction *inst)
   return true;
 }
 
+std::vector<llvm::Instruction *>
+Binstructions::extractInstsAfter(llvm::Instruction *inst)
+{
+  auto it = std::find(instructions_.begin(), instructions_.end(), inst);
+  assert(it != instructions_.end());
+  std::vector<llvm::Instruction *> rval(it, instructions_.end());
+  if (it != instructions_.end())
+    instructions_.erase(it, instructions_.end());
+  return rval;
+}
+
 Bexpression::Bexpression(NodeFlavor fl, const std::vector<Bnode *> &kids,
                          llvm::Value *val, Btype *typ, Location loc)
     : Bnode(fl, kids, loc)
