@@ -180,7 +180,10 @@ add_custom_target(
     "SUBDIR" "src/cmd/vet"
     "LOGFILE" "${gotools_binroot}/cmd_vet-testlog"
     "SETENV" "GOPATH=${gotools_binroot}/check-vet-dir"
-    "COPYDIRS" "${cmd_srcroot}/vet:src/cmd"
+    "COPYDIRS"
+        "${cmd_srcroot}/vet:src/cmd"
+        "${cmd_srcroot}/internal/objabi:src/cmd/internal"
+    "COPYFILES" "${libgo_binroot}/objabi.go:src/cmd/internal/objabi"
     "TIMEOUT" ${default_check_timeout}
     "GOC" "${rungoc}"
     "BINDIR" ${gotools_binroot}

@@ -120,6 +120,36 @@ function(mkversion goos goarch outfile bindir srcroot scriptroot)
   file(APPEND ${outfile} "type Uintreg uintptr\n")
 endfunction()
 
+#----------------------------------------------------------------------
+# Emit 'cpugen.go'. Similar to version.go, but with a smaller set of
+# CPU-specific constants. Based on the libgo Makefile recipe.
+#
+# Unnamed parameters:
+#
+#   * GOARCH setting (target architecture)
+#   * output file
+#   * root of src containing libgo script files
+#
+function(mkcpugen goarch outfile scriptroot)
+
+  file(REMOVE ${outfile})
+  file(WRITE ${outfile} "package cpu\n")
+
+  # Invoke goarch.sh
+  execute_process(COMMAND ${shell} "${scriptroot}/goarch.sh"
+    ${goarch} "cachelinesize"
+      OUTPUT_VARIABLE result
+      ERROR_VARIABLE errmsg
+      RESULT_VARIABLE exitstatus)
+    if(${exitstatus} MATCHES 0)
+      file(APPEND ${outfile} "const CacheLineSize = ${result}")
+    else()
+      message(FATAL_ERROR "goarch.sh invocation failed: ${errmsg}")
+    endif()
+    file(APPEND ${outfile} "\n\n")
+
+endfunction()
+
 macro(upperfirst name result)
   string(SUBSTRING ${name} 0 1 c1)
   string(SUBSTRING ${name} 1 -1 crem)
@@ -206,6 +236,7 @@ function(mkobjabi outfile binroot srcroot)
   file(APPEND ${outfile} "const defaultGO386 = `sse2`\n")
   file(APPEND ${outfile} "const defaultGOARM = `5`\n")
   file(APPEND ${outfile} "const defaultGOMIPS = `hardfloat`\n")
+  file(APPEND ${outfile} "const defaultGOMIPS64 = `hardfloat`\n")
   file(APPEND ${outfile} "const defaultGOOS = runtime.GOOS\n")
   file(APPEND ${outfile} "const defaultGOARCH = runtime.GOARCH\n")
   file(APPEND ${outfile} "const defaultGO_EXTLINK_ENABLED = ``\n")
