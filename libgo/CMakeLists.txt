@@ -99,7 +99,8 @@ set(runtime_matchargs "--tag=libffi")
 # that <pkg>_extra_go_files holds the additional sources for <pkg>.
 set(runtime_extra_go_files "runtime_sysinfo.go" "sigtab.go")
 set(cmd_internal_objabi_extra_go_files "objabi.go")
-set(go_build_extra_go_files "zstdpkglist.go")
+set(internal_goroot_extra_go_files "zstdpkglist.go")
+set(internal_cpu_extra_go_files "cpugen.go")
 set(cmd_go_internal_cfg_extra_go_files "zdefaultcc.go")
 set(runtime_internal_sys_extra_go_files "version.go")
 set(go_types_extra_go_files "gccgosizes.go")
@@ -222,7 +223,7 @@ copy_if_different(${objabitmp} ${objabidotgo})
 # Rules for zstdpkglist.go
 set(zstdpkglistdotgo "${libgo_binroot}/zstdpkglist.go")
 set(zstdpkglisttmp "${libgo_binroot}/zstdpkglist.go.tmp")
-mkzstdpkglist("build" ${zstdpkglisttmp} "${libpackages}")
+mkzstdpkglist("goroot" ${zstdpkglisttmp} "${libpackages}")
 copy_if_different(${zstdpkglisttmp} ${zstdpkglistdotgo})
 
 # Rules for zdefaultcc.go
@@ -315,6 +316,12 @@ set(epolldotgo "${libgo_binroot}/epoll.go")
 set(epolltmp "${libgo_binroot}/epoll.go.tmp")
 mkepoll(${epolltmp})
 copy_if_different(${epolltmp} ${epolldotgo})
+
+# Generated file cpugen.go
+set(cpugendotgo "${libgo_binroot}/cpugen.go")
+set(cpugentmp "${libgo_binroot}/cpugen.go.tmp")
+mkcpugen(${goarch} ${cpugentmp} ${libgo_scriptroot})
+copy_if_different(${cpugentmp} ${cpugendotgo})
 
 #........................................................................
 
@@ -420,9 +427,11 @@ set(runtimecfiles
 # C files that happen to be living in other packages.
 list(APPEND runtimecfiles
   "go/bytes/indexbyte.c"
+  "go/internal/bytealg/bytealg.c"
   "go/log/syslog/syslog_c.c"
   "go/reflect/makefunc_ffi_c.c"
   "go/runtime/internal/atomic/atomic.c"
+  "go/internal/cpu/cpu_gccgo.c"
   "go/strings/indexbyte.c"
   "go/sync/atomic/atomic.c"
   "go/sync/cas.c"
@@ -547,6 +556,16 @@ set(extra_check_libs_cmd_go_internal_cache "${libgo_binroot}/libgotool.a")
 set(extra_check_libs_cmd_go_internal_generate "${libgo_binroot}/libgotool.a")
 set(extra_check_libs_cmd_go_internal_get "${libgo_binroot}/libgotool.a")
 set(extra_check_libs_cmd_go_internal_load "${libgo_binroot}/libgotool.a")
+set(extra_check_libs_cmd_go_internal_imports "${libgo_binroot}/libgotool.a")
+set(extra_check_libs_cmd_go_internal_modconv "${libgo_binroot}/libgotool.a")
+set(extra_check_libs_cmd_go_internal_modfetch "${libgo_binroot}/libgotool.a")
+set(extra_check_libs_cmd_go_internal_modfetch_codehost "${libgo_binroot}/libgotool.a")
+set(extra_check_libs_cmd_go_internal_modfile "${libgo_binroot}/libgotool.a")
+set(extra_check_libs_cmd_go_internal_modload "${libgo_binroot}/libgotool.a")
+set(extra_check_libs_cmd_go_internal_module "${libgo_binroot}/libgotool.a")
+set(extra_check_libs_cmd_go_internal_mvs "${libgo_binroot}/libgotool.a")
+set(extra_check_libs_cmd_go_internal_search "${libgo_binroot}/libgotool.a")
+set(extra_check_libs_cmd_go_internal_web2 "${libgo_binroot}/libgotool.a")
 set(extra_check_libs_cmd_go_internal_work "${libgo_binroot}/libgotool.a")
 set(extra_check_libs_cmd_vet_internal_cfg "${libgo_binroot}/libgotool.a")
 
