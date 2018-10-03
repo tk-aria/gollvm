@@ -13,8 +13,8 @@ else()
 endif()
 
 # List of all architectures, families, os flavors.
-set(allgoarch "386" "alpha" "amd64" "amd64p32" "arm" "armbe" "arm64" "arm64be" "ia64" "m68k" "mips" "mipsle" "mips64" "mips64le" "mips64p32" "mips64p32le" "ppc" "ppc64" "ppc64le" "s390" "s390x" "sparc" "sparc64")
-set(allgoarchfamily "I386" "ALPHA" "AMD64" "ARM" "ARM64" "IA64" "M68K" "MIPS" "MIPS64" "PPC" "PPC64" "S390" "S390X" "SPARC" "SPARC64")
+set(allgoarch "386" "alpha" "amd64" "amd64p32" "arm" "armbe" "arm64" "arm64be" "ia64" "m68k" "mips" "mipsle" "mips64" "mips64le" "mips64p32" "mips64p32le" "nios2" "ppc" "ppc64" "ppc64le" "riscv" "riscv64" "s390" "s390x" "sh" "shbe" "sparc" "sparc64" "wasm")
+set(allgoarchfamily "I386" "ALPHA" "AMD64" "ARM" "ARM64" "IA64" "M68K" "MIPS" "MIPS64" "PPC" "PPC64" "RISCV" "RISCV64" "S390" "S390X" "SH" "SPARC" "SPARC64" "WASM")
 set(allgoos "aix" "android" "darwin" "dragonfly" "freebsd" "irix" "linux" "netbsd" "openbsd" "plan9" "rtems" "solaris" "windows")
 
 # Set library suffix based on target triple
