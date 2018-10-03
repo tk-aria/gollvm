@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8fc9f871_8866b6d5",
+        "filename": "cmake/modules/AutoGenGo.cmake",
+        "patchSetId": 1
+      },
+      "lineNbr": 150,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-10-03T19:45:23Z",
+      "side": 1,
+      "message": "This line and line 152 have whitespaces.",
+      "revId": "a17a74879c851146fe3361da5c20c11de1570d71",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
