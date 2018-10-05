@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "006dfbe5_ff59a3e6",
+        "filename": "bridge/go-llvm-materialize.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 194,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-10-05T20:12:51Z",
+      "side": 1,
+      "message": "Seems reasonable-- I\u0027ll do it that way.",
+      "parentUuid": "8500d30b_5d8478a4",
+      "revId": "546ccba77c40453b5aff074f376a716ba02b7745",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "f4653860_8ab0e9a7",
         "filename": "bridge/go-llvm.cpp",
         "patchSetId": 2
@@ -33,6 +51,24 @@
       "revId": "546ccba77c40453b5aff074f376a716ba02b7745",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "83cbe03e_359b7fa0",
+        "filename": "bridge/go-llvm.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 801,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-10-05T20:12:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f4653860_8ab0e9a7",
+      "revId": "546ccba77c40453b5aff074f376a716ba02b7745",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
