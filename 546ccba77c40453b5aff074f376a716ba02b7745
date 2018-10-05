@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8500d30b_5d8478a4",
+        "filename": "bridge/go-llvm-materialize.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 194,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-10-05T19:33:57Z",
+      "side": 1,
+      "message": "Maybe we should do this case first? Not sure why we didn\u0027t do it this way.",
+      "revId": "546ccba77c40453b5aff074f376a716ba02b7745",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f4653860_8ab0e9a7",
+        "filename": "bridge/go-llvm.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 801,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-10-05T19:33:57Z",
+      "side": 1,
+      "message": "This is the same as candidate.",
+      "revId": "546ccba77c40453b5aff074f376a716ba02b7745",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
