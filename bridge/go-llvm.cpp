@@ -682,6 +682,129 @@ Bexpression *Llvm_backend::resolveVarContext(Bexpression *expr,
   return expr;
 }
 
+// This helper function takes a constant value and a specified type and tries to
+// create an equivalent constant value using using the new type. It is designed
+// primarily for aggreate types, but will work for other types as well.
+//
+// Background: conversions of aggregate constant values are a problem area for
+// the bridge, due to the front end's use of placeholder types, and to the way
+// that LLVM implements placeholders.
+//
+// For example, suppose that the front end creates a placholder struct type PH,
+// then later on resolves the placeholder to the struct type "{ i64, i64 }". In
+// the world of LLVM types, the resulting type is named (has name "PH") but is
+// also a struct type with two fields.
+//
+// Elsewhere in the compilation constant struct value of "{ 13, 14 }" is created
+// using an anonymous struct type T of the form "{ i64, i64 }". Since this type
+// is not named, it has a separate, distinct LLVM type from PH.
+//
+// The front end sees these two types as equivalent, however, so it can often
+// take constant values of type T and assign them (either directly or via an
+// initializer) to variables of type PH (or vice versa), adding conversions if
+// the backend types don't match. LLVM, however, doesn't allow you to convert an
+// aggregate value V1 (with type T1) to another value V2 (with different type
+// T2) using a bitcast -- the IR builder will reject the cast.
+//
+// One way around this is to take the address of V1, convert the resulting
+// pointer to "pointer to T2", then dereference the pointer and assign
+// the result to V2.
+//
+// This routine takes a different route, which is to pick apart the constant
+// value (of type T1) and create an equivalent constant value of type T2.
+// Note that if the types are sufficiently different (for example, different
+// number of struct fields or different size) the process will fail and
+// a null pointer will be returned.
+
+llvm::Constant *Llvm_backend::genConvertedConstant(llvm::Constant *fromVal,
+                                                   llvm::Type *llToType)
+{
+  llvm::Type *llFromType = fromVal->getType();
+  if (llFromType == llToType)
+    return fromVal;
+
+  // There must be agreement in type class (struct -> struct, etc).
+  bool isFromComposite = llvm::isa<llvm::CompositeType>(llFromType);
+  bool isToComposite = llvm::isa<llvm::CompositeType>(llToType);
+  if (isFromComposite != isToComposite)
+    return nullptr;
+
+  // If the type in question is not an aggregate, go ahead and
+  // apply a bitcast to perform the conversion.
+  LIRBuilder builder(context_, llvm::ConstantFolder());
+  if (! isToComposite) {
+    llvm::Value *bitcast = builder.CreateBitCast(fromVal, llToType);
+    assert(llvm::isa<llvm::Constant>(bitcast));
+    llvm::Constant *constCast = llvm::cast<llvm::Constant>(bitcast);
+    return constCast;
+  }
+
+  // Collect disposition of type (struct vs array) and number of elements,
+  // and weed out any clashes between 'from' and 'to' types.
+  unsigned numElements = 0;
+  bool isFromStructTy = llFromType->isStructTy();
+  bool isToStructTy = llToType->isStructTy();
+  if (isFromStructTy) {
+    if (! isToStructTy)
+      return nullptr;
+    llvm::StructType *fromStTy = llvm::cast<llvm::StructType>(llFromType);
+    llvm::StructType *toStTy = llvm::cast<llvm::StructType>(llToType);
+    numElements = fromStTy->getNumElements();
+    if (numElements != toStTy->getNumElements())
+      return nullptr;
+  } else {
+    assert(llFromType->isArrayTy());
+    if (! llToType->isArrayTy())
+      return nullptr;
+    llvm::ArrayType *fromArTy = llvm::cast<llvm::ArrayType>(llFromType);
+    llvm::ArrayType *toArTy = llvm::cast<llvm::ArrayType>(llToType);
+    numElements = fromArTy->getNumElements();
+    if (numElements != toArTy->getNumElements())
+      return nullptr;
+  }
+
+  // Do a lookup to see if we have a memoized value from a previous
+  // conversion.
+  auto candidate = std::make_pair(fromVal, llToType);
+  auto it = genConvConstMap_.find(candidate);
+  if (it != genConvConstMap_.end())
+    return it->second;
+
+  // Grab from/to types as composites.
+  llvm::CompositeType *llFromCT = llvm::cast<llvm::CompositeType>(llFromType);
+  llvm::CompositeType *llToCT = llvm::cast<llvm::CompositeType>(llToType);
+  assert(llFromCT != nullptr);
+  assert(llToCT != nullptr);
+
+  // Walk through the child values and convert them.
+  llvm::SmallVector<llvm::Constant *, 64> newvals(numElements);
+  for (unsigned idx = 0; idx < numElements; idx++) {
+    llvm::Type *toEltType = llToCT->getTypeAtIndex(idx);
+    llvm::Constant *constElt = fromVal->getAggregateElement(idx);
+    llvm::Constant *convElt = genConvertedConstant(constElt, toEltType);
+    if (convElt == nullptr)
+      return nullptr;
+    newvals[idx] = convElt;
+  }
+
+  // Materialize final constant value.
+  llvm::Constant *toVal = nullptr;
+  if (llToType->isStructTy()) {
+    llvm::StructType *llst = llvm::cast<llvm::StructType>(llToType);
+    toVal = llvm::ConstantStruct::get(llst, newvals);
+  } else {
+    llvm::ArrayType *llat = llvm::cast<llvm::ArrayType>(llToType);
+    toVal = llvm::ConstantArray::get(llat, newvals);
+  }
+
+  // Cache the result.
+  genConvConstMap_[candidate] = toVal;
+
+  // Return the final product.
+  return toVal;
+}
+
+
 Bvariable *Llvm_backend::genVarForConstant(llvm::Constant *conval,
                                            Btype *type)
 {

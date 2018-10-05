@@ -395,4 +395,75 @@ TEST(BackendCoreTests, TestFcnPointerCompatible) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
+TEST(BackendCallTests, TestCompositeInitGvarConvert) {
+
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
+  Location loc;
+
+  // Regular struct of type { i8, *i8, i32 }
+  Btype *bt = be->bool_type();
+  Btype *pbt = be->pointer_type(bt);
+  Btype *bi32t = be->integer_type(false, 32);
+  Btype *s3t = mkBackendStruct(be, bt, "f0", pbt, "f1", bi32t, "f2", nullptr);
+
+  // Placeholder version of type { i8, *i8, i32 }
+  Btype *phst1 = be->placeholder_struct_type("ph", loc);
+  std::vector<Backend::Btyped_identifier> fields = {
+      Backend::Btyped_identifier("f0", bt, loc),
+      Backend::Btyped_identifier("f1", pbt, loc),
+      Backend::Btyped_identifier("f3", bi32t, loc)};
+  be->set_placeholder_struct_type(phst1, fields);
+
+  // Another struct that uses the both types above as fields
+  Btype *sqt = mkBackendStruct(be, s3t, "f0", phst1, "f1", nullptr);
+
+  // Create a global variable using this type
+  Bvariable *g1 =
+      be->global_variable("gv", "gv", sqt, false, /* is_external */
+                          false,                  /* is_hidden */
+                          false, /* unique_section */
+                          loc);
+
+  // Create initializers using the various types.  Note: the initial
+  // value for "f0" (non-placeholder type) is created using the
+  // corresponding placeholder and vice versa -- the intent is to
+  // make sure the conversion is handled properly.
+  Bexpression *f1con, *f2con, *topcon;
+  {
+    std::vector<Bexpression *> vals;
+    vals.push_back(be->zero_expression(bt));
+    vals.push_back(be->zero_expression(pbt));
+    vals.push_back(mkInt32Const(be, int32_t(101)));
+    f1con = be->constructor_expression(s3t, vals, loc);
+  }
+  {
+    std::vector<Bexpression *> vals;
+    vals.push_back(be->zero_expression(bt));
+    vals.push_back(be->zero_expression(pbt));
+    vals.push_back(mkInt32Const(be, int32_t(101)));
+    f2con = be->constructor_expression(phst1, vals, loc);
+  }
+  {
+    std::vector<Bexpression *> vals;
+    Bexpression *bc1 = be->convert_expression(phst1, f1con, loc);
+    vals.push_back(bc1);
+    Bexpression *bc2 = be->convert_expression(s3t, f2con, loc);
+    vals.push_back(bc2);
+    topcon = be->constructor_expression(sqt, vals, loc);
+  }
+
+  // Set initializer
+  be->global_variable_set_init(g1, topcon);
+
+  bool broken = h.finish(StripDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+
+  be->dumpModule();
+
+  bool ok = h.expectModuleDumpContains("@gv = global { { i8, i8*, i32 }, %ph.0 } { { i8, i8*, i32 } { i8 0, i8* null, i32 101 }, %ph.0 { i8 0, i8* null, i32 101 } }");
+  EXPECT_TRUE(ok);
+
+}
+
 }

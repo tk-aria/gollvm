@@ -162,14 +162,34 @@ Bexpression *Llvm_backend::materializeConversion(Bexpression *convExpr)
     }
   }
 
-  // If we're converting an aggregate type to an equivalent one,
-  // the conversion will happen on the pointer. For constant
-  // composite value, we need to make a variable for it to take
-  // the address. And the result will be pointer, so it has a
-  // load pending.
+  // If we're converting between two different Btypes that have the
+  // same underlying LLVM type, then we can create a new Bexpression
+  // for the conversion but not do anything else.
+  if (toType == valType) {
+    Bexpression *rval =
+        nbuilder_.mkConversion(type, expr->value(), expr, location);
+    if (expr->varExprPending())
+      rval->setVarExprPending(expr->varContext());
+    return rval;
+  }
+
+  // If we're applying a conversion to an aggregate constant, call a helper to
+  // see if we can create a new (but equivalent) constant value using the target
+  // type. If this works, we're effectively done. If the conversion doesn't
+  // succeed, materialize a variable containing the constant and apply the
+  // conversion to the variable's type (which will be a pointer to the type of
+  // the constant), then flag the result as "load pending".
   bool pending = false;
   if (expr->isConstant() && val->getType()->isAggregateType()) {
     llvm::Constant *cval = llvm::cast<llvm::Constant>(val);
+    assert(valType == cval->getType());
+    llvm::Value *convertedValue = genConvertedConstant(cval, toType);
+    if (convertedValue != nullptr) {
+      // We have a new value of the correct type. Wrap a conversion
+      // expr around it and return.
+      return nbuilder_.mkConversion(type, convertedValue, expr, location);
+    }
+    // materialize constant into variable.
     Bvariable *cv = genVarForConstant(cval, expr->btype());
     val = cv->value();
     valType = val->getType();
@@ -178,16 +198,6 @@ Bexpression *Llvm_backend::materializeConversion(Bexpression *convExpr)
   }
 
   Bexpression *rval = nullptr;
-
-  // If we're converting between two different Btypes that have the
-  // same underlying LLVM type, then we can create a new Bexpression
-  // for the conversion but not do anything else.
-  if (toType == valType) {
-    rval = nbuilder_.mkConversion(type, expr->value(), expr, location);
-    if (expr->varExprPending())
-      rval->setVarExprPending(expr->varContext());
-    return rval;
-  }
 
   LIRBuilder builder(context_, llvm::ConstantFolder());
 
@@ -891,8 +901,10 @@ Llvm_backend::makeConstCompositeExpr(Btype *btype,
         Bexpression *bex = vals[ii];
         llvm::Constant *con = llvm::cast<llvm::Constant>(bex->value());
         llvm::Type *elt = llct->getTypeAtIndex(ii);
-        if (elt != con->getType())
-          con = llvm::ConstantExpr::getBitCast(con, elt);
+        if (elt != con->getType()) {
+          con = genConvertedConstant(con, elt);
+          assert(con != nullptr);
+        }
         llvals[idx] = con;
       }
       if (numElements != nvals) {
@@ -907,8 +919,10 @@ Llvm_backend::makeConstCompositeExpr(Btype *btype,
       for (unsigned long ii = 0; ii < numElements; ++ii) {
         llvm::Constant *con = llvm::cast<llvm::Constant>(vals[ii]->value());
         llvm::Type *elt = llct->getTypeAtIndex(ii);
-        if (elt != con->getType())
-          con = llvm::ConstantExpr::getBitCast(con, elt);
+        if (elt != con->getType()) {
+          con = genConvertedConstant(con, elt);
+          assert(con != nullptr);
+        }
         llvals[ii] = con;
       }
     }

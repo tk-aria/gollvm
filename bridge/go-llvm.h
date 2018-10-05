@@ -556,6 +556,13 @@ public:
   // Materialize a composite constant into a variable
   Bvariable *genVarForConstant(llvm::Constant *conval, Btype *type);
 
+  // Convert a constant to another type. Returns nullptr if the conversion is
+  // not allowed. Intended primarily for aggregate constants, where the two
+  // types are structurally identical but may differ due to the presence
+  // or absence of placeholders.
+  llvm::Constant *genConvertedConstant(llvm::Constant *fromVal,
+                                       llvm::Type *llToType);
+
   // Examine vector of values to test whether they are constants.
   // Checks for and handles pending composite inits.
   static bool
@@ -787,6 +794,11 @@ public:
   // This is used to cache compiler-constructed vars to capture
   // constant values (created in genVarForConstant).
   std::unordered_map<llvm::Value *, Bvariable *> genVarConstMap_;
+
+  // This table is a cache for converted constants; key is a pair
+  // [FromVal,ToType] and value is a constant value equivalent
+  // to FromVal but converted to ToType.
+  pairvalmap<llvm::Constant *, llvm::Type *, llvm::Constant *> genConvConstMap_;
 
   // Table for commoning strings by value. String constants have
   // concrete types like "[5 x i8]", whereas we would like to return
