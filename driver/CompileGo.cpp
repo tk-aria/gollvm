@@ -225,7 +225,8 @@ bool CompileGoImpl::preamble(const Artifact &output)
   if (args_.hasArg(gollvm::options::OPT_v) || hashHashHash) {
     errs() << "Target: " << triple_.str() << "\n";
     errs() << " " << executablePath_;
-    if (!args_.hasArg(gollvm::options::OPT_S))
+    if (!args_.hasArg(gollvm::options::OPT_S) &&
+        !args_.hasArg(gollvm::options::OPT_emit_llvm))
       errs() << " " << "-S";
     for (auto arg : args_) {
       // Special case for -L. Here even if the user said "-L /x"
@@ -711,6 +712,10 @@ bool CompileGoImpl::invokeBackEnd()
       createTargetTransformInfoWrapperPass(target_->getTargetIRAnalysis()));
   createPasses(modulePasses, functionPasses);
 
+  legacy::PassManager codeGenPasses;
+  bool noverify = args_.hasArg(gollvm::options::OPT_noverify);
+  TargetMachine::CodeGenFileType ft = TargetMachine::CGFT_AssemblyFile;
+
   // Add passes to emit bitcode or LLVM IR as appropriate. Here we mimic
   // clang behavior, which is to emit bitcode when "-emit-llvm" is specified
   // but an LLVM IR dump of "-S -emit-llvm" is used.
@@ -724,23 +729,22 @@ bool CompileGoImpl::invokeBackEnd()
     modulePasses.add(bitcode ?
                      createBitcodeWriterPass(*OS, preserveUseLists) :
                      createPrintModulePass(*OS, "", preserveUseLists));
+    goto run;
   }
 
   // Set up codegen passes
-  legacy::PassManager codeGenPasses;
   codeGenPasses.add(
       createTargetTransformInfoWrapperPass(target_->getTargetIRAnalysis()));
 
   // Codegen setup
   codeGenPasses.add(new TargetLibraryInfoWrapperPass(*tlii_));
-  bool noverify = args_.hasArg(gollvm::options::OPT_noverify);
-  TargetMachine::CodeGenFileType ft = TargetMachine::CGFT_AssemblyFile;
   if (target_->addPassesToEmitFile(codeGenPasses, *OS, nullptr, ft,
                                    /*DisableVerify=*/ noverify)) {
     errs() << "error: unable to interface with target\n";
     return false;
   }
 
+run:
   // Here we go... first function passes
   functionPasses.doInitialization();
   for (Function &F : *module_.get())
@@ -752,7 +756,8 @@ bool CompileGoImpl::invokeBackEnd()
   modulePasses.run(*module_.get());
 
   // ... and finally code generation
-  codeGenPasses.run(*module_.get());
+  if (!args_.hasArg(gollvm::options::OPT_emit_llvm))
+    codeGenPasses.run(*module_.get());
 
   if (hasError_)
     return false;

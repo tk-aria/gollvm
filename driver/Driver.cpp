@@ -446,7 +446,7 @@ bool Driver::buildActions(Compilation &compilation)
     compilation.addAction(gocompact);
 
     // Schedule assemble action now if no -S.
-    if (!OPT_S) {
+    if (!OPT_S && !args_.hasArg(gollvm::options::OPT_emit_llvm)) {
       // Create action
       Action *asmact =
           new Action(Action::A_Assemble, gocompact);
