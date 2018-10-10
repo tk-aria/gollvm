@@ -23,6 +23,7 @@
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/FileSystem.h"
 
 DIBuildHelper::DIBuildHelper(llvm::Module *module,
@@ -52,6 +53,10 @@ void DIBuildHelper::createCompileUnitIfNeeded()
                                     "llvm-goc", isOptimized,
                                     compileFlags, runtimeVersion);
   pushDIScope(moduleScope_);
+
+  module_->addModuleFlag(llvm::Module::Warning, "Debug Info Version",
+                         llvm::DEBUG_METADATA_VERSION);
+  module_->addModuleFlag(llvm::Module::Warning, "Dwarf Version", 4);
 }
 
 void DIBuildHelper::finalize()
