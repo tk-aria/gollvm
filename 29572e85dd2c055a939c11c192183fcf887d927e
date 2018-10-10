@@ -36,6 +36,24 @@
     },
     {
       "key": {
+        "uuid": "674265a5_d00b6b38",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 101,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-10-10T20:29:03Z",
+      "side": 1,
+      "message": "Will move to the class.\n\nCurrently it is unique across a module (package). The idea is that we need a unique symbol for each safepoint. Later in codegen the stack map generation code will put stack maps to the symbols, so they can match. We could make the ID function scoped, say, by adding the function name as part of the symbol name, as long as it matches with the stack map generation code.",
+      "parentUuid": "d1cd8895_e452b331",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "a50a4c52_e61a903a",
         "filename": "passes/GoStatepoints.cpp",
         "patchSetId": 2
@@ -133,6 +151,30 @@
     },
     {
       "key": {
+        "uuid": "e9253660_dfb15c0b",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1366,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-10-10T20:29:03Z",
+      "side": 1,
+      "message": "This is part of the symbol name, so it needs to be text. This will not going into the binary (except the symbol table).",
+      "parentUuid": "318002a6_4ab4cf3d",
+      "range": {
+        "startLine": 1366,
+        "startChar": 47,
+        "endLine": 1366,
+        "endChar": 67
+      },
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "54ce02e9_4549b7c1",
         "filename": "passes/GoStatepoints.cpp",
         "patchSetId": 2
@@ -167,6 +209,24 @@
     },
     {
       "key": {
+        "uuid": "c558e6a3_342655b2",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1618,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-10-10T20:29:03Z",
+      "side": 1,
+      "message": "We might be able to do it in the front end. But there we don\u0027t yet know which slots are ambiguously live. We\u0027d need to zero all the slots. Also not sure what dead store elimination optimization would do.",
+      "parentUuid": "fa8ade8d_1f97aab5",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "605a2a9d_d83348a9",
         "filename": "passes/GoStatepoints.cpp",
         "patchSetId": 2
@@ -184,6 +244,24 @@
     },
     {
       "key": {
+        "uuid": "5fdb39f3_87f83b68",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1944,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-10-10T20:29:03Z",
+      "side": 1,
+      "message": "Good point. I completely ignored this part. It seems that GC leaf functions could be:\n- intrinsics (seems already handled),\n- actual leaf functions,\n- functions that are not preemptible, cannot block, and don\u0027t trigger GC themselves.\n\nMaybe as a start we should mark actual leaf functions as GC leaf?",
+      "parentUuid": "605a2a9d_d83348a9",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "d63b1f5f_ea2b03ca",
         "filename": "passes/GoStatepoints.cpp",
         "patchSetId": 2
@@ -195,6 +273,24 @@
       "writtenOn": "2018-09-28T16:12:49Z",
       "side": 1,
       "message": "seems like we should definitely be doing this in the bridge/frontend, I would think (since it will improve other optimizations too)?  I\u0027m kind of confused that this doesn\u0027t happen already.",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "838b0417_53ee55bc",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1954,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-10-10T20:29:03Z",
+      "side": 1,
+      "message": "Yeah, this is a good idea. Thank you for the CL.\n\nI was surprised that the optimizer does not simplify the CFG by cutting those edges.",
+      "parentUuid": "d63b1f5f_ea2b03ca",
       "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
@@ -252,6 +348,24 @@
     },
     {
       "key": {
+        "uuid": "1c3f368f_50809629",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2229,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-10-10T20:29:03Z",
+      "side": 1,
+      "message": "In theory typedmemmove should not be used for stack writes. It may read the stack (i.e. src is on stack), which will be handled just like regular calls, counted as a use of src.\n\nIf typedmemmove is really called with dst on stack, currently it is treated just as a use of dst. Maybe we should treat it as an initialization? Or better, just rewrite it to a plain memmove.\n\nSeems ok at the moment. I\u0027ll see if it causes real problem.",
+      "parentUuid": "1e0f9da3_5f458fec",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "65a114a4_b5e44ab9",
         "filename": "passes/GoStatepoints.cpp",
         "patchSetId": 2
@@ -269,6 +383,24 @@
     },
     {
       "key": {
+        "uuid": "c0fd2864_8bb47b5b",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2385,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-10-10T20:29:03Z",
+      "side": 1,
+      "message": "Oops. Will fix.\n\nWe could insert zeroing in the bridge, but I\u0027m not sure if the optimizer would remove it. In fact this is only needed when the optimizer messes up our initialization sequence...",
+      "parentUuid": "65a114a4_b5e44ab9",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "782b8959_2b9cdbe5",
         "filename": "passes/GoStatepoints.cpp",
         "patchSetId": 2
@@ -280,6 +412,24 @@
       "writtenOn": "2018-09-28T16:12:49Z",
       "side": 1,
       "message": "I\u0027d recommend extracting all this stuff (from here until the end of the file) out into a separate file, since it doesn\u0027t really depend on anything in lowering. That way it could be unit tested separately as well.",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d48930af_add5d7ac",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2702,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-10-10T20:29:03Z",
+      "side": 1,
+      "message": "Sounds good. Will do.",
+      "parentUuid": "782b8959_2b9cdbe5",
       "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
