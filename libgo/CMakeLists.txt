@@ -605,7 +605,7 @@ foreach( pack ${checkpackages})
     "GOLIBS" ${packlibs} ${extralibs}
     "BINDIR" "${libgo_binroot}"
     "BASEDIR" "${libgo_srcroot}"
-    DEPENDS ${libgo_goxfiles} libgotool libgo_shared libgo_static
+    DEPENDS ${libgo_goxfiles} libgotool libgo_shared libgo_static libgobegin
     COMMENT "Checking Go package ${pack}"
     VERBATIM)
   list(APPEND checktargets ${targetname})

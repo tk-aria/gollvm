@@ -82,7 +82,7 @@ foreach(tool ${tools})
       GOLIB ${libgotool_archive}
       GOCFLAGS ${gotools_extra_gocflags}
       ISUBDIR ${isubdir}
-      GODEP libgotool libgo_shared libgo_static)
+      GODEP libgotool libgo_shared libgo_static libgobegin)
     list(APPEND allgotools ${tool_target})
   endif()
 endforeach()
@@ -165,7 +165,7 @@ add_custom_target(
     "GOC" "${rungoc}"
     "BINDIR" ${gotools_binroot}
     "LIBDIR" ${libgo_binroot}
-  DEPENDS ${libgo_goxfiles} libgotool libgo_shared gotools_all
+  DEPENDS ${libgo_goxfiles} libgotool libgo_shared gotools_all libgobegin libgolibbegin
     ${libgo_binroot}/zstdpkglist.go ${libgo_binroot}/zdefaultcc.go
   COMMENT "Checking cmd/go tool"
   VERBATIM)
@@ -188,7 +188,7 @@ add_custom_target(
     "GOC" "${rungoc}"
     "BINDIR" ${gotools_binroot}
     "LIBDIR" ${libgo_binroot}
-  DEPENDS ${libgo_goxfiles} libgotool libgo_shared gotools_all
+  DEPENDS ${libgo_goxfiles} libgotool libgo_shared gotools_all libgobegin
   COMMENT "Checking cmd/vet tool"
   VERBATIM)
 list(APPEND checktargets ${targetname})
@@ -207,7 +207,7 @@ add_custom_target(
     "SETENV" "GOTRACEBACK=2"
     "BINDIR" ${gotools_binroot}
     "LIBDIR" ${libgo_binroot}
-  DEPENDS ${libgo_goxfiles} libgotool libgo_shared gotools_all
+  DEPENDS ${libgo_goxfiles} libgotool libgo_shared gotools_all libgobegin
   COMMENT "Checking cmd/cgo tool"
   VERBATIM)
 list(APPEND checktargets ${targetname})
@@ -227,7 +227,7 @@ add_custom_target(
     "TESTARG" "carchive_test.go"
     "BINDIR" ${gotools_binroot}
     "LIBDIR" ${libgo_binroot}
-  DEPENDS ${libgo_goxfiles} libgotool libgo_shared gotools_all
+  DEPENDS ${libgo_goxfiles} libgotool libgo_shared gotools_all libgobegin libgolibbegin
   COMMENT "Checking cmd/carchive tool"
   VERBATIM)
 list(APPEND checktargets ${targetname})
@@ -251,7 +251,7 @@ add_custom_target(
   "GOLIBS" ${packlibs} ${extralibs}
   "BINDIR" "${libgo_binroot}"
   "BASEDIR" "${libgo_srcroot}"
-  DEPENDS libgotool libgo_shared libgo_static gotools_all
+  DEPENDS libgotool libgo_shared libgo_static gotools_all libgobegin
   COMMENT "Checking runtime package with 'go' tool"
   VERBATIM)
 list(APPEND checktargets ${targetname})
