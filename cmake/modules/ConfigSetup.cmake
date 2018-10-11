@@ -135,9 +135,11 @@ check_c_source_compiles("#include <stdint.h>\nstatic uint64_t s;\nint main(int a
 # Issue an error if the C compiler doesn't support -fsplit-stack
 # (in theory you can build libgo without it, so I suppose this could
 # be changed to a warning).
-check_c_compiler_flag("-fsplit-stack" C_SUPPORTS_SPLIT_STACK)
-if(NOT C_SUPPORTS_SPLIT_STACK)
-  message(SEND_ERROR "C compiler does not support -fsplit-stack")
+if(GOLLVM_USE_SPLIT_STACK)
+  check_c_compiler_flag("-fsplit-stack" C_SUPPORTS_SPLIT_STACK)
+  if(NOT C_SUPPORTS_SPLIT_STACK)
+    message(SEND_ERROR "C compiler does not support -fsplit-stack")
+  endif()
+  set(USING_SPLIT_STACK 1)
 endif()
-set(USING_SPLIT_STACK 1)
 set(USE_LIBFFI 1)

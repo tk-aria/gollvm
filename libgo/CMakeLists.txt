@@ -82,6 +82,9 @@ set(gocompiler ${gollvm_driver})
 # Pick up any extra Go compiler flags specified via
 # "cmake -DGOLLVM_EXTRA_GOCFLAGS=..."
 set(libgo_extra_gocflags ${GOLLVM_EXTRA_GOCFLAGS})
+if(NOT GOLLVM_USE_SPLIT_STACK)
+  list(APPEND libgo_extra_gocflags "-fno-split-stack")
+endif()
 
 # Read in list of all libgo packages
 file(STRINGS "${libgo_srcroot}/libgo-packages.txt" libpackages)
@@ -453,7 +456,10 @@ foreach(cfile ${runtimecfiles})
 endforeach()
 
 # Compiler flags for C files in the runtime.
-set(baseopts "-Wno-zero-length-array -fsplit-stack ")
+set(baseopts "-Wno-zero-length-array ")
+if(GOLLVM_USE_SPLIT_STACK)
+  string(APPEND baseopts "-fsplit-stack ")
+endif()
 foreach(def ${basedefines})
   string(APPEND baseopts "${def} ")
 endforeach()
@@ -500,7 +506,11 @@ add_gollvm_library(libgo_shared SHARED
 set_target_properties(libgo_shared PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY ${libgo_binroot})
 set_target_properties(libgo_shared PROPERTIES OUTPUT_NAME "go")
-target_link_libraries(libgo_shared PUBLIC "-fsplit-stack;-lpthread;-lm")
+set(linkopts "-lpthread;-lm")
+if(GOLLVM_USE_SPLIT_STACK)
+  string(APPEND linkopts ";-fsplit-stack")
+endif()
+target_link_libraries(libgo_shared PUBLIC "${linkopts}")
 
 # Sources for libgobegin.a
 set(libgobegincfiles
