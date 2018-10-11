@@ -22,6 +22,8 @@ include(AddGollvm)
 # So that we can issue "make -jN" cmds in externalproject_add
 processorcount(PROCESSOR_COUNT)
 
+set(GOLLVM_USE_SPLIT_STACK ON CACHE BOOL "use split stack by default")
+
 set(EXTINSTALLDIR ${CMAKE_CURRENT_BINARY_DIR}/external/install)
 set(EXTLIBDIR "${EXTINSTALLDIR}/lib")
 set(EXTINCLUDEDIR "${EXTINSTALLDIR}/include")
