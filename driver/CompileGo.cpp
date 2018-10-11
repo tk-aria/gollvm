@@ -484,6 +484,13 @@ bool CompileGoImpl::initBridge()
                                   true);
   bridge_->setNoFpElim(!omitFp);
 
+  // -f[no-]split-stack
+  bool useSplitStack =
+      driver_.reconcileOptionPair(gollvm::options::OPT_fsplit_stack,
+                                  gollvm::options::OPT_fno_split_stack,
+                                  true);
+  bridge_->setUseSplitStack(useSplitStack);
+
   // Honor -fdebug-prefix=... option.
   for (const auto &arg : driver_.args().getAllArgValues(gollvm::options::OPT_fdebug_prefix_map_EQ))
     bridge_->addDebugPrefix(llvm::StringRef(arg).split('='));
