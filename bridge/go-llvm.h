@@ -393,6 +393,9 @@ public:
   // Disable frame pointer elimination if set to true.
   void setNoFpElim(bool b) { noFpElim_ = b; };
 
+  // Enable/disable the use of split stacks.
+  void setUseSplitStack(bool b) { useSplitStack_ = b; };
+
   // Target CPU and features
   void setTargetCpuAttr(const std::string &cpu);
   void setTargetFeaturesAttr(const std::string &attrs);
@@ -739,6 +742,9 @@ public:
 
   // Whether to disable frame pointer elimination.
   bool noFpElim_;
+
+  // Whether to use split stacks.
+  bool useSplitStack_;
 
   // Whether to check for unexpected node sharing (e.g. same Bexpression
   // or statement pointed to by multiple parents).

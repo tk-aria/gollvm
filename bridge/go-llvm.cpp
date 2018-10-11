@@ -53,6 +53,7 @@ Llvm_backend::Llvm_backend(llvm::LLVMContext &context,
     , traceLevel_(0)
     , noInline_(false)
     , noFpElim_(false)
+    , useSplitStack_(true)
     , checkIntegrity_(true)
     , createDebugMetaData_(true)
     , exportDataStarted_(false)
@@ -468,7 +469,7 @@ Bfunction *Llvm_backend::createBuiltinFcn(BuiltinEntry *be)
   bool is_visible = true;
   bool is_declaration = false;
   bool is_inl = true;
-  bool is_splitstack = true;
+  bool is_splitstack = useSplitStack_;
   bool in_unique_section = false;
   bool is_noret = false;
 
@@ -2570,7 +2571,7 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
       fcn->addFnAttr(llvm::Attribute::NoInline);
 
     // split-stack or nosplit
-    if (! disable_split_stack)
+    if (useSplitStack_ && !disable_split_stack)
       fcn->addFnAttr("split-stack");
 
     // allow elim frame pointer or not
@@ -2614,7 +2615,7 @@ createbfunc:
                                    typeManager());
 
   // split-stack or nosplit
-  if (disable_split_stack)
+  if (!useSplitStack_ || disable_split_stack)
     bfunc->setSplitStack(Bfunction::NoSplit);
 
   // TODO: unique section support. llvm::GlobalObject has support for
