@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "ed88ac36_0c737476",
+        "filename": "bridge/go-llvm-bnode.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1019,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-10-12T19:31:36Z",
+      "side": 1,
+      "message": "Yeah, for completeness I think you are right.",
+      "parentUuid": "1a5e760b_9be3138e",
+      "range": {
+        "startLine": 1019,
+        "startChar": 4,
+        "endLine": 1019,
+        "endChar": 8
+      },
+      "revId": "9c40d23858e637ae4492c7ca0a06a296f960ab39",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "22cdc14e_7f4704ca",
         "filename": "bridge/go-llvm.cpp",
         "patchSetId": 2
@@ -42,6 +66,24 @@
     },
     {
       "key": {
+        "uuid": "7d8317c3_1a9c8e29",
+        "filename": "bridge/go-llvm.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2969,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-10-12T19:31:36Z",
+      "side": 1,
+      "message": "You are right. I\u0027ll fix this up. I think this points out the need a unit test that includes an invokeinst downstream of a no-return call; I\u0027ll work on that.",
+      "parentUuid": "22cdc14e_7f4704ca",
+      "revId": "9c40d23858e637ae4492c7ca0a06a296f960ab39",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "305c3eb6_6952b2e2",
         "filename": "bridge/go-llvm.cpp",
         "patchSetId": 2
@@ -53,6 +95,24 @@
       "writtenOn": "2018-10-12T18:32:13Z",
       "side": 1,
       "message": "This variable seems write-only?",
+      "revId": "9c40d23858e637ae4492c7ca0a06a296f960ab39",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "720d1554_6d8800af",
+        "filename": "bridge/go-llvm.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3003,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-10-12T19:31:36Z",
+      "side": 1,
+      "message": "Will remove.",
+      "parentUuid": "305c3eb6_6952b2e2",
       "revId": "9c40d23858e637ae4492c7ca0a06a296f960ab39",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
