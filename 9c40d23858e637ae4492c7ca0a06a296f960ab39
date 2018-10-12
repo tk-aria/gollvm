@@ -1,0 +1,61 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1a5e760b_9be3138e",
+        "filename": "bridge/go-llvm-bnode.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1019,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-10-12T18:32:13Z",
+      "side": 1,
+      "message": "Remove \"else\"?\nIf idx \u003d\u003d newSize, I think we also need to unsetParent? Or maybe just leave for deleteAfter code at line 1032 to unsetParent?",
+      "range": {
+        "startLine": 1019,
+        "startChar": 4,
+        "endLine": 1019,
+        "endChar": 8
+      },
+      "revId": "9c40d23858e637ae4492c7ca0a06a296f960ab39",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "22cdc14e_7f4704ca",
+        "filename": "bridge/go-llvm.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2969,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-10-12T18:32:13Z",
+      "side": 1,
+      "message": "This doesn\u0027t cover Invoke instruction. In walkExpr below this is called after postProcessInst, so Calls may be already converted to Invokes.",
+      "revId": "9c40d23858e637ae4492c7ca0a06a296f960ab39",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "305c3eb6_6952b2e2",
+        "filename": "bridge/go-llvm.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3003,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-10-12T18:32:13Z",
+      "side": 1,
+      "message": "This variable seems write-only?",
+      "revId": "9c40d23858e637ae4492c7ca0a06a296f960ab39",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
