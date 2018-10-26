@@ -126,6 +126,9 @@ class CompileGoImpl {
   // Helpers for -### output
   void dumpArg(opt::Arg &arg, bool doquote);
   void quoteDump(const std::string &str, bool doquote);
+
+  // Misc
+  bool enableVectorization(bool slp);
 };
 
 CompileGoImpl::CompileGoImpl(ToolChain &tc, const std::string &executablePath)
@@ -673,8 +676,21 @@ bool CompileGoImpl::invokeFrontEnd()
   return true;
 }
 
+bool CompileGoImpl::enableVectorization(bool slp)
+{
+  bool enable = (olvl_ > 1);
+  if (slp)
+    return driver_.reconcileOptionPair(gollvm::options::OPT_fvectorize,
+                                       gollvm::options::OPT_fno_vectorize,
+                                       enable);
+  else
+    return driver_.reconcileOptionPair(gollvm::options::OPT_fslp_vectorize,
+                                       gollvm::options::OPT_fno_slp_vectorize,
+                                       enable);
+}
+
 void CompileGoImpl::createPasses(legacy::PassManager &MPM,
-                                           legacy::FunctionPassManager &FPM)
+                                 legacy::FunctionPassManager &FPM)
 {
   if (args_.hasArg(gollvm::options::OPT_disable_llvm_passes))
     return;
@@ -697,6 +713,8 @@ void CompileGoImpl::createPasses(legacy::PassManager &MPM,
   pmb.SizeLevel = 0; // TODO: decide on right value here
   pmb.PrepareForThinLTO = false;
   pmb.PrepareForLTO = false;
+  pmb.SLPVectorize = enableVectorization(true);
+  pmb.LoopVectorize = enableVectorization(false);
 
   FPM.add(new TargetLibraryInfoWrapperPass(*tlii_));
   if (! args_.hasArg(gollvm::options::OPT_noverify))
