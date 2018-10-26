@@ -249,6 +249,16 @@ def fno_pie : Flag<["-"], "fno-pie">, Group<f_Group>;
 def fno_inline : Flag<["-"], "fno-inline">, Group<f_Group>,
   HelpText<"Disable inlining">;
 
+def fvectorize : Flag<["-"], "fvectorize">, Group<f_Group>,
+  HelpText<"Enable the loop vectorization passes">;
+def fno_vectorize : Flag<["-"], "fno-vectorize">, Group<f_Group>,
+  HelpText<"Disable the loop vectorization passes">;
+
+def fslp_vectorize : Flag<["-"], "fslp-vectorize">, Group<f_Group>,
+  HelpText<"Enable the superword-level parallelism vectorization passes">;
+def fno_slp_vectorize : Flag<["-"], "fno-slp-vectorize">, Group<f_Group>,
+  HelpText<"Disable the superword-level parallelism vectorization passes">;
+
 def ffp_contract_EQ : Joined<["-"], "ffp-contract=">, Group<f_Group>,
   HelpText<"Form fused FP ops (e.g. FMAs): fast (everywhere)"
   " | on (according to FP_CONTRACT pragma, default) | off (never fuse)">,
