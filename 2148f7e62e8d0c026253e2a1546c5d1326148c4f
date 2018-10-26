@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1697a1b1_2cad896b",
+        "filename": "driver/CompileGo.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 682,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-10-26T14:30:54Z",
+      "side": 1,
+      "message": "Are the two branch swapped?",
+      "revId": "2148f7e62e8d0c026253e2a1546c5d1326148c4f",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
