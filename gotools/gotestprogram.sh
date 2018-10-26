@@ -94,8 +94,9 @@ if [ $? != 0 ]; then
   echo "can't change to $BINDIR"
   exit 1
 fi
-rm -rf $WORKDIR
-mkdir $WORKDIR
+CACHEDIR="${WORKDIR}-gocache"
+rm -rf $WORKDIR $CACHEDIR
+mkdir $WORKDIR $CACHEDIR
 #
 # Copy in files cited in 'COPYGODIRS'. Each item here is a tuple X:Y
 # where X is a source directory containing Go files and Y is a destination
@@ -147,6 +148,7 @@ done
 #
 # More setup
 #
+export GOCACHE=$CACHEDIR
 export GCCGOTOOLDIR=${BINDIR}
 export GO_TESTING_GOTOOLS=yes
 export GCCGO=${GOC}
