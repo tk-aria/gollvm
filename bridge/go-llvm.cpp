@@ -3008,7 +3008,6 @@ llvm::BasicBlock *GenBlocks::walkExpr(llvm::BasicBlock *curblock,
   bool changed = false;
   std::vector<llvm::Instruction*> newinsts;
   for (auto originst : expr->instructions()) {
-    llvm::BasicBlock *origblock = curblock;
     auto pair = postProcessInst(originst, curblock);
     auto inst = pair.first;
     if (inst != originst)
