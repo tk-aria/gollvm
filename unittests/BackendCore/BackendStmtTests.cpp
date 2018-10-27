@@ -601,7 +601,6 @@ TEST(BackendStmtTests, TestExceptionHandlingStmt) {
   Btype *bi8t = be->integer_type(false, 8);
   Bvariable *loc2 = h.mkLocal("y", bi8t);
   Btype *s2t = mkBackendStruct(be, bi8t, "f1", bi8t, "f2", nullptr);
-  Bvariable *loc3 = h.mkLocal("z", s2t);
   BFunctionType *beftynr = mkFuncTyp(be, L_RES, s2t, L_END);
 
   BFunctionType *befty2 = mkFuncTyp(be,
@@ -688,15 +687,11 @@ entry:
   %ehtmp.0 = alloca { i8*, i32 }
   %x = alloca i64
   %y = alloca i8
-  %z = alloca { i8, i8 }
   %sret.actual.0 = alloca { i8, i8 }
   %sret.actual.1 = alloca { i8, i8 }
   %finvar.0 = alloca i8
   store i64 0, i64* %x
   store i8 0, i8* %y
-  %cast.0 = bitcast { i8, i8 }* %z to i8*
-  %cast.1 = bitcast { i8, i8 }* @const.0 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 1 %cast.0, i8* align 1 %cast.1, i64 2, i1 false)
   %call.0 = invoke i64 @id(i8* nest undef, i64 99)
           to label %cont.1 unwind label %pad.1
 

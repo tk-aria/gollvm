@@ -395,7 +395,7 @@ TEST(BackendCoreTests, TestFcnPointerCompatible) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendCallTests, TestCompositeInitGvarConvert) {
+TEST(BackendCoreTests, TestCompositeInitGvarConvert) {
 
   FcnTestHarness h("foo");
   Llvm_backend *be = h.be();
@@ -458,8 +458,6 @@ TEST(BackendCallTests, TestCompositeInitGvarConvert) {
 
   bool broken = h.finish(StripDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
-
-  be->dumpModule();
 
   bool ok = h.expectModuleDumpContains("@gv = global { { i8, i8*, i32 }, %ph.0 } { { i8, i8*, i32 } { i8 0, i8* null, i32 101 }, %ph.0 { i8 0, i8* null, i32 101 } }");
   EXPECT_TRUE(ok);
