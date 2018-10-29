@@ -213,16 +213,10 @@ Bfunction *mkFunci32o64(Backend *be, const char *fname, bool mkParams) {
       mkFuncTyp(be,
                 L_PARM, bi32t, L_PARM, bi32t, L_PARM, bpi64t,
                 L_RES, bi64t, L_END);
-  bool visible = true;
-  bool is_declaration = false;
-  bool is_inl = true;
-  bool split_stack = true;
-  bool unique_sec = false;
-  bool no_ret = false;
+  unsigned fflags = (Backend::function_is_visible |
+                     Backend::function_is_inlinable);
   Location loc;
-  Bfunction *func = be->function(befty, fname, fname, visible,
-                                 is_declaration, is_inl,
-                                 split_stack, no_ret, unique_sec, loc);
+  Bfunction *func = be->function(befty, fname, fname, fflags, loc);
   if (mkParams) {
     be->parameter_variable(func, "param1", bi32t, false, loc);
     be->parameter_variable(func, "param2", bi32t, false, loc);
@@ -234,15 +228,9 @@ Bfunction *mkFunci32o64(Backend *be, const char *fname, bool mkParams) {
 Bfunction *mkFuncFromType(Backend *be, const char *fname,
                           BFunctionType *befty, Location loc)
 {
-  bool visible = true;
-  bool is_declaration = false;
-  bool is_inl = true;
-  bool split_stack = true;
-  bool unique_sec = false;
-  bool no_ret = false;
-  Bfunction *func = be->function(befty, fname, fname, visible,
-                                 is_declaration, is_inl,
-                                 split_stack, no_ret, unique_sec, loc);
+  unsigned fflags = (Backend::function_is_visible |
+                     Backend::function_is_inlinable);
+  Bfunction *func = be->function(befty, fname, fname, fflags, loc);
   const std::vector<Btype *> &paramTypes = befty->paramTypes();
   for (unsigned idx = 0; idx < paramTypes.size(); ++idx) {
     std::stringstream ss;

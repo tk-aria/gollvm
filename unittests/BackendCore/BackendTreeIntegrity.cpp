@@ -171,11 +171,11 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrityRepairableSubtree) {
   BFunctionType *bfterr = mkFuncTyp(be,
                                     L_PARM, bi32t,
                                     L_END);
-  bool visible = true;  bool is_inl = true;
-  bool split_stack = false;  bool uniq_sec = false;
-  bool no_ret = true; bool is_decl = true;
-  Bfunction *rtefcn = be->function(bfterr, rtename, rtename, visible, is_decl,
-                                   is_inl, split_stack, no_ret, uniq_sec, loc);
+  unsigned fflags = (Backend::function_is_visible |
+                     Backend::function_is_inlinable |
+                     Backend::function_does_not_return |
+                     Backend::function_is_declaration);
+  Bfunction *rtefcn = be->function(bfterr, rtename, rtename, fflags, loc);
 
   // p0 != nil ? *p0 + 3 : runtime_error(6)
   Bexpression *cmp2 =

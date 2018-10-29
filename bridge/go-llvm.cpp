@@ -466,17 +466,12 @@ Bfunction *Llvm_backend::createBuiltinFcn(BuiltinEntry *be)
   // FIXME: may want to revisit these settings at some point. For example,
   // do we want to mark builtins as no-split-stack? Also it might be useful
   // to allow for creation of no-return builtins (such as longjmp, perhaps).
-  bool is_visible = true;
-  bool is_declaration = false;
-  bool is_inl = true;
-  bool is_splitstack = useSplitStack_;
-  bool in_unique_section = false;
-  bool is_noret = false;
+  unsigned flags = (Backend::function_is_visible |
+                    Backend::function_is_inlinable |
+                    (!useSplitStack_ ? Backend::function_no_split_stack : 0));
 
   // Create function
-  return function(fcnType, be->name(), be->name(),
-                  is_visible, is_declaration, is_inl, is_splitstack,
-                  is_noret, in_unique_section, bloc);
+  return function(fcnType, be->name(), be->name(), flags, bloc);
 }
 
 bool Llvm_backend::moduleScopeValue(llvm::Value *val, Btype *btype) const
@@ -2512,10 +2507,8 @@ Bfunction *Llvm_backend::error_function()
 // Declare or define a new function.
 
 Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
-                                  const std::string &asm_name, bool is_visible,
-                                  bool is_declaration, bool is_inlinable,
-                                  bool disable_split_stack, bool no_return,
-                                  bool in_unique_section, Location location)
+                                  const std::string &asm_name, unsigned flags,
+                                  Location location)
 {
   if (fntype == errorType())
     return errorFunction_.get();
@@ -2527,7 +2520,7 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
   // function with the same name, and reuse that if need be. Check to make
   // sure that the function types agree if we see a hit in the cache.
   std::string fns(!asm_name.empty() ? asm_name : name);
-  if (is_declaration) {
+  if ((flags & Backend::function_is_declaration) != 0) {
     assert(ft);
     fcnNameAndType candidate(std::make_pair(ft, fns));
     auto it = fcnDeclMap_.find(candidate);
@@ -2537,15 +2530,17 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
     }
   }
 
-  llvm::GlobalValue::LinkageTypes linkage = is_visible ?
+  llvm::GlobalValue::LinkageTypes linkage =
+      ((flags & Backend::function_is_visible) != 0) ?
       llvm::GlobalValue::ExternalLinkage : llvm::GlobalValue::InternalLinkage;
   llvm::StringRef fn(fns);
   llvm::Constant *fcnValue = nullptr;
   llvm::Value *declVal = module_->getNamedValue(fn);
-  if (!is_declaration || !declVal) {
+  if (((flags & Backend::function_is_declaration) == 0) || !declVal) {
     llvm::Function *declFnVal = nullptr;
     llvm::FunctionType *declFnTyp;
-    if (!is_declaration && declVal && llvm::isa<llvm::Function>(declVal)) {
+    if (((flags & Backend::function_is_declaration) == 0) && declVal &&
+        llvm::isa<llvm::Function>(declVal)) {
       declFnVal = llvm::cast<llvm::Function>(declVal);
       declFnTyp = declFnVal->getFunctionType();
       if (declFnTyp == fty) {
@@ -2567,18 +2562,18 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
     fcn->addFnAttr("disable-tail-calls", "true");
 
     // inline/noinline
-    if (!is_inlinable || noInline_)
+    if ((flags & Backend::function_is_inlinable) == 0 || noInline_)
       fcn->addFnAttr(llvm::Attribute::NoInline);
 
     // split-stack or nosplit
-    if (useSplitStack_ && !disable_split_stack)
+    if (useSplitStack_ && (flags & Backend::function_no_split_stack) == 0)
       fcn->addFnAttr("split-stack");
 
     // allow elim frame pointer or not
     fcn->addFnAttr("no-frame-pointer-elim", noFpElim_ ? "true" : "false");
 
     // no-return
-    if (no_return)
+    if ((flags & Backend::function_does_not_return) != 0)
       fcn->addFnAttr(llvm::Attribute::NoReturn);
 
     // attributes for target CPU and features
@@ -2615,16 +2610,17 @@ createbfunc:
                                    typeManager());
 
   // split-stack or nosplit
-  if (!useSplitStack_ || disable_split_stack)
+  if (!useSplitStack_ || (flags & Backend::function_no_split_stack) != 0)
     bfunc->setSplitStack(Bfunction::NoSplit);
 
   // TODO: unique section support. llvm::GlobalObject has support for
   // setting COMDAT groups and section names, but there doesn't seem
   // to be an interface available to request a unique section on a
   // per-function basis (only a translation-unit-wide default).
-  assert(!in_unique_section || is_declaration);
+  assert((flags & Backend::function_in_unique_section) == 0 ||
+         (flags & Backend::function_is_declaration) != 0);
 
-  if (is_declaration) {
+  if ((flags & Backend::function_is_declaration) != 0) {
     fcnNameAndType candidate(std::make_pair(ft, fns));
     fcnDeclMap_[candidate] = bfunc;
   }
