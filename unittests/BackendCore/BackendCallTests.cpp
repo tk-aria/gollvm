@@ -58,12 +58,9 @@ TEST(BackendCallTests, CallToVoid) {
 
   // Declare a function bar with no args and no return.
   Btype *befty = mkFuncTyp(be, L_END);
-  bool is_decl = true; bool is_inl = false;
-  bool is_vis = true; bool is_split = true;
-  bool is_noret = false; bool is_uniqsec = false;
-  Bfunction *befcn = be->function(befty, "bar", "bar",
-                                  is_vis, is_decl, is_inl, is_split,
-                                  is_noret, is_uniqsec, loc);
+  unsigned fflags = (Backend::function_is_visible |
+                     Backend::function_is_declaration);
+  Bfunction *befcn = be->function(befty, "bar", "bar", fflags, loc);
 
   // Create call to it
   Bexpression *fn = be->function_code_expression(befcn, loc);
@@ -92,12 +89,12 @@ TEST(BackendCallTests, MultiReturnCall) {
   Btype *bi32t = be->integer_type(false, 32);
   Btype *bi8t = be->integer_type(false, 8);
   BFunctionType *befty1 = mkFuncTyp(be,
-                            L_PARM, be->pointer_type(bi8t),
-                            L_RES, be->pointer_type(bi8t),
-                            L_RES, be->pointer_type(bi32t),
-                            L_RES, be->pointer_type(bi64t),
-                            L_RES, bi64t,
-                            L_END);
+                                    L_PARM, be->pointer_type(bi8t),
+                                    L_RES, be->pointer_type(bi8t),
+                                    L_RES, be->pointer_type(bi32t),
+                                    L_RES, be->pointer_type(bi64t),
+                                    L_RES, bi64t,
+                                    L_END);
   Bfunction *func = h.mkFunction("foo", befty1);
 
   // Emit a suitable return suitable for "foo" as declared above.
@@ -175,12 +172,10 @@ TEST(BackendCallTests, CallToNoReturnFunction) {
   Location loc;
 
   // Declare a function 'noret' with no args and no return.
-  bool is_decl = true; bool is_inl = false;
-  bool is_vis = true; bool is_split = true;
-  bool is_noret = true; bool is_uniqsec = false;
-  Bfunction *nrfcn = be->function(befty, "noret", "noret",
-                                  is_vis, is_decl, is_inl, is_split,
-                                  is_noret, is_uniqsec, loc);
+  unsigned fflags = (Backend::function_is_visible |
+                     Backend::function_is_declaration |
+                     Backend::function_does_not_return);
+  Bfunction *nrfcn = be->function(befty, "noret", "noret", fflags, loc);
 
   // Create a block containing two no-return calls. The intent here is to make
   // sure that the bridge detects and deletes instructions appearing downstream

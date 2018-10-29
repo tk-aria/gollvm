@@ -512,15 +512,13 @@ static Bstatement *CreateDeferStmt(Llvm_backend *be,
 
   // Declare checkdefer, deferreturn
   Btype *befty = mkFuncTyp(be, L_PARM, be->pointer_type(bi8t), L_END);
-  bool is_decl = true; bool is_inl = false;
-  bool is_vis = true; bool is_split = true;
-  bool is_noret = false; bool is_uniqsec = false;
+  unsigned fflags = (Backend::function_is_visible |
+                     Backend::function_is_declaration);
   Bfunction *bchkfcn = be->function(befty, "checkdefer", "checkdefer",
-                                    is_vis, is_decl, is_inl, is_split,
-                                    is_noret, is_uniqsec, h.newloc());
+                                    fflags, h.newloc());
   Bfunction *bdefretfcn = be->function(befty, "deferreturn", "deferreturn",
-                                       is_vis, is_decl, is_inl, is_split,
-                                       is_noret, is_uniqsec, h.newloc());
+                                       fflags, h.newloc());
+
 
   // Materialize call to deferreturn
   Bexpression *retfn = be->function_code_expression(bdefretfcn, h.newloc());
@@ -608,32 +606,28 @@ TEST(BackendStmtTests, TestExceptionHandlingStmt) {
                                     L_RES, bi64t,
                                     L_END);
 
-  bool is_decl = true; bool is_inl = false;
-  bool is_vis = true; bool is_split = true;
-  bool is_noret = false; bool is_uniqsec = false;
+  unsigned fflags = (Backend::function_is_visible |
+                     Backend::function_is_declaration);
   const char *fnames[] = { "plark", "plix" };
   Bfunction *fcns[4];
   Bexpression *calls[5];
   for (unsigned ii = 0; ii < 2; ++ii)  {
-    fcns[ii] = be->function(befty, fnames[ii], fnames[ii],
-                            is_vis, is_decl, is_inl, is_split,
-                            is_noret, is_uniqsec, h.newloc());
+    fcns[ii] = be->function(befty, fnames[ii], fnames[ii], fflags, h.newloc());
     Bexpression *pfn = be->function_code_expression(fcns[ii], h.newloc());
     std::vector<Bexpression *> args;
     calls[ii] = be->call_expression(func, pfn, args,
                                     nullptr, h.newloc());
   }
-  fcns[2] = be->function(befty2, "id", "id",
-                         is_vis, is_decl, is_inl, is_split,
-                         is_noret, is_uniqsec, h.newloc());
+  fcns[2] = be->function(befty2, "id", "id", fflags, h.newloc());
   Bexpression *idfn = be->function_code_expression(fcns[2], h.newloc());
   std::vector<Bexpression *> iargs;
   iargs.push_back(mkInt64Const(be, 99));
   calls[2] = be->call_expression(func, idfn, iargs,
                                  nullptr, h.newloc());
-  fcns[3] = be->function(beftynr, "noret", "noret",
-                         is_vis, is_decl, is_inl, is_split,
-                         true, is_uniqsec, h.newloc());
+  unsigned fflags2 = (Backend::function_is_visible |
+                      Backend::function_does_not_return |
+                      Backend::function_is_declaration);
+  fcns[3] = be->function(beftynr, "noret", "noret", fflags2, h.newloc());
   for (unsigned ii = 0; ii < 2; ++ii)  {
     Bexpression *nrfn = be->function_code_expression(fcns[3], h.newloc());
     std::vector<Bexpression *> noargs;
@@ -807,12 +801,9 @@ TEST(BackendStmtTests, TestExceptionHandlingStmtWithReturns) {
   Bfunction *func = h.mkFunction("baz", befty);
   Bvariable *rtmp = h.mkLocal("ret", bi64t);
 
-  bool is_decl = true; bool is_inl = false;
-  bool is_vis = true; bool is_split = true;
-  bool is_noret = false; bool is_uniqsec = false;
-  Bfunction *sfn = be->function(befty, "splat", "splat",
-                                is_vis, is_decl, is_inl, is_split,
-                                is_noret, is_uniqsec, h.newloc());
+  unsigned fflags = (Backend::function_is_visible |
+                     Backend::function_is_declaration);
+  Bfunction *sfn = be->function(befty, "splat", "splat", fflags, h.newloc());
   Bexpression *splfn = be->function_code_expression(sfn, h.newloc());
   Btype *bi8t = be->integer_type(false, 8);
   Bvariable *loc1 = h.mkLocal("x", bi8t);

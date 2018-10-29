@@ -303,10 +303,8 @@ public:
   Bfunction *error_function();
 
   Bfunction *function(Btype *fntype, const std::string &name,
-                      const std::string &asm_name, bool is_visible,
-                      bool is_declaration, bool is_inlinable,
-                      bool disable_split_stack, bool does_not_return,
-                      bool in_unique_section, Location);
+                      const std::string &asm_name, unsigned flags,
+                      Location);
 
   Bstatement *function_defer_statement(Bfunction *function,
                                        Bexpression *undefer, Bexpression *defer,
