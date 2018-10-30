@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "da2de0a9_7182b28c",
+        "filename": "unittests/BackendCore/BackendFcnTests.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-10-30T15:20:35Z",
+      "side": 1,
+      "message": "Seems swapped? (or rename the variable split to nosplit?)",
+      "revId": "e17357b74128b57161493a5e93feb4899a0f77f6",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
