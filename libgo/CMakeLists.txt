@@ -312,10 +312,12 @@ compute_field_offset_at_compile_time(STRUCT_EPOLL_EVENT_FD_OFFSET
   "cmake-epoll-tmpfile.cpp")
 
 # Generated file epoll.go
-set(epolldotgo "${libgo_binroot}/epoll.go")
-set(epolltmp "${libgo_binroot}/epoll.go.tmp")
-mkepoll(${epolltmp})
-copy_if_different(${epolltmp} ${epolldotgo})
+if(${goos} STREQUAL "linux")
+  set(epolldotgo "${libgo_binroot}/epoll.go")
+  set(epolltmp "${libgo_binroot}/epoll.go.tmp")
+  mkepoll(${epolltmp})
+  copy_if_different(${epolltmp} ${epolldotgo})
+endif()
 
 # Generated file cpugen.go
 set(cpugendotgo "${libgo_binroot}/cpugen.go")
