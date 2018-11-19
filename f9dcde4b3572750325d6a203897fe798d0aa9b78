@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "56e1c4fe_f2263e34",
+        "filename": "libgo/CMakeLists.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 315,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-11-19T20:03:10Z",
+      "side": 1,
+      "message": "This looks reasonable.\n\nWould it make sense to increase the scope of the \"only linux\" guard to include the code on lines 303-312 (computing offsets) as well?",
+      "revId": "f9dcde4b3572750325d6a203897fe798d0aa9b78",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
