@@ -112,14 +112,17 @@ void DIBuildHelper::beginFunction(Bfunction *function,
   // Now the function entry itself
   unsigned fcnLine = linemap()->location_line(function->location());
   bool isLocalToUnit = !function->function()->hasExternalLinkage();
-  bool isDefinition = true;
   unsigned scopeLine = fcnLine; // FIXME -- determine correct value here
   llvm::DIFile *difile = diFileFromLocation(function->location());
+  llvm::DINode::DIFlags flags = llvm::DINode::FlagZero;
+  llvm::DISubprogram::DISPFlags spflags = llvm::DISubprogram::SPFlagDefinition;
+  if (isLocalToUnit)
+    spflags |= llvm::DISubprogram::SPFlagLocalToUnit;
   auto difunc =
       dibuilder().createFunction(moduleScope(), function->name(),
                                  isLocalToUnit ? "" : function->asmName(),
-                                 difile, fcnLine, dst, isLocalToUnit,
-                                 isDefinition, scopeLine);
+                                 difile, fcnLine, dst, scopeLine, flags,
+                                 spflags);
   pushDIScope(difunc);
 }
 
