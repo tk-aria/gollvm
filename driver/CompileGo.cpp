@@ -462,19 +462,30 @@ bool CompileGoImpl::initBridge()
   context_.setDiagnosticHandler(
       llvm::make_unique<BEDiagnosticHandler>(&this->hasError_));
 
+  llvm::Optional<unsigned> enable_gc =
+      driver_.getLastArgAsInteger(gollvm::options::OPT_enable_gc_EQ, 0u);
+  enable_gc_ = enable_gc && *enable_gc;
+
   // Construct linemap and module
   linemap_.reset(new Llvm_linemap());
   module_.reset(new llvm::Module("gomodule", context_));
 
   // Add the target data from the target machine, if it exists
   module_->setTargetTriple(triple_.getTriple());
-  module_->setDataLayout(target_->createDataLayout());
+
+  // Data layout.
+  std::string dlstr = target_->createDataLayout().getStringRepresentation();
+  if (enable_gc_)
+    dlstr += "-ni:1"; // non-integral pointer in address space 1
+  module_->setDataLayout(dlstr);
+
   module_->setPICLevel(driver_.getPicLevel());
   if (driver_.picIsPIE())
     module_->setPIELevel(driver_.getPieLevel());
 
   // Now construct Llvm_backend helper.
-  bridge_.reset(new Llvm_backend(context_, module_.get(), linemap_.get()));
+  unsigned addrspace = enable_gc_ ? 1 : 0;
+  bridge_.reset(new Llvm_backend(context_, module_.get(), linemap_.get(), addrspace));
 
   // Honor inline, tracelevel cmd line options
   llvm::Optional<unsigned> tl =
@@ -504,14 +515,13 @@ bool CompileGoImpl::initBridge()
   for (const auto &arg : driver_.args().getAllArgValues(gollvm::options::OPT_fdebug_prefix_map_EQ))
     bridge_->addDebugPrefix(llvm::StringRef(arg).split('='));
 
-  llvm::Optional<unsigned> enable_gc =
-      driver_.getLastArgAsInteger(gollvm::options::OPT_enable_gc_EQ, 0u);
-  if (enable_gc && *enable_gc) {
-    enable_gc_ = true;
+  // GC support.
+  if (enable_gc_) {
     bridge_->setGCStrategy("go");
     linkGoGC();
     linkGoGCPrinter();
   }
+
   // Support -fgo-dump-ast
   if (args_.hasArg(gollvm::options::OPT_fgo_dump_ast))
     go_enable_dump("ast");
@@ -753,8 +763,10 @@ bool CompileGoImpl::invokeBackEnd()
 
   // Add statepoint insertion pass to the end of optimization pipeline,
   // right before lowering to machine IR.
-  if (enable_gc_)
+  if (enable_gc_) {
     modulePasses.add(createGoStatepointsLegacyPass());
+    modulePasses.add(createRemoveAddrSpacePass(target_->createDataLayout()));
+  }
 
   legacy::PassManager codeGenPasses;
   bool noverify = args_.hasArg(gollvm::options::OPT_noverify);

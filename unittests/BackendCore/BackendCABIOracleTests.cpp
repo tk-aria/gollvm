@@ -20,7 +20,7 @@ namespace {
 
 TEST(BackendCABIOracleTests, Basic) {
   LLVMContext C;
-  std::unique_ptr<Llvm_backend> bep(new Llvm_backend(C, nullptr, nullptr));
+  std::unique_ptr<Llvm_backend> bep(new Llvm_backend(C, nullptr, nullptr, 0));
   Llvm_backend *be = bep.get();
 
   Btype *bi8t = be->integer_type(false, 8);
@@ -58,7 +58,7 @@ TEST(BackendCABIOracleTests, Basic) {
 
 TEST(BackendCABIOracleTests, Extended) {
   LLVMContext C;
-  std::unique_ptr<Llvm_backend> bep(new Llvm_backend(C, nullptr, nullptr));
+  std::unique_ptr<Llvm_backend> bep(new Llvm_backend(C, nullptr, nullptr, 0));
   Llvm_backend *be = bep.get();
 
   Btype *bi8t = be->integer_type(false, 8);

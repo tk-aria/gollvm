@@ -81,6 +81,15 @@ llvm::Instruction *Bfunction::addAlloca(llvm::Type *typ,
   if (! name.empty())
     inst->setName(name);
   allocas_.push_back(inst);
+
+  // Immediately cast to address space
+  unsigned addressSpace = abiOracle_->tm()->addressSpace();
+  if (addressSpace != 0) {
+    llvm::Type *pt = llvm::PointerType::get(typ, addressSpace);
+    inst = new llvm::AddrSpaceCastInst(inst, pt);
+    allocas_.push_back(inst);
+  }
+
   return inst;
 }
 
@@ -251,8 +260,12 @@ Bvariable *Bfunction::localVariable(const std::string &name,
   } else {
     inst = addAlloca(btype->type(), name);
   }
-  if (is_address_taken)
-    inst->setMetadata("go_addrtaken", llvm::MDNode::get(inst->getContext(), {}));
+  if (is_address_taken) {
+    llvm::Instruction *alloca = inst;
+    if (auto *ascast = llvm::dyn_cast<llvm::AddrSpaceCastInst>(alloca))
+      alloca = llvm::cast<llvm::Instruction>(ascast->getPointerOperand());
+    alloca->setMetadata("go_addrtaken", llvm::MDNode::get(inst->getContext(), {}));
+  }
   Bvariable *bv =
       new Bvariable(btype, location, name, LocalVar, is_address_taken, inst);
   localVariables_.push_back(bv);
@@ -468,7 +481,7 @@ void Bfunction::genProlog(llvm::BasicBlock *entry)
 }
 
 void Bfunction::fixupProlog(llvm::BasicBlock *entry,
-                            const std::vector<llvm::AllocaInst *> &temps)
+                            const std::vector<llvm::Instruction *> &temps)
 {
   lazyAbiSetup();
   // If there are any "new" temporaries discovered during the control
@@ -477,8 +490,14 @@ void Bfunction::fixupProlog(llvm::BasicBlock *entry,
   // (potentially) references to the alloca instructions themselves, so
   // we insert any new temps into the start of the block.
   if (! temps.empty())
-    for (auto ai : temps)
+    for (auto ai : temps) {
       entry->getInstList().push_front(ai);
+      if (auto *ascast = llvm::dyn_cast<llvm::AddrSpaceCastInst>(ai)) {
+        llvm::Value *op = ascast->getPointerOperand();
+        assert(llvm::isa<llvm::AllocaInst>(op));
+        entry->getInstList().push_front(llvm::cast<llvm::Instruction>(op));
+      }
+    }
 }
 
 llvm::Value *Bfunction::genReturnSequence(Bexpression *toRet,

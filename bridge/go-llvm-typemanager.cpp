@@ -22,11 +22,13 @@
 #include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/Type.h"
 
-TypeManager::TypeManager(llvm::LLVMContext &context, llvm::CallingConv::ID conv)
+TypeManager::TypeManager(llvm::LLVMContext &context,
+                         llvm::CallingConv::ID conv,
+                         unsigned addrspace)
     : context_(context)
     , datalayout_(nullptr)
     , cconv_(conv)
-    , addressSpace_(0)
+    , addressSpace_(addrspace)
     , traceLevel_(0)
     , nametags_(nullptr)
     , errorExpression_(nullptr)
@@ -36,6 +38,7 @@ TypeManager::TypeManager(llvm::LLVMContext &context, llvm::CallingConv::ID conv)
     , llvmVoidType_(nullptr)
     , llvmBoolType_(nullptr)
     , llvmPtrType_(nullptr)
+    , llvmPtr0Type_(nullptr)
     , llvmSizeType_(nullptr)
     , llvmIntegerType_(nullptr)
     , llvmInt8Type_(nullptr)
@@ -56,6 +59,8 @@ TypeManager::TypeManager(llvm::LLVMContext &context, llvm::CallingConv::ID conv)
   llvmPtrType_ =
       llvm::PointerType::get(llvm::IntegerType::get(context_, 8),
                              addressSpace_);
+  llvmPtr0Type_ =
+      llvm::PointerType::get(llvm::IntegerType::get(context_, 8), 0);
 
   // Assorted pre-computer types for use in builtin function creation
   llvmVoidType_ = llvm::Type::getVoidTy(context_);
@@ -483,6 +488,11 @@ Btype *TypeManager::complexType(int bits)
 
 Btype *TypeManager::pointerType(Btype *toType)
 {
+  return addrSpacePointerType(toType, addressSpace_);
+}
+
+Btype *TypeManager::addrSpacePointerType(Btype *toType, unsigned addressSpace)
+{
   if (toType == errorType_)
     return errorType_;
 
@@ -491,7 +501,7 @@ Btype *TypeManager::pointerType(Btype *toType)
   // as pointer to char.
   llvm::Type *lltot =
       (toType->type() == llvmVoidType_ ? llvmInt8Type_ : toType->type());
-  llvm::Type *llpt = llvm::PointerType::get(lltot, addressSpace_);
+  llvm::Type *llpt = llvm::PointerType::get(lltot, addressSpace);
 
   // Check for and return existing anon type if we have one already
   Location loc;
@@ -1340,7 +1350,7 @@ Btype *TypeManager::synthesizeNonZeroSizeType(Btype *typ, Bexpression *one)
 llvm::Type *TypeManager::landingPadExceptionType()
 {
   llvm::SmallVector<llvm::Type *, 2> elems(2);
-  elems[0] = llvmPtrType();
+  elems[0] = llvmPtr0Type();
   elems[1] = llvmInt32Type();
   return llvm::StructType::get(context_, elems);
 }
