@@ -64,7 +64,7 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrity2) {
 
   // Add the same Expression to more than one statement
   LLVMContext C;
-  std::unique_ptr<Llvm_backend> be(new Llvm_backend(C, nullptr, nullptr));
+  std::unique_ptr<Llvm_backend> be(new Llvm_backend(C, nullptr, nullptr, 0));
   be->disableIntegrityChecks();
 
   Location loc;
@@ -101,7 +101,7 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrity3) {
 
   // Same statement with more than one parent.
   LLVMContext C;
-  std::unique_ptr<Llvm_backend> be(new Llvm_backend(C, nullptr, nullptr));
+  std::unique_ptr<Llvm_backend> be(new Llvm_backend(C, nullptr, nullptr, 0));
   be->disableIntegrityChecks();
   Location loc;
   Bfunction *func = mkFunci32o64(be.get(), "foo");
