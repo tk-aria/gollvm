@@ -42,7 +42,9 @@ enum PTDisp { Concrete, Placeholder };
 
 class TypeManager {
  public:
-  TypeManager(llvm::LLVMContext &context, llvm::CallingConv::ID cconv);
+  TypeManager(llvm::LLVMContext &context,
+              llvm::CallingConv::ID cconv,
+              unsigned addrspace);
   ~TypeManager();
 
   // These methods are intended to match up with the similarly
@@ -114,6 +116,7 @@ class TypeManager {
   llvm::Type *llvmVoidType() const { return llvmVoidType_; }
   llvm::Type *llvmBoolType() const { return llvmBoolType_; }
   llvm::Type *llvmPtrType() const { return llvmPtrType_; }
+  llvm::Type *llvmPtr0Type() const { return llvmPtr0Type_; } // pointer in address space 0
   llvm::Type *llvmInt8Type() const { return llvmInt8Type_; }
   llvm::Type *llvmInt32Type() const { return llvmInt32Type_; }
   llvm::Type *llvmInt64Type() const { return llvmInt64Type_; }
@@ -146,6 +149,9 @@ class TypeManager {
   // Context + address space.
   llvm::LLVMContext &context() const { return context_; }
   unsigned addressSpace() const { return addressSpace_; }
+
+  // Same as pointerType, but explicitly specify address space.
+  Btype *addrSpacePointerType(Btype *toType, unsigned addressSpace);
 
   // Go string type
   Btype *stringType() const { return stringType_; }
@@ -357,6 +363,7 @@ class TypeManager {
   llvm::Type *llvmVoidType_;
   llvm::Type *llvmBoolType_;
   llvm::Type *llvmPtrType_;
+  llvm::Type *llvmPtr0Type_;
   llvm::Type *llvmSizeType_;
   llvm::Type *llvmIntegerType_;
   llvm::Type *llvmInt8Type_;

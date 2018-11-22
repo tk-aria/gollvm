@@ -108,7 +108,7 @@ public:
   // the the entry BB for the function, and "temps" is a set of temporary
   // variables that need to be adopted into the function.
   void fixupProlog(llvm::BasicBlock *entry,
-                   const std::vector<llvm::AllocaInst *> &temps);
+                   const std::vector<llvm::Instruction *> &temps);
 
   // Create code to return a function value from this fcn, following ABI rules.
   llvm::Value *genReturnSequence(Bexpression *toRet,

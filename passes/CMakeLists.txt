@@ -10,5 +10,6 @@ add_llvm_library(LLVMCppGoPasses
   GC.cpp
   GoAnnotation.cpp
   GoStatepoints.cpp
+  RemoveAddrSpace.cpp
   Util.cpp
 )

@@ -340,7 +340,7 @@ class BnodeBuilder {
   // construction (via the mkTempVar method above). If so, the
   // variable is extracted from the builder's set and returned. If the
   // var is not an unadopted temp, then NULL is returned.
-  Bvariable *adoptTemporaryVariable(llvm::AllocaInst *alloca);
+  Bvariable *adoptTemporaryVariable(llvm::Instruction *alloca);
 
   // Free up this expr or stmt (it is garbage). Does not free up children.
   void freeNode(Bnode *node);
@@ -405,10 +405,11 @@ class BnodeBuilder {
   std::vector<Bstatement *> sarchive_;
   std::vector<SwitchDescriptor*> swcases_;
   std::vector< std::vector<unsigned long> > indexvecs_;
-  std::unordered_map<llvm::AllocaInst*, Bvariable*> tempvars_;
+  std::unordered_map<llvm::Instruction*, Bvariable*> tempvars_;
   std::unique_ptr<IntegrityVisitor> integrityVisitor_;
   bool checkIntegrity_;
   std::vector<llvm::Instruction*> deadInstructions_;
+  unsigned addressSpace_;
 };
 
 // This class helps automate walking of a Bnode subtree; it invokes

@@ -78,7 +78,8 @@ class Llvm_backend : public Backend, public TypeManager, public NameGen {
 public:
   Llvm_backend(llvm::LLVMContext &context,
                llvm::Module *module,
-               Llvm_linemap *linemap);
+               Llvm_linemap *linemap,
+               unsigned addrspace);
   ~Llvm_backend();
 
   // Types.
