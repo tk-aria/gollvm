@@ -22,9 +22,11 @@ class Value;
 
 void initializeGoAnnotationPass(PassRegistry&);
 void initializeGoStatepointsLegacyPassPass(PassRegistry&);
+void initializeRemoveAddrSpacePassPass(PassRegistry&);
 
 FunctionPass *createGoAnnotationPass();
 ModulePass *createGoStatepointsLegacyPass();
+ModulePass *createRemoveAddrSpacePass(const DataLayout&);
 
 void linkGoGC();
 void linkGoGCPrinter();

@@ -42,14 +42,15 @@
 
 Llvm_backend::Llvm_backend(llvm::LLVMContext &context,
                            llvm::Module *module,
-                           Llvm_linemap *linemap)
-    : TypeManager(context, llvm::CallingConv::X86_64_SysV)
+                           Llvm_linemap *linemap,
+                           unsigned addrspace)
+    : TypeManager(context, llvm::CallingConv::X86_64_SysV, addrspace)
     , context_(context)
     , module_(module)
     , datalayout_(module ? &module->getDataLayout() : nullptr)
     , nbuilder_(this)
     , linemap_(linemap)
-    , addressSpace_(0)
+    , addressSpace_(addrspace)
     , traceLevel_(0)
     , noInline_(false)
     , noFpElim_(false)
@@ -747,7 +748,7 @@ llvm::Constant *Llvm_backend::genConvertedConstant(llvm::Constant *fromVal,
   // apply a bitcast to perform the conversion.
   LIRBuilder builder(context_, llvm::ConstantFolder());
   if (! isToComposite) {
-    llvm::Value *bitcast = builder.CreateBitCast(fromVal, llToType);
+    llvm::Value *bitcast = builder.CreatePointerBitCastOrAddrSpaceCast(fromVal, llToType);
     assert(llvm::isa<llvm::Constant>(bitcast));
     llvm::Constant *constCast = llvm::cast<llvm::Constant>(bitcast);
     return constCast;
@@ -1432,13 +1433,16 @@ Bexpression *Llvm_backend::function_code_expression(Bfunction *bfunc,
   if (bfunc == errorFunction_.get())
     return errorExpression();
 
-  // Look up pointer-to-function type
-  Btype *fpBtype = pointer_type(bfunc->fcnType());
+  // Look up pointer-to-function type.
+  // Function is always in address space 0.
+  Btype *fpBtype = addrSpacePointerType(bfunc->fcnType(), 0);
+
+  llvm::Constant *fpval = bfunc->fcnValue();
 
   // Create an address-of-function expr
-  Bexpression *fexpr = nbuilder_.mkFcnAddress(fpBtype, bfunc->fcnValue(),
+  Bexpression *fexpr = nbuilder_.mkFcnAddress(fpBtype, fpval,
                                               bfunc, location);
-  return makeGlobalExpression(fexpr, bfunc->fcnValue(), fpBtype, location);
+  return makeGlobalExpression(fexpr, fpval, fpBtype, location);
 }
 
 // Return an expression for the field at INDEX in BSTRUCT.
@@ -2128,9 +2132,12 @@ Llvm_backend::makeModuleVar(Btype *btype,
     }
   }
 
+  llvm::GlobalValue::ThreadLocalMode threadlocal =
+      llvm::GlobalValue::NotThreadLocal;
   glob = new llvm::GlobalVariable(module(), underlyingType->type(),
                                   isConstant == MV_Constant,
-                                  linkage, init, gname);
+                                  linkage, init, gname, nullptr,
+                                  threadlocal, addressSpace_);
 
   if (alignment)
     glob->setAlignment(alignment);
@@ -2454,8 +2461,11 @@ Bvariable *Llvm_backend::immutable_struct_reference(const std::string &name,
   llvm::GlobalValue::LinkageTypes linkage = llvm::GlobalValue::ExternalLinkage;
   bool isConstant = true;
   llvm::Constant *init = nullptr;
+  llvm::GlobalValue::ThreadLocalMode threadlocal =
+      llvm::GlobalValue::NotThreadLocal;
   glob = new llvm::GlobalVariable(module(), btype->type(), isConstant,
-                                  linkage, init, gname);
+                                  linkage, init, gname, nullptr,
+                                  threadlocal, addressSpace_);
 
   Bvariable *bv =
       new Bvariable(btype, location, name, GlobalVar, false, glob);
@@ -2765,8 +2775,8 @@ class GenBlocks {
   std::vector<Bblock *> blockStack_;
   std::map<LabelId, llvm::BasicBlock *> labelmap_;
   std::vector<llvm::BasicBlock*> padBlockStack_;
-  std::set<llvm::AllocaInst *> temporariesDiscovered_;
-  std::vector<llvm::AllocaInst *> newTemporaries_;
+  std::set<llvm::Instruction *> temporariesDiscovered_;
+  std::vector<llvm::Instruction *> newTemporaries_;
   llvm::BasicBlock *finallyBlock_;
   Bstatement *cachedReturn_;
 };
@@ -2825,6 +2835,8 @@ void GenBlocks::appendLifetimeIntrinsic(llvm::Value *alloca,
   else
     builder.SetInsertPoint(curBlock);
 
+  if (auto *ascast = llvm::dyn_cast<llvm::AddrSpaceCastInst>(alloca))
+    alloca = ascast->getPointerOperand();
   llvm::AllocaInst *ai = llvm::cast<llvm::AllocaInst>(alloca);
 
   // expect array size of 1 given how we constructed it
@@ -2966,8 +2978,9 @@ GenBlocks::postProcessInst(llvm::Instruction *inst,
 {
   for (llvm::Instruction::op_iterator oi = inst->op_begin(),
            oe = inst->op_end(); oi != oe; ++oi) {
-    if (llvm::isa<llvm::AllocaInst>(*oi)) {
-      llvm::AllocaInst *ai = llvm::cast<llvm::AllocaInst>(*oi);
+    if (llvm::isa<llvm::AllocaInst>(*oi) ||
+        llvm::isa<llvm::AddrSpaceCastInst>(*oi)) {
+      llvm::Instruction *ai = llvm::cast<llvm::Instruction>(*oi);
 
       // If this alloca is associated with a temporary variable
       // that was manufactured at some point during IR construction,
@@ -3362,7 +3375,7 @@ llvm::Value *GenBlocks::populateCatchPadBlock(llvm::BasicBlock *catchpadbb,
 
   // Create temporary into which caught result will be stored
   std::string tag(be_->namegen("ehtmp"));
-  llvm::AllocaInst *ai = new llvm::AllocaInst(eht, 0, tag);
+  llvm::Instruction *ai = new llvm::AllocaInst(eht, 0, tag);
   temporariesDiscovered_.insert(ai);
   newTemporaries_.push_back(ai);
 
@@ -3850,5 +3863,5 @@ const char *go_localize_identifier(const char *ident) { return ident; }
 // Return a new backend generator.
 
 Backend *go_get_backend(llvm::LLVMContext &context) {
-  return new Llvm_backend(context, nullptr, nullptr);
+  return new Llvm_backend(context, nullptr, nullptr, 0);
 }

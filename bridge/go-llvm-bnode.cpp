@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "go-llvm.h"
 #include "go-llvm-btype.h"
 #include "go-llvm-bnode.h"
 #include "go-llvm-bvariable.h"
@@ -372,6 +373,7 @@ int Bnode::getIndices() const
 BnodeBuilder::BnodeBuilder(Llvm_backend *be)
     : integrityVisitor_(new IntegrityVisitor(be, TreeIntegCtl(DumpPointers, DontReportRepairableSharing, IncrementalMode)))
     , checkIntegrity_(true)
+    , addressSpace_(be->addressSpace())
 {
 }
 
@@ -398,14 +400,21 @@ BnodeBuilder::~BnodeBuilder()
       delete expr;
     }
   }
-  for (auto inst : todel)
-    inst->deleteValue();
-  for (auto inst : deadInstructions_)
-    inst->deleteValue();
   for (auto ivpair : tempvars_) {
-    delete ivpair.first;
+    llvm::Instruction *inst = ivpair.first;
+    if (auto *ascast = llvm::dyn_cast<llvm::AddrSpaceCastInst>(inst)) {
+      inst = llvm::cast<llvm::Instruction>(ascast->getPointerOperand());
+      ascast->dropAllReferences();
+      todel.push_back(ascast);
+    }
+    assert(llvm::isa<llvm::AllocaInst>(inst));
+    todel.push_back(inst);
     delete ivpair.second;
   }
+  for (auto v : todel)
+    v->deleteValue();
+  for (auto inst : deadInstructions_)
+    inst->deleteValue();
 }
 
 void BnodeBuilder::freeStmts()
@@ -509,16 +518,24 @@ Bvariable *BnodeBuilder::mkTempVar(Btype *varType,
                                    const std::string &name)
 {
   assert(varType);
-  llvm::AllocaInst *inst = new llvm::AllocaInst(varType->type(), 0);
+  llvm::Type *typ = varType->type();
+  llvm::Instruction *inst = new llvm::AllocaInst(typ, 0);
   if (! name.empty())
     inst->setName(name);
+
+  // Immediately cast to address space
+  if (addressSpace_ != 0) {
+    llvm::Type *pt = llvm::PointerType::get(typ, addressSpace_);
+    inst = new llvm::AddrSpaceCastInst(inst, pt);
+  }
+
   Bvariable *tvar = new Bvariable(varType, loc, name, LocalVar, true, inst);
   tempvars_[inst] = tvar;
   tvar->markAsTemporary();
   return tvar;
 }
 
-Bvariable *BnodeBuilder::adoptTemporaryVariable(llvm::AllocaInst *alloca)
+Bvariable *BnodeBuilder::adoptTemporaryVariable(llvm::Instruction *alloca)
 {
   assert(alloca);
   auto mit = tempvars_.find(alloca);
@@ -729,6 +746,15 @@ Bexpression *BnodeBuilder::mkCompound(Bstatement *st,
   return archive(rval);
 }
 
+static bool isAlloca(llvm::Value *val)
+{
+  if (llvm::isa<llvm::AllocaInst>(val))
+    return true;
+  if (auto *ascast = llvm::dyn_cast<llvm::AddrSpaceCastInst>(val))
+    return llvm::isa<llvm::AllocaInst>(ascast->getPointerOperand());
+  return false;
+}
+
 Bexpression *BnodeBuilder::mkCall(Btype *btype,
                                   llvm::Value *val,
                                   Bfunction *caller,
@@ -751,7 +777,7 @@ Bexpression *BnodeBuilder::mkCall(Btype *btype,
       found = true;
     rval->appendInstruction(inst);
   }
-  if (!found && val && !llvm::isa<llvm::AllocaInst>(val))
+  if (!found && val && !isAlloca(val))
     appendInstIfNeeded(rval, val);
   rval->u.func = caller;
   return archive(rval);

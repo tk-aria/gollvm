@@ -207,24 +207,45 @@ Bexpression *Llvm_backend::materializeConversion(Bexpression *convExpr)
   // uintptr (as part of GC symbol initializer creation), and in other
   // places in FE-generated code (ex: array index checks).
   if (valType->isPointerTy() && toType == llvmIntegerType()) {
+    if (val->getType()->getPointerAddressSpace() != 0) {
+      // We are using non-integral pointer. Cast to address space 0
+      // before casting to int.
+      llvm::Type *et = val->getType()->getPointerElementType();
+      llvm::Type *pt = llvm::PointerType::get(et, 0);
+      std::string tname(namegen("ascast"));
+      val = builder.CreateAddrSpaceCast(val, pt, tname);
+      expr = nbuilder_.mkConversion(type, val, expr, location);
+    }
     std::string tname(namegen("pticast"));
     llvm::Value *pticast = builder.CreatePtrToInt(val, toType, tname);
     rval = nbuilder_.mkConversion(type, pticast, expr, location);
   }
 
-  // Pointer-sized-integer type pointer type. This comes up
+  // Pointer-sized-integer type to pointer type. This comes up
   // in type hash/compare functions.
   if (toType->isPointerTy() && valType == llvmIntegerType()) {
+    llvm::Type *pt = toType;
+    if (toType->getPointerAddressSpace() != 0) {
+      // We are using non-integral pointer. Cast to address space 0
+      // first.
+      llvm::Type *et = toType->getPointerElementType();
+      pt = llvm::PointerType::get(et, 0);
+    }
     std::string tname(namegen("itpcast"));
-    llvm::Value *itpcast = builder.CreateIntToPtr(val, toType, tname);
+    llvm::Value *itpcast = builder.CreateIntToPtr(val, pt, tname);
     rval = nbuilder_.mkConversion(type, itpcast, expr, location);
+    if (pt != toType) {
+      std::string tname(namegen("ascast"));
+      llvm::Value *ascast = builder.CreateAddrSpaceCast(itpcast, toType, tname);
+      rval = nbuilder_.mkConversion(type, ascast, rval, location);
+    }
   }
 
   // For pointer conversions (ex: *int32 => *int64) create an
   // appropriate bitcast.
   if (valType->isPointerTy() && toType->isPointerTy()) {
     std::string tag(namegen("cast"));
-    llvm::Value *bitcast = builder.CreateBitCast(val, toType, tag);
+    llvm::Value *bitcast = builder.CreatePointerBitCastOrAddrSpaceCast(val, toType, tag);
     rval = nbuilder_.mkConversion(type, bitcast, expr, location);
   }
 
@@ -1482,7 +1503,8 @@ Llvm_backend::convertForAssignment(Btype *srcBType,
   // descriptor. Allow this case.
   if (dstPtrToFD && srcFuncPtr) {
     std::string tag(namegen("cast"));
-    llvm::Value *bitcast = builder->CreateBitCast(srcVal, dstToType, tag);
+    llvm::Value *bitcast =
+        builder->CreatePointerBitCastOrAddrSpaceCast(srcVal, dstToType, tag);
     return bitcast;
   }
 
@@ -1523,7 +1545,7 @@ Llvm_backend::convertForAssignment(Btype *srcBType,
   if ((dstToType == llvmPtrType() && llvm::isa<llvm::PointerType>(srcType)) ||
       (srcType == llvmPtrType() && llvm::isa<llvm::PointerType>(dstToType))) {
     std::string tag(namegen("cast"));
-    llvm::Value *bitcast = builder->CreateBitCast(srcVal, dstToType, tag);
+    llvm::Value *bitcast = builder->CreatePointerBitCastOrAddrSpaceCast(srcVal, dstToType, tag);
     return bitcast;
   }
 
