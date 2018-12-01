@@ -71,6 +71,24 @@
     },
     {
       "key": {
+        "uuid": "d0bca5fd_c3355bb2",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 124,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-12-01T16:45:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a50a4c52_e61a903a",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "9aba3bdc_68149b40",
         "filename": "passes/GoStatepoints.cpp",
         "patchSetId": 2
@@ -99,6 +117,24 @@
       "writtenOn": "2018-09-28T16:12:49Z",
       "side": 1,
       "message": "Wasn\u0027t clear to me if this was code you wrote? If so, what is a \"fused\" statepoint?",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "be392b99_fbad5ca7",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1351,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-12-01T16:45:09Z",
+      "side": 1,
+      "message": "No, it was just copied over. I just need a unique function, so I reused this one, for a different purpose. I\u0027ll drop the comment.",
+      "parentUuid": "7603eeb4_a83e56ee",
       "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
@@ -172,6 +208,30 @@
       "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2faba92c_5f414bcf",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1366,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-12-01T16:45:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "eb83851d_3c61f040",
+      "range": {
+        "startLine": 1366,
+        "startChar": 29,
+        "endLine": 1366,
+        "endChar": 43
+      },
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     },
     {
       "key": {
@@ -297,6 +357,24 @@
     },
     {
       "key": {
+        "uuid": "5290866f_47b9bf19",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1954,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-12-01T16:45:09Z",
+      "side": 1,
+      "message": "Done. Removed now.",
+      "parentUuid": "838b0417_53ee55bc",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "1aad425e_66ffe46d",
         "filename": "passes/GoStatepoints.cpp",
         "patchSetId": 2
@@ -325,6 +403,24 @@
       "writtenOn": "2018-09-28T16:12:49Z",
       "side": 1,
       "message": "maybe also Intrinsic::sideeffect or Intrinsic::assume?",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "dbf15a7a_e5bc1133",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2180,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-12-01T16:45:09Z",
+      "side": 1,
+      "message": "Added Intrinsic::assume.\n\nIntrinsic::sideeffect doesn\u0027t take any argument, so it cannot be use.",
+      "parentUuid": "ab90586c_be6f7a34",
       "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
@@ -401,6 +497,24 @@
     },
     {
       "key": {
+        "uuid": "cd735336_c8fbd294",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2385,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-12-01T16:45:09Z",
+      "side": 1,
+      "message": "Done. Moved out of #if NDEBUG.\n\nI thought this a little more. In the gc compiler, for aggregate type, we emit a VARDEF pseudo-instruction after the initialization sequence and before any use. Potentially we could do something similar, say, emitting a special dummy call which will be removed after liveness. The gc compiler\u0027s optimizer preserve the memory order of this. We\u0027ll need to do something to ensure LLVM optimizer doesn\u0027t reorder it with stores or uses. Maybe use some volatile-like attribute?",
+      "parentUuid": "c0fd2864_8bb47b5b",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "782b8959_2b9cdbe5",
         "filename": "passes/GoStatepoints.cpp",
         "patchSetId": 2
@@ -430,6 +544,24 @@
       "side": 1,
       "message": "Sounds good. Will do.",
       "parentUuid": "782b8959_2b9cdbe5",
+      "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f1eaa35e_33a57a40",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2702,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-12-01T16:45:09Z",
+      "side": 1,
+      "message": "Done (haven\u0027t added unit test yet).",
+      "parentUuid": "d48930af_add5d7ac",
       "revId": "29572e85dd2c055a939c11c192183fcf887d927e",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
