@@ -2531,8 +2531,11 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
   }
 
   llvm::GlobalValue::LinkageTypes linkage =
-      ((flags & Backend::function_is_visible) != 0) ?
-      llvm::GlobalValue::ExternalLinkage : llvm::GlobalValue::InternalLinkage;
+      llvm::GlobalValue::InternalLinkage;
+  if ((flags & Backend::function_is_visible) != 0)
+    linkage = llvm::GlobalValue::ExternalLinkage;
+  else if ((flags & Backend::function_only_inline) != 0)
+    linkage = llvm::GlobalValue::AvailableExternallyLinkage;
   llvm::StringRef fn(fns);
   llvm::Constant *fcnValue = nullptr;
   llvm::Value *declVal = module_->getNamedValue(fn);
@@ -2564,6 +2567,7 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
     // inline/noinline
     if ((flags & Backend::function_is_inlinable) == 0 || noInline_)
       fcn->addFnAttr(llvm::Attribute::NoInline);
+    // TODO: should we use inlinehint for imported only_inline functions?
 
     // split-stack or nosplit
     if (useSplitStack_ && (flags & Backend::function_no_split_stack) == 0)
