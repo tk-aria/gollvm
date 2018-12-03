@@ -80,34 +80,42 @@ TEST(BackendFcnTests, MakeFunction) {
 
   const bool is_visible[2] = {true, false};
   const bool is_inlinable[2] = {true, false};
+  const bool only_inline[2] = {true, false};
   bool split_stack[2] = {true, false};
   bool is_noret[2] = {true, false};
   Location loc;
   unsigned count = 0;
   for (auto vis : is_visible) {
     for (auto inl : is_inlinable) {
-      for (auto nosplit : split_stack) {
-        for (auto noret : is_noret) {
-          unsigned fflags =
-              (Backend::function_is_declaration |
-               (vis ? Backend::function_is_visible : 0) |
-               (inl ? Backend::function_is_inlinable : 0) |
-               (nosplit ? Backend::function_no_split_stack : 0) |
-               (noret ? Backend::function_does_not_return : 0));
+      for (auto only_inl : only_inline) {
+        // Functions imported only for inlining cannot be exported.
+        if (only_inl && vis)
+          continue;
+        for (auto nosplit : split_stack) {
+          for (auto noret : is_noret) {
+            unsigned fflags =
+                (Backend::function_is_declaration |
+                 (vis ? Backend::function_is_visible : 0) |
+                 (inl ? Backend::function_is_inlinable : 0) |
+                 (nosplit ? Backend::function_no_split_stack : 0) |
+                 (noret ? Backend::function_does_not_return : 0) |
+                 (only_inl ? Backend::function_only_inline : 0));
 
-          std::stringstream ss;
-          ss << "fcn" << count++;
-          Bfunction *befcn =
-              be->function(befty, "_foo", ss.str(), fflags, loc);
-          llvm::Function *llfunc = befcn->function();
-          ASSERT_TRUE(llfunc != NULL);
-          EXPECT_EQ(llfunc->getName(), ss.str());
-          EXPECT_FALSE(llfunc->isVarArg());
-          EXPECT_EQ(llfunc->hasFnAttribute(Attribute::NoInline), !inl);
-          EXPECT_EQ(llfunc->hasFnAttribute(Attribute::NoReturn), noret);
-          EXPECT_EQ(llfunc->hasExternalLinkage(), vis);
-          EXPECT_EQ(llfunc->hasInternalLinkage(), !vis);
-          EXPECT_EQ(befcn->splitStack() == Bfunction::YesSplit, !nosplit);
+            std::stringstream ss;
+            ss << "fcn" << count++;
+            Bfunction *befcn =
+                be->function(befty, "_foo", ss.str(), fflags, loc);
+            llvm::Function *llfunc = befcn->function();
+            ASSERT_TRUE(llfunc != NULL);
+            EXPECT_EQ(llfunc->getName(), ss.str());
+            EXPECT_FALSE(llfunc->isVarArg());
+            EXPECT_EQ(llfunc->hasFnAttribute(Attribute::NoInline), !inl);
+            EXPECT_EQ(llfunc->hasFnAttribute(Attribute::NoReturn), noret);
+            EXPECT_EQ(llfunc->hasExternalLinkage(), vis);
+            EXPECT_EQ(llfunc->hasInternalLinkage(), !vis && !only_inl);
+            EXPECT_EQ(llfunc->hasAvailableExternallyLinkage(), only_inl);
+            EXPECT_EQ(befcn->splitStack() == Bfunction::YesSplit, !nosplit);
+          }
         }
       }
     }
