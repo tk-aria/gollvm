@@ -16,6 +16,24 @@
       "revId": "5510a14b0f015492425176766becc27d4751cdc9",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7f47653a_dd390b68",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2444,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-12-04T23:23:54Z",
+      "side": 1,
+      "message": "When I played with non-integral pointer stuff, once this was needed as otherwise it asserts. I updated the bridge and now it\u0027s no longer needed for correctness, but I forgot to revert.\n\nWe can leave this in for efficiency, I think, as we don\u0027t propagate through landing pad blocks.",
+      "parentUuid": "ddc81b69_0b24c7c9",
+      "revId": "5510a14b0f015492425176766becc27d4751cdc9",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
