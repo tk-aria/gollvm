@@ -22,6 +22,30 @@
       "revId": "b6061e89804ea83d1fad2eeb81b03e28071ce8f1",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9dbd12f8_e20e734d",
+        "filename": "driver/CompileGo.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 238,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-12-05T20:49:20Z",
+      "side": 1,
+      "message": "Oops. Looks like a rebasing error. Fixed.",
+      "parentUuid": "13e950c5_7e6ff747",
+      "range": {
+        "startLine": 237,
+        "startChar": 3,
+        "endLine": 238,
+        "endChar": 28
+      },
+      "revId": "b6061e89804ea83d1fad2eeb81b03e28071ce8f1",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
