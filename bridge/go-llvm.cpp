@@ -3308,8 +3308,19 @@ llvm::BasicBlock *GenBlocks::genDefer(Bstatement *defst,
 
   // Insure that current function has personality routine set.
   llvm::Function *func = function()->function();
-  if (! func->hasPersonalityFn())
+  if (! func->hasPersonalityFn()) {
     func->setPersonalityFn(be_->personalityFunction());
+
+    // Disable inlining for now if GC is enabled.
+    // When such a function gets inlined, the outer function may see
+    // a control flow that goes from normal block to landing pad,
+    // then go to normal again (when the inlined function returns to
+    // the outer function). Currently the liveness code cannot handle
+    // it.
+    // TODO: can the liveness code be smarter? Is it possible?
+    if (func->hasGC())
+      func->addFnAttr(llvm::Attribute::NoInline);
+  }
 
   Bexpression *defcallex = defst->getDeferStmtDeferCall();
   Bexpression *undcallex = defst->getDeferStmtUndeferCall();
@@ -3494,8 +3505,12 @@ llvm::BasicBlock *GenBlocks::genExcep(Bstatement *excepst,
 
   // Insure that current function has personality set.
   llvm::Function *func = function()->function();
-  if (! func->hasPersonalityFn())
+  if (! func->hasPersonalityFn()) {
     func->setPersonalityFn(be_->personalityFunction());
+    // Disable inlining for now. See the comment in genDefer.
+    if (func->hasGC())
+      func->addFnAttr(llvm::Attribute::NoInline);
+  }
 
   Bstatement *body = excepst->getExcepStmtBody();
   assert(body);
