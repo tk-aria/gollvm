@@ -327,6 +327,7 @@ static void computeLiveInValues(DominatorTree &DT, Function &F,
                                 GCPtrLivenessData &Data,
                                 SetVector<Value *> &AddrTakenAllocas,
                                 SetVector<Value *> &ToZero,
+                                SetVector<Value *> &BadLoads,
                                 DefiningValueMapTy &DVCache);
 
 /// Given results from the dataflow liveness computation, find the set of live
@@ -1560,13 +1561,17 @@ makeStatepointExplicit(DominatorTree &DT, CallSite CS,
 static void findLiveReferences(
     Function &F, DominatorTree &DT, ArrayRef<CallSite> toUpdate,
     MutableArrayRef<struct PartiallyConstructedSafepointRecord> records,
-    SetVector<Value *> &AddrTakenAllocas, SetVector <Value *> &ToZero,
+    SetVector<Value *> &AddrTakenAllocas,
+    SetVector<Value *> &ToZero,
+    SetVector<Value *> &BadLoads,
     DefiningValueMapTy &DVCache) {
   GCPtrLivenessData OriginalLivenessData;
-  computeLiveInValues(DT, F, OriginalLivenessData, AddrTakenAllocas, ToZero, DVCache);
+  computeLiveInValues(DT, F, OriginalLivenessData, AddrTakenAllocas,
+                      ToZero, BadLoads, DVCache);
   for (size_t i = 0; i < records.size(); i++) {
     struct PartiallyConstructedSafepointRecord &info = records[i];
-    analyzeParsePointLiveness(DT, OriginalLivenessData, AddrTakenAllocas, toUpdate[i], info, DVCache);
+    analyzeParsePointLiveness(DT, OriginalLivenessData, AddrTakenAllocas,
+                              toUpdate[i], info, DVCache);
   }
 }
 
@@ -1662,6 +1667,14 @@ zeroAmbiguouslyLiveSlots(Function &F, SetVector<Value *> &ToZero,
   assert(ToZero.empty());
 }
 
+static void
+fixBadPhiOperands(Function &F, SetVector<Value *> &BadLoads) {
+  for (auto *I : BadLoads) {
+    I->replaceAllUsesWith(Constant::getNullValue(I->getType()));
+    cast<Instruction>(I)->eraseFromParent();
+  }
+}
+
 static bool insertParsePoints(Function &F, DominatorTree &DT,
                               TargetTransformInfo &TTI,
                               SmallVectorImpl<CallSite> &ToUpdate) {
@@ -1689,7 +1702,7 @@ static bool insertParsePoints(Function &F, DominatorTree &DT,
 
   SmallVector<PartiallyConstructedSafepointRecord, 64> Records(ToUpdate.size());
 
-  SetVector<Value *> AddrTakenAllocas, ToZero;
+  SetVector<Value *> AddrTakenAllocas, ToZero, BadLoads;
 
   // Cache the 'defining value' relation used in the computation and
   // insertion of base phis and selects.  This ensures that we don't insert
@@ -1698,13 +1711,16 @@ static bool insertParsePoints(Function &F, DominatorTree &DT,
 
   // A) Identify all gc pointers which are statically live at the given call
   // site.
-  findLiveReferences(F, DT, ToUpdate, Records, AddrTakenAllocas, ToZero, DVCache);
+  findLiveReferences(F, DT, ToUpdate, Records, AddrTakenAllocas, ToZero,
+                     BadLoads, DVCache);
 
   // B) Find the base pointers for each live pointer
   for (size_t i = 0; i < Records.size(); i++) {
     PartiallyConstructedSafepointRecord &info = Records[i];
     findBasePointers(DT, DVCache, ToUpdate[i], info);
   }
+
+  fixBadPhiOperands(F, BadLoads);
 
   // It is possible that non-constant live variables have a constant base.  For
   // example, a GEP with a variable offset from a global.  In this case we can
@@ -1785,7 +1801,6 @@ static bool insertParsePoints(Function &F, DominatorTree &DT,
     }
 #endif
   }
-  unique_unsorted(Live);
 
 #ifndef NDEBUG
   // sanity check
@@ -2420,6 +2435,7 @@ static void computeLiveInValues(DominatorTree &DT, Function &F,
                                 GCPtrLivenessData &Data,
                                 SetVector<Value *> &AddrTakenAllocas,
                                 SetVector<Value *> &ToZero,
+                                SetVector<Value *> &BadLoads,
                                 DefiningValueMapTy &DVCache) {
   SmallSetVector<BasicBlock *, 32> Worklist;
 
@@ -2469,8 +2485,13 @@ static void computeLiveInValues(DominatorTree &DT, Function &F,
         if (Data.AllocaDefSet[&BB].count(V) != 0)
           return false;
         for (BasicBlock *Pred : predecessors(&BB))
-          if (Data.AllocaDefAll[Pred].count(V) == 0)
+          if (Data.AllocaDefAll[Pred].count(V) == 0) {
+            if (PrintLiveSet)
+              dbgs() << ">>> removing " << V->getName() << " from " <<
+                        BB.getName() << " DefAll;  pred = " <<
+                        Pred->getName() << "\n";
             return true;
+          }
         return false;
       };
       if (Data.AllocaDefAll[&BB].remove_if(NotDefAll))
@@ -2548,10 +2569,37 @@ static void computeLiveInValues(DominatorTree &DT, Function &F,
     }
   } // while (!Worklist.empty())
 
+  // In some rare cases, the optimizer may generate a load
+  // from an uninitialized slot. I saw this happens with LICM's
+  // load promotion. A load is moved out of the loop, and its
+  // only used in Phis. In the actual execution when the value
+  // is used, the Phi is always holding other incoming values,
+  // which are valid. The problem is that the load or the Phi
+  // may be recorded live, and the stack scan may heppend before
+  // it holding valid data, which is bad. Record those bad loads
+  // and remove them.
+  for (Instruction &I : instructions(F))
+    if (LoadInst *LI = dyn_cast<LoadInst>(&I)) {
+      Value *V = LI->getPointerOperand();
+      if (Value *Base = isTrackedAlloca(V, DVCache)) {
+        BasicBlock *BB = LI->getParent();
+        // AllocaDefAll is the set of allocas initialized at the
+        // end of BB. It doesn't include ones that are killed in
+        // BB (as they don't reach the end). Add KillSet explicitly.
+        if (!Data.AllocaDefAll[BB].count(Base) &&
+            !Data.AllocaKillSet[BB].count(Base) &&
+            !AddrTakenAllocas.count(Base)) {
+          BadLoads.insert(LI);
+          //dbgs() << "!!! load off uninitialized slot:\n\t" <<
+          //          F.getName() << "\n\t" << *LI << "\n";
+        }
+      }
+    }
+
   // Sanity check: live alloca must be initialized.
-  // In some rare case it may be recorded live even before
-  // initialization. (I saw this as a result of loop hoisting.)
-  // In this case, we don't mark them live.
+  // Due to the reason above, uninitialized slot may appear live,
+  // as the bad load counts as a use. Remove them, as well as the
+  // bad loads.
   for (BasicBlock &BB : F) {
     auto NotDefAll = [&](Value *V){
       if (isa<AllocaInst>(V)) {
@@ -2564,6 +2612,7 @@ static void computeLiveInValues(DominatorTree &DT, Function &F,
       return false;
     };
     Data.LiveOut[&BB].remove_if(NotDefAll);
+    Data.LiveOut[&BB].set_subtract(BadLoads);
   }
 
   // After this point, we only care address-taken allocas. Remove the rest.

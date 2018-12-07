@@ -79,7 +79,11 @@ computeBitVector(uint64_t StackSize,
 
       // If a slot is following a "Constant" location, it is an aggregate type
       // and that constant encodes the pointer bitmap.
-      if (i+1 < n && CSLocs[i+1].Type == StackMaps::Location::Constant) {
+      // Constant 0 cannot be a pointer bitmap. Instead, it encodes a null pointer
+      // as live (happens with degenerated Phis).
+      if (i+1 < n &&
+          CSLocs[i+1].Type == StackMaps::Location::Constant &&
+          CSLocs[i+1].Offset != 0) {
         // Make sure it is a local/arg slot, not a spill of in-register value.
         assert(Loc.Type == StackMaps::Location::Direct);
 
