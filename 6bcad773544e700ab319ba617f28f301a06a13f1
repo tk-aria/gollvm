@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2b617872_adc084a3",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-12-08T00:24:48Z",
+      "side": 1,
+      "message": "Missing word? Should this be \"containing a defer gets inlined\"?",
+      "range": {
+        "startLine": 9,
+        "startChar": 16,
+        "endLine": 9,
+        "endChar": 33
+      },
+      "revId": "6bcad773544e700ab319ba617f28f301a06a13f1",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
