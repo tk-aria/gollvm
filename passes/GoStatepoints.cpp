@@ -2435,10 +2435,8 @@ static void computeLiveInValues(DominatorTree &DT, Function &F,
     Data.LiveSet[&BB].clear();
     computeLiveInValues(BB.rbegin(), BB.rend(), Data.LiveSet[&BB], AddrTakenAllocas, DVCache);
     computeAllocaDefs(BB.begin(), BB.end(), Data.AllocaDefSet[&BB], Data.AllocaKillSet[&BB], DVCache);
-    if (!BB.isLandingPad()) {
-      Data.AllocaDefAny[&BB] = Data.AllocaDefSet[&BB];
-      Data.AllocaDefAny[&BB].set_subtract(Data.AllocaKillSet[&BB]);
-    }
+    Data.AllocaDefAny[&BB] = Data.AllocaDefSet[&BB];
+    Data.AllocaDefAny[&BB].set_subtract(Data.AllocaKillSet[&BB]);
     Data.LiveOut[&BB] = SetVector<Value *>();
     computeLiveOutSeed(&BB, Data.LiveOut[&BB], DVCache);
 
@@ -2453,13 +2451,6 @@ static void computeLiveInValues(DominatorTree &DT, Function &F,
   while (changed) {
     changed = false;
     for (BasicBlock &BB : F) {
-      // Don't propagate through landing pad. The whole frame is
-      // essentially dead when an exception is thrown.
-      if (BB.isLandingPad()) {
-        assert(Data.AllocaDefAny[&BB].empty());
-        continue;
-      }
-
       unsigned OldSize = Data.AllocaDefAny[&BB].size();
       for (BasicBlock *Pred : predecessors(&BB))
         Data.AllocaDefAny[&BB].set_union(Data.AllocaDefAny[Pred]);
@@ -2531,9 +2522,6 @@ static void computeLiveInValues(DominatorTree &DT, Function &F,
     SetVector<Value *> LiveOut = Data.LiveOut[BB];
     const auto OldLiveOutSize = LiveOut.size();
     for (BasicBlock *Succ : successors(BB)) {
-      if (Succ->isLandingPad())
-        // Don't propagate through landing pad. The frame should be dead at this point.
-        continue;
       assert(Data.LiveIn.count(Succ));
       LiveOut.set_union(Data.LiveIn[Succ]);
     }
