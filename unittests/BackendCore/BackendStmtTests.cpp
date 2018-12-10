@@ -813,6 +813,7 @@ TEST(BackendStmtTests, TestExceptionHandlingStmtWithReturns) {
   //   return 22
   // } else {
   //   return parm
+  //   return 33 // add some dead code
   // }
   Bstatement *body = nullptr;
   {
@@ -830,8 +831,10 @@ TEST(BackendStmtTests, TestExceptionHandlingStmtWithReturns) {
 
     Bstatement *retparm = mkMemReturn(be, func, rtmp, ve1);
     Bstatement *ret22 = mkMemReturn(be, func, rtmp, mkInt64Const(be, 22));
+    Bstatement *ret33 = mkMemReturn(be, func, rtmp, mkInt64Const(be, 33));
     Bblock *thenblock = mkBlockFromStmt(be, func, ret22);
     Bblock *elseblock = mkBlockFromStmt(be, func, retparm);
+    addStmtToBlock(be, elseblock, ret33);
     Bstatement *ifst = be->if_statement(func, eq,
                                         thenblock, elseblock, h.newloc());
     body = ifst;

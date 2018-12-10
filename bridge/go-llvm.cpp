@@ -3256,7 +3256,8 @@ llvm::BasicBlock *GenBlocks::genReturn(Bstatement *rst,
     } else {
       be_->nodeBuilder().destroy(re, DelInstructions);
     }
-    genDeferReturn(curblock);
+    if (curblock)
+      genDeferReturn(curblock);
   } else {
     // Walk return expression
     walkReturn(curblock, rst, re);
