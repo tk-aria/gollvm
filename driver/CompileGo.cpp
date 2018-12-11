@@ -69,6 +69,7 @@ namespace gollvm { namespace arch {
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
+#include "llvm/Transforms/Utils.h"
 
 #include <sstream>
 
@@ -108,6 +109,7 @@ class CompileGoImpl {
   std::unique_ptr<TargetLibraryInfoImpl> tlii_;
   std::string targetCpuAttr_;
   std::string targetFeaturesAttr_;
+  std::string sampleProfileFile_;
   bool enable_gc_;
 
   void createPasses(legacy::PassManager &MPM,
@@ -342,6 +344,25 @@ bool CompileGoImpl::setup()
       driver_.reconcileOptionPair(gollvm::options::OPT_fshow_column,
                                   gollvm::options::OPT_fno_show_column,
                                   true);
+
+  // AutoFDO.
+  opt::Arg *sprofarg =
+      args_.getLastArg(gollvm::options::OPT_fprofile_sample_use,
+                       gollvm::options::OPT_fno_profile_sample_use,
+                       gollvm::options::OPT_fprofile_sample_use_EQ);
+  if (sprofarg && !sprofarg->getOption().matches(
+          gollvm::options::OPT_fno_profile_sample_use)) {
+    opt::Arg *fnamearg =
+        args_.getLastArg(gollvm::options::OPT_fprofile_sample_use_EQ);
+    if (fnamearg != nullptr) {
+      StringRef fname = fnamearg->getValue();
+      if (!llvm::sys::fs::exists(fname)) {
+        errs() << progname_ << ": unable to access file: " << fname;
+        return false;
+      }
+      sampleProfileFile_ = fname;
+    }
+  }
 
   TargetOptions Options;
 
@@ -713,6 +734,11 @@ bool CompileGoImpl::enableVectorization(bool slp)
                                        enable);
 }
 
+static void addAddDiscriminatorsPass(const llvm::PassManagerBuilder &Builder,
+                                     llvm::legacy::PassManagerBase &PM) {
+  PM.add(createAddDiscriminatorsPass());
+}
+
 void CompileGoImpl::createPasses(legacy::PassManager &MPM,
                                  legacy::FunctionPassManager &FPM)
 {
@@ -739,6 +765,25 @@ void CompileGoImpl::createPasses(legacy::PassManager &MPM,
   pmb.PrepareForLTO = false;
   pmb.SLPVectorize = enableVectorization(true);
   pmb.LoopVectorize = enableVectorization(false);
+
+  bool needDwarfDiscr = false;
+  if (! sampleProfileFile_.empty()) {
+    pmb.PGOSampleUse = sampleProfileFile_;
+    needDwarfDiscr = true;
+  }
+  opt::Arg *dbgprofarg =
+      args_.getLastArg(gollvm::options::OPT_fdebug_info_for_profiling,
+                       gollvm::options::OPT_fno_debug_info_for_profiling);
+  if (dbgprofarg) {
+    if (dbgprofarg->getOption().matches(gollvm::options::OPT_fdebug_info_for_profiling))
+      needDwarfDiscr = true;
+    else
+      needDwarfDiscr = false;
+  }
+  if (needDwarfDiscr)
+    pmb.addExtension(llvm::PassManagerBuilder::EP_EarlyAsPossible,
+                           addAddDiscriminatorsPass);
+
 
   FPM.add(new TargetLibraryInfoWrapperPass(*tlii_));
   if (! args_.hasArg(gollvm::options::OPT_noverify))
