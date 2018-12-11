@@ -301,6 +301,21 @@ def fuse_ld_EQ : Joined<["-"], "fuse-ld=">, Group<f_Group>;
 def fdebug_prefix_map_EQ : Joined<["-"], "fdebug-prefix-map=">, Group<f_Group>,
   HelpText<"remap file source paths in debug info">;
 
+
+def fprofile_sample_use : Flag<["-"], "fprofile-sample-use">, Group<f_Group>, Flags<[DriverOption]>;
+def fno_profile_sample_use : Flag<["-"], "fno-profile-sample-use">, Group<f_Group>, Flags<[DriverOption]>;
+
+def fprofile_sample_use_EQ : Joined<["-"], "fprofile-sample-use=">,
+    Group<f_Group>, Flags<[DriverOption]>,
+    HelpText<"Enable sample-based profile guided optimizations">;
+
+def fdebug_info_for_profiling : Flag<["-"], "fdebug-info-for-profiling">, Group<f_Group>,
+    Flags<[DriverOption]>,
+    HelpText<"Emit extra debug info to make sample profile more accurate.">;
+def fno_debug_info_for_profiling : Flag<["-"], "fno-debug-info-for-profiling">, Group<f_Group>,
+    Flags<[DriverOption]>,
+    HelpText<"Do not emit extra debug info for sample profiler.">;
+    
 // Target-dependent "-m" options.
 
 def march_EQ : Joined<["-"], "march=">, Group<m_Group>;
