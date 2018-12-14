@@ -52,6 +52,7 @@ add_llvm_library(LLVMCppGoFrontEnd
   go-llvm-typemanager.cpp
   go-llvm.cpp
   go-sha1.cpp
+  namegen.cpp
 )
 
 add_dependencies(LLVMCppGoFrontEnd intrinsics_gen)

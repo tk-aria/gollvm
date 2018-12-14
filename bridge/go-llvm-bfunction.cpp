@@ -87,6 +87,10 @@ llvm::Instruction *Bfunction::addAlloca(llvm::Type *typ,
   if (addressSpace != 0) {
     llvm::Type *pt = llvm::PointerType::get(typ, addressSpace);
     inst = new llvm::AddrSpaceCastInst(inst, pt);
+    if (! name.empty()) {
+      std::string castname(NameGen::combineTags(name, ".ascast"));
+      inst->setName(namegen(castname));
+    }
     allocas_.push_back(inst);
   }
 
