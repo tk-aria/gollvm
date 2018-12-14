@@ -13,6 +13,10 @@
 #ifndef LLVMGOFRONTEND_NAMEGEN_H
 #define LLVMGOFRONTEND_NAMEGEN_H
 
+#include <string>
+#include <sstream>
+#include <unordered_map>
+
 class NameGen {
  public:
   NameGen() { }
@@ -21,19 +25,12 @@ class NameGen {
   static constexpr unsigned ChooseVer = 0xffffffff;
 
   // For creating useful type, inst and block names.
-  std::string namegen(const std::string &tag, unsigned expl = ChooseVer) {
-    auto it = nametags_.find(tag);
-    unsigned count = 0;
-    if (it != nametags_.end())
-      count = it->second + 1;
-    if (expl != ChooseVer)
-      count = expl;
-    std::stringstream ss;
-    ss << tag << "." << count;
-    if (expl == ChooseVer)
-      nametags_[tag] = count;
-    return ss.str();
-  }
+  std::string namegen(const std::string &tag, unsigned expl = ChooseVer);
+
+  // Form a new tag name based on an existing tag and a suffix. If
+  // the existing tag is versioned, strip off the version.
+  static std::string combineTags(const std::string &baseTag,
+                                 const std::string &suffix);
 
   NameGen *nameTags() {
     return const_cast<NameGen*>(this);
@@ -43,7 +40,5 @@ class NameGen {
   // Key is tag (ex: "add") and val is counter to uniquify.
   std::unordered_map<std::string, unsigned> nametags_;
 };
-
-
 
 #endif // LLVMGOFRONTEND_TYPEMANAGER_H
