@@ -155,9 +155,9 @@ Bexpression *Llvm_backend::materializeConversion(Bexpression *convExpr)
       valType = val->getType();
     }
     if (lvalue || useCopyForLoadStore(type->type())) {
-      llvm::Type *pet = llvm::PointerType::get(expr->btype()->type(),
-                                               addressSpace_);
-      if (valType == pet)
+      llvm::Type *et = expr->btype()->type();
+      if (valType->isPointerTy() &&
+          valType->getPointerElementType() == et)
         toType = llvm::PointerType::get(toType, addressSpace_);
     }
   }
@@ -1141,6 +1141,8 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
     if (paramInfo.attr() == AttrNest)
       continue;
 
+    BinstructionsLIRBuilder &builder = state.builder;
+
     // For arguments not passed by value, no call to resolveVarContext
     // (we want var address, not var value).
     if (paramInfo.disp() == ParmIndirect) {
@@ -1156,7 +1158,14 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
         Bvariable *cv = genVarForConstant(cval, fn_args[idx]->btype());
         val = cv->value();
       }
-      assert(val->getType()->isPointerTy());
+      llvm::Type *vt = val->getType();
+      assert(vt->isPointerTy());
+      if (paramInfo.attr() == AttrByVal && vt->getPointerAddressSpace() != 0) {
+        // We pass a stack address, which is always in address space 0.
+        std::string castname(namegen("ascast"));
+        llvm::Type *pt = llvm::PointerType::get(vt->getPointerElementType(), 0);
+        val = builder.CreateAddrSpaceCast(val, pt, castname);
+      }
       state.llargs.push_back(val);
       continue;
     }
@@ -1177,7 +1186,6 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
 
     llvm::Value *val = resarg->value();
 
-    BinstructionsLIRBuilder &builder = state.builder;
     if (paramInfo.abiTypes().size() == 1) {
       if (ctx == VE_lvalue) {
         // Passing single-eightbyte struct or array directly.
@@ -1243,7 +1251,8 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
 
     // Cast the value to the struct type
     std::string tag(namegen("cast"));
-    llvm::Value *bitcast = builder.CreateBitCast(val, ptst, tag);
+    llvm::Value *bitcast =
+        builder.CreatePointerBitCastOrAddrSpaceCast(val, ptst, tag);
 
     // Load up each field
     std::string ftag0(namegen("field0"));
@@ -1566,7 +1575,8 @@ Llvm_backend::convertForAssignment(Btype *srcBType,
   std::set<llvm::Type *> visited;
   if (fcnPointerCompatible(dstToType, srcType, visited)) {
     std::string tag(namegen("cast"));
-    llvm::Value *bitcast = builder->CreateBitCast(srcVal, dstToType, tag);
+    llvm::Value *bitcast =
+        builder->CreatePointerBitCastOrAddrSpaceCast(srcVal, dstToType, tag);
     return bitcast;
   }
 
