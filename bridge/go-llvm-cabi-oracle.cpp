@@ -652,8 +652,9 @@ CABIParamInfo CABIOracle::analyzeABIParam(Btype *paramType, ABIState &state)
   int sigOff = state.argCount();
 
   if (pdisp == ParmIndirect) {
-    // Value will be passed in memory
-    llvm::Type *ptrTyp = tm()->makeLLVMPointerType(ptyp);
+    // Value will be passed in memory on stack.
+    // Stack is always in address space 0.
+    llvm::Type *ptrTyp = llvm::PointerType::get(ptyp, 0);
     state.addIndirectArg();
     return CABIParamInfo(ptrTyp, ParmIndirect, AttrByVal, sigOff);
   }
@@ -684,7 +685,7 @@ CABIParamInfo CABIOracle::analyzeABIParam(Btype *paramType, ABIState &state)
     return CABIParamInfo(abiTypes, ParmDirect, attr, sigOff);
   } else {
     state.addIndirectArg();
-    llvm::Type *ptrTyp = tm()->makeLLVMPointerType(ptyp);
+    llvm::Type *ptrTyp = llvm::PointerType::get(ptyp, 0);
     return CABIParamInfo(ptrTyp, ParmIndirect, AttrByVal, sigOff);
   }
 }
