@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fe343fb3_78bf5ff6",
+        "filename": "README.md",
+        "patchSetId": 2
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-12-17T19:36:15Z",
+      "side": 1,
+      "message": "Does it mean GCC 5.0 (or later), or Clang 5.0 (or later)?",
+      "range": {
+        "startLine": 67,
+        "startChar": 132,
+        "endLine": 67,
+        "endChar": 149
+      },
+      "revId": "b26ef524d83f8c3c6764206d3dd6652212f213f9",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e920c086_285eed47",
+        "filename": "README.md",
+        "patchSetId": 2
+      },
+      "lineNbr": 344,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-12-17T19:36:15Z",
+      "side": 1,
+      "message": "Too many empty lines at the end.",
+      "revId": "b26ef524d83f8c3c6764206d3dd6652212f213f9",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
