@@ -62,9 +62,9 @@ To set up a work area for Gollvm, check out a copy of LLVM, the overlay the goll
 %
 ```
 
-## Building gollvm with cmake and ninja  <a name="cmakeninja"></a>
+## Building gollvm with cmake and ninja <a name="cmakeninja"></a>
 
-You'll need to have an up-to-date copy of cmake on your system (3.6 or later vintage) to build Gollvm.
+You'll need to have an up-to-date copy of cmake on your system (3.6 or later vintage) to build Gollvm, as well as a C/C++ compiler (GCC or Clang V5.0 or later).
 
 Create a build directory (separate from the source tree) and run 'cmake' within the build area to set up for the build. Assuming that 'workarea' is the directory created as above:
 
@@ -79,7 +79,7 @@ Create a build directory (separate from the source tree) and run 'cmake' within 
 %
 ```
 
-This will build the various tools and libraries needed for Gollvm.
+This will build the various tools and libraries needed for Gollvm. To select a specific C/C++ compiler for the build, you can use the "-DCMAKE_C_COMPILER" and "-DCMAKE_CXX_COMPILER" options to select your desired C/C++ compiler when invoking cmake (details [here](https://gitlab.kitware.com/cmake/community/wikis/FAQ#how-do-i-use-a-different-compiler). 
 
 ## Installing gollvm <a name="installing"></a>
 
@@ -336,3 +336,11 @@ There are plans to support FDO, AutoFDO, and ThinLTO for gollvm, however these f
 ## Can I use the race detector?  <a name="racedetector"></a>
 
 Gollvm does not support the Go race detector; please use the main Go compiler for this purpose.
+
+## I am seeing "undefined symbol: `__get_cpuid_count`" from my gollvm install <a name="getcpuidcount_undefined">
+
+The Gollvm build procedure requires an up-to-date C/C++ compiler; there is code in the gollvm runtime (libgo) that refers to functions defined in `<cpuid.h>`, however some older versions of clang (prior to 5.0) don't provide definitions for all the needed functions. If you encounter this problem, rerun `cmake` to configure your build to use a more recent version of Clang (or use GCC).
+
+
+
+
