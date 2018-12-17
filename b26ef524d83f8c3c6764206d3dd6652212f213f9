@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "977059b6_57f5b4f3",
+        "filename": "README.md",
+        "patchSetId": 2
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-12-17T20:00:44Z",
+      "side": 1,
+      "message": "You are right, that\u0027s kind of ambiguous as written.  I will reword.",
+      "parentUuid": "fe343fb3_78bf5ff6",
+      "range": {
+        "startLine": 67,
+        "startChar": 132,
+        "endLine": 67,
+        "endChar": 149
+      },
+      "revId": "b26ef524d83f8c3c6764206d3dd6652212f213f9",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "e920c086_285eed47",
         "filename": "README.md",
         "patchSetId": 2
@@ -39,6 +63,24 @@
       "revId": "b26ef524d83f8c3c6764206d3dd6652212f213f9",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "98a6b858_b3bb96e2",
+        "filename": "README.md",
+        "patchSetId": 2
+      },
+      "lineNbr": 344,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-12-17T20:00:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e920c086_285eed47",
+      "revId": "b26ef524d83f8c3c6764206d3dd6652212f213f9",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
