@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "376b5320_39a6a5ec",
+        "filename": "bridge/go-llvm-materialize.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1163,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-12-18T18:27:41Z",
+      "side": 1,
+      "message": "Added AttrByVal condition.",
+      "revId": "a982c9ac2747513ee32b25c3a7fd54e1b6a63c13",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
