@@ -31,7 +31,8 @@ source tree, then within the LLVM tree you check out additional git repos.
   * [What is the relationship between gollvm and gccgo?](#gollvmandgccgo)
   * [Can I use FDO or Thin LTO with gollvm?](#thinltofdo)
   * [Can I use the race detector?](#racedetector)
-
+  * [I am seeing "undefined symbol: `__get_cpuid_count`" from my gollvm install](#getcpuidcount_undefined)
+  
 # Building gollvm <a name="building"></a>
 
 Gollvm is currently in development -- releases are not yet available for download.  Instructions for building gollvm follow.
