@@ -1379,6 +1379,9 @@ makeStatepointExplicitImpl(const CallSite CS, /* to replace */
   // pointer fields.
   SmallVector<Value *, 64> PtrFields;
   for (Value *V : BasePtrs) {
+    if (auto *Phi = dyn_cast<PHINode>(V))
+      if (Phi->hasConstantValue())
+        continue;
     if (isa<AllocaInst>(V) ||
         (isa<Argument>(V) && cast<Argument>(V)->hasByValAttr())) {
       // Byval argument is at a fixed frame offset. Treat it the same as alloca.
@@ -1668,10 +1671,29 @@ zeroAmbiguouslyLiveSlots(Function &F, SetVector<Value *> &ToZero,
 }
 
 static void
-fixBadPhiOperands(Function &F, SetVector<Value *> &BadLoads) {
+fixBadPhiOperands(Function &F, SetVector<Value *> &BadLoads,
+                  SetVector<Instruction *> &ToDel) {
   for (auto *I : BadLoads) {
     I->replaceAllUsesWith(Constant::getNullValue(I->getType()));
     cast<Instruction>(I)->eraseFromParent();
+  }
+
+  // The replacement above may lead to degenerate Phis, which, if live,
+  // will be encoded as constants in the stack map, which is bad
+  // (confusing with pointer bitmaps). Clean them up.
+  // Don't delete them yet -- they may be referenced in the liveness
+  // map. We'll delete them at the end.
+  bool Changed = true;
+  while (Changed) {
+    Changed = false;
+    for (Instruction &I : instructions(F))
+      if (auto *Phi = dyn_cast<PHINode>(&I))
+        if (Value *V = Phi->hasConstantValue())
+          if (!ToDel.count(Phi)) {
+            Phi->replaceAllUsesWith(V);
+            ToDel.insert(Phi);
+            Changed = true;
+          }
   }
 }
 
@@ -1720,7 +1742,8 @@ static bool insertParsePoints(Function &F, DominatorTree &DT,
     findBasePointers(DT, DVCache, ToUpdate[i], info);
   }
 
-  fixBadPhiOperands(F, BadLoads);
+  SetVector<Instruction *> ToDel;
+  fixBadPhiOperands(F, BadLoads, ToDel);
 
   // It is possible that non-constant live variables have a constant base.  For
   // example, a GEP with a variable offset from a global.  In this case we can
@@ -1810,6 +1833,10 @@ static bool insertParsePoints(Function &F, DominatorTree &DT,
 #endif
 
   zeroAmbiguouslyLiveSlots(F, ToZero, AddrTakenAllocas);
+
+  // Delete dead Phis.
+  for (Instruction *I : ToDel)
+    I->eraseFromParent();
 
   return !Records.empty();
 }
