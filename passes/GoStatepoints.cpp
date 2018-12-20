@@ -93,9 +93,8 @@ static cl::opt<bool> PrintLiveSet("gogc-print-liveset", cl::Hidden,
 static cl::opt<std::string> PrintFunc("gogc-print-func", cl::Hidden,
                                       cl::init(""));
 
-// TODO: make sure ClobberNonLive work. In the original code it
-// is to clobber non-relocated pointers. We'll need a different
-// mechanism.
+// At each statepoint, clobber all the stack slots that are considered
+// dead, for debugging purposes.
 static cl::opt<bool> ClobberNonLive("gogc-clobber-non-live",
                                     cl::Hidden, cl::init(false));
 
@@ -335,6 +334,7 @@ static void computeLiveInValues(DominatorTree &DT, Function &F,
 static void findLiveSetAtInst(Instruction *inst, GCPtrLivenessData &Data,
                               SetVector<Value *> &AddrTakenAllocas,
                               StatepointLiveSetTy &out,
+                              SetVector<Value *> &AllAllocas,
                               DefiningValueMapTy &DVCache);
 
 // TODO: Once we can get to the GCStrategy, this becomes
@@ -406,11 +406,13 @@ analyzeParsePointLiveness(DominatorTree &DT,
                           GCPtrLivenessData &OriginalLivenessData,
                           SetVector<Value *> &AddrTakenAllocas, CallSite CS,
                           PartiallyConstructedSafepointRecord &Result,
+                          SetVector<Value *> &AllAllocas,
                           DefiningValueMapTy &DVCache) {
   Instruction *Inst = CS.getInstruction();
 
   StatepointLiveSetTy LiveSet;
-  findLiveSetAtInst(Inst, OriginalLivenessData, AddrTakenAllocas, LiveSet, DVCache);
+  findLiveSetAtInst(Inst, OriginalLivenessData, AddrTakenAllocas,
+                    LiveSet, AllAllocas, DVCache);
 
   if (PrintLiveSet) {
     dbgs() << "Live Variables at " << *Inst << ":\n";
@@ -1569,12 +1571,20 @@ static void findLiveReferences(
     SetVector<Value *> &BadLoads,
     DefiningValueMapTy &DVCache) {
   GCPtrLivenessData OriginalLivenessData;
+
+  // Find all allocas.
+  SetVector<Value *> AllAllocas;
+  if (ClobberNonLive)
+    for (Instruction &I : F.getEntryBlock())
+      if (isa<AllocaInst>(I) && hasPointer(I.getType()->getPointerElementType()))
+        AllAllocas.insert(&I);
+
   computeLiveInValues(DT, F, OriginalLivenessData, AddrTakenAllocas,
                       ToZero, BadLoads, DVCache);
   for (size_t i = 0; i < records.size(); i++) {
     struct PartiallyConstructedSafepointRecord &info = records[i];
     analyzeParsePointLiveness(DT, OriginalLivenessData, AddrTakenAllocas,
-                              toUpdate[i], info, DVCache);
+                              toUpdate[i], info, AllAllocas, DVCache);
   }
 }
 
@@ -1870,6 +1880,16 @@ static bool insertParsePoints(Function &F, DominatorTree &DT,
 #endif
 
   zeroAmbiguouslyLiveSlots(F, ToZero, AddrTakenAllocas);
+
+  // In clobber-non-live mode, delete all lifetime markers, as the
+  // inserted clobbering may be beyond the original lifetime.
+  if (ClobberNonLive)
+    for (Instruction &I : instructions(F))
+      if (CallInst *CI = dyn_cast<CallInst>(&I))
+        if (Function *Fn = CI->getCalledFunction())
+          if (Fn->getIntrinsicID() == Intrinsic::lifetime_start ||
+              Fn->getIntrinsicID() == Intrinsic::lifetime_end)
+            ToDel.insert(&I);
 
   // Delete dead Phis.
   for (Instruction *I : ToDel)
@@ -2723,9 +2743,14 @@ static void computeLiveInValues(DominatorTree &DT, Function &F,
 #endif
 }
 
+// Compute the set of values live at Inst, store the result in Out.
+//
+// Side effect: in clobber-non-live mode, the clobbering instructions
+// are inserted here.
 static void findLiveSetAtInst(Instruction *Inst, GCPtrLivenessData &Data,
                               SetVector<Value *> &AddrTakenAllocas,
                               StatepointLiveSetTy &Out,
+                              SetVector<Value *> &AllAllocas,
                               DefiningValueMapTy &DVCache) {
   BasicBlock *BB = Inst->getParent();
 
@@ -2754,6 +2779,24 @@ static void findLiveSetAtInst(Instruction *Inst, GCPtrLivenessData &Data,
            DL.getTypeStoreSize(V->getType()->getPointerElementType())))
         LiveOut.remove(V);
     }
+
+  // Clobber all non-live allocas.
+  if (ClobberNonLive) {
+    SetVector<Value *> ToClobber(AllAllocas);
+    ToClobber.set_subtract(LiveOut);
+    if (!ToClobber.empty()) {
+      IRBuilder<> Builder(Inst);
+      Type *Int8Ty = IntegerType::get(Inst->getModule()->getContext(), 8);
+      const DataLayout &DL = Inst->getModule()->getDataLayout();
+      Value *Bad = ConstantInt::get(Int8Ty, 0xff);
+      for (Value *Alloca : ToClobber) {
+        unsigned Siz =
+            DL.getTypeStoreSize(Alloca->getType()->getPointerElementType());
+        Builder.CreateMemSet(Alloca, Bad, Siz, 0);
+        //dbgs() << "clobber " << *Alloca << " at " << *Inst << "\n";
+      }
+    }
+  }
 
   Out.insert(LiveOut.begin(), LiveOut.end());
 }
