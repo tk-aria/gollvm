@@ -1670,6 +1670,43 @@ zeroAmbiguouslyLiveSlots(Function &F, SetVector<Value *> &ToZero,
   assert(ToZero.empty());
 }
 
+// Detect degenerate Phi.
+// Try harder to handle mutually dependent case, like
+//   a = phi(null, b)
+// (in a different block)
+//   b = phi(a, null)
+static Value *
+phiHasConstantValue(PHINode *Phi0) {
+  Value *V = Phi0->hasConstantValue();
+  if (V)
+    return V;
+
+  // Visit all the Phi inputs. Discover new Phis on the go, and visit them.
+  // Early exit if we see a non-constant or two different constants.
+  SmallSet<PHINode *, 4> Phis, Visited;
+  Phis.insert(Phi0);
+  while (!Phis.empty()) {
+    PHINode *Phi = *Phis.begin();
+    Visited.insert(Phi);
+    for (Value *Operand : Phi->incoming_values()) {
+      if (PHINode *P = dyn_cast<PHINode>(Operand)) {
+        if (!Visited.count(P))
+          Phis.insert(P);
+        continue;
+      }
+      if (isa<Constant>(Operand)) {
+        if (V && V != Operand)
+          return nullptr; // operands not same
+        V = Operand;
+      } else
+        return nullptr; // has non-constant input
+    }
+    Phis.erase(Phi);
+  }
+
+  return V;
+}
+
 static void
 fixBadPhiOperands(Function &F, SetVector<Value *> &BadLoads,
                   SetVector<Instruction *> &ToDel) {
@@ -1688,8 +1725,8 @@ fixBadPhiOperands(Function &F, SetVector<Value *> &BadLoads,
     Changed = false;
     for (Instruction &I : instructions(F))
       if (auto *Phi = dyn_cast<PHINode>(&I))
-        if (Value *V = Phi->hasConstantValue())
-          if (!ToDel.count(Phi)) {
+        if (!ToDel.count(Phi))
+          if (Value *V = phiHasConstantValue(Phi)) {
             Phi->replaceAllUsesWith(V);
             ToDel.insert(Phi);
             Changed = true;
