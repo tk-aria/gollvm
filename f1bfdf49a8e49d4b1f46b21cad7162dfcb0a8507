@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "e049df50_eea79f96",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1884,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-12-21T17:10:06Z",
+      "side": 1,
+      "message": "Yeah, this is a little too conservative. One thing I\u0027ve seen is that the lifetime marker may be put on Phis, where it seems a little tricky to determine whether it is associate to a pointerful alloca and ends up using the same slot. I think a little extra stack space (from not reusing slots for pointerless allocas) isn\u0027t a big deal, so maybe just do it simple here.",
+      "parentUuid": "f8107fe3_475009e4",
+      "revId": "f1bfdf49a8e49d4b1f46b21cad7162dfcb0a8507",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "c7e43d40_246c41ae",
         "filename": "passes/GoStatepoints.cpp",
         "patchSetId": 1
@@ -30,6 +48,24 @@
       "writtenOn": "2018-12-21T13:50:55Z",
       "side": 1,
       "message": "Code LGTM, although I worry a little about if there will be scalability problems for very large functions. Could consider only zapping those alloca\u0027s that are available at a specific spot (available here in the AVAIL dataflow sense) if there are issues along these lines. That way if you have something like\n\n   s1 :\u003d MyStructWitPtrs{...}\n   ...\n   call1()\n   ...\n   s2 :\u003d MyStructWithPtrs{...}\n   ...\n   call2()\n\nyou would only insert clobbers of an alloca at spots reachable from the point at which the alloca is declared.  For the code above there\u0027s no point adding a clobber of s2 before the call to call1(), since we haven\u0027t reached s2\u0027s declaration.\n\nThe other thing that is a little weird is that this code is making changes to the IR inside a function named \"findLiveSetAtInst\" -- the naming implies that it\u0027s just doing some analysis, whereas in fact it\u0027s making changes too. \n\nWith that said, I\u0027m fine with what you have here.",
+      "revId": "f1bfdf49a8e49d4b1f46b21cad7162dfcb0a8507",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "180899f3_807ea0ac",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2779,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-12-21T17:10:06Z",
+      "side": 1,
+      "message": "Yeah, it does slow down the compilation and blow up the binaries quite a bit. One advantage for this is that it doesn\u0027t depend much on analysis. Since here we are debugging the analysis itself, we probably don\u0027t want to be too fancy.\n\nI agree that the function name doesn\u0027t sound like it will mutate the IR. Maybe I can move this to its caller, or at least add a comment.",
+      "parentUuid": "c7e43d40_246c41ae",
       "revId": "f1bfdf49a8e49d4b1f46b21cad7162dfcb0a8507",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
