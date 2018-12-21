@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2ce98764_757ea5b7",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1691,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-12-21T13:33:14Z",
+      "side": 1,
+      "message": "Not sure if we care, but it\u0027s possible to imagine a degenerate case where you have\n\nb \u003d phi(...)\na \u003d phi(b, b, c)\n\nin which case the same phi (\"b\") gets put onto the list more than once. Don\u0027t think it should really make a difference though.",
+      "revId": "1cf37ae969dda5c1e4e6d82564da81b041039537",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
