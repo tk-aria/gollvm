@@ -16,6 +16,24 @@
       "revId": "1cf37ae969dda5c1e4e6d82564da81b041039537",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6f538aa3_76acc21d",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1691,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-12-21T16:51:17Z",
+      "side": 1,
+      "message": "Good point. I think SmallSet deduplicates on insert, so this should be fine.",
+      "parentUuid": "2ce98764_757ea5b7",
+      "revId": "1cf37ae969dda5c1e4e6d82564da81b041039537",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
