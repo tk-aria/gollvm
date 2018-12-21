@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f8107fe3_475009e4",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1884,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-12-21T13:50:55Z",
+      "side": 1,
+      "message": "This will delete all lifetime markers, not just those alloca\u0027s that are pointers or contain pointers. Seems ok, but just something to keep in mind.",
+      "revId": "f1bfdf49a8e49d4b1f46b21cad7162dfcb0a8507",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c7e43d40_246c41ae",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2779,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-12-21T13:50:55Z",
+      "side": 1,
+      "message": "Code LGTM, although I worry a little about if there will be scalability problems for very large functions. Could consider only zapping those alloca\u0027s that are available at a specific spot (available here in the AVAIL dataflow sense) if there are issues along these lines. That way if you have something like\n\n   s1 :\u003d MyStructWitPtrs{...}\n   ...\n   call1()\n   ...\n   s2 :\u003d MyStructWithPtrs{...}\n   ...\n   call2()\n\nyou would only insert clobbers of an alloca at spots reachable from the point at which the alloca is declared.  For the code above there\u0027s no point adding a clobber of s2 before the call to call1(), since we haven\u0027t reached s2\u0027s declaration.\n\nThe other thing that is a little weird is that this code is making changes to the IR inside a function named \"findLiveSetAtInst\" -- the naming implies that it\u0027s just doing some analysis, whereas in fact it\u0027s making changes too. \n\nWith that said, I\u0027m fine with what you have here.",
+      "revId": "f1bfdf49a8e49d4b1f46b21cad7162dfcb0a8507",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
