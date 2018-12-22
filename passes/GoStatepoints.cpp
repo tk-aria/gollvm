@@ -1588,35 +1588,6 @@ static void findLiveReferences(
   }
 }
 
-// Helper function for the "rematerializeLiveValues". It walks use chain
-// starting from the "CurrentValue" until it reaches the root of the chain, i.e.
-// the base or a value it cannot process. Only "simple" values are processed
-// (currently it is GEP's and casts). The returned root is  examined by the
-// callers of findRematerializableChainToBasePointer.  Fills "ChainToBase" array
-// with all visited values.
-static Value* findRematerializableChainToBasePointer(
-  SmallVectorImpl<Instruction*> &ChainToBase,
-  Value *CurrentValue) {
-  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(CurrentValue)) {
-    ChainToBase.push_back(GEP);
-    return findRematerializableChainToBasePointer(ChainToBase,
-                                                  GEP->getPointerOperand());
-  }
-
-  if (CastInst *CI = dyn_cast<CastInst>(CurrentValue)) {
-    if (!CI->isNoopCast(CI->getModule()->getDataLayout()))
-      return CI;
-
-    ChainToBase.push_back(CI);
-    return findRematerializableChainToBasePointer(ChainToBase,
-                                                  CI->getOperand(0));
-  }
-
-  // We have reached the root of the chain, which is either equal to the base or
-  // is the first unsupported value along the use chain.
-  return CurrentValue;
-}
-
 static void
 zeroAmbiguouslyLiveSlots(Function &F, SetVector<Value *> &ToZero,
                          SetVector<Value *> &AddrTakenAllocas) {
@@ -2318,13 +2289,17 @@ computeAllocaDefs(BasicBlock::iterator Begin,
 // Determine whether an alloca has its address taken.
 // We use different mechanisms to track the liveness of
 // address-taken and non-address-taken allocas.
+// Also keep track the location where the address is used.
+// The alloca needs to be live where its address is taken.
 static void
 determineAllocaAddrTaken(Function &F,
                          SetVector<Value *> &AddrTakenAllocas,
+                         MapVector<BasicBlock *, SetVector<Value *>> &AllocaAddrUse,
                          DefiningValueMapTy &DVCache) {
   // Use the metadata inserted by the FE.
   for (Instruction &I : F.getEntryBlock())
-    if (isa<AllocaInst>(I) && I.getMetadata("go_addrtaken"))
+    if (isa<AllocaInst>(I) && I.getMetadata("go_addrtaken") &&
+        hasPointer(I.getType()->getPointerElementType()))
       AddrTakenAllocas.insert(&I);
 
   // The FE's addrtaken mark may be imprecise. Look for certain
@@ -2345,8 +2320,10 @@ determineAllocaAddrTaken(Function &F,
       for (Value *V : I.operands()) {
         if (!isHandledGCPointerType(V->getType()))
           continue;
-        if (Value *Base = isTrackedAlloca(V, DVCache))
+        if (Value *Base = isTrackedAlloca(V, DVCache)) {
           AddrTakenAllocas.insert(Base);
+          AllocaAddrUse[I.getParent()].insert(Base);
+        }
       }
     else if (StoreInst *SI = dyn_cast<StoreInst>(&I)) {
       // If the address of a slot is stored, it must be addrtaken.
@@ -2355,8 +2332,10 @@ determineAllocaAddrTaken(Function &F,
       // TODO: maybe we should fix the FE?
       Value *V = SI->getValueOperand();
       if (isHandledGCPointerType(V->getType()))
-        if (Value *Base = isTrackedAlloca(V, DVCache))
+        if (Value *Base = isTrackedAlloca(V, DVCache)) {
           AddrTakenAllocas.insert(Base);
+          AllocaAddrUse[I.getParent()].insert(Base);
+        }
     }
   }
 }
@@ -2521,9 +2500,8 @@ static void computeLiveInValues(DominatorTree &DT, Function &F,
                                 SetVector<Value *> &ToZero,
                                 SetVector<Value *> &BadLoads,
                                 DefiningValueMapTy &DVCache) {
-  SmallSetVector<BasicBlock *, 32> Worklist;
-
-  determineAllocaAddrTaken(F, AddrTakenAllocas, DVCache);
+  MapVector<BasicBlock *, SetVector<Value *>> AllocaAddrUse;
+  determineAllocaAddrTaken(F, AddrTakenAllocas, AllocaAddrUse, DVCache);
   if (PrintLiveSet) {
     dbgs() << "AddrTakenAllocas:\n";
     printLiveSet(AddrTakenAllocas);
@@ -2546,8 +2524,9 @@ static void computeLiveInValues(DominatorTree &DT, Function &F,
 #endif
   }
 
-  // Propagate Alloca def any/all until stable.
+  // Propagate Alloca def any until stable.
   bool changed = true;
+again:
   while (changed) {
     changed = false;
     for (BasicBlock &BB : F) {
@@ -2559,6 +2538,31 @@ static void computeLiveInValues(DominatorTree &DT, Function &F,
         changed = true;
     }
   }
+
+  // When a slot's address is taken, it can be live any point after it.
+  // It can also be initialized "indirectly", like
+  //   tmp = phi(&a, &b)
+  //   *tmp = ...
+  // computeAllocaDefs doesn't see this initialization.
+  // It can be initialized some time later, or never. We don't know for
+  // sure. The slot needs to be live. And we need to pre-zero it, if we
+  // don't otherwise know it is initialized.
+  if (!AllocaAddrUse.empty()) {
+    for (BasicBlock &BB : F) {
+      AllocaAddrUse[&BB].set_subtract(Data.AllocaKillSet[&BB]);
+      for (Value *V : AllocaAddrUse[&BB])
+        if (!Data.AllocaDefAny[&BB].count(V)) {
+          Data.AllocaDefAny[&BB].insert(V);
+          ToZero.insert(V);
+          changed = true;
+        }
+     }
+    AllocaAddrUse.clear();
+    if (changed)
+      goto again; // re-propagate alloca def any
+  }
+
+  // Propagate Alloca def all until stable.
   for (BasicBlock &BB : F)
     Data.AllocaDefAll[&BB] = Data.AllocaDefAny[&BB];
   changed = true;
@@ -2610,6 +2614,7 @@ static void computeLiveInValues(DominatorTree &DT, Function &F,
     }
   }
 
+  SmallSetVector<BasicBlock *, 32> Worklist;
   for (BasicBlock &BB : F) {
     Data.LiveIn[&BB] = Data.LiveSet[&BB];
     Data.LiveIn[&BB].set_union(Data.LiveOut[&BB]);
