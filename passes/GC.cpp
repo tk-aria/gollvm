@@ -98,7 +98,16 @@ computeBitVector(uint64_t StackSize,
         break;
       }
 
+      // Another case of aggregate type is a spill of a vector of pointers.
+      if (Loc.Size > PtrSize) {
+        assert(Loc.Type == StackMaps::Location::Indirect);
+        for (unsigned j = 0; j < Loc.Size / PtrSize; j++)
+          BV.set(Idx + j);
+        break;
+      }
+
       // A single pointer slot.
+      assert(Loc.Size == PtrSize);
       if (Idx >= BV.size())
         // This can happen if Loc is an arg slot (for byVal aggregate type).
         BV.resize(Idx + 1);
