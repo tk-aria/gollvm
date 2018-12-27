@@ -28,6 +28,10 @@
 
 using namespace llvm;
 
+// Pad the stackmap to at least the frame size, so we can do a
+// conservative scan of a frame in case of debugging.
+static cl::opt<bool> Padding("gogc-stackmap-pad", cl::Hidden, cl::init(false));
+
 namespace {
 
 class GoGC : public GCStrategy {
@@ -124,6 +128,8 @@ computeBitVector(uint64_t StackSize,
   if (BV.none())
     return Bytes;
   int last = BV.find_last();
+  if (Padding && last < (int)StackSize/PtrSize - 1)
+    last = StackSize/PtrSize - 1; // ensure the stack map has at least frame size
   Size = last + 1;
   Bytes.reserve(last/8 + 1);
   int i;
