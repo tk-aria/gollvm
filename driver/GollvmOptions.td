@@ -315,7 +315,17 @@ def fdebug_info_for_profiling : Flag<["-"], "fdebug-info-for-profiling">, Group<
 def fno_debug_info_for_profiling : Flag<["-"], "fno-debug-info-for-profiling">, Group<f_Group>,
     Flags<[DriverOption]>,
     HelpText<"Do not emit extra debug info for sample profiler.">;
-    
+
+def fsave_optimization_record : Flag<["-"], "fsave-optimization-record">,
+    Group<f_Group>, Flags<[DriverOption]>,
+    HelpText<"Generate a YAML optimization record file">;
+def fno_save_optimization_record : Flag<["-"], "fno_save-optimization-record">,
+    Group<f_Group>, Flags<[DriverOption]>,
+    HelpText<"Do not generate a YAML optimization record file">;
+def foptimization_record_file_EQ : Joined<["-"], "foptimization-record-file=">,
+    Group<f_Group>, Flags<[DriverOption]>,
+    HelpText<"Specify the file name of any generated YAML optimization record">;
+
 // Target-dependent "-m" options.
 
 def march_EQ : Joined<["-"], "march=">, Group<m_Group>;
