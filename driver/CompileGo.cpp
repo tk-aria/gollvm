@@ -106,6 +106,7 @@ class CompileGoImpl {
   std::vector<std::string> inputFileNames_;
   std::string asmOutFileName_;
   std::unique_ptr<ToolOutputFile> asmout_;
+  std::unique_ptr<ToolOutputFile> optRecordFile_;
   std::unique_ptr<TargetLibraryInfoImpl> tlii_;
   std::string targetCpuAttr_;
   std::string targetFeaturesAttr_;
@@ -368,6 +369,33 @@ bool CompileGoImpl::setup()
         return false;
       }
       sampleProfileFile_ = fname;
+    }
+  }
+
+  // Capture optimization record.
+  opt::Arg *optrecordarg =
+      args_.getLastArg(gollvm::options::OPT_fsave_optimization_record,
+                       gollvm::options::OPT_fno_save_optimization_record,
+                       gollvm::options::OPT_foptimization_record_file_EQ);
+  if (optrecordarg && !optrecordarg->getOption().matches(
+          gollvm::options::OPT_fno_save_optimization_record)) {
+    opt::Arg *fnamearg =
+        args_.getLastArg(gollvm::options::OPT_foptimization_record_file_EQ);
+    if (fnamearg != nullptr) {
+      StringRef fname = fnamearg->getValue();
+      std::error_code EC;
+      optRecordFile_ = llvm::make_unique<llvm::ToolOutputFile>(
+          fname, EC, llvm::sys::fs::F_None);
+      if (EC) {
+        errs() << "error: unable to open file '"
+               << fname << "' to emit optimization remarks\n";
+        return false;
+      }
+      context_.setDiagnosticsOutputFile(
+          llvm::make_unique<yaml::Output>(optRecordFile_->os()));
+      if (! sampleProfileFile_.empty())
+        context_.setDiagnosticsHotnessRequested(true);
+      optRecordFile_->keep();
     }
   }
 
