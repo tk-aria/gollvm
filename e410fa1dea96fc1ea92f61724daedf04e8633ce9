@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7252587f_9af20060",
+        "filename": "passes/GC.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 105,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-12-28T13:38:31Z",
+      "side": 1,
+      "message": "Is it possible to have a vector register with a mix of pointer- and non-pointer values?",
+      "revId": "e410fa1dea96fc1ea92f61724daedf04e8633ce9",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
