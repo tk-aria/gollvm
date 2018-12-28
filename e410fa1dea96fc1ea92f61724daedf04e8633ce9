@@ -16,6 +16,24 @@
       "revId": "e410fa1dea96fc1ea92f61724daedf04e8633ce9",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ecac49e5_7f840f74",
+        "filename": "passes/GC.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 105,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-12-28T14:48:04Z",
+      "side": 1,
+      "message": "As far as I can tell, no, since in the IR a vector\u0027s elements must have the same type, e.g. \u003c2 x i8*\u003e.",
+      "parentUuid": "7252587f_9af20060",
+      "revId": "e410fa1dea96fc1ea92f61724daedf04e8633ce9",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
