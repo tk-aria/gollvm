@@ -16,6 +16,24 @@
       "revId": "644ebfb92fc7ad83c8d7eb50fbfb5d5fd0bb3505",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "124a27a4_516c0753",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2542,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2018-12-28T16:26:18Z",
+      "side": 1,
+      "message": "In the address use case we need to pre-zero. The idea is that first compute AllocaDefAny without this, and see if it could cover all the address uses, if so, we don\u0027t need to pre-zero. Otherwise we have to pre-zero (and re-propagate).\n\nI think you are right about the kill set. Fixed.",
+      "parentUuid": "a37d15c2_5e924551",
+      "revId": "644ebfb92fc7ad83c8d7eb50fbfb5d5fd0bb3505",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
