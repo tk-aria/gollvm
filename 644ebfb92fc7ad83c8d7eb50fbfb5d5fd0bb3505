@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a37d15c2_5e924551",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2542,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2018-12-28T13:35:57Z",
+      "side": 1,
+      "message": "The basic idea of this looks ok, but a couple of things seem not quite right. First, it seems as though this code should take place before the main \"while(changed)\" loop for AllocaDefAny, as opposed to being inside it (I think that would be equivalent and it should be clearer). Second concern is over kills -- suppose we have a basic block B that contains\n\n   B:\n     ...\n     t1 \u003d phi(alloca1, ...)\n     ...\n     end_lifetime(alloca1)\n\nHere the phi instruction will cause \u0027alloca1\u0027 to be added to the AllocaAddrUse set for the block, but since the lifetime of \u0027alloca1\u0027 ends at the end of the block, it should not matter. In the code below, however, I don\u0027t see this reflected (doesn\u0027t subtract out the kill set) if I am reading it right.",
+      "revId": "644ebfb92fc7ad83c8d7eb50fbfb5d5fd0bb3505",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
