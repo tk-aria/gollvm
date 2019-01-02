@@ -2533,6 +2533,25 @@ Bfunction *Llvm_backend::error_function()
   return errorFunction_.get();
 }
 
+// This is a list of functions the call sites of which are not
+// GC statepoints.
+//
+// Keep this sync with the runtime and the frontend.
+static std::string gcleaffuncs[] = {
+  "runtime.gcWriteBarrier",
+  "runtime.typedmemmove",
+};
+
+static bool isGCLeaf(std::string name)
+{
+
+  for (auto f : gcleaffuncs)
+    if (name == f)
+      return true;
+  return false;
+
+}
+
 // Declare or define a new function.
 
 Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
@@ -2615,6 +2634,10 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
     // attributes for target CPU and features
     fcn->addFnAttr("target-cpu", targetCpuAttr_);
     fcn->addFnAttr("target-features", targetFeaturesAttr_);
+
+    // attribute for GC leaf function (i.e. not a statepoint)
+    if (isGCLeaf(fns))
+      fcn->addFnAttr("gc-leaf-function");
 
     fcnValue = fcn;
 
