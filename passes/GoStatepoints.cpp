@@ -1727,6 +1727,8 @@ fixBadPhiOperands(Function &F, SetVector<Value *> &BadLoads,
   }
 }
 
+static void fixStackWriteBarriers(Function &F, DefiningValueMapTy &DVCache);
+
 static bool insertParsePoints(Function &F, DominatorTree &DT,
                               TargetTransformInfo &TTI,
                               SmallVectorImpl<CallSite> &ToUpdate) {
@@ -1760,6 +1762,8 @@ static bool insertParsePoints(Function &F, DominatorTree &DT,
   // insertion of base phis and selects.  This ensures that we don't insert
   // large numbers of duplicate base_phis.
   DefiningValueMapTy DVCache;
+
+  fixStackWriteBarriers(F, DVCache);
 
   // A) Identify all gc pointers which are statically live at the given call
   // site.
@@ -2816,4 +2820,58 @@ static void findLiveSetAtInst(Instruction *Inst, GCPtrLivenessData &Data,
   }
 
   Out.insert(LiveOut.begin(), LiveOut.end());
+}
+
+// Remove write barriers for stack writes, for
+// 1. write barriers are unnecessary for stack writes,
+// 2. if a write barrier is applied to a write on an uninitialized slot,
+//    the GC may see the bad content.
+// This is not the best way to do it: it doesn't remove the conditional
+// branch that tests if the write barrier is on.
+// It may be better that we insert write barriers not that early.
+//
+// This function is not really related to statepoints. It is here so
+// it can reuse the base pointer calculations (and caching).
+static void
+fixStackWriteBarriers(Function &F, DefiningValueMapTy &DVCache) {
+  SmallSet<Instruction *, 8> ToDel;
+
+  for (Instruction &I : instructions(F)) {
+    if (auto *CI = dyn_cast<CallInst>(&I))
+      if (Function *Callee = CI->getCalledFunction()) {
+        if (Callee->getName().equals("runtime.gcWriteBarrier")) {
+          // gcWriteBarrier(dst, val)
+          // there is an extra "nest" argument.
+          Value *Dst = CI->getArgOperand(1), *Val = CI->getArgOperand(2);
+          if (!isAlloca(Dst, DVCache))
+            continue;
+          IRBuilder<> Builder(CI);
+          unsigned AS = Dst->getType()->getPointerAddressSpace();
+          Dst = Builder.CreateBitCast(Dst,
+                                      PointerType::get(Val->getType(), AS));
+          Builder.CreateStore(Val, Dst);
+          ToDel.insert(CI);
+        } else if (Callee->getName().equals("runtime.typedmemmove")) {
+          // typedmemmove(typ, dst, src)
+          // there is an extra "nest" argument.
+          Value *Dst = CI->getArgOperand(2), *Src = CI->getArgOperand(3);
+          if (!isAlloca(Dst, DVCache))
+            continue;
+          IRBuilder<> Builder(CI);
+          // We should know the size at compile time, but at this stage I
+          // don't know how to retrieve it. Load from the type descriptor
+          // for now. The size is the first field. The optimizer should be
+          // able to constant-fold it.
+          Value *TD = CI->getArgOperand(1);
+          Value *GEP = Builder.CreateConstInBoundsGEP2_32(
+              TD->getType()->getPointerElementType(), TD, 0, 0);
+          Value *Siz = Builder.CreateLoad(GEP);
+          Builder.CreateMemMove(Dst, 0, Src, 0, Siz);
+          ToDel.insert(CI);
+        }
+      }
+  }
+
+  for (Instruction *I : ToDel)
+    I->eraseFromParent();
 }
