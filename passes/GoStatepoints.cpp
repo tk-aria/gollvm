@@ -1588,6 +1588,12 @@ static void findLiveReferences(
   }
 }
 
+// Zero ambigously lived stack slots. We insert zeroing at lifetime
+// start (or the entry block), so the GC won't see uninitialized
+// content. We also insert zeroing at kill sites, to ensure the GC
+// won't see a dead slot come back to life.
+// We also conservatively extend the lifetime of address-taken slots,
+// to prevent the slot being reused while it is still recorded live.
 static void
 zeroAmbiguouslyLiveSlots(Function &F, SetVector<Value *> &ToZero,
                          SetVector<Value *> &AddrTakenAllocas) {
@@ -1620,8 +1626,14 @@ zeroAmbiguouslyLiveSlots(Function &F, SetVector<Value *> &ToZero,
           }
         } else if (Fn->getIntrinsicID() == Intrinsic::lifetime_end) {
           Value *V = I.getOperand(1)->stripPointerCasts();
-          if (ToZero.count(V) != 0 && AddrTakenAllocas.count(V) != 0)
+          if (ToZero.count(V) != 0 && AddrTakenAllocas.count(V) != 0) {
+            if (!succ_empty(I.getParent())) { // no need to zero at exit block
+              IRBuilder<> Builder(&I);
+              Value *Zero = Constant::getNullValue(V->getType()->getPointerElementType());
+              Builder.CreateStore(Zero, V);
+            }
             InstToDelete.push_back(&I);
+          }
         }
       }
   }
