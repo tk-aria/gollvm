@@ -82,8 +82,15 @@ do
     exit 1
   fi
 done
-export LD_LIBRARY_PATH="${LIBDIR}:${LD_LIBRARY_PATH}"
-export PATH="${BINDIR}:${PATH}"
+
+function setenv() {
+  export "$@"
+  echo export "$@" >> ${LOGFILE}
+}
+
+>${LOGFILE}
+setenv LD_LIBRARY_PATH="${LIBDIR}:${LD_LIBRARY_PATH}"
+setenv PATH="${BINDIR}:${PATH}"
 #
 #------------------------------------------------------------------------
 #
@@ -148,14 +155,14 @@ done
 #
 # More setup
 #
-export GOCACHE=$CACHEDIR
-export GCCGOTOOLDIR=${BINDIR}
-export GO_TESTING_GOTOOLS=yes
-export GCCGO=${GOC}
+setenv GOCACHE=$CACHEDIR
+setenv GCCGOTOOLDIR=${BINDIR}
+setenv GO_TESTING_GOTOOLS=yes
+setenv GCCGO=${GOC}
 if [ ! -z "${CC}" ]; then
-  export CC
+  setenv CC="${CC}"
 fi
-export GOROOT=${LIBDIR}
+setenv GOROOT=${LIBDIR}
 HERE=`pwd`
 cd $WORKDIR
 #
@@ -171,12 +178,13 @@ CMD="go test -compiler gccgo -test.short -test.timeout=${TIMEOUT}s -test.v ${TES
 # Set up environment
 #
 if [ ! -z "${SETENV}" ]; then
-  export ${SETENV}
+  setenv ${SETENV}
 fi
 #
 # Capture command for posterity
 #
-echo $CMD > ${LOGFILE}
+echo cd $PWD >> ${LOGFILE}
+echo $CMD >> ${LOGFILE}
 #
 # Execute the test, capturing output to log file. Emit log file highlights
 # to stdout, then exit with appropriate status.
