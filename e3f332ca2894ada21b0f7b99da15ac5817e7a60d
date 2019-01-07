@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c0b8fc48_fd585225",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1594,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-01-07T16:34:41Z",
+      "side": 1,
+      "message": "maybe \"dead slot come back to life\"?",
+      "range": {
+        "startLine": 1594,
+        "startChar": 15,
+        "endLine": 1594,
+        "endChar": 37
+      },
+      "revId": "e3f332ca2894ada21b0f7b99da15ac5817e7a60d",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
