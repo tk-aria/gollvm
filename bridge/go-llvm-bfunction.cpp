@@ -81,19 +81,6 @@ llvm::Instruction *Bfunction::addAlloca(llvm::Type *typ,
   if (! name.empty())
     inst->setName(name);
   allocas_.push_back(inst);
-
-  // Immediately cast to address space
-  unsigned addressSpace = abiOracle_->tm()->addressSpace();
-  if (addressSpace != 0) {
-    llvm::Type *pt = llvm::PointerType::get(typ, addressSpace);
-    inst = new llvm::AddrSpaceCastInst(inst, pt);
-    if (! name.empty()) {
-      std::string castname(NameGen::combineTags(name, ".ascast"));
-      inst->setName(namegen(castname));
-    }
-    allocas_.push_back(inst);
-  }
-
   return inst;
 }
 
@@ -377,7 +364,7 @@ unsigned Bfunction::genArgSpill(Bvariable *paramVar,
     if (paramInfo.abiType()->isVectorTy() ||
         arg->getType() != llpt->getElementType()) {
       std::string tag(namegen("cast"));
-      llvm::Type *ptv = tm->makeLLVMPointerType(paramInfo.abiType());
+      llvm::Type *ptv = llvm::PointerType::get(paramInfo.abiType(), 0);
       llvm::Value *bitcast = builder.CreateBitCast(sploc, ptv, tag);
       sploc = bitcast;
     }
@@ -391,7 +378,7 @@ unsigned Bfunction::genArgSpill(Bvariable *paramVar,
 
   // Create struct type corresponding to first and second params
   llvm::Type *llst = paramInfo.computeABIStructType(tm);
-  llvm::Type *ptst = tm->makeLLVMPointerType(llst);
+  llvm::Type *ptst = llvm::PointerType::get(llst, 0);
 
   // Cast the spill location to a pointer to the struct created above.
   std::string tag(namegen("cast"));
@@ -545,7 +532,7 @@ llvm::Value *Bfunction::genReturnSequence(Bexpression *toRet,
   llvm::Type *llrt = (returnInfo.abiType()->isAggregateType() ?
                       returnInfo.computeABIStructType(tm) :
                       returnInfo.abiType());
-  llvm::Type *ptst = tm->makeLLVMPointerType(llrt);
+  llvm::Type *ptst = llvm::PointerType::get(llrt, 0);
   BinstructionsLIRBuilder builder(function()->getContext(), retInstrs);
   std::string castname(namegen("cast"));
   llvm::Value *bitcast = builder.CreateBitCast(toRet->value(), ptst, castname);
