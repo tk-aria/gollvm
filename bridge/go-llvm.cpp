@@ -3290,6 +3290,23 @@ llvm::BasicBlock *GenBlocks::genReturn(Bstatement *rst,
   return nullptr;
 }
 
+// A helper function that clones an instruction, and fixes up the operands
+// if they are previously cloned values.
+static llvm::Instruction *
+cloneInstruction(llvm::Instruction *inst,
+                 std::unordered_map<llvm::Value*, llvm::Value*> &argMap)
+{
+  llvm::Instruction *c = inst->clone();
+  assert(argMap.find(inst) == argMap.end());
+  argMap[inst] = c;
+  for (unsigned i = 0, n = c->getNumOperands(); i < n; i++) {
+    auto it = argMap.find(c->getOperand(i));
+    if (it != argMap.end())
+      c->setOperand(i, it->second);
+  }
+  return c;
+}
+
 // Generate the DEFERRETURN call for return statement in functions
 // that has defer.
 // We could simply rewrite the return to a jump into the 'finally'
@@ -3303,17 +3320,21 @@ void GenBlocks::genDeferReturn(llvm::BasicBlock *curblock)
 {
   llvm::BasicBlock *blockToClone = finallyBlock_;
   assert(blockToClone);
+
+  // A map from old value to new value, used to fix up operands.
+  std::unordered_map<llvm::Value*, llvm::Value*> argMap;
+
   while (1) {
     llvm::Instruction *term = blockToClone->getTerminator();
     for (llvm::Instruction &inst : *blockToClone) {
       if (&inst == term)
         break; // terminator is handled below
-      llvm::Instruction *c = inst.clone();
+      llvm::Instruction *c = cloneInstruction(&inst, argMap);
       curblock->getInstList().push_back(c);
     }
     if (llvm::isa<llvm::InvokeInst>(term)) {
       // This is the call to DEFERRETURN. Copy this then we're done.
-      llvm::Instruction *c = term->clone();
+      llvm::Instruction *c = cloneInstruction(term, argMap);
       curblock->getInstList().push_back(c);
       break;
     }

@@ -523,12 +523,6 @@ Bvariable *BnodeBuilder::mkTempVar(Btype *varType,
   if (! name.empty())
     inst->setName(name);
 
-  // Immediately cast to address space
-  if (addressSpace_ != 0) {
-    llvm::Type *pt = llvm::PointerType::get(typ, addressSpace_);
-    inst = new llvm::AddrSpaceCastInst(inst, pt);
-  }
-
   Bvariable *tvar = new Bvariable(varType, loc, name, LocalVar, true, inst);
   tempvars_[inst] = tvar;
   tvar->markAsTemporary();
@@ -625,6 +619,7 @@ Bexpression *BnodeBuilder::mkAddress(Btype *typ, llvm::Value *val,
 {
   std::vector<Bnode *> kids = { src };
   Bexpression *rval = new Bexpression(N_Address, kids, val, typ, loc);
+  appendInstIfNeeded(rval, val);
   return archive(rval);
 }
 

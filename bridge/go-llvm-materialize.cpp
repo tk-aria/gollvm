@@ -106,6 +106,19 @@ Bexpression *Llvm_backend::materializeAddress(Bexpression *addrExpr)
     val = cv->value();
   }
 
+  // When using non-integral pointers, the Go pointer types (Btype)
+  // are in address space 1. Local variables (allocas) are always
+  // in address space 0. We need to insert a cast if we are taking
+  // the address of a local variable.
+  llvm::Type *valtyp = val->getType();
+  assert(valtyp->isPointerTy());
+  if (valtyp->getPointerAddressSpace() != addressSpace_) {
+    llvm::Type *typ =
+        llvm::PointerType::get(valtyp->getPointerElementType(),
+                               addressSpace_);
+    val = new llvm::AddrSpaceCastInst(val, typ, "ascast");
+  }
+
   // Create new expression with proper type.
   Btype *pt = pointer_type(bexpr->btype());
   Bexpression *rval = nbuilder_.mkAddress(pt, val, bexpr, location);
@@ -1116,8 +1129,16 @@ void Llvm_backend::genCallProlog(GenCallState &state)
     Btype *resTyp = state.calleeFcnType->resultType();
     assert(state.callerFcn);
     state.sretTemp = state.callerFcn->createTemporary(resTyp, tname);
-    if (returnInfo.disp() == ParmIndirect)
-      state.llargs.push_back(state.sretTemp);
+    if (returnInfo.disp() == ParmIndirect) {
+      llvm::Value *sretval = state.sretTemp;
+      if (addressSpace_ != 0) {
+        llvm::Type *typ =
+            makeLLVMPointerType(sretval->getType()->getPointerElementType());
+        sretval =
+            state.builder.CreateAddrSpaceCast(sretval, typ, "sret.actual.ascast");
+      }
+      state.llargs.push_back(sretval);
+    }
   }
 
   // Chain param if needed
@@ -1197,7 +1218,12 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
           val = cv->value();
         }
         std::string castname(namegen("cast"));
-        llvm::Type *ptv = makeLLVMPointerType(paramInfo.abiType());
+        // We are going to do a load, so the address space does not matter.
+        // It seems we may get here with either address space, so we just
+        // do an address-space-preserving cast.
+        llvm::Type *ptv =
+            llvm::PointerType::get(paramInfo.abiType(),
+                                   val->getType()->getPointerAddressSpace());
         llvm::Value *bitcast = builder.CreateBitCast(val, ptv, castname);
         std::string ltag(namegen("ld"));
         llvm::Value *ld = builder.CreateLoad(bitcast, ltag);
@@ -1322,7 +1348,7 @@ void Llvm_backend::genCallEpilog(GenCallState &state,
       llvm::Type *rt = (returnInfo.abiTypes().size() == 1 ?
                         returnInfo.abiType()  :
                         returnInfo.computeABIStructType(typeManager()));
-      llvm::Type *ptrt = makeLLVMPointerType(rt);
+      llvm::Type *ptrt = llvm::PointerType::get(rt, 0);
       std::string castname(namegen("cast"));
       llvm::Value *bitcast = builder.CreateBitCast(state.sretTemp,
                                                    ptrt, castname);
