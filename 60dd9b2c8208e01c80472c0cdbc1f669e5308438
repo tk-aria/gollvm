@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6bd702bc_1878465c",
+        "filename": "bridge/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3300,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-01-08T20:40:20Z",
+      "side": 1,
+      "message": "Add assert here that inst is not yet in map?",
+      "revId": "60dd9b2c8208e01c80472c0cdbc1f669e5308438",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
