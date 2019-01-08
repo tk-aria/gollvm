@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "88809236_2dcc1b3d",
+        "filename": "driver/GnuTools.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 364,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-01-08T21:53:25Z",
+      "side": 1,
+      "message": "Alternatively, we could move this call out of the if.",
+      "revId": "42a07a620ca451538b09266743a02ad2a353caf1",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
