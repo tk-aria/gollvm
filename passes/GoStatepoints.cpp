@@ -357,6 +357,9 @@ static bool isHandledGCPointerType(Type *T) {
   if (auto VT = dyn_cast<VectorType>(T))
     if (isGCPointerType(VT->getElementType()))
       return true;
+  // FCA is partially supported.
+  if (T->isStructTy())
+    return hasPointer(T);
   return false;
 }
 
@@ -525,6 +528,17 @@ findBaseDefiningValueOfVector(Value *I) {
 /// (i.e. a PHI or Select of two derived pointers), or c) involves a change
 /// from pointer to vector type or back.
 static BaseDefiningValueResult findBaseDefiningValue(Value *I) {
+  if (I->getType()->isStructTy())
+    // Assuming FCA is always base.
+    // FCAs appear mostly in the call sequnce where we pass/return multiple
+    // values in registers, e.g. { i8*, i64 }. If it contains the address of
+    // an alloca, the alloca should already be address taken (at least when
+    // creating the FCA), so we don't need to link the FCA back to the alloca.
+    // It is also unlikely to contain past-the-end pointer (we cannot do
+    // pointer arithmetic directly with FCA). So it is safe to treat FCA as
+    // base.
+    return BaseDefiningValueResult(I, true);
+
   assert(I->getType()->isPtrOrPtrVectorTy() &&
          "Illegal to ask for the base pointer of a non-pointer type");
 
@@ -1359,6 +1373,22 @@ attachStackMap(uint64_t StatepointID, Instruction *LandingPad) {
   LandingPad->setOperand(0, C);
 }
 
+// Extract pointer fields from an FCA.
+static void
+extractPointerFromFCA(Value *V, IRBuilder<> &Builder,
+                      SmallVectorImpl<Value *> &PtrFields) {
+  Type *T = V->getType();
+  assert(T->isStructTy());
+  for (unsigned i = 0, e = T->getStructNumElements(); i < e; ++i) {
+    Type *ElemT = T->getStructElementType(i);
+    if (ElemT->isPointerTy()) {
+      Value *Field = Builder.CreateExtractValue(V, {i});
+      PtrFields.push_back(Field);
+    } else
+     assert(!hasPointer(ElemT) && "nested FCA is not supported");
+  }
+}
+
 static void
 makeStatepointExplicitImpl(const CallSite CS, /* to replace */
                            SmallVectorImpl<Value *> &BasePtrs,
@@ -1392,6 +1422,11 @@ makeStatepointExplicitImpl(const CallSite CS, /* to replace */
         PtrFields.push_back(V);
         getPtrBitmapForType(T, DL, PtrFields);
       }
+    } else if (V->getType()->isStructTy()) {
+      // Statepoint lowering doesn't handle FCA. So we do it ourselves by
+      // extracting all the pointer fields and letting the statepoint lowering
+      // spill them.
+      extractPointerFromFCA(V, Builder, PtrFields);
     } else
       PtrFields.push_back(V);
   }
@@ -2181,11 +2216,8 @@ static void computeLiveInValues(BasicBlock::reverse_iterator Begin,
 
     // USE - Add to the LiveIn set for this instruction
     for (Value *V : I.operands()) {
-      // FIXME: skip FCA for now. They appear when pass/return aggregate type
-      // in registers (e.g. {i8*, i8*}). They don't seem live across
-      // statepoints, so we are probably fine.
-      //assert(!isUnhandledGCPointerType(V->getType()) &&
-      //       "support for FCA unimplemented");
+      assert(!isUnhandledGCPointerType(V->getType()) &&
+             "unexpected value type");
       if (isHandledGCPointerType(V->getType()) && !isa<Constant>(V)) {
         // The choice to exclude all things constant here is slightly subtle.
         // There are two independent reasons:
@@ -2365,9 +2397,8 @@ static void computeLiveOutSeed(BasicBlock *BB, SetVector<Value *> &LiveTmp,
         break;
 
       Value *V = PN->getIncomingValueForBlock(BB);
-      // FIXME: skip FCA for now, see the comment in computeLiveInValues.
-      //assert(!isUnhandledGCPointerType(V->getType()) &&
-      //       "support for FCA unimplemented");
+      assert(!isUnhandledGCPointerType(V->getType()) &&
+             "unexpected value type");
       if (isHandledGCPointerType(V->getType()) && !isa<Constant>(V)) {
         if (isAlloca(V, DVCache))
           // Alloca is tracked separately. (It is a Phi arg so it
