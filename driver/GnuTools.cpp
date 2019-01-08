@@ -357,15 +357,12 @@ bool Linker::constructCommand(Compilation &compilation,
 
   bool useStdLib = !args.hasArg(gollvm::options::OPT_nostdlib);
 
-  if (useStdLib) {
+  // Select proper options depending on presence of -static/-shared, etc.
+  // Dynamic linker selection is also done here.
+  addSharedAndOrStaticFlags(cmdArgs);
 
-    // Select proper options depending on presence of -static/-shared, etc.
-    // Dynamic linker selection is also done here.
-    addSharedAndOrStaticFlags(cmdArgs);
-
-    // Add crtbegin*.
+  if (useStdLib)
     addBeginFiles(cmdArgs);
-  }
 
   // Incorporate inputs and -l/-L flags with -Wl,.. and -Xlinker args, in
   // correct order.
@@ -397,6 +394,13 @@ bool Linker::constructCommand(Compilation &compilation,
 
     // crtend files.
     addEndFiles(cmdArgs);
+
+  } else {
+
+    // For the -nostdlib case we don't want start/end files, but we
+    // still need the toolchain-specific -L args so that the correct
+    // version of libgcc, etc.
+    addFilePathArgs(cmdArgs);
   }
 
   // end of args.
