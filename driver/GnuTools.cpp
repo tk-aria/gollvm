@@ -397,8 +397,14 @@ bool Linker::constructCommand(Compilation &compilation,
 
     // crtend files.
     addEndFiles(cmdArgs);
-  }
 
+  } else {
+
+    // For the -nostdlib case we don't want start/end files, but we
+    // still need the toolchain-specific -L args so that the correct
+    // version of libgcc, etc get picked up.
+    addFilePathArgs(cmdArgs);
+  }
   // end of args.
   cmdArgs.push_back(nullptr);
 
