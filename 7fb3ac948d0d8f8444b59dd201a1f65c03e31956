@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "304ae454_7fc9f966",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 360,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-01-09T20:02:54Z",
+      "side": 1,
+      "message": "\"partially supported\" in what sense? are there things/cases that this new approach doesn\u0027t handle? or is this just intended to say that we\u0027re covering the specific case of FCA in the C abi?",
+      "range": {
+        "startLine": 360,
+        "startChar": 12,
+        "endLine": 360,
+        "endChar": 21
+      },
+      "revId": "7fb3ac948d0d8f8444b59dd201a1f65c03e31956",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
