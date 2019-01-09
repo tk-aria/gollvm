@@ -16,6 +16,24 @@
       "revId": "42a07a620ca451538b09266743a02ad2a353caf1",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0142dd7f_4603eb7f",
+        "filename": "driver/GnuTools.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 364,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-01-09T15:32:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "88809236_2dcc1b3d",
+      "revId": "42a07a620ca451538b09266743a02ad2a353caf1",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
