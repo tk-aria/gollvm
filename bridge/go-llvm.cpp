@@ -542,19 +542,20 @@ Bexpression *Llvm_backend::genCircularConversion(Btype *toType,
                                                  Location loc)
 {
   llvm::Value *val = expr->value();
+  llvm::Type *vt = val->getType();
+  assert(vt->isPointerTy());
   llvm::Type *llToType = toType->type();
   if (expr->varExprPending()) {
-    llvm::Type *pet = llvm::PointerType::get(expr->btype()->type(),
-                                             addressSpace_);
-    if (val->getType() == pet)
-      llToType = llvm::PointerType::get(llToType, addressSpace_);
+    llvm::Type *et = expr->btype()->type();
+    if (vt->getPointerElementType() == et)
+      llToType = llvm::PointerType::get(llToType, vt->getPointerAddressSpace());
   }
-  if (val->getType() == llToType)
+  if (vt == llToType)
     return expr;
 
   std::string tag(namegen("cast"));
   LIRBuilder builder(context_, llvm::ConstantFolder());
-  llvm::Value *bitcast = builder.CreateBitCast(val, llToType, tag);
+  llvm::Value *bitcast = builder.CreatePointerBitCastOrAddrSpaceCast(val, llToType, tag);
   return nbuilder_.mkConversion(toType, bitcast, expr, loc);
 }
 
