@@ -22,6 +22,30 @@
       "revId": "7fb3ac948d0d8f8444b59dd201a1f65c03e31956",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8ffd6c95_8641ba27",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 360,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-01-10T19:28:23Z",
+      "side": 1,
+      "message": "Yeah, basically this is what I meant -- it doesn\u0027t do base pointer calculation, and it doesn\u0027t handle anything other than a flag struct (can anything else happen?). I just deleted the word \"partially\".",
+      "parentUuid": "304ae454_7fc9f966",
+      "range": {
+        "startLine": 360,
+        "startChar": 12,
+        "endLine": 360,
+        "endChar": 21
+      },
+      "revId": "7fb3ac948d0d8f8444b59dd201a1f65c03e31956",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
