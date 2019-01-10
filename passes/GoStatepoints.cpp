@@ -1623,6 +1623,36 @@ static void findLiveReferences(
   }
 }
 
+// A helper function that reports whether V is a Phi that contains an
+// ambiguously live alloca as input.
+static bool
+phiContainsAlloca(Value *V, SetVector<Value *> &ToZero,
+                  SetVector<Value *> &AddrTakenAllocas) {
+  PHINode *Phi0 = dyn_cast<PHINode>(V);
+  if (!Phi0)
+    return false;
+
+  // Visit all the Phi inputs. Discover new Phis on the go, and visit them.
+  SmallSet<PHINode *, 4> Phis, Visited;
+  Phis.insert(Phi0);
+  while (!Phis.empty()) {
+    PHINode *Phi = *Phis.begin();
+    Visited.insert(Phi);
+    for (Value *Operand : Phi->incoming_values()) {
+      if (PHINode *P = dyn_cast<PHINode>(Operand)) {
+        if (!Visited.count(P))
+          Phis.insert(P);
+        continue;
+      }
+      Value *Base = Operand->stripPointerCasts();
+      if (ToZero.count(Base) != 0 && AddrTakenAllocas.count(Base) != 0)
+        return true;
+    }
+    Phis.erase(Phi);
+  }
+  return false;
+}
+
 // Zero ambigously lived stack slots. We insert zeroing at lifetime
 // start (or the entry block), so the GC won't see uninitialized
 // content. We also insert zeroing at kill sites, to ensure the GC
@@ -1636,6 +1666,7 @@ zeroAmbiguouslyLiveSlots(Function &F, SetVector<Value *> &ToZero,
   SetVector<Value *> Done;
   const DataLayout &DL = F.getParent()->getDataLayout();
   IntegerType *Int64Ty = Type::getInt64Ty(F.getParent()->getContext());
+  IntegerType *Int8Ty = Type::getInt8Ty(F.getParent()->getContext());
 
   // If a slot has lifetime.start, place the zeroing right after it.
   for (Instruction &I : instructions(F)) {
@@ -1643,29 +1674,36 @@ zeroAmbiguouslyLiveSlots(Function &F, SetVector<Value *> &ToZero,
       if (Function *Fn = CI->getCalledFunction()) {
         if (Fn->getIntrinsicID() == Intrinsic::lifetime_start) {
           Value *V = I.getOperand(1)->stripPointerCasts();
-          if (ToZero.count(V) != 0) {
-            if (AddrTakenAllocas.count(V) != 0) {
-              // For addrtaken alloca, the lifetime start may not dominate all
-              // safepoints where the slot can be live.
-              // For now, zero it in the entry block and remove the lifetime
-              // marker.
-              InstToDelete.push_back(&I);
-            } else {
-              IRBuilder<> Builder(I.getNextNode());
-              Value *Zero = Constant::getNullValue(V->getType()->getPointerElementType());
-              Builder.CreateStore(Zero, V);
-              // Don't remove V from ToZero for now, as there may be multiple
-              // lifetime start markers, where we need to insert zeroing.
-              Done.insert(V);
-            }
+          if ((ToZero.count(V) != 0 && AddrTakenAllocas.count(V) != 0) ||
+              phiContainsAlloca(V, ToZero, AddrTakenAllocas)) {
+            // For addrtaken alloca, the lifetime start may not dominate all
+            // safepoints where the slot can be live.
+            // For now, zero it in the entry block and remove the lifetime
+            // marker.
+            // Also remove lifetime markers on Phis that contain interesting
+            // allocas (which must be address-taken).
+            InstToDelete.push_back(&I);
+          } else if (ToZero.count(V) != 0) {
+            // Non-addrtaken alloca. Just insert zeroing, keep the lifetime marker.
+            IRBuilder<> Builder(I.getNextNode());
+            Value *Zero = Constant::getNullValue(V->getType()->getPointerElementType());
+            Builder.CreateStore(Zero, V);
+            // Don't remove V from ToZero for now, as there may be multiple
+            // lifetime start markers, where we need to insert zeroing.
+            Done.insert(V);
           }
         } else if (Fn->getIntrinsicID() == Intrinsic::lifetime_end) {
           Value *V = I.getOperand(1)->stripPointerCasts();
-          if (ToZero.count(V) != 0 && AddrTakenAllocas.count(V) != 0) {
+          if ((ToZero.count(V) != 0 && AddrTakenAllocas.count(V) != 0) ||
+              phiContainsAlloca(V, ToZero, AddrTakenAllocas)) {
             if (!succ_empty(I.getParent())) { // no need to zero at exit block
+              // What to zero in the Phi case?
+              // We just zero whatever the Phi points to, using the size on the
+              // lifetime marker. This also works in the alloca case.
               IRBuilder<> Builder(&I);
-              Value *Zero = Constant::getNullValue(V->getType()->getPointerElementType());
-              Builder.CreateStore(Zero, V);
+              Value *Zero = Constant::getNullValue(Int8Ty);
+              Value *Siz = I.getOperand(0);
+              Builder.CreateMemSet(V, Zero, Siz, 0);
             }
             InstToDelete.push_back(&I);
           }
