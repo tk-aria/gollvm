@@ -1623,6 +1623,36 @@ static void findLiveReferences(
   }
 }
 
+// A helper function that reports whether V is a Phi that contains an
+// ambiguously live alloca as input.
+static bool
+phiContainsAlloca(Value *V, SetVector<Value *> &ToZero,
+                  SetVector<Value *> &AddrTakenAllocas) {
+  PHINode *Phi0 = dyn_cast<PHINode>(V);
+  if (!Phi0)
+    return false;
+
+  // Visit all the Phi inputs. Discover new Phis on the go, and visit them.
+  SmallSet<PHINode *, 4> Phis, Visited;
+  Phis.insert(Phi0);
+  while (!Phis.empty()) {
+    PHINode *Phi = *Phis.begin();
+    Visited.insert(Phi);
+    for (Value *Operand : Phi->incoming_values()) {
+      if (PHINode *P = dyn_cast<PHINode>(Operand)) {
+        if (!Visited.count(P))
+          Phis.insert(P);
+        continue;
+      }
+      Value *Base = Operand->stripPointerCasts();
+      if (ToZero.count(Base) != 0 && AddrTakenAllocas.count(Base) != 0)
+        return true;
+    }
+    Phis.erase(Phi);
+  }
+  return false;
+}
+
 // Zero ambigously lived stack slots. We insert zeroing at lifetime
 // start (or the entry block), so the GC won't see uninitialized
 // content. We also insert zeroing at kill sites, to ensure the GC
@@ -1636,6 +1666,7 @@ zeroAmbiguouslyLiveSlots(Function &F, SetVector<Value *> &ToZero,
   SetVector<Value *> Done;
   const DataLayout &DL = F.getParent()->getDataLayout();
   IntegerType *Int64Ty = Type::getInt64Ty(F.getParent()->getContext());
+  IntegerType *Int8Ty = Type::getInt8Ty(F.getParent()->getContext());
 
   // If a slot has lifetime.start, place the zeroing right after it.
   for (Instruction &I : instructions(F)) {
@@ -1658,6 +1689,10 @@ zeroAmbiguouslyLiveSlots(Function &F, SetVector<Value *> &ToZero,
               // lifetime start markers, where we need to insert zeroing.
               Done.insert(V);
             }
+          } else if (phiContainsAlloca(V, ToZero, AddrTakenAllocas)) {
+            // A lifetime marker on a Phi that contains an interesting alloca.
+            // Treat it the same as the alloca (which must be address-taken).
+            InstToDelete.push_back(&I);
           }
         } else if (Fn->getIntrinsicID() == Intrinsic::lifetime_end) {
           Value *V = I.getOperand(1)->stripPointerCasts();
@@ -1666,6 +1701,17 @@ zeroAmbiguouslyLiveSlots(Function &F, SetVector<Value *> &ToZero,
               IRBuilder<> Builder(&I);
               Value *Zero = Constant::getNullValue(V->getType()->getPointerElementType());
               Builder.CreateStore(Zero, V);
+            }
+            InstToDelete.push_back(&I);
+          } else if (phiContainsAlloca(V, ToZero, AddrTakenAllocas)) {
+            if (!succ_empty(I.getParent())) { // no need to zero at exit block
+              // What to zero in the Phi case?
+              // We just zero whatever the Phi points to, using the size on the
+              // lifetime marker.
+              IRBuilder<> Builder(&I);
+              Value *Zero = Constant::getNullValue(Int8Ty);
+              Value *Siz = I.getOperand(0);
+              Builder.CreateMemSet(V, Zero, Siz, 0);
             }
             InstToDelete.push_back(&I);
           }
