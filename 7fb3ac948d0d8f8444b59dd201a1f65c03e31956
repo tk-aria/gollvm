@@ -70,6 +70,30 @@
       "revId": "7fb3ac948d0d8f8444b59dd201a1f65c03e31956",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b1a21d44_9e1f2c10",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 360,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-01-10T19:41:35Z",
+      "side": 1,
+      "message": "OK, thanks. SGTM",
+      "parentUuid": "f6ce34ec_fddced96",
+      "range": {
+        "startLine": 360,
+        "startChar": 12,
+        "endLine": 360,
+        "endChar": 21
+      },
+      "revId": "7fb3ac948d0d8f8444b59dd201a1f65c03e31956",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
