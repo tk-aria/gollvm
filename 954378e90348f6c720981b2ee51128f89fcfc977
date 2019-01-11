@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9a2cd0c3_1f143d00",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 12,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-01-11T20:35:49Z",
+      "side": 1,
+      "message": "recorded as",
+      "range": {
+        "startLine": 12,
+        "startChar": 25,
+        "endLine": 12,
+        "endChar": 39
+      },
+      "revId": "954378e90348f6c720981b2ee51128f89fcfc977",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3e48d114_117d5f66",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1678,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-01-11T20:35:49Z",
+      "side": 1,
+      "message": "The code might be a little more readable if you hoisted the new test up here, e.g. \n\n            if (AddrTakenAllocas.count(V) !\u003d 0 || \n                phiContainsAlloca(V, ToZero, AddrTakenAllocas) { ...",
+      "range": {
+        "startLine": 1678,
+        "startChar": 0,
+        "endLine": 1678,
+        "endChar": 49
+      },
+      "revId": "954378e90348f6c720981b2ee51128f89fcfc977",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2dbef950_23c4265d",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1699,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-01-11T20:35:49Z",
+      "side": 1,
+      "message": "Similarly here -- could you combine the two cases?",
+      "range": {
+        "startLine": 1699,
+        "startChar": 38,
+        "endLine": 1699,
+        "endChar": 71
+      },
+      "revId": "954378e90348f6c720981b2ee51128f89fcfc977",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
