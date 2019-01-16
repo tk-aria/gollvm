@@ -58,7 +58,9 @@ getPtrBitmapForTypeHelper(Type *T, const DataLayout &DL, uint64_t BaseOffset, Bi
   case Type::ArrayTyID: {
     Type *ET = T->getArrayElementType();
     for (unsigned i = 0, n = T->getArrayNumElements(); i < n; ++i) {
-      ArrayRef<Value*> Idx = { ConstantInt::get(Int32Ty, 0), ConstantInt::get(Int32Ty, i) };
+      Value *ivals[2] = { ConstantInt::get(Int32Ty, 0),
+                          ConstantInt::get(Int32Ty, i) };
+      ArrayRef<Value*> Idx = makeArrayRef(ivals, 2);
       uint64_t Offset = DL.getIndexedOffsetInType(T, Idx);
       getPtrBitmapForTypeHelper(ET, DL, BaseOffset+Offset, BV);
     }
@@ -67,7 +69,9 @@ getPtrBitmapForTypeHelper(Type *T, const DataLayout &DL, uint64_t BaseOffset, Bi
   case Type::VectorTyID: {
     Type *ET = T->getVectorElementType();
     for (unsigned i = 0, n = T->getVectorNumElements(); i < n; ++i) {
-      ArrayRef<Value*> Idx = { ConstantInt::get(Int32Ty, 0), ConstantInt::get(Int32Ty, i) };
+      Value *ivals[2] = { ConstantInt::get(Int32Ty, 0),
+                          ConstantInt::get(Int32Ty, i) };
+      ArrayRef<Value*> Idx = makeArrayRef(ivals, 2);
       uint64_t Offset = DL.getIndexedOffsetInType(T, Idx);
       getPtrBitmapForTypeHelper(ET, DL, BaseOffset+Offset, BV);
     }
@@ -78,7 +82,9 @@ getPtrBitmapForTypeHelper(Type *T, const DataLayout &DL, uint64_t BaseOffset, Bi
       Type *ET = T->getStructElementType(i);
       if (!hasPointer(ET))
         continue;
-      ArrayRef<Value*> Idx = { ConstantInt::get(Int32Ty, 0), ConstantInt::get(Int32Ty, i) };
+      Value *ivals[2] = { ConstantInt::get(Int32Ty, 0),
+                          ConstantInt::get(Int32Ty, i) };
+      ArrayRef<Value*> Idx = makeArrayRef(ivals, 2);
       uint64_t Offset = DL.getIndexedOffsetInType(T, Idx);
       getPtrBitmapForTypeHelper(ET, DL, BaseOffset+Offset, BV);
     }
