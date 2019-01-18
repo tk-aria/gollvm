@@ -426,13 +426,11 @@ set(runtimecfiles
 
 # C files that happen to be living in other packages.
 list(APPEND runtimecfiles
-  "go/bytes/indexbyte.c"
   "go/internal/bytealg/bytealg.c"
   "go/log/syslog/syslog_c.c"
   "go/reflect/makefunc_ffi_c.c"
   "go/runtime/internal/atomic/atomic.c"
   "go/internal/cpu/cpu_gccgo.c"
-  "go/strings/indexbyte.c"
   "go/sync/atomic/atomic.c"
   "go/sync/cas.c"
   "go/syscall/errno.c"
@@ -563,6 +561,7 @@ set(extra_check_libs_cmd_go_internal_cache "${libgo_binroot}/libgotool.a")
 set(extra_check_libs_cmd_go_internal_generate "${libgo_binroot}/libgotool.a")
 set(extra_check_libs_cmd_go_internal_get "${libgo_binroot}/libgotool.a")
 set(extra_check_libs_cmd_go_internal_load "${libgo_binroot}/libgotool.a")
+set(extra_check_libs_cmd_go_internal_lockedfile "${libgo_binroot}/libgotool.a")
 set(extra_check_libs_cmd_go_internal_imports "${libgo_binroot}/libgotool.a")
 set(extra_check_libs_cmd_go_internal_modconv "${libgo_binroot}/libgotool.a")
 set(extra_check_libs_cmd_go_internal_modfetch "${libgo_binroot}/libgotool.a")
