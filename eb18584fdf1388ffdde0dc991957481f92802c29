@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "3f0f33dc_e264679a",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 12,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-01-23T17:48:46Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "204e7cbe_69aa2b76",
+      "range": {
+        "startLine": 12,
+        "startChar": 33,
+        "endLine": 12,
+        "endChar": 64
+      },
+      "revId": "eb18584fdf1388ffdde0dc991957481f92802c29",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "a9d28088_d2e21593",
         "filename": "driver/CompileGo.cpp",
         "patchSetId": 1
@@ -36,6 +60,30 @@
       "writtenOn": "2019-01-23T17:06:01Z",
       "side": 1,
       "message": "This option (without \u003d sign and file name) doesn\u0027t seem to do anything?",
+      "range": {
+        "startLine": 350,
+        "startChar": 23,
+        "endLine": 350,
+        "endChar": 63
+      },
+      "revId": "eb18584fdf1388ffdde0dc991957481f92802c29",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8de8cd49_93908cf4",
+        "filename": "driver/CompileGo.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 350,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-01-23T17:48:46Z",
+      "side": 1,
+      "message": "I agree this looks weird, but I am trying to be compatible with clang here. \n\nI think the intent is to allow the final decision on whether to enable/disable AutoFDO by looking at the rightmost option.  Imagine that you have a checked-in Makefile for some piece of software that is using -fprofile-sample-use\u003d\u003cfile\u003e, e.g.\n\n Makefile:\n   EXTRA_FLAGS\u003d\n   CCFLAGS\u003d-fprofile-sample-use\u003dfile.afdo -fPIC $(EXTRA_FLAGS)\n\nBy looking at the rightmost instance of -fprofile-sample-use, you can have the \"final say\" as to whether AutoFDO gets used, e.g.\n\n  Auto-FDO on:\n  -fprofile-sample-use\u003dfile.afdo\n\n  Auto-FDO off:\n  -fprofile-sample-use\u003dfile.afdo -fno-profile-sample-use\n\n  Auto-FDO back on again:\n  -fprofile-sample-use\u003dfile.afdo -fno-profile-sample-use -fprofile-sample-use\n\nThis is where the no-argument form of the option comes in handy.\n\nOne could make an argument that if the user just supplies \"-profile-sample-use\" without \"-fprofile-sample-use\u003d\u003cFILE\u003e\" then a warning or error should be issued -- clang doesn\u0027t but perhaps it would make sense to do it for gollvm?",
+      "parentUuid": "a9d28088_d2e21593",
       "range": {
         "startLine": 350,
         "startChar": 23,
@@ -65,6 +113,24 @@
     },
     {
       "key": {
+        "uuid": "860c4a22_931310a4",
+        "filename": "driver/CompileGo.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 777,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-01-23T17:48:46Z",
+      "side": 1,
+      "message": "Thanks, good catch.\n\nYes, my intent was to have -fno-debug-info-for-profiling turn off the discriminators; I will rework it to make sure that happens.",
+      "parentUuid": "5a2f4a06_7d0cd8ea",
+      "revId": "eb18584fdf1388ffdde0dc991957481f92802c29",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "1b78ab45_fd0f0973",
         "filename": "driver/GollvmOptions.td",
         "patchSetId": 1
@@ -79,6 +145,24 @@
       "revId": "eb18584fdf1388ffdde0dc991957481f92802c29",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7973480b_32b24219",
+        "filename": "driver/GollvmOptions.td",
+        "patchSetId": 1
+      },
+      "lineNbr": 318,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-01-23T17:48:46Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1b78ab45_fd0f0973",
+      "revId": "eb18584fdf1388ffdde0dc991957481f92802c29",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
