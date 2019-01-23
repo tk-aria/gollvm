@@ -186,6 +186,7 @@ add_custom_target(
     "COPYDIRS"
         "${cmd_srcroot}/vet:src/cmd"
         "${cmd_srcroot}/internal/objabi:src/cmd/internal"
+        "${libgo_srcroot}/go/golang.org/x/tools:src/cmd/vendor/golang.org/x"
     "COPYFILES" "${libgo_binroot}/objabi.go:src/cmd/internal/objabi"
     "TIMEOUT" ${default_check_timeout}
     "GOC" "${rungoc}"
