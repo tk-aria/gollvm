@@ -4,6 +4,8 @@ external/
 
 # These are separate git repos and are tracked independently
 gofrontend/
+libgo/libbacktrace
+libgo/libffi
 libgo/libbacktrace/
 libgo/libffi/
 
