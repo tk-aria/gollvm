@@ -1,0 +1,84 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "204e7cbe_69aa2b76",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 12,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-01-23T17:06:01Z",
+      "side": 1,
+      "message": "cause issues in \"create_llvm_prof\" ?",
+      "range": {
+        "startLine": 12,
+        "startChar": 33,
+        "endLine": 12,
+        "endChar": 64
+      },
+      "revId": "eb18584fdf1388ffdde0dc991957481f92802c29",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a9d28088_d2e21593",
+        "filename": "driver/CompileGo.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 350,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-01-23T17:06:01Z",
+      "side": 1,
+      "message": "This option (without \u003d sign and file name) doesn\u0027t seem to do anything?",
+      "range": {
+        "startLine": 350,
+        "startChar": 23,
+        "endLine": 350,
+        "endChar": 63
+      },
+      "revId": "eb18584fdf1388ffdde0dc991957481f92802c29",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5a2f4a06_7d0cd8ea",
+        "filename": "driver/CompileGo.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 777,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-01-23T17:06:01Z",
+      "side": 1,
+      "message": "I\u0027m not sure I followed here. We set needDwarfDiscr to true when it does NOT match a yes option? (i.e. matches a no option?)\n\nAlso, if needDwarfDiscr is set to true at line 772, but fno_debug_info_for_profiling is specified, should we set it to false here?",
+      "revId": "eb18584fdf1388ffdde0dc991957481f92802c29",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1b78ab45_fd0f0973",
+        "filename": "driver/GollvmOptions.td",
+        "patchSetId": 1
+      },
+      "lineNbr": 318,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-01-23T17:06:01Z",
+      "side": 1,
+      "message": "Remove spaces in this line.",
+      "revId": "eb18584fdf1388ffdde0dc991957481f92802c29",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
