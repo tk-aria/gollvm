@@ -132,6 +132,8 @@ check_c_source_compiles("#include <stdint.h>\nstatic uint64_t s;\nint main(int a
 check_c_source_compiles("int main(int argc, char **argv) { return __sync_fetch_and_add(&argc, 1); }\n" HAVE_SYNC_FETCH_AND_ADD_4)
 check_c_source_compiles("#include <stdint.h>\nstatic uint64_t s;\nint main(int argc, char **argv) { return __sync_add_and_fetch(&s, 1) == s ? 0 : 1; }\n" HAVE_SYNC_ADD_AND_FETCH_8)
 
+check_c_source_compiles("int main() { __asm__(\"aesenc %xmm0, %xmm1\"); return 0; }\n" HAVE_AS_X86_AES)
+
 # Issue an error if the C compiler doesn't support -fsplit-stack
 # (in theory you can build libgo without it, so I suppose this could
 # be changed to a warning).
