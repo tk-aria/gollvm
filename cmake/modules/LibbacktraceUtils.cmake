@@ -61,11 +61,11 @@ function(setup_libbacktrace)
     "${libbacktrace_srcroot}/sort.c"
     "${libbacktrace_srcroot}/state.c")
 
+  set(libbacktraceflags "-g")
   if(GOLLVM_USE_SPLIT_STACK)
-    set(libbacktraceflags "-fsplit-stack")
-  else()
-    set(libbacktraceflags "")
+    string(APPEND libbacktraceflags " -fsplit-stack")
   endif()
+  string(APPEND libbacktraceflags " ${GOLLVM_EXTRA_CFLAGS}")
 
   # Object libraries built from libbacktrace sources.
   # Note: this build uses -fsplit-stack, whereas in the gccgo

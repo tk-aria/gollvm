@@ -67,6 +67,12 @@ function(setup_libffi libffi_srcroot)
   set(FFI_EXEC_TRAMPOLINE_TABLE 0)
   set(FFI_MMAP_EXEC_WRIT 0)
 
+  set(libffiflags "-g")
+  if(GOLLVM_USE_SPLIT_STACK)
+    string(APPEND libffiflags " -fsplit-stack")
+  endif()
+  string(APPEND libffiflags " ${GOLLVM_EXTRA_CFLAGS}")
+
   # Copy correct version of ffitarget.h to libgo binary root.
   file(COPY "${libffi_srcroot}/src/x86/ffitarget.h" DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -76,11 +82,12 @@ function(setup_libffi libffi_srcroot)
 
   # Create libffi object libraries
   add_library(libffi_nonpiclib OBJECT EXCLUDE_FROM_ALL ${c_srcs} ${asm_srcs})
-  set_target_properties(libffi_nonpiclib PROPERTIES COMPILE_FLAGS "")
+  set_target_properties(libffi_nonpiclib PROPERTIES COMPILE_FLAGS "${libffiflags}")
   target_include_directories(libffi_nonpiclib PUBLIC "${libffi_srcroot}/include")
 
+  string(APPEND libffiflags " -fPIC")
   add_library(libffi_piclib OBJECT EXCLUDE_FROM_ALL ${c_srcs} ${asm_srcs})
-  set_target_properties(libffi_piclib PROPERTIES COMPILE_FLAGS "-fPIC")
+  set_target_properties(libffi_piclib PROPERTIES COMPILE_FLAGS "${libffiflags}")
   target_include_directories(libffi_piclib PUBLIC "${libffi_srcroot}/include")
 
 endfunction()
