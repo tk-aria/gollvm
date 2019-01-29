@@ -452,7 +452,7 @@ foreach(cfile ${runtimecfiles})
 endforeach()
 
 # Compiler flags for C files in the runtime.
-set(baseopts "-Wno-zero-length-array ")
+set(baseopts "-g -Wno-zero-length-array ")
 if(GOLLVM_USE_SPLIT_STACK)
   string(APPEND baseopts "-fsplit-stack ")
 endif()
