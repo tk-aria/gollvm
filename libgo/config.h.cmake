@@ -156,6 +156,9 @@
 /* Define to 1 if you have '__sync_add_and_fetch_8'. */
 #cmakedefine HAVE_SYNC_ADD_AND_FETCH_8 1
 
+/* Define to 1 if assembler supports AES instructions. */
+#cmakedefine HAVE_AS_X86_AES 1
+
 /* Define if we're to use libffi. */
 #cmakedefine USE_LIBFFI 1
 
