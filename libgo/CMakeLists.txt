@@ -78,7 +78,10 @@ set(gocompiler ${gollvm_driver})
 
 # Pick up any extra Go compiler flags specified via
 # "cmake -DGOLLVM_EXTRA_GOCFLAGS=..."
-set(libgo_extra_gocflags ${GOLLVM_EXTRA_GOCFLAGS})
+set(tmp_libgo_extra_gocflags ${GOLLVM_EXTRA_GOCFLAGS})
+if(GOLLVM_EXTRA_GOCFLAGS)
+  string(REPLACE " " ";" libgo_extra_gocflags ${tmp_libgo_extra_gocflags})
+endif()
 if(NOT GOLLVM_USE_SPLIT_STACK)
   list(APPEND libgo_extra_gocflags "-fno-split-stack")
 endif()
