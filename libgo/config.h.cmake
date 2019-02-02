@@ -144,18 +144,6 @@
 /* Define to 1 if you have the `wait4' function. */
 #cmakedefine HAVE_WAIT4 1
 
-/* Define to 1 if you have '__sync_bool_compare_and_swap_4'. */
-#cmakedefine HAVE_SYNC_BOOL_COMPARE_AND_SWAP_4 1
-
-/* Define to 1 if you have '__sync_bool_compare_and_swap_8'. */
-#cmakedefine HAVE_SYNC_BOOL_COMPARE_AND_SWAP_8 1
-
-/* Define to 1 if you have '__sync_fetch_and_add_4'. */
-#cmakedefine HAVE_SYNC_FETCH_AND_ADD_4 1
-
-/* Define to 1 if you have '__sync_add_and_fetch_8'. */
-#cmakedefine HAVE_SYNC_ADD_AND_FETCH_8 1
-
 /* Define to 1 if assembler supports AES instructions. */
 #cmakedefine HAVE_AS_X86_AES 1
 
