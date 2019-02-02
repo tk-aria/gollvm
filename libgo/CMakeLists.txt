@@ -421,7 +421,6 @@ set(runtimecfiles
   "runtime/proc.c"
   "runtime/runtime_c.c"
   "runtime/stack.c"
-  "runtime/thread.c"
   "runtime/yield.c")
 
 # C files that happen to be living in other packages.
@@ -432,7 +431,6 @@ list(APPEND runtimecfiles
   "go/runtime/internal/atomic/atomic.c"
   "go/internal/cpu/cpu_gccgo.c"
   "go/sync/atomic/atomic.c"
-  "go/sync/cas.c"
   "go/syscall/errno.c"
   "go/syscall/signame.c"
   "go/syscall/wait.c")

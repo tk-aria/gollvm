@@ -7,6 +7,7 @@ int i;
 int main () {
   __atomic_load_n (&i, __ATOMIC_ACQUIRE);
   __atomic_store_n (&i, 1, __ATOMIC_RELEASE);
+  __atomic_add_fetch (&i, 1, __ATOMIC_SEQ_CST);
  return 0;
 }\n")
 
