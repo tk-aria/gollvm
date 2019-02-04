@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "72aaf8ba_fc59a4c0",
+        "filename": "cmake/modules/ConfigSetup.cmake",
+        "patchSetId": 1
+      },
+      "lineNbr": 134,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-02-04T15:56:29Z",
+      "side": 1,
+      "message": "We can delete this as well as the corresponding lines in libgo/config.h.cmake.",
+      "range": {
+        "startLine": 130,
+        "startChar": 0,
+        "endLine": 134,
+        "endChar": 180
+      },
+      "revId": "d361ec73995825417e0b79b999340c7488df75e0",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
