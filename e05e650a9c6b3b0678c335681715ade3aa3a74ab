@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "439e6765_c372b670",
+        "filename": "driver/CompileGo.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 391,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-02-04T16:40:05Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7d3bc9bf_bb689c91",
+      "revId": "e05e650a9c6b3b0678c335681715ade3aa3a74ab",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "192d710b_7aeaf889",
         "filename": "driver/GollvmOptions.td",
         "patchSetId": 2
@@ -30,6 +48,30 @@
       "writtenOn": "2019-02-04T16:13:08Z",
       "side": 1,
       "message": "I think the first _ should be -.",
+      "range": {
+        "startLine": 322,
+        "startChar": 51,
+        "endLine": 322,
+        "endChar": 52
+      },
+      "revId": "e05e650a9c6b3b0678c335681715ade3aa3a74ab",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7db6c883_ba1cf573",
+        "filename": "driver/GollvmOptions.td",
+        "patchSetId": 2
+      },
+      "lineNbr": 322,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-02-04T16:40:05Z",
+      "side": 1,
+      "message": "Thanks for catching that. Fixed.",
+      "parentUuid": "192d710b_7aeaf889",
       "range": {
         "startLine": 322,
         "startChar": 51,
