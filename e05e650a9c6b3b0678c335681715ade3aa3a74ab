@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7d3bc9bf_bb689c91",
+        "filename": "driver/CompileGo.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 391,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-02-04T16:13:08Z",
+      "side": 1,
+      "message": "Here we are in the middle of processing TargetOptions flags. This is not a TargetOptions flag, so maybe move this a little earlier or later.",
+      "revId": "e05e650a9c6b3b0678c335681715ade3aa3a74ab",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "192d710b_7aeaf889",
+        "filename": "driver/GollvmOptions.td",
+        "patchSetId": 2
+      },
+      "lineNbr": 322,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-02-04T16:13:08Z",
+      "side": 1,
+      "message": "I think the first _ should be -.",
+      "range": {
+        "startLine": 322,
+        "startChar": 51,
+        "endLine": 322,
+        "endChar": 52
+      },
+      "revId": "e05e650a9c6b3b0678c335681715ade3aa3a74ab",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
