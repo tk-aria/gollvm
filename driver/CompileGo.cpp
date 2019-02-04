@@ -78,6 +78,14 @@ using namespace llvm;
 namespace gollvm {
 namespace driver {
 
+// For keeping track of info on -Rpass=<regex> and related options.
+class RemarkCtl {
+ public:
+  std::shared_ptr<llvm::Regex> optimizationRemarkPattern_;
+  std::shared_ptr<llvm::Regex> optimizationRemarkMissedPattern_;
+  std::shared_ptr<llvm::Regex> optimizationRemarkAnalysisPattern_;
+};
+
 class CompileGoImpl {
  public:
   CompileGoImpl(ToolChain &tc, const std::string &executablePath);
@@ -107,6 +115,7 @@ class CompileGoImpl {
   std::string asmOutFileName_;
   std::unique_ptr<ToolOutputFile> asmout_;
   std::unique_ptr<ToolOutputFile> optRecordFile_;
+  RemarkCtl remarkCtl_;
   std::unique_ptr<TargetLibraryInfoImpl> tlii_;
   std::string targetCpuAttr_;
   std::string targetFeaturesAttr_;
@@ -191,8 +200,8 @@ bool CompileGoImpl::performAction(Compilation &compilation,
 class BEDiagnosticHandler : public DiagnosticHandler {
   bool *error_;
  public:
-  BEDiagnosticHandler(bool *errorPtr)
-      : error_(errorPtr) {}
+  BEDiagnosticHandler(bool *errorPtr, RemarkCtl &remarkCtl)
+    : error_(errorPtr), r_(remarkCtl) {}
   bool handleDiagnostics(const DiagnosticInfo &DI) override {
     if (DI.getSeverity() == DS_Error)
       *error_ = true;
@@ -205,6 +214,28 @@ class BEDiagnosticHandler : public DiagnosticHandler {
     errs() << "\n";
     return true;
   }
+
+  // Overrides of parent class methods.
+  bool isAnalysisRemarkEnabled(StringRef passName) const override {
+    return (r_.optimizationRemarkAnalysisPattern_ &&
+            r_.optimizationRemarkAnalysisPattern_->match(passName));
+  }
+  bool isMissedOptRemarkEnabled(StringRef passName) const override {
+    return (r_.optimizationRemarkMissedPattern_ &&
+            r_.optimizationRemarkMissedPattern_->match(passName));
+  }
+  bool isPassedOptRemarkEnabled(StringRef passName) const override {
+    return (r_.optimizationRemarkPattern_ &&
+            r_.optimizationRemarkPattern_->match(passName));
+  }
+  bool isAnyRemarkEnabled() const override {
+    return (r_.optimizationRemarkPattern_ ||
+            r_.optimizationRemarkMissedPattern_ ||
+            r_.optimizationRemarkAnalysisPattern_);
+  }
+
+ private:
+  RemarkCtl &r_;
 };
 
 void CompileGoImpl::quoteDump(const std::string &str, bool doquote)
@@ -291,6 +322,21 @@ bool CompileGoImpl::resolveInputOutput(const Action &jobAction,
   asmout_.reset(FDOut.release());
   asmout_->keep();
   return true;
+}
+
+static std::shared_ptr<llvm::Regex>
+generateOptimizationRemarkRegex(opt::ArgList &args, opt::Arg *rpassArg)
+{
+  llvm::StringRef val = rpassArg->getValue();
+  std::string regexError;
+  std::shared_ptr<llvm::Regex> pattern = std::make_shared<llvm::Regex>(val);
+  if (!pattern->isValid(regexError)) {
+    errs() << "error: invalid regex for '"
+           << rpassArg->getAsString(args) << "' option: "
+           << regexError << "\n";
+    pattern.reset();
+  }
+  return pattern;
 }
 
 bool CompileGoImpl::setup()
@@ -397,6 +443,20 @@ bool CompileGoImpl::setup()
         context_.setDiagnosticsHotnessRequested(true);
       optRecordFile_->keep();
     }
+  }
+
+  // Vet/honor -Rpass= and friends.
+  if (opt::Arg *arg = args_.getLastArg(gollvm::options::OPT_Rpass_EQ)) {
+    remarkCtl_.optimizationRemarkPattern_ =
+        generateOptimizationRemarkRegex(args_, arg);
+  }
+  if (opt::Arg *arg = args_.getLastArg(gollvm::options::OPT_Rpass_missed_EQ)) {
+    remarkCtl_.optimizationRemarkMissedPattern_ =
+        generateOptimizationRemarkRegex(args_, arg);
+  }
+  if (opt::Arg *arg = args_.getLastArg(gollvm::options::OPT_Rpass_analysis_EQ)) {
+    remarkCtl_.optimizationRemarkAnalysisPattern_ =
+        generateOptimizationRemarkRegex(args_, arg);
   }
 
   TargetOptions Options;
@@ -516,7 +576,7 @@ bool CompileGoImpl::initBridge()
 {
   // Set up the LLVM context
   context_.setDiagnosticHandler(
-      llvm::make_unique<BEDiagnosticHandler>(&this->hasError_));
+      llvm::make_unique<BEDiagnosticHandler>(&this->hasError_, this->remarkCtl_));
 
   llvm::Optional<unsigned> enable_gc =
       driver_.getLastArgAsInteger(gollvm::options::OPT_enable_gc_EQ, 0u);
