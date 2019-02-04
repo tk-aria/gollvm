@@ -64,6 +64,9 @@ def f_Group : OptionGroup<"<f group>">, Group<CompileOnly_Group>,
 def m_Group : OptionGroup<"<m group>">, Group<CompileOnly_Group>,
               DocName<"Target-dependent compilation options">;
 
+def R_Group : OptionGroup<"<R group>">, Group<CompileOnly_Group>,
+              DocName<"Optimization remark control options">;
+
 def DebugInfo_Group : OptionGroup<"<g group>">, Group<CompileOnly_Group>,
                       DocName<"Debug information generation">, DocBrief<[{
 Flags controlling how much and what kind of debug information should be
@@ -325,6 +328,16 @@ def fno_save_optimization_record : Flag<["-"], "fno-save-optimization-record">,
 def foptimization_record_file_EQ : Joined<["-"], "foptimization-record-file=">,
     Group<f_Group>, Flags<[DriverOption]>,
     HelpText<"Specify the file name of any generated YAML optimization record">;
+
+def Rpass_EQ : Joined<["-"], "Rpass=">, Group<R_Group>, 
+  HelpText<"Report transformations performed by optimization passes whose "
+           "name matches the given POSIX regular expression">;
+def Rpass_missed_EQ : Joined<["-"], "Rpass-missed=">, Group<R_Group>,
+  HelpText<"Report missed transformations by optimization passes whose "
+           "name matches the given POSIX regular expression">;
+def Rpass_analysis_EQ : Joined<["-"], "Rpass-analysis=">, Group<R_Group>,
+  HelpText<"Report transformation analysis from optimization passes whose "
+           "name matches the given POSIX regular expression">;
 
 // Target-dependent "-m" options.
 
