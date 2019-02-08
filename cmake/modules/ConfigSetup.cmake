@@ -127,6 +127,7 @@ check_include_file(stdint.h HAVE_STDINT_H)
 check_function_exists(alloca HAVE_ALLOCA)
 check_function_exists(memcpy HAVE_MEMCPY)
 
+check_c_source_compiles("int main(int argc, char **argv) { return __sync_bool_compare_and_swap(&argc, argc, -argc) ? 1 : 0; }\n" HAVE_SYNC_BOOL_COMPARE_AND_SWAP_4)
 check_c_source_compiles("#include <stdint.h>\nstatic uint64_t s;\nint main(int argc, char **argv) { return __sync_bool_compare_and_swap(&s, argc, -argc) ? 0 : 1; }\n" HAVE_SYNC_BOOL_COMPARE_AND_SWAP_8)
 
 check_c_source_compiles("int main() { __asm__(\"aesenc %xmm0, %xmm1\"); return 0; }\n" HAVE_AS_X86_AES)
