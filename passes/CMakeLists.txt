@@ -12,4 +12,6 @@ add_llvm_library(LLVMCppGoPasses
   GoStatepoints.cpp
   RemoveAddrSpace.cpp
   Util.cpp
+
+  DEPENDS intrinsics_gen
 )
