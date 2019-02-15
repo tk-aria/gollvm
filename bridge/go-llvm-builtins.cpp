@@ -124,6 +124,9 @@ void BuiltinTable::defineIntrinsicBuiltins() {
   defineIntrinsicBuiltin("__builtin_frame_address", nullptr,
                          llvm::Intrinsic::frameaddress, ptrType,
                          uint32Type, nullptr);
+  defineIntrinsicBuiltin("__builtin_dwarf_cfa", nullptr,
+                         llvm::Intrinsic::eh_dwarf_cfa, ptrType,
+                         uint32Type, nullptr);
 
   defineIntrinsicBuiltin("__builtin_prefetch", nullptr, llvm::Intrinsic::prefetch,
                          ptrType, int32Type, int32Type, nullptr);

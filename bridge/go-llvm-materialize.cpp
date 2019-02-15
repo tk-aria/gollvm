@@ -1415,6 +1415,14 @@ Bexpression *Llvm_backend::materializeCall(Bexpression *callExpr)
         fn_args.push_back(conexpr);
         break;
       }
+      case llvm::Intrinsic::eh_dwarf_cfa: {
+        // llvm.eh.dwarf.cfa takes an additional arg 0.
+        Btype *buint32t = integerType(true, 32);
+        llvm::Constant *c1 = llvm::ConstantInt::get(llvmInt32Type(), 0);
+        Bexpression *conexpr = nbuilder_.mkConst(buint32t, c1);
+        fn_args.push_back(conexpr);
+        break;
+      }
       default: {
         // at the moment no other instrinsics need special handling
       }
