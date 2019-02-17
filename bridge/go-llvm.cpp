@@ -2080,9 +2080,8 @@ Llvm_backend::makeModuleVar(Btype *btype,
   // variable.
   assert(inUniqueSection == MV_DefaultSection);
 
-  llvm::Constant *init =
-      (isExtInit == MV_ExternallyInitialized ? nullptr :
-       llvm::Constant::getNullValue(underlyingType->type()));
+  if (initializer == nullptr && isExtInit == MV_NotExternallyInitialized)
+    initializer = llvm::Constant::getNullValue(underlyingType->type());
   std::string gname(asm_name.empty() ? name : asm_name);
   llvm::GlobalVariable *glob = module_->getGlobalVariable(gname);
   llvm::Value *old = nullptr;
@@ -2137,19 +2136,17 @@ Llvm_backend::makeModuleVar(Btype *btype,
       llvm::GlobalValue::NotThreadLocal;
   glob = new llvm::GlobalVariable(module(), underlyingType->type(),
                                   isConstant == MV_Constant,
-                                  linkage, init, gname, nullptr,
+                                  linkage, initializer, gname, nullptr,
                                   threadlocal, addressSpace_);
 
   if (alignment)
     glob->setAlignment(alignment);
-  if (initializer)
-    glob->setInitializer(initializer);
   if (inComdat == MV_InComdat) {
     assert(! gname.empty());
     glob->setComdat(module().getOrInsertComdat(gname));
   }
   if (isExtInit == MV_ExternallyInitialized) {
-    assert(!init);
+    assert(!initializer);
     glob->setExternallyInitialized(true);
   }
 
