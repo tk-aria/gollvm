@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9ee6811f_8d088083",
+        "filename": "driver/GollvmOptions.td",
+        "patchSetId": 1
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-02-19T19:49:55Z",
+      "side": 1,
+      "message": "Clang and GCC seem to only support --version. Do we want to support single-dashed version?",
+      "range": {
+        "startLine": 107,
+        "startChar": 20,
+        "endLine": 107,
+        "endChar": 23
+      },
+      "revId": "37edc490f53a3900d8992671908e2544f3e7dc74",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
