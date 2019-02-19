@@ -104,6 +104,9 @@ def Developer_Group : OptionGroup<"<dev group>">, DocName<"Developer flags">,
 def help : Flag<["-", "--"], "help">,
   HelpText<"Display available options">;
 
+def version : Flag<["-", "--"], "version">,
+  HelpText<"Display compiler version information.">;
+
 def B : JoinedOrSeparate<["-"], "B">,
     Flags<[DriverOption]>, MetaVarName<"<prefix>">,
     HelpText<"Add prefix for searching binaries and libraries">;
