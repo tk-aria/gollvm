@@ -2641,7 +2641,8 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
 
     // Fix up references to declaration of old type.
     if (declFnVal && declFnTyp != fty) {
-      llvm::Constant *newDeclVal = module_->getOrInsertFunction(fn, declFnTyp);
+      llvm::Constant *newDeclVal = llvm::cast<llvm::Constant>(
+          module_->getOrInsertFunction(fn, declFnTyp).getCallee());
       declFnVal->replaceAllUsesWith(newDeclVal);
       declFnVal->deleteValue();
       for (auto it = fcnDeclMap_.begin(); it != fcnDeclMap_.end(); it++) {
@@ -2657,7 +2658,8 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
     // A function of the same name has already been created in this
     // module. Call a module helper to get a constant corresponding
     // to the original fcn bit-casted to the new type.
-    fcnValue = module_->getOrInsertFunction(fn, fty);
+    fcnValue = llvm::cast<llvm::Constant>(
+        module_->getOrInsertFunction(fn, fty).getCallee());
   }
 
 createbfunc:
