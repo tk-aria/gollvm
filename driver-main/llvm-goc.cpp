@@ -106,6 +106,12 @@ bool CommandLineParser::parseCommandLine(int argc, char **argv)
     exit(0);
   }
 
+  // Honor -version
+  if (args_.hasArg(gollvm::options::OPT_version)) {
+    Driver::emitVersion();
+    exit(0);
+  }
+
   // Honor --print-multi-lib. FIXME: add real multilib support.
   if (args_.hasArg(gollvm::options::OPT_print_multi_lib)) {
     llvm::outs() << ".;@m64\n";

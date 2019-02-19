@@ -116,6 +116,7 @@ class Driver {
   void appendInputActions(const inarglist &infiles,
                           ActionList &result,
                           Compilation &compilation);
+  static void emitVersion();
 
  private:
   llvm::Triple triple_;
@@ -134,7 +135,6 @@ class Driver {
 
   bool processAction(Action *act, Compilation &compilation, bool lastAct);
   ArtifactList collectInputArtifacts(Action *act, InternalTool *it);
-  void emitVersion();
 };
 
 template<typename IT>
