@@ -19,6 +19,7 @@
 #include "Driver.h"
 #include "LinuxToolChain.h"
 #include "ToolChain.h"
+#include "GollvmConfig.h"
 
 using namespace llvm;
 
@@ -69,7 +70,8 @@ void Driver::emitVersion()
 {
   // NB: the go build tool keys off the presence of the "experimental"
   // keyword (hashes compiler binary if detected).
-  llvm::errs() << "gollvm version 1 (experimental)\n";
+  llvm::errs() << "gollvm version 1 (experimental) [LLVM version "
+               << GOLLVM_COMPILERVERSION << "]\n";
 }
 
 std::string Driver::getFilePath(llvm::StringRef name,
