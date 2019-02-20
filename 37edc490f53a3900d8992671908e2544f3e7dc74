@@ -22,6 +22,30 @@
       "revId": "37edc490f53a3900d8992671908e2544f3e7dc74",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2c8f2b8b_7e34714f",
+        "filename": "driver/GollvmOptions.td",
+        "patchSetId": 1
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-02-20T16:01:27Z",
+      "side": 1,
+      "message": "Thanks -- I\u0027ll fix it up to remove the single dash variant.",
+      "parentUuid": "9ee6811f_8d088083",
+      "range": {
+        "startLine": 107,
+        "startChar": 20,
+        "endLine": 107,
+        "endChar": 23
+      },
+      "revId": "37edc490f53a3900d8992671908e2544f3e7dc74",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
