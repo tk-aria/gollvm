@@ -1386,6 +1386,8 @@ extractPointerFromFCA(Value *V, IRBuilder<> &Builder,
   }
 }
 
+static Value *phiHasConstantValue(PHINode *Phi0);
+
 static void
 makeStatepointExplicitImpl(CallBase *Call, /* to replace */
                            SmallVectorImpl<Value *> &BasePtrs,
@@ -1408,8 +1410,7 @@ makeStatepointExplicitImpl(CallBase *Call, /* to replace */
   SmallVector<Value *, 64> PtrFields;
   for (Value *V : BasePtrs) {
     if (auto *Phi = dyn_cast<PHINode>(V))
-      if (Phi->hasConstantValue())
-        continue;
+      assert(!phiHasConstantValue(Phi) && "constant phi should not be in liveset");
     if (isa<AllocaInst>(V) ||
         (isa<Argument>(V) && cast<Argument>(V)->hasByValAttr())) {
       // Byval argument is at a fixed frame offset. Treat it the same as alloca.
@@ -1740,8 +1741,10 @@ zeroAmbiguouslyLiveSlots(Function &F, SetVector<Value *> &ToZero,
 static Value *
 phiHasConstantValue(PHINode *Phi0) {
   Value *V = Phi0->hasConstantValue();
-  if (V)
+  if (V && isa<Constant>(V))
     return V;
+
+  V = nullptr;
 
   // Visit all the Phi inputs. Discover new Phis on the go, and visit them.
   // Early exit if we see a non-constant or two different constants.
@@ -1770,27 +1773,25 @@ phiHasConstantValue(PHINode *Phi0) {
 }
 
 static void
-fixBadPhiOperands(Function &F, SetVector<Value *> &BadLoads,
-                  SetVector<Instruction *> &ToDel) {
-  for (auto *I : BadLoads) {
+fixBadPhiOperands(Function &F, SetVector<Value *> &BadLoads) {
+  // Don't delete instructions yet -- they may be referenced in the liveness
+  // map. We'll delete them at the end.
+
+  for (auto *I : BadLoads)
     I->replaceAllUsesWith(Constant::getNullValue(I->getType()));
-    cast<Instruction>(I)->eraseFromParent();
-  }
 
   // The replacement above may lead to degenerate Phis, which, if live,
   // will be encoded as constants in the stack map, which is bad
   // (confusing with pointer bitmaps). Clean them up.
-  // Don't delete them yet -- they may be referenced in the liveness
-  // map. We'll delete them at the end.
   bool Changed = true;
   while (Changed) {
     Changed = false;
     for (Instruction &I : instructions(F))
       if (auto *Phi = dyn_cast<PHINode>(&I))
-        if (!ToDel.count(Phi))
+        if (!BadLoads.count(Phi))
           if (Value *V = phiHasConstantValue(Phi)) {
             Phi->replaceAllUsesWith(V);
-            ToDel.insert(Phi);
+            BadLoads.insert(Phi);
             Changed = true;
           }
   }
@@ -1825,7 +1826,18 @@ static bool insertParsePoints(Function &F, DominatorTree &DT,
 
   SmallVector<PartiallyConstructedSafepointRecord, 64> Records(ToUpdate.size());
 
-  SetVector<Value *> AddrTakenAllocas, ToZero, BadLoads;
+  SetVector<Value *> AddrTakenAllocas, ToZero;
+
+  // In some rare cases, the optimizer may generate a load
+  // from an uninitialized slot. I saw this happens with LICM's
+  // load promotion. A load is moved out of the loop, and its
+  // only used in Phis. In the actual execution when the value
+  // is used, the Phi is always holding other incoming values,
+  // which are valid. The problem is that the load or the Phi
+  // may be recorded live, and the stack scan may heppen before
+  // it holding valid data, which is bad. We'll record those bad
+  // loads and remove them from the live sets.
+  SetVector<Value *> BadLoads;
 
   // Cache the 'defining value' relation used in the computation and
   // insertion of base phis and selects.  This ensures that we don't insert
@@ -1845,8 +1857,7 @@ static bool insertParsePoints(Function &F, DominatorTree &DT,
     findBasePointers(DT, DVCache, ToUpdate[i], info);
   }
 
-  SetVector<Instruction *> ToDel;
-  fixBadPhiOperands(F, BadLoads, ToDel);
+  fixBadPhiOperands(F, BadLoads);
 
   // It is possible that non-constant live variables have a constant base.  For
   // example, a GEP with a variable offset from a global.  In this case we can
@@ -1856,9 +1867,10 @@ static bool insertParsePoints(Function &F, DominatorTree &DT,
   // Note that the relocation placement code relies on this filtering for
   // correctness as it expects the base to be in the liveset, which isn't true
   // if the base is constant.
+  // Also make sure bad loads are not included in the liveset.
   for (auto &Info : Records)
     for (auto &BasePair : Info.PointerToBase)
-      if (isa<Constant>(BasePair.second))
+      if (isa<Constant>(BasePair.second) || BadLoads.count(BasePair.second))
         Info.LiveSet.remove(BasePair.first);
 
   // We need this to safely RAUW and delete call or invoke return values that
@@ -1881,6 +1893,12 @@ static bool insertParsePoints(Function &F, DominatorTree &DT,
     PR.doReplacement();
 
   Replacements.clear();
+
+  // At this point we should be able to delete all the bad loads and Phis.
+  // There should be no reference to them. If there are, it will assert,
+  // since the liveness args are already linked into the IR.
+  for (Value *V : BadLoads)
+    cast<Instruction>(V)->eraseFromParent();
 
   for (auto &Info : Records) {
     // These live sets may contain state Value pointers, since we replaced calls
@@ -1939,7 +1957,9 @@ static bool insertParsePoints(Function &F, DominatorTree &DT,
 
   // In clobber-non-live mode, delete all lifetime markers, as the
   // inserted clobbering may be beyond the original lifetime.
-  if (ClobberNonLive)
+  if (ClobberNonLive) {
+    SetVector<Instruction *> ToDel;
+
     for (Instruction &I : instructions(F))
       if (CallInst *CI = dyn_cast<CallInst>(&I))
         if (Function *Fn = CI->getCalledFunction())
@@ -1947,9 +1967,9 @@ static bool insertParsePoints(Function &F, DominatorTree &DT,
               Fn->getIntrinsicID() == Intrinsic::lifetime_end)
             ToDel.insert(&I);
 
-  // Delete dead Phis.
-  for (Instruction *I : ToDel)
-    I->eraseFromParent();
+    for (Instruction *I : ToDel)
+      I->eraseFromParent();
+  }
 
   return !Records.empty();
 }
@@ -2739,15 +2759,8 @@ again:
     }
   } // while (!Worklist.empty())
 
-  // In some rare cases, the optimizer may generate a load
-  // from an uninitialized slot. I saw this happens with LICM's
-  // load promotion. A load is moved out of the loop, and its
-  // only used in Phis. In the actual execution when the value
-  // is used, the Phi is always holding other incoming values,
-  // which are valid. The problem is that the load or the Phi
-  // may be recorded live, and the stack scan may heppend before
-  // it holding valid data, which is bad. Record those bad loads
-  // and remove them.
+  // Find the bad loads, i.e. loads from uninitialized slots.
+  // See also the comment in function insertParsePoints.
   for (Instruction &I : instructions(F))
     if (LoadInst *LI = dyn_cast<LoadInst>(&I)) {
       Value *V = LI->getPointerOperand();
