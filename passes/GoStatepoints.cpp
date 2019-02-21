@@ -2321,6 +2321,19 @@ computeAllocaDefs(BasicBlock::iterator Begin,
                   SetVector<Value *> &AllocaDefs,
                   SetVector<Value *> &AllocaKills,
                   DefiningValueMapTy &DVCache) {
+  // Iterate forwards over the instructions, record the defs and kills
+  // of allocas.
+  // Notes on the special cases about def and kill appearing in the same
+  // block:
+  // - kill after def:
+  //   Record the kill but don't remove it from def set, since we will
+  //   subtract the kill set anyway. And when a slot is initialized and
+  //   then killed in the same block, we don't lose information.
+  // - def after kill:
+  //   The def overrides the kill, i.e. remove it from the kill set
+  //   (unless we see a kill again leter). So we have the information
+  //   that the slot is initialized at the end of the block, even after
+  //   we subtract the kill set.
   for (auto &I : make_range(Begin, End)) {
     // skip Phi ?
     if (isa<PHINode>(I))
@@ -2328,16 +2341,20 @@ computeAllocaDefs(BasicBlock::iterator Begin,
 
     if (StoreInst *SI = dyn_cast<StoreInst>(&I)){
       Value *V = SI->getPointerOperand();
-      if (Value *Base = isTrackedAlloca(V, DVCache))
+      if (Value *Base = isTrackedAlloca(V, DVCache)) {
         AllocaDefs.insert(Base);
+        AllocaKills.remove(Base);
+      }
       continue;
     }
 
     if (CallInst *CI = dyn_cast<CallInst>(&I)){
       if (CI->hasStructRetAttr()) {
         Value *V = CI->getOperand(0);
-        if (Value *Base = isTrackedAlloca(V, DVCache))
+        if (Value *Base = isTrackedAlloca(V, DVCache)) {
           AllocaDefs.insert(Base);
+          AllocaKills.remove(Base);
+        }
       }
       if (Function *Fn = CI->getCalledFunction())
         switch (Fn->getIntrinsicID()) {
@@ -2346,17 +2363,16 @@ computeAllocaDefs(BasicBlock::iterator Begin,
         case Intrinsic::memset: {
           // We're writing to the first arg.
           Value *V = CI->getOperand(0);
-          if (Value *Base = isTrackedAlloca(V, DVCache))
+          if (Value *Base = isTrackedAlloca(V, DVCache)) {
             AllocaDefs.insert(Base);
+            AllocaKills.remove(Base);
+          }
           break;
         }
         case Intrinsic::lifetime_end: {
           Value *V = CI->getOperand(1);
           if (Value *Base = isTrackedAlloca(V, DVCache)) {
             AllocaKills.insert(Base);
-            // We don't remove it from def set, since we will subtract
-            // the kill set anyway. And when a slot is initialized and
-            // then killed in the same block, we don't lose information.
           }
           break;
         }
@@ -2369,8 +2385,10 @@ computeAllocaDefs(BasicBlock::iterator Begin,
     if (InvokeInst *II = dyn_cast<InvokeInst>(&I)) {
       if (II->hasStructRetAttr()) {
         Value *V = II->getOperand(0);
-        if (Value *Base = isTrackedAlloca(V, DVCache))
+        if (Value *Base = isTrackedAlloca(V, DVCache)) {
           AllocaDefs.insert(Base);
+          AllocaKills.remove(Base);
+        }
       }
       continue;
     }
