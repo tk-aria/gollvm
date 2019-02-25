@@ -2877,15 +2877,11 @@ static void findLiveSetAtInst(Instruction *Inst, GCPtrLivenessData &Data,
 
   // We want to handle the statepoint itself oddly.  It's
   // call result is not live (normal), nor are it's arguments
-  // (unless they're used again later).  This adjustment is
-  // specifically what we need to relocate
-  computeLiveInValues(BB->rbegin(), ++Inst->getIterator().getReverse(),
-                      LiveOut, AddrTakenAllocas, DVCache);
-  LiveOut.remove(Inst);
-
+  // (unless they're used again later).
   // The statepoint is always an invoke instruction, which is the last
-  // instruction in the block. The only thing it can initialize is the
-  // outgoing arg.
+  // instruction in the block. The only thing it can initialize is its
+  // result (passed directly, or indirectly as outgoing arg).
+  LiveOut.remove(Inst);
   if (InvokeInst *II = dyn_cast<InvokeInst>(Inst))
     if (II->hasStructRetAttr()) {
       Value *Ptr = II->getOperand(0);
