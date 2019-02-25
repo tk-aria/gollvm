@@ -22,6 +22,30 @@
       "revId": "d9a8a94f9d75b89c34ba51aac7c397b9b48f8106",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1d1e4904_e8833524",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2334,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-02-25T22:00:13Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a37420a5_ef4ece5e",
+      "range": {
+        "startLine": 2334,
+        "startChar": 35,
+        "endLine": 2334,
+        "endChar": 40
+      },
+      "revId": "d9a8a94f9d75b89c34ba51aac7c397b9b48f8106",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
