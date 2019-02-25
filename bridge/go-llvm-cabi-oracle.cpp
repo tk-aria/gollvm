@@ -595,7 +595,8 @@ CABIParamInfo CABIOracle::analyzeABIReturn(Btype *resultType, ABIState &state)
   if (rdisp == ParmIndirect) {
     // Return value will be passed in memory, via a hidden
     // struct return param.
-    llvm::Type *ptrTyp = tm()->makeLLVMPointerType(rtyp);
+    // It is on stack, therefore address space 0.
+    llvm::Type *ptrTyp = llvm::PointerType::get(rtyp, 0);
     state.addIndirectReturn();
     return CABIParamInfo(ptrTyp, ParmIndirect, AttrStructReturn, 0);
   }
