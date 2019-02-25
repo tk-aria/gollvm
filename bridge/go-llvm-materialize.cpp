@@ -1129,16 +1129,8 @@ void Llvm_backend::genCallProlog(GenCallState &state)
     Btype *resTyp = state.calleeFcnType->resultType();
     assert(state.callerFcn);
     state.sretTemp = state.callerFcn->createTemporary(resTyp, tname);
-    if (returnInfo.disp() == ParmIndirect) {
-      llvm::Value *sretval = state.sretTemp;
-      if (addressSpace_ != 0) {
-        llvm::Type *typ =
-            makeLLVMPointerType(sretval->getType()->getPointerElementType());
-        sretval =
-            state.builder.CreateAddrSpaceCast(sretval, typ, "sret.actual.ascast");
-      }
-      state.llargs.push_back(sretval);
-    }
+    if (returnInfo.disp() == ParmIndirect)
+      state.llargs.push_back(state.sretTemp);
   }
 
   // Chain param if needed
