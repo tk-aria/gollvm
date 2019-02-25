@@ -16,6 +16,24 @@
       "revId": "7871a16ac76c075f42be5b42a9056d7f26eb4d30",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3daa634e_1a14b1a2",
+        "filename": "passes/GoStatepoints.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1886,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-02-25T22:00:38Z",
+      "side": 1,
+      "message": "This also include the bad loads themselves, as now we don\u0027t delete them early.",
+      "parentUuid": "98d6f211_8fe8c678",
+      "revId": "7871a16ac76c075f42be5b42a9056d7f26eb4d30",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
