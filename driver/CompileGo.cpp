@@ -612,6 +612,8 @@ bool CompileGoImpl::initBridge()
   bridge_->setNoInline(args_.hasArg(gollvm::options::OPT_fno_inline));
   bridge_->setTargetCpuAttr(targetCpuAttr_);
   bridge_->setTargetFeaturesAttr(targetFeaturesAttr_);
+  if (!sampleProfileFile_.empty())
+    bridge_->setEnableAutoFDO();
 
   // -f[no-]omit-frame-pointer
   bool omitFp =

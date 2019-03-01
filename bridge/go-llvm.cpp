@@ -67,6 +67,7 @@ Llvm_backend::Llvm_backend(llvm::LLVMContext &context,
     , personalityFunction_(nullptr)
     , dummyPersonalityFunction_(nullptr)
     , gcStrategy_("")
+    , autoFDO_(false)
 {
   // If nobody passed in a linemap, create one for internal use (unit testing)
   if (!linemap_) {
@@ -2624,6 +2625,10 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
 
     // allow elim frame pointer or not
     fcn->addFnAttr("no-frame-pointer-elim", noFpElim_ ? "true" : "false");
+
+    // set suffix elision policy if autoFDO in effect
+    if (autoFDO_)
+      fcn->addFnAttr("sample-profile-suffix-elision-policy", "selected");
 
     // no-return
     if ((flags & Backend::function_does_not_return) != 0)

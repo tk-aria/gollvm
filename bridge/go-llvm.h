@@ -408,6 +408,9 @@ public:
   // Dummy personality function
   llvm::Function *dummyPersonalityFunction();
 
+  // Inform bridge that we may be using AutoFDO.
+  void setEnableAutoFDO() { autoFDO_ = true; }
+
  private:
   Bexpression *errorExpression() const { return errorExpression_; }
   Bstatement *errorStatement() const { return errorStatement_; }
@@ -849,6 +852,9 @@ public:
 
   // GC strategy
   std::string gcStrategy_;
+
+  // Prepare for use of AutoFDO.
+  bool autoFDO_;
 };
 
 #endif
