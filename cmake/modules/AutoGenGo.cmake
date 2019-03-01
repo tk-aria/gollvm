@@ -142,11 +142,14 @@ function(mkcpugen goarch outfile scriptroot)
       ERROR_VARIABLE errmsg
       RESULT_VARIABLE exitstatus)
     if(${exitstatus} MATCHES 0)
-      file(APPEND ${outfile} "const CacheLinePadSize = ${result}")
+      file(APPEND ${outfile} "const CacheLinePadSize = ${result}\n")
     else()
       message(FATAL_ERROR "goarch.sh invocation failed: ${errmsg}")
     endif()
-    file(APPEND ${outfile} "\n\n")
+    # For now this is hard-wired off. If/when gollvm supports
+    # PPC64 ELF ABI v1 we'll need to configure it.
+    file(APPEND ${outfile} "const FunctionDescriptors = false\n")
+    file(APPEND ${outfile} "\n")
 
 endfunction()
 
