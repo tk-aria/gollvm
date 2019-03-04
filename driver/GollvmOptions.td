@@ -409,6 +409,9 @@ def xassembler_with_cpp : Flag<["-"], "xassembler-with-cpp">,
 def fno_toplevel_reorder : Flag<["-"], "fno-toplevel-reorder">,
     Flags<[Ignored]>, HelpText<"This option is ignored">;
 
+def no_canonical_prefixes : Flag<["-"], "no-canonical-prefixes">,
+    Flags<[Ignored]>, HelpText<"This option is ignored">;
+
 def fno_diagnostics_show_caret : Flag<["-"], "fno-diagnostics-show-caret">,
     Flags<[Ignored]>, HelpText<"This option is ignored">;
 
