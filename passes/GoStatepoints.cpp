@@ -2252,6 +2252,13 @@ isTrackedAlloca(Value *V, DefiningValueMapTy &DVCache) {
   return nullptr;
 }
 
+static bool
+hasStructRetAttr(CallBase *Call) {
+  return Call->hasStructRetAttr() ||
+         (Call->getNumArgOperands() > 0 &&
+          Call->getParamAttr(0, "go_sret") != Attribute());
+}
+
 /// Compute the live-in set for the location rbegin starting from
 /// the live-out set of the basic block
 static void computeLiveInValues(BasicBlock::reverse_iterator Begin,
@@ -2360,7 +2367,7 @@ computeAllocaDefs(BasicBlock::iterator Begin,
     }
 
     if (CallInst *CI = dyn_cast<CallInst>(&I)){
-      if (CI->hasStructRetAttr()) {
+      if (hasStructRetAttr(CI)) {
         Value *V = CI->getOperand(0);
         if (Value *Base = isTrackedAlloca(V, DVCache)) {
           AllocaDefs.insert(Base);
@@ -2394,7 +2401,7 @@ computeAllocaDefs(BasicBlock::iterator Begin,
     }
 
     if (InvokeInst *II = dyn_cast<InvokeInst>(&I)) {
-      if (II->hasStructRetAttr()) {
+      if (hasStructRetAttr(II)) {
         Value *V = II->getOperand(0);
         if (Value *Base = isTrackedAlloca(V, DVCache)) {
           AllocaDefs.insert(Base);
@@ -2563,7 +2570,7 @@ checkStoreSize(Value *V, BasicBlock &BB, const DataLayout &DL,
       if (isTrackedAlloca(Ptr, DVCache) == V)
         StoreSize += DL.getTypeStoreSize(SI->getValueOperand()->getType());
     } else if (CallInst *CI = dyn_cast<CallInst>(&I)) {
-      if (CI->hasStructRetAttr()) {
+      if (hasStructRetAttr(CI)) {
         Value *Ptr = CI->getOperand(0);
         if (isTrackedAlloca(Ptr, DVCache) == V)
           StoreSize += DL.getTypeStoreSize(Ptr->getType()->getPointerElementType());
@@ -2587,7 +2594,7 @@ checkStoreSize(Value *V, BasicBlock &BB, const DataLayout &DL,
           break;
         }
     } else if (InvokeInst *II = dyn_cast<InvokeInst>(&I)) {
-      if (II->hasStructRetAttr()) {
+      if (hasStructRetAttr(II)) {
         Value *Ptr = II->getOperand(0);
         if (isTrackedAlloca(Ptr, DVCache) == V)
           if (DL.getTypeStoreSize(Ptr->getType()->getPointerElementType()) + PtrSize - 1 >= Size)
@@ -2883,7 +2890,7 @@ static void findLiveSetAtInst(Instruction *Inst, GCPtrLivenessData &Data,
   // result (passed directly, or indirectly as outgoing arg).
   LiveOut.remove(Inst);
   if (InvokeInst *II = dyn_cast<InvokeInst>(Inst))
-    if (II->hasStructRetAttr()) {
+    if (hasStructRetAttr(II)) {
       Value *Ptr = II->getOperand(0);
       Value *V = Ptr->stripPointerCasts();
       const DataLayout &DL = Inst->getModule()->getDataLayout();

@@ -1293,8 +1293,10 @@ void Llvm_backend::genCallAttributes(GenCallState &state, llvm::CallInst *call)
 {
   // Sret attribute if needed
   const CABIParamInfo &returnInfo = state.oracle.returnInfo();
-  if (returnInfo.disp() == ParmIndirect)
+  if (returnInfo.disp() == ParmIndirect) {
     call->addAttribute(1, llvm::Attribute::StructRet);
+    call->addAttribute(1, llvm::Attribute::get(call->getContext(), "go_sret"));
+  }
 
   // Nest attribute if needed
   const CABIParamInfo &chainInfo = state.oracle.chainInfo();
