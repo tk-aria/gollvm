@@ -395,7 +395,7 @@ TEST(BackendCABIOracleTests, PassAndReturnArrays) {
   const char *exp = R"RAW_RESULT(
     %cast.0 = bitcast [2 x float]* %p0.addr to <2 x float>*
     %ld.0 = load <2 x float>, <2 x float>* %cast.0
-    call addrspace(0) void @foo([3 x double]* sret %sret.actual.0, i8* nest undef, <2 x float> %ld.0)
+    call addrspace(0) void @foo([3 x double]* sret "go_sret" %sret.actual.0, i8* nest undef, <2 x float> %ld.0)
     %cast.1 = bitcast [3 x double]* %sret.formal.0 to i8*
     %cast.2 = bitcast [3 x double]* %sret.actual.0 to i8*
     call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.1, i8* align 8 %cast.2, i64 24, i1 false)
