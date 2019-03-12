@@ -1171,13 +1171,46 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
         Bvariable *cv = genVarForConstant(cval, fn_args[idx]->btype());
         val = cv->value();
       }
-      llvm::Type *vt = val->getType();
-      assert(vt->isPointerTy());
-      if (paramInfo.attr() == AttrByVal && vt->getPointerAddressSpace() != 0) {
-        // We pass a stack address, which is always in address space 0.
-        std::string castname(namegen("ascast"));
-        llvm::Type *pt = llvm::PointerType::get(vt->getPointerElementType(), 0);
-        val = builder.CreateAddrSpaceCast(val, pt, castname);
+      if (paramInfo.attr() == AttrByVal) {
+        llvm::Type *vt = val->getType();
+        assert(vt->isPointerTy());
+        llvm::Type *et = vt->getPointerElementType();
+
+        // If we pass an alloca as a byval arg, the LLVM optimizer seems
+        // to think it uses the address, which prevents it from being SROA'd
+        // or registerized.
+        // Work around this by generating an extra copy. We only do this
+        // when it is an alloca (or an offset from it), not known as
+        // address-taken, and the type is small.
+        // FIXME: this really should be the job of the optimizer.
+        if (!fnarg->isConstant() &&
+            vt->getPointerAddressSpace() == 0 &&
+            llvmTypeSize(et) <= 32) {
+          llvm::AllocaInst *ai =
+              llvm::dyn_cast<llvm::AllocaInst>(val->stripInBoundsOffsets());
+          if (ai && !ai->getMetadata("go_addrtaken")) {
+            Btype *argTyp = fnarg->btype();
+            std::string tname(namegen("byvaltmp"));
+            llvm::Value *tmpv = state.callerFcn->createTemporary(argTyp, tname);
+            // CreateMemCpy requires a parent block & function.
+            // Use a BlockLIRBuilder with a dummy function.
+            llvm::Function *dummyFcn = errorFunction_->function();
+            BlockLIRBuilder bbuilder(dummyFcn, this);
+            uint64_t sz = llvmTypeSize(et);
+            unsigned align =typeAlignment(argTyp);
+            bbuilder.CreateMemCpy(tmpv, align, val, align, sz);
+            for (auto inst : bbuilder.instructions())
+              builder.Insert(inst);
+            val = tmpv;
+          }
+        }
+
+        if (vt->getPointerAddressSpace() != 0) {
+          // We pass a stack address, which is always in address space 0.
+          std::string castname(namegen("ascast"));
+          llvm::Type *pt = llvm::PointerType::get(et, 0);
+          val = builder.CreateAddrSpaceCast(val, pt, castname);
+        }
       }
       state.llargs.push_back(val);
       continue;
