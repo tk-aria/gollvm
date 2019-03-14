@@ -42,6 +42,7 @@ namespace gollvm { namespace arch {
 #include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/LegacyPassManager.h"
+#include "llvm/IR/RemarkStreamer.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Option/Arg.h"
@@ -437,8 +438,8 @@ bool CompileGoImpl::setup()
                << fname << "' to emit optimization remarks\n";
         return false;
       }
-      context_.setDiagnosticsOutputFile(
-          llvm::make_unique<yaml::Output>(optRecordFile_->os()));
+      context_.setRemarkStreamer(llvm::make_unique<llvm::RemarkStreamer>(
+          fname, optRecordFile_->os()));
       if (! sampleProfileFile_.empty())
         context_.setDiagnosticsHotnessRequested(true);
       optRecordFile_->keep();
