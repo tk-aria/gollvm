@@ -1523,6 +1523,69 @@ TEST(BackendExprTests, TestCompoundExpression) {
   EXPECT_TRUE(isOK && "Function does not have expected contents");
 }
 
+TEST(BackendExprTests, TestCompoundExpression2) {
+
+  FcnTestHarness h("foo");
+  Llvm_backend *be = h.be();
+  Bfunction *func = h.func();
+  Location loc;
+
+  // var x int64
+  // var y = (x = 5; struct{int64; int64}{x, x})
+  Btype *bi64t = be->integer_type(false, 64);
+  Bvariable *xv = h.mkLocal("x", bi64t);
+  Bexpression *vex = be->var_expression(xv, loc);
+  Bstatement *st = be->assignment_statement(func, vex,
+                                            mkInt64Const(be, 5), loc);
+  Bexpression *vex1 = be->var_expression(xv, loc);
+  Bexpression *vex2 = be->var_expression(xv, loc);
+  Btype *bst = mkTwoFieldStruct(be, bi64t, bi64t);
+  Bexpression *sce = be->constructor_expression(bst, {vex1, vex2}, loc);
+  Bexpression *ce = be->compound_expression(st, sce, loc);
+
+  Bvariable *yv = h.mkLocal("y", bst);
+  Bexpression *yvex = be->var_expression(yv, loc);
+  Bstatement *st2 = be->assignment_statement(func, yvex, ce, loc);
+  h.addStmt(st2);
+
+  const char *exp = R"RAW_RESULT(
+    define i64 @foo(i8* nest %nest.0, i32 %param1, i32 %param2, i64* %param3) #0 {
+      entry:
+        %tmp.0 = alloca { i64, i64 }
+        %param1.addr = alloca i32
+        %param2.addr = alloca i32
+        %param3.addr = alloca i64*
+        %x = alloca i64
+        %y = alloca { i64, i64 }
+        store i32 %param1, i32* %param1.addr
+        store i32 %param2, i32* %param2.addr
+        store i64* %param3, i64** %param3.addr
+        store i64 0, i64* %x
+        %cast.0 = bitcast { i64, i64 }* %y to i8*
+        %cast.1 = bitcast { i64, i64 }* @const.0 to i8*
+        call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 16, i1 false)
+        store i64 5, i64* %x
+        %x.ld.0 = load i64, i64* %x
+        %x.ld.1 = load i64, i64* %x
+        %field.0 = getelementptr inbounds { i64, i64 }, { i64, i64 }* %tmp.0, i32 0, i32 0
+        store i64 %x.ld.0, i64* %field.0
+        %field.1 = getelementptr inbounds { i64, i64 }, { i64, i64 }* %tmp.0, i32 0, i32 1
+        store i64 %x.ld.1, i64* %field.1
+        %cast.2 = bitcast { i64, i64 }* %y to i8*
+        %cast.3 = bitcast { i64, i64 }* %tmp.0 to i8*
+        call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.2, i8* align 8 %cast.3, i64 16, i1 false)
+        ret i64 0
+      }
+    )RAW_RESULT";
+
+  bool broken = h.finish(StripDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+
+  // Note that this
+  bool isOK = h.expectValue(func->function(), exp);
+  EXPECT_TRUE(isOK && "Function does not have expected contents");
+}
+
 TEST(BackendExprTests, TestLhsConditionalExpression) {
 
   FcnTestHarness h;
