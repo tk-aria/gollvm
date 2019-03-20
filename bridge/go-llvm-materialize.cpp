@@ -422,6 +422,10 @@ Bexpression *Llvm_backend::materializeCompound(Bexpression *comExpr)
 
   // Compound expressions can be used to produce lvalues, so we don't
   // want to call resolve() on bexpr here.
+  // But we do want to resolve composite init.
+  if (bexpr->compositeInitPending())
+    bexpr = resolveCompositeInit(bexpr, nullptr);
+
   Bexpression *rval = nbuilder_.mkCompound(bstat, bexpr, bexpr->value(),
                                            location);
   if (bexpr->varExprPending())
