@@ -404,7 +404,6 @@ set(runtimecfiles
   "runtime/go-memclr.c"
   "runtime/go-memcmp.c"
   "runtime/go-memequal.c"
-  "runtime/go-memmove.c"
   "runtime/go-nanotime.c"
   "runtime/go-now.c"
   "runtime/go-nosys.c"
