@@ -466,6 +466,14 @@ def fgo_debug_escape_hash_EQ : Joined<["-"], "fgo-debug-escape-hash=">,
              " given suffix. Can be used to binary search across"
              " functions to uncover escape analysis bugs.">;
 
+def fgo_debug_optimization : Flag<["-"], "fgo-debug-optimization">,
+  Group<f_Group>,
+  HelpText<"Emit gofrontend optimization diagnostics">;
+
+def fno_go_debug_optimization : Flag<["-"], "fno-go-debug-optimization">,
+  Group<f_Group>,
+  HelpText<"Do not emit gofrontend optimization diagnostics">;
+
 def tracelevel_EQ : Joined<["-", "--"], "tracelevel=">, Group<Developer_Group>,
     HelpText<"Set debug trace level (def: 0, no trace output)">;
 

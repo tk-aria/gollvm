@@ -680,6 +680,10 @@ bool CompileGoImpl::initBridge()
   opt::Arg *hasharg =
       args_.getLastArg(gollvm::options::OPT_fgo_debug_escape_hash_EQ);
   args.debug_escape_hash = (hasharg != nullptr ? hasharg->getValue() : NULL);
+  args.debug_optimization =
+      driver_.reconcileOptionPair(gollvm::options::OPT_fgo_debug_optimization,
+                                  gollvm::options::OPT_fno_go_debug_optimization,
+                                  false);
   args.nil_check_size_threshold = -1;
   args.linemap = linemap_.get();
   args.backend = bridge_.get();
