@@ -136,7 +136,7 @@ void BuiltinTable::defineIntrinsicBuiltins() {
 
   defineLibcallBuiltin("__builtin_memcmp", "memcmp",
                        llvm::LibFunc::LibFunc_memcmp,
-                       uint32Type, ptrType, ptrType,
+                       int32Type, ptrType, ptrType,
                        sizeType, nullptr);
 
   defineIntrinsicBuiltin("__builtin_memcpy", "memcpy",
