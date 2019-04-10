@@ -381,6 +381,13 @@ class BnodeBuilder {
   void updateInstructions(Bexpression *expr,
                           std::vector<llvm::Instruction*> newinsts);
 
+
+  // Similar to the above, but used in cases where a parent Bexpression
+  // inherits the value from a child, and the child's value is rewritten
+  // to some new value (simpler case here, since there is no book-keeping
+  // update needed for the integrity checker).
+  void updateValue(Bexpression *expr, llvm::Value *newValue);
+
   // Get/set whether the tree integrity checker is enabled. It makes sense
   // to turn off the integrity checker during tree cloning operations
   // (part of sharing repair), and also for unit testing.

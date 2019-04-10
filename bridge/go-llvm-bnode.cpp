@@ -1059,3 +1059,16 @@ void BnodeBuilder::updateInstructions(Bexpression *expr,
     }
   }
 }
+
+void BnodeBuilder::updateValue(Bexpression *expr, llvm::Value *newValue)
+{
+  assert(expr != NULL && newValue != NULL && expr->value() != NULL);
+
+  // New value should be different from old value
+  assert(expr->value() != newValue);
+
+  // Types should match
+  assert(expr->value()->getType() == newValue->getType());
+
+  expr->setValue(newValue);
+}

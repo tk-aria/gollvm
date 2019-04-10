@@ -2772,7 +2772,8 @@ class GenBlocks {
   llvm::BasicBlock *getBlockForLabel(Blabel *lab);
   llvm::BasicBlock *walkExpr(llvm::BasicBlock *curblock,
                              Bstatement *containingStmt,
-                             Bexpression *expr);
+                             Bexpression *expr,
+                             bool subexpr=false);
   std::pair<llvm::Instruction*, llvm::BasicBlock *>
   rewriteToMayThrowCall(llvm::CallInst *call,
                         llvm::BasicBlock *curblock);
@@ -2809,6 +2810,7 @@ class GenBlocks {
   std::vector<llvm::BasicBlock*> padBlockStack_;
   std::set<llvm::Instruction *> temporariesDiscovered_;
   std::vector<llvm::Instruction *> newTemporaries_;
+  std::map<llvm::Value *, llvm::Instruction *> instRewrites_;
   llvm::BasicBlock *finallyBlock_;
   Bstatement *cachedReturn_;
 };
@@ -2992,11 +2994,35 @@ GenBlocks::rewriteToMayThrowCall(llvm::CallInst *call,
   // return value.
   call->replaceAllUsesWith(invcall);
 
+  // Add an entry in the rewrites map to record the fact that we've replaced the
+  // call with an invoke. This is to take care of situations where the LLVM
+  // value for a given Bexpression is inherited by the expression's parent.
+  // Example:
+  //
+  //    func f(...) int64 { ... }
+  //    ...
+  //    func g() {
+  //      defer func() { ... }()
+  //      z = uint64(f(...))
+  //      ...
+  //    }
+  //
+  // This will result in a call parented by a conversion, e.g.
+  //
+  //    conv: [ btype: [uns] 'uint64' i64 ]
+  //       call: [ btype: 'int64' i64 ]
+  //          fcn: [ btype: i64 (i8*, i64)* ] main.F
+  //          ...
+  //
+  // Both the call and the convert will wind up with the same LLVM Value,
+  // hence we need to rewrite the value not just of the Bexpression for the
+  // call, but also the Bexpression for the convert.
+  //
+  assert(instRewrites_.find(call) == instRewrites_.end());
+  instRewrites_[call] = invcall;
+
   // New call needs same attributes
   invcall->setAttributes(call->getAttributes());
-
-  // Old call longer needed
-  call->deleteValue();
 
   return std::make_pair(invcall, contbb);
 }
@@ -3053,7 +3079,8 @@ static bool isNoReturnCall(llvm::Instruction *inst)
 
 llvm::BasicBlock *GenBlocks::walkExpr(llvm::BasicBlock *curblock,
                                       Bstatement *containingStmt,
-                                      Bexpression *expr)
+                                      Bexpression *expr,
+                                      bool subexpr)
 {
   // Delete dead instructions before visiting the children,
   // as they may use values defined in the children. Uses
@@ -3063,8 +3090,13 @@ llvm::BasicBlock *GenBlocks::walkExpr(llvm::BasicBlock *curblock,
 
   // Visit children first
   const std::vector<Bnode *> &kids = expr->children();
-  for (auto &child : kids)
-    curblock = walk(child, containingStmt, curblock);
+  for (auto &child : kids) {
+    Bexpression *expr = child->castToBexpression();
+    if (expr)
+      curblock = walkExpr(curblock, containingStmt, expr, true);
+    else
+      curblock = walk(child, containingStmt, curblock);
+  }
 
   // In case it becomes dead after visiting some child...
   if (!curblock)
@@ -3101,6 +3133,22 @@ llvm::BasicBlock *GenBlocks::walkExpr(llvm::BasicBlock *curblock,
   if (changed)
     be_->nodeBuilder().updateInstructions(expr, newinsts);
   expr->clear();
+
+  // Rewrite value for this expr if needed.
+  auto it = instRewrites_.find(expr->value());
+  if (it != instRewrites_.end())
+    be_->nodeBuilder().updateValue(expr, it->second);
+
+  // If this is a top-level expression (e.g. expression parented by statement,
+  // as opposed to expression parented by some other expr), then at this
+  // point we can delete any inst that appears as a key in the rewrite
+  // map (we don't expect to see any other uses).
+  if (!subexpr) {
+    for (auto it = instRewrites_.begin(); it != instRewrites_.end(); it++)
+      it->first->deleteValue();
+    instRewrites_.clear();
+  }
+
   return curblock;
 }
 
