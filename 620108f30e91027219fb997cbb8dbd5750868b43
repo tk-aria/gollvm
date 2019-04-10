@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6c388561_129b7a12",
+        "filename": "bridge/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3149,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-04-10T18:09:13Z",
+      "side": 1,
+      "message": "I think we can call deleteValue without casting to Instruction.",
+      "range": {
+        "startLine": 3148,
+        "startChar": 0,
+        "endLine": 3149,
+        "endChar": 26
+      },
+      "revId": "620108f30e91027219fb997cbb8dbd5750868b43",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
