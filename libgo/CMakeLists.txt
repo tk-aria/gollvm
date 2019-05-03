@@ -461,6 +461,11 @@ foreach(def ${basedefines})
 endforeach()
 string(APPEND baseopts "${GOLLVM_EXTRA_CFLAGS} ")
 
+# Special flags required for aeshash.c (functions in this file are called
+# only when running on the proper architecture, so it is safe to ask for
+# specific architectural features).
+set_source_files_properties(${libgo_csrcroot}/runtime/aeshash.c PROPERTIES COMPILE_FLAGS "-maes -mssse3")
+
 # Object library based on libgo C code, PIC-compiled
 add_library(libgo_c_piclib OBJECT EXCLUDE_FROM_ALL ${runtimecpaths})
 set_target_properties(libgo_c_piclib PROPERTIES COMPILE_FLAGS "-fPIC ${baseopts}")
