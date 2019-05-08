@@ -263,6 +263,10 @@ Bexpression *Llvm_backend::materializeConversion(Bexpression *convExpr)
   }
 
   // Integer-to-integer conversions
+  // FIXME: the type of the the operand could be AuxT, which we use
+  // to wrap an LLVM type for intrinsics. Assume it is signed for now.
+  // If this turns to be an issue, we should define the correct Btype
+  // for intrinsics.
   if (valType->isIntegerTy() && toType->isIntegerTy()) {
     llvm::IntegerType *valIntTyp =
         llvm::cast<llvm::IntegerType>(valType);
@@ -273,7 +277,8 @@ Bexpression *Llvm_backend::materializeConversion(Bexpression *convExpr)
     llvm::Value *conv = nullptr;
     if (tobits > valbits) {
       if (expr->btype()->type() == llvmBoolType() ||
-          expr->btype()->castToBIntegerType()->isUnsigned())
+          (expr->btype()->castToBIntegerType() &&
+           expr->btype()->castToBIntegerType()->isUnsigned()))
         conv = builder.CreateZExt(val, toType, namegen("zext"));
       else
         conv = builder.CreateSExt(val, toType, namegen("sext"));
@@ -308,7 +313,8 @@ Bexpression *Llvm_backend::materializeConversion(Bexpression *convExpr)
   // Integer -> float conversions
   if (toType->isFloatingPointTy() && valType->isIntegerTy()) {
     llvm::Value *conv = nullptr;
-    if (expr->btype()->castToBIntegerType()->isUnsigned())
+    if (expr->btype()->castToBIntegerType() &&
+        expr->btype()->castToBIntegerType()->isUnsigned())
       conv = builder.CreateUIToFP(val, toType, namegen("uitof"));
     else
       conv = builder.CreateSIToFP(val, toType, namegen("sitof"));
