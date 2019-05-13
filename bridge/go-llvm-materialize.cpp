@@ -1509,7 +1509,7 @@ Bexpression *Llvm_backend::materializeCall(Bexpression *callExpr)
     if (be) {
       BuiltinExprMaker makerfn = be->exprMaker();
       if (makerfn)
-        callValue = makerfn(state.llargs, &state.builder);
+        callValue = makerfn(state.llargs, &state.builder, this);
     }
   }
   if (!callValue) {

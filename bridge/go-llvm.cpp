@@ -473,7 +473,7 @@ Bfunction *Llvm_backend::createBuiltinFcn(BuiltinEntry *be)
   std::vector<Btyped_identifier> results;
   Location bloc(linemap_->get_predeclared_location());
   const BuiltinEntryTypeVec &types = be->types();
-  if (types.size() > 0) {
+  if (types.size() > 0 && types[0] != nullptr) {
     Btyped_identifier result("ret", types[0], bloc);
     results.push_back(result);
   }
