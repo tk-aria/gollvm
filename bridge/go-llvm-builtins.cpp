@@ -319,8 +319,9 @@ void BuiltinTable::defineIntrinsicBuiltin(const char *name,
   registerIntrinsicBuiltin(name, libname, iid, overloadTypes);
 }
 
-static llvm::Value *builtinExtractReturnAddrMaker(llvm::SmallVector<llvm::Value*, 16> args,
-                                                  BinstructionsLIRBuilder *builder)
+static llvm::Value *builtinExtractReturnAddrMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
+                                                  BinstructionsLIRBuilder *builder,
+                                                  TypeManager *tm)
 {
   // __builtin_extract_return_addr(uintptr) uintptr
   // extracts the actual encoded address from the address as returned
@@ -333,22 +334,189 @@ static llvm::Value *builtinExtractReturnAddrMaker(llvm::SmallVector<llvm::Value*
   return args[0];
 }
 
-static llvm::Value *builtinUnreachableMaker(llvm::SmallVector<llvm::Value*, 16> args,
-                                            BinstructionsLIRBuilder *builder)
+static llvm::Value *builtinUnreachableMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
+                                            BinstructionsLIRBuilder *builder,
+                                            TypeManager *tm)
 {
   llvm::UnreachableInst *unr = builder->CreateUnreachable();
   return unr;
 }
 
+static llvm::AtomicOrdering llvmOrder(int o)
+{
+  switch (o) {
+  case __ATOMIC_RELAXED:
+    return llvm::AtomicOrdering::Monotonic;
+  case __ATOMIC_CONSUME:
+    return llvm::AtomicOrdering::Acquire; // LLVM does not define consume
+  case __ATOMIC_ACQUIRE:
+    return llvm::AtomicOrdering::Acquire;
+  case __ATOMIC_RELEASE:
+    return llvm::AtomicOrdering::Release;
+  case __ATOMIC_ACQ_REL:
+    return llvm::AtomicOrdering::AcquireRelease;
+  case __ATOMIC_SEQ_CST:
+    return llvm::AtomicOrdering::SequentiallyConsistent;
+  }
+  llvm_unreachable("unknown atomic order");
+}
+
+static llvm::Value *atomicLoadMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
+                                    BinstructionsLIRBuilder *builder,
+                                    TypeManager *tm, int sz)
+{
+  assert(args.size() == 2);
+  llvm::Type *t = sz == 8 ? tm->llvmInt64Type() : tm->llvmInt32Type();
+  llvm::LoadInst *load = builder->CreateLoad(t, args[0]);
+  // FIXME: we assume the FE always emits constant memory order.
+  // in case it doesn't, conservatively use SequentiallyConsistent.
+  llvm::AtomicOrdering o =
+      llvm::isa<llvm::ConstantInt>(args[1]) ?
+      llvmOrder(llvm::cast<llvm::ConstantInt>(args[1])->getZExtValue()) :
+      llvm::AtomicOrdering::SequentiallyConsistent;
+  load->setAtomic(o);
+  load->setAlignment(sz);
+  return load;
+}
+
+static llvm::Value *atomicLoad4Maker(llvm::SmallVectorImpl<llvm::Value*> &args,
+                                     BinstructionsLIRBuilder *builder,
+                                     TypeManager *tm)
+{
+  return atomicLoadMaker(args, builder, tm, 4);
+}
+
+static llvm::Value *atomicLoad8Maker(llvm::SmallVectorImpl<llvm::Value*> &args,
+                                     BinstructionsLIRBuilder *builder,
+                                     TypeManager *tm)
+{
+  return atomicLoadMaker(args, builder, tm, 8);
+}
+
+static llvm::Value *atomicStoreMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
+                                     BinstructionsLIRBuilder *builder,
+                                     TypeManager *tm, int sz)
+{
+  assert(args.size() == 3);
+  llvm::StoreInst *store = builder->CreateStore(args[1], args[0]);
+  // FIXME: see atomicLoadMaker.
+  llvm::AtomicOrdering o =
+      llvm::isa<llvm::ConstantInt>(args[2]) ?
+      llvmOrder(llvm::cast<llvm::ConstantInt>(args[2])->getZExtValue()) :
+      llvm::AtomicOrdering::SequentiallyConsistent;
+  store->setAtomic(o);
+  store->setAlignment(sz);
+  return store;
+}
+
+static llvm::Value *atomicStore4Maker(llvm::SmallVectorImpl<llvm::Value*> &args,
+                                      BinstructionsLIRBuilder *builder,
+                                      TypeManager *tm)
+{
+  return atomicStoreMaker(args, builder, tm, 4);
+}
+
+static llvm::Value *atomicStore8Maker(llvm::SmallVectorImpl<llvm::Value*> &args,
+                                      BinstructionsLIRBuilder *builder,
+                                      TypeManager *tm)
+{
+  return atomicStoreMaker(args, builder, tm, 8);
+}
+
+static llvm::Value *atomicRMWMaker(llvm::AtomicRMWInst::BinOp op,
+                                   llvm::SmallVectorImpl<llvm::Value*> &args,
+                                   BinstructionsLIRBuilder *builder,
+                                   TypeManager *tm)
+{
+  assert(args.size() == 3);
+  // FIXME: see atomicLoadMaker.
+  llvm::AtomicOrdering o =
+      llvm::isa<llvm::ConstantInt>(args[2]) ?
+      llvmOrder(llvm::cast<llvm::ConstantInt>(args[2])->getZExtValue()) :
+      llvm::AtomicOrdering::SequentiallyConsistent;
+  return builder->CreateAtomicRMW(op, args[0], args[1], o);
+}
+
+static llvm::Value *atomicXchgMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
+                                    BinstructionsLIRBuilder *builder,
+                                    TypeManager *tm)
+{
+  return atomicRMWMaker(llvm::AtomicRMWInst::Xchg, args, builder, tm);
+}
+
+static llvm::Value *atomicAddMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
+                                   BinstructionsLIRBuilder *builder,
+                                   TypeManager *tm)
+{
+  // atomicrmw returns the old content. We need to do the add.
+  llvm::Value* old = atomicRMWMaker(llvm::AtomicRMWInst::Add, args, builder, tm);
+  return builder->CreateAdd(old, args[1]);
+}
+
+static llvm::Value *atomicAndMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
+                                   BinstructionsLIRBuilder *builder,
+                                   TypeManager *tm)
+{
+  // atomicrmw returns the old content. We need to do the and.
+  llvm::Value* old = atomicRMWMaker(llvm::AtomicRMWInst::And, args, builder, tm);
+  return builder->CreateAnd(old, args[1]);
+}
+
+static llvm::Value *atomicOrMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
+                                  BinstructionsLIRBuilder *builder,
+                                  TypeManager *tm)
+{
+  // atomicrmw returns the old content. We need to do the or.
+  llvm::Value* old = atomicRMWMaker(llvm::AtomicRMWInst::Or, args, builder, tm);
+  return builder->CreateOr(old, args[1]);
+}
+
+static llvm::Value *atomicCasMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
+                                   BinstructionsLIRBuilder *builder,
+                                   TypeManager *tm)
+{
+  assert(args.size() == 6);
+  // GCC __atomic_compare_exchange_n takes a pointer to the old value.
+  // We need to load it.
+  llvm::Value *old = builder->CreateLoad(args[1]);
+  // FIXME: see atomicLoadMaker, but default to SequentiallyConsistent
+  // for success order, Monotonic (i.e. relaxed) for failed order,
+  // and false for weak.
+  llvm::AtomicOrdering o =
+      llvm::isa<llvm::ConstantInt>(args[4]) ?
+      llvmOrder(llvm::cast<llvm::ConstantInt>(args[4])->getZExtValue()) :
+      llvm::AtomicOrdering::SequentiallyConsistent;
+  llvm::AtomicOrdering o2 =
+      llvm::isa<llvm::ConstantInt>(args[5]) ?
+      llvmOrder(llvm::cast<llvm::ConstantInt>(args[5])->getZExtValue()) :
+      llvm::AtomicOrdering::Monotonic;
+  bool weak =
+      llvm::isa<llvm::ConstantInt>(args[3]) &&
+      !llvm::cast<llvm::ConstantInt>(args[3])->isZero();
+  llvm::AtomicCmpXchgInst *cas =
+      builder->CreateAtomicCmpXchg(args[0], old, args[2], o, o2);
+  cas->setWeak(weak);
+  // LLVM cmpxchg instruction returns { valType, i1 }. Extract the second
+  // value, and cast to Go bool type (i8).
+  llvm::Value *ret = builder->CreateExtractValue(cas, {1});
+  return builder->CreateZExt(ret, tm->llvmInt8Type());
+}
+
 void BuiltinTable::defineExprBuiltins()
 {
+  Btype *boolType = tman_->boolType();
+  Btype *int32Type = tman_->integerType(false, 32);
+  Btype *uint8Type = tman_->integerType(true, 8);
+  Btype *uint8PtrType = tman_->pointerType(uint8Type);
+  Btype *uint32Type = tman_->integerType(true, 32);
+  Btype *uint32PtrType = tman_->pointerType(uint32Type);
+  Btype *uint64Type = tman_->integerType(true, 64);
+  Btype *uint64PtrType = tman_->pointerType(uint64Type);
   unsigned bitsInPtr = tman_->datalayout()->getPointerSizeInBits();
   Btype *uintPtrType = tman_->integerType(true, bitsInPtr);
 
   {
-    BuiltinEntryTypeVec typeVec(2);
-    typeVec[0] = uintPtrType;
-    typeVec[1] = uintPtrType;
+    BuiltinEntryTypeVec typeVec = {uintPtrType, uintPtrType};
     registerExprBuiltin("__builtin_extract_return_addr", nullptr,
                         typeVec, builtinExtractReturnAddrMaker);
   }
@@ -357,5 +525,63 @@ void BuiltinTable::defineExprBuiltins()
     BuiltinEntryTypeVec typeVec;
     registerExprBuiltin("__builtin_unreachable", nullptr,
                         typeVec, builtinUnreachableMaker);
+  }
+
+  {
+    BuiltinEntryTypeVec typeVec = {uint32Type, uint32PtrType, int32Type};
+    registerExprBuiltin("__atomic_load_4", nullptr,
+                        typeVec, atomicLoad4Maker);
+  }
+  {
+    BuiltinEntryTypeVec typeVec = {uint64Type, uint64PtrType, int32Type};
+    registerExprBuiltin("__atomic_load_8", nullptr,
+                        typeVec, atomicLoad8Maker);
+  }
+
+  {
+    BuiltinEntryTypeVec typeVec = {nullptr, uint32PtrType, uint32Type, int32Type};
+    registerExprBuiltin("__atomic_store_4", nullptr,
+                        typeVec, atomicStore4Maker);
+  }
+  {
+    BuiltinEntryTypeVec typeVec = {nullptr, uint64PtrType, uint64Type, int32Type};
+    registerExprBuiltin("__atomic_store_8", nullptr,
+                        typeVec, atomicStore8Maker);
+  }
+
+  {
+    BuiltinEntryTypeVec typeVec = {uint32Type, uint32PtrType, uint32Type, int32Type};
+    registerExprBuiltin("__atomic_exchange_4", nullptr,
+                        typeVec, atomicXchgMaker);
+    registerExprBuiltin("__atomic_add_fetch_4", nullptr,
+                        typeVec, atomicAddMaker);
+  }
+  {
+    BuiltinEntryTypeVec typeVec = {uint64Type, uint64PtrType, uint64Type, int32Type};
+    registerExprBuiltin("__atomic_exchange_8", nullptr,
+                        typeVec, atomicXchgMaker);
+    registerExprBuiltin("__atomic_add_fetch_8", nullptr,
+                        typeVec, atomicAddMaker);
+  }
+
+  {
+    BuiltinEntryTypeVec typeVec = {uint8Type, uint8PtrType, uint8Type, int32Type};
+    registerExprBuiltin("__atomic_and_fetch_1", nullptr,
+                        typeVec, atomicAndMaker);
+    registerExprBuiltin("__atomic_or_fetch_1", nullptr,
+                        typeVec, atomicOrMaker);
+  }
+
+  {
+    BuiltinEntryTypeVec typeVec = {boolType, uint32PtrType, uint32PtrType, uint32Type,
+                                   boolType, int32Type, int32Type};
+    registerExprBuiltin("__atomic_compare_exchange_4", nullptr,
+                        typeVec, atomicCasMaker);
+  }
+  {
+    BuiltinEntryTypeVec typeVec = {boolType, uint64PtrType, uint64PtrType, uint64Type,
+                                   boolType, int32Type, int32Type};
+    registerExprBuiltin("__atomic_compare_exchange_8", nullptr,
+                        typeVec, atomicCasMaker);
   }
 }
