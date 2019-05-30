@@ -2613,6 +2613,7 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
       fcn->setGC(gcStrategy_);
 
     fcn->addFnAttr("disable-tail-calls", "true");
+    fcn->addFnAttr("null-pointer-is-valid", "true"); // Don't optimize nil pointer deref to undefined
 
     // inline/noinline
     if ((flags & Backend::function_is_inlinable) == 0 || noInline_)
