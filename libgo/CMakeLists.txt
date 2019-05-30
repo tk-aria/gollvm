@@ -423,7 +423,8 @@ set(runtimecfiles
   "runtime/proc.c"
   "runtime/runtime_c.c"
   "runtime/stack.c"
-  "runtime/yield.c")
+  "runtime/yield.c"
+  "runtime/go-context.S")
 
 # C files that happen to be living in other packages.
 list(APPEND runtimecfiles
