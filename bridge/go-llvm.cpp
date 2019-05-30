@@ -2089,13 +2089,14 @@ Llvm_backend::makeModuleVar(Btype *btype,
   if (glob && glob->getLinkage() == linkage) {
     // A global variable with same name already exists.
     if (glob->getType()->getElementType() == btype->type()) {
-      assert(glob->isConstant() == (isConstant == MV_Constant));
-      assert(glob->hasComdat() == (inComdat == MV_InComdat));
-      assert(glob->getLinkage() == linkage);
-
       if (isExtInit == MV_NotExternallyInitialized) {
         // A definition overrides a declaration for external var.
         glob->setExternallyInitialized(false);
+        glob->setConstant(isConstant == MV_Constant);
+        if (inComdat == MV_InComdat) {
+          assert(! gname.empty());
+          glob->setComdat(module().getOrInsertComdat(gname));
+        }
         if (alignment)
           glob->setAlignment(alignment);
         if (initializer)
@@ -2367,8 +2368,10 @@ Bvariable *Llvm_backend::implicit_variable_reference(const std::string &name,
                                                      const std::string &asmname,
                                                      Btype *btype)
 {
-  assert(false && "Llvm_backend::implicit_variable_reference not yet impl");
-  return nullptr;
+  bool is_external = true, is_hidden = false, in_unique_section = false;
+  Location location; // dummy
+  return global_variable(name, asmname, btype, is_external, is_hidden,
+                         in_unique_section, location);
 }
 
 // Create a named immutable initialized data structure.
