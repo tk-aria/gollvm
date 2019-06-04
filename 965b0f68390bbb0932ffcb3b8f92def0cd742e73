@@ -34,6 +34,24 @@
       "revId": "965b0f68390bbb0932ffcb3b8f92def0cd742e73",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c1f81b11_ac221b3c",
+        "filename": "bridge/go-llvm.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2585,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-06-04T17:55:13Z",
+      "side": 1,
+      "message": "OK, I added some tracing code and tried things before and after Ian\u0027s recent inlining change. Before the change, all the only_inline\u003dtrue functions were marked as non-visible (which doesn\u0027t seem right). Now all only_inline\u003dtrue functions are being marked as visible.\n\nRegarding marking all only_inline\u003dtrue functions as available externally -- that seems like it would work, but I wonder if it might get us into hot water later on. Example:\n\n package p1\n func InlineMe() {\n   local()\n   ...\n }\n func local() { ... }\n\n----\n\n package p2\n import \"p1\"\n func P2Func() {\n   p1.InlineMe()\n }\n\n----\n\nDuring compilation of package p1, the front end exports bodies for both p1.InlineMe() and p1.local() since they are both small enough, both would be marked as \"only_inline\u003dtrue\".  Presumably the exported version of p1.local would have to be be marked as non-visible (so as to prevent calls from other packages).\n\nIn the backend phase for compiling p1, let\u0027s say all p1.local call sites are inlined, so the out-of-line definition of p1.local is deleted.\n\nNow we compile p2.  We can\u0027t guarantee that all calls to p1.local are inlined away (maybe the file is huge and the back end runs out of inline budget). In that scenario we can\u0027t mark p1.local AvailableExternally since it is in fact not really available. \n\nSo I think the way I have it in the current patch is the way to go. I will adjust the unit test, however.",
+      "parentUuid": "b70c8622_2006d407",
+      "revId": "965b0f68390bbb0932ffcb3b8f92def0cd742e73",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
