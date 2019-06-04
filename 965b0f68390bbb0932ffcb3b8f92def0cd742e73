@@ -52,6 +52,24 @@
       "revId": "965b0f68390bbb0932ffcb3b8f92def0cd742e73",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8b063227_47b3fd68",
+        "filename": "bridge/go-llvm.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2585,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-06-04T21:09:43Z",
+      "side": 1,
+      "message": "Emmm. I\u0027m not sure what is the exact meaning of \"visible\" for only_inline functions.\n\nI think only_inline is used only for imported functions. So when compiling p1, \"local\" would not be marked as only_inline. I would think it will be marked visible if its body is exported for inlining. The frontend will reject calls from other package to p1.local directly. (It is true that it won\u0027t be able to stop non-Go code call that function.)\n\nIf this is the case, when compiling p2 it will not emit a standalone copy of p1.local, even if it is not inlined, as it is actually externally available (in p1). And it does not matter whether it is visible.",
+      "parentUuid": "c1f81b11_ac221b3c",
+      "revId": "965b0f68390bbb0932ffcb3b8f92def0cd742e73",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
