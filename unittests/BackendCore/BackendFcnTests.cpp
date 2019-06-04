@@ -88,9 +88,6 @@ TEST(BackendFcnTests, MakeFunction) {
   for (auto vis : is_visible) {
     for (auto inl : is_inlinable) {
       for (auto only_inl : only_inline) {
-        // Functions imported only for inlining cannot be exported.
-        if (only_inl && vis)
-          continue;
         for (auto nosplit : split_stack) {
           for (auto noret : is_noret) {
             unsigned fflags =
@@ -111,9 +108,9 @@ TEST(BackendFcnTests, MakeFunction) {
             EXPECT_FALSE(llfunc->isVarArg());
             EXPECT_EQ(llfunc->hasFnAttribute(Attribute::NoInline), !inl);
             EXPECT_EQ(llfunc->hasFnAttribute(Attribute::NoReturn), noret);
-            EXPECT_EQ(llfunc->hasExternalLinkage(), vis);
-            EXPECT_EQ(llfunc->hasInternalLinkage(), !vis && !only_inl);
-            EXPECT_EQ(llfunc->hasAvailableExternallyLinkage(), only_inl);
+            EXPECT_EQ(llfunc->hasInternalLinkage(), !vis);
+            EXPECT_EQ(llfunc->hasExternalLinkage(), vis && !only_inl);
+            EXPECT_EQ(llfunc->hasAvailableExternallyLinkage(), vis && only_inl);
             EXPECT_EQ(befcn->splitStack() == Bfunction::YesSplit, !nosplit);
           }
         }
