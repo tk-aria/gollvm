@@ -2582,10 +2582,12 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
 
   llvm::GlobalValue::LinkageTypes linkage =
       llvm::GlobalValue::InternalLinkage;
-  if ((flags & Backend::function_is_visible) != 0)
-    linkage = llvm::GlobalValue::ExternalLinkage;
-  else if ((flags & Backend::function_only_inline) != 0)
-    linkage = llvm::GlobalValue::AvailableExternallyLinkage;
+  if ((flags & Backend::function_is_visible) != 0) {
+    if ((flags & Backend::function_only_inline) != 0)
+      linkage = llvm::GlobalValue::AvailableExternallyLinkage;
+    else
+      linkage = llvm::GlobalValue::ExternalLinkage;
+  }
   llvm::StringRef fn(fns);
   llvm::Constant *fcnValue = nullptr;
   llvm::Value *declVal = module_->getNamedValue(fn);
