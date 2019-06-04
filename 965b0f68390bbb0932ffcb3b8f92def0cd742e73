@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fade72c7_91cb1335",
+        "filename": "bridge/go-llvm.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2585,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-06-04T15:54:58Z",
+      "side": 1,
+      "message": "I think before there was no function that is both visible and only_inline (see also https://go.googlesource.com/gollvm/+/c08b8899001e26a9b58d72082b03ac343bb445e3/unittests/BackendCore/BackendFcnTests.cpp#91). Now there are? What changed? It appears that the new code assumes only_inline functions are always visible, which is the opposite of what it was.\n\nMaybe we could set only_inline function as AvailableExternallyLinkage regardless of visibility?\n\nDoes the test case need adjustment?",
+      "revId": "965b0f68390bbb0932ffcb3b8f92def0cd742e73",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
