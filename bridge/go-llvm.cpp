@@ -2580,12 +2580,20 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
     }
   }
 
+  // At the moment don't allow the combination of only_inline and non-visible.
+  // The assumption is that if the FE exports an inlinable function, that
+  // function will be visible (in the ELF object file sense) in the host pkg.
+  assert(((flags & Backend::function_only_inline) == 0) ||
+         ((flags & Backend::function_is_visible) != 0));
+
   llvm::GlobalValue::LinkageTypes linkage =
       llvm::GlobalValue::InternalLinkage;
-  if ((flags & Backend::function_is_visible) != 0)
-    linkage = llvm::GlobalValue::ExternalLinkage;
-  else if ((flags & Backend::function_only_inline) != 0)
-    linkage = llvm::GlobalValue::AvailableExternallyLinkage;
+  if ((flags & Backend::function_is_visible) != 0) {
+    if ((flags & Backend::function_only_inline) != 0)
+      linkage = llvm::GlobalValue::AvailableExternallyLinkage;
+    else
+      linkage = llvm::GlobalValue::ExternalLinkage;
+  }
   llvm::StringRef fn(fns);
   llvm::Constant *fcnValue = nullptr;
   llvm::Value *declVal = module_->getNamedValue(fn);
