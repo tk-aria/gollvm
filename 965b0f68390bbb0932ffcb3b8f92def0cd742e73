@@ -16,6 +16,24 @@
       "revId": "965b0f68390bbb0932ffcb3b8f92def0cd742e73",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b70c8622_2006d407",
+        "filename": "bridge/go-llvm.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2585,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-06-04T16:23:05Z",
+      "side": 1,
+      "message": "Hmm. You are right, the unit test disagrees with this change. \n\nThere were a number of functions that were triggering the problem; two examples were sync.RWMutex.RLocker and time.Duration.Nanoseconds. Let me poke around a little to gather some data to see what has changed.",
+      "parentUuid": "fade72c7_91cb1335",
+      "revId": "965b0f68390bbb0932ffcb3b8f92def0cd742e73",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
