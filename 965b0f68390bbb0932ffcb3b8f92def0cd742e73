@@ -70,6 +70,24 @@
       "revId": "965b0f68390bbb0932ffcb3b8f92def0cd742e73",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "605a59aa_d4c552ea",
+        "filename": "bridge/go-llvm.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2585,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-06-05T13:58:10Z",
+      "side": 1,
+      "message": "OK.  In that case I think what we need is an assert that fires if we see an only_inline function that is not marked visible. I think that should protect from the scenario I was concerned about.",
+      "parentUuid": "8b063227_47b3fd68",
+      "revId": "965b0f68390bbb0932ffcb3b8f92def0cd742e73",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
