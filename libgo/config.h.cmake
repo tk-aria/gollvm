@@ -147,6 +147,9 @@
 /* Define to 1 if assembler supports AES instructions. */
 #cmakedefine HAVE_AS_X86_AES 1
 
+/* Define to 1 if you have the `memmem' function. */
+#cmakedefine HAVE_MEMMEM 1
+
 /* Define if we're to use libffi. */
 #cmakedefine USE_LIBFFI 1
 

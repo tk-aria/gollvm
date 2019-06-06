@@ -60,6 +60,7 @@ list(APPEND CMAKE_REQUIRED_DEFINITIONS "-D_LARGEFILE64_SOURCE=1")
 check_symbol_exists(open64 "fcntl.h" HAVE_OPEN64)
 check_symbol_exists(mknodat "sys/types.h;sys/stat.h;fcntl.h;unistd.h" HAVE_MKNODAT)
 check_symbol_exists(pipe2 "unistd.h" HAVE_PIPE2)
+check_symbol_exists(memmem "string.h" HAVE_MEMMEM)
 
 # Checks for include files
 check_include_file(dlfcn.h HAVE_DLFCN_H)
