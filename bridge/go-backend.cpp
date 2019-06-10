@@ -69,19 +69,20 @@ readExportDataFromObject(llvm::object::ObjectFile *obj,
       break;
     if (sname == GO_EXPORT_SECTION_NAME) {
       // Extract section of interest
-      llvm::StringRef bytes;
-      if (sref.getContents(bytes)) {
+      llvm::Expected<llvm::StringRef> bytes = sref.getContents();
+      if (! bytes) {
+        consumeError(bytes.takeError());
         *perr = errno;
         return "get section contents";
       }
-      char *buf = new char[bytes.size()];
+      char *buf = new char[bytes->size()];
       if (! buf) {
         *perr = errno;
         return "malloc";
       }
-      memcpy(buf, bytes.data(), bytes.size());
+      memcpy(buf, bytes->data(), bytes->size());
       *pbuf = buf;
-      *plen = bytes.size();
+      *plen = bytes->size();
       return nullptr;
     }
   }
