@@ -144,3 +144,6 @@ if(GOLLVM_USE_SPLIT_STACK)
   set(USING_SPLIT_STACK 1)
 endif()
 set(USE_LIBFFI 1)
+
+# _Unwind_GetIPInfo is defined on Linux/AMD46.
+set(HAVE_GETIPINFO 1)

@@ -156,4 +156,7 @@
 /* Define if the compiler supports -fsplit-stack */
 #cmakedefine USING_SPLIT_STACK 1
 
+/* Define to 1 if _Unwind_GetIPInfo is available. */
+#cmakedefine HAVE_GETIPINFO 1
+
 #endif
