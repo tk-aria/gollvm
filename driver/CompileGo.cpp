@@ -685,7 +685,9 @@ bool CompileGoImpl::initBridge()
       driver_.reconcileOptionPair(gollvm::options::OPT_fgo_debug_optimization,
                                   gollvm::options::OPT_fno_go_debug_optimization,
                                   false);
-  args.nil_check_size_threshold = -1;
+  args.nil_check_size_threshold =
+      (args.compiling_runtime && args.pkgpath && strcmp(args.pkgpath, "runtime") == 0 ?
+       4096 : -1);
   args.linemap = linemap_.get();
   args.backend = bridge_.get();
   go_create_gogo (&args);
