@@ -2299,7 +2299,11 @@ Bvariable *Llvm_backend::temporary_variable(Bfunction *function,
     return tvar;
   }
   tvar->markAsTemporary();
-  Bstatement *is = init_statement(function, tvar, binit);
+  Bstatement *is;
+  if (binit)
+    is = init_statement(function, tvar, binit);
+  else
+    is = statement_list({}); // dummy
   *pstatement = is;
   return tvar;
 }
