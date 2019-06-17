@@ -450,6 +450,9 @@ foreach(cfile ${runtimecfiles})
   list(APPEND runtimecpaths "${libgo_csrcroot}/${cfile}")
 endforeach()
 
+# go-memops.c is not in gofrontend/libgo
+list(APPEND runtimecpaths "${GOLLVM_SOURCE_DIR}/libgo/runtime/go-memops.c")
+
 # Compiler flags for C files in the runtime.
 set(baseopts "-g -Wno-zero-length-array ")
 if(GOLLVM_USE_SPLIT_STACK)

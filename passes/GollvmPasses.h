@@ -21,11 +21,13 @@ class Type;
 class Value;
 
 void initializeGoAnnotationPass(PassRegistry&);
+void initializeGoMemopsPass(PassRegistry&);
 void initializeGoNilChecksPass(PassRegistry&);
 void initializeGoStatepointsLegacyPassPass(PassRegistry&);
 void initializeRemoveAddrSpacePassPass(PassRegistry&);
 
 FunctionPass *createGoAnnotationPass();
+FunctionPass *createGoMemopsPass();
 FunctionPass *createGoNilChecksPass();
 ModulePass *createGoStatepointsLegacyPass();
 ModulePass *createRemoveAddrSpacePass(const DataLayout&);
