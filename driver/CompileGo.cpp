@@ -960,6 +960,8 @@ bool CompileGoImpl::invokeBackEnd()
     passConfig->addMachinePasses();
     passConfig->setInitialized();
 
+    codeGenPasses.add(createGoNilChecksPass());
+
     if (enable_gc_)
       codeGenPasses.add(createGoAnnotationPass());
 
