@@ -3139,6 +3139,17 @@ llvm::BasicBlock *GenBlocks::walkExpr(llvm::BasicBlock *curblock,
       curblock->getInstList().push_back(unreachable);
       curblock = nullptr;
       changed = true;
+
+      // Mark nil checks "make_implicit". GoNilChecks pass will
+      // try to elide the branch.
+      if (llvm::Function *fn = llvm::cast<llvm::CallBase>(inst)->getCalledFunction())
+        if (fn->getName() == "__go_runtime_error")
+          if (llvm::BasicBlock *pred = inst->getParent()->getSinglePredecessor()) {
+            llvm::Instruction *br = pred->getTerminator();
+            br->setMetadata(llvm::LLVMContext::MD_make_implicit,
+                            llvm::MDNode::get(inst->getContext(), {}));
+          }
+
       break;
     }
   }
