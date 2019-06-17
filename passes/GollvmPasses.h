@@ -23,11 +23,13 @@ class Value;
 void initializeGoAnnotationPass(PassRegistry&);
 void initializeGoNilChecksPass(PassRegistry&);
 void initializeGoStatepointsLegacyPassPass(PassRegistry&);
+void initializeGoWrappersPass(PassRegistry&);
 void initializeRemoveAddrSpacePassPass(PassRegistry&);
 
 FunctionPass *createGoAnnotationPass();
 FunctionPass *createGoNilChecksPass();
 ModulePass *createGoStatepointsLegacyPass();
+FunctionPass *createGoWrappersPass();
 ModulePass *createRemoveAddrSpacePass(const DataLayout&);
 
 void linkGoGC();
