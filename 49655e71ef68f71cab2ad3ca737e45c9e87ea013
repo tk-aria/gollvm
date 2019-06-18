@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "958c2539_6d550d56",
+        "filename": "libgo/runtime/go-memops.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-06-18T20:22:51Z",
+      "side": 1,
+      "message": "Libc memmov/memcpy have return values -- are we sure that none of the replaced calls are calls that use the return value?",
+      "revId": "49655e71ef68f71cab2ad3ca737e45c9e87ea013",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
