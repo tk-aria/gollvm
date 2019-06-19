@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5299a44d_1d5257d1",
+        "filename": "passes/GoNilChecks.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 699,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-06-19T13:47:51Z",
+      "side": 1,
+      "message": "Original code includes an update of live-in set for block with mem op -- do we need this in the Go-specific version?",
+      "revId": "f497997f758a238621e9f53f275cc779215bc04b",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
