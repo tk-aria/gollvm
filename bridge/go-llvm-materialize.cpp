@@ -358,13 +358,12 @@ llvm::Value *Llvm_backend::makeArrayIndexGEP(llvm::ArrayType *llat,
   return val;
 }
 
-llvm::Value *Llvm_backend::makeFieldGEP(llvm::StructType *llst,
-                                        unsigned fieldIndex,
+llvm::Value *Llvm_backend::makeFieldGEP(unsigned fieldIndex,
                                         llvm::Value *sptr)
 {
   assert(sptr->getType()->isPointerTy());
   llvm::PointerType *srcTyp = llvm::cast<llvm::PointerType>(sptr->getType());
-  assert(srcTyp->getElementType()->isStructTy());
+  llvm::StructType *llst = llvm::cast<llvm::StructType>(srcTyp->getElementType());
   LIRBuilder builder(context_, llvm::ConstantFolder());
   assert(fieldIndex < llst->getNumElements());
   std::string tag(namegen("field"));
@@ -390,13 +389,12 @@ Bexpression *Llvm_backend::materializeStructField(Bexpression *fieldExpr)
   // Construct an appropriate GEP
   llvm::Type *llt = bstruct->btype()->type();
   assert(llt->isStructTy());
-  llvm::StructType *llst = llvm::cast<llvm::StructType>(llt);
   llvm::Value *sval = bstruct->value();
   llvm::Value *fval;
   if (bstruct->isConstant())
     fval = llvm::cast<llvm::Constant>(sval)->getAggregateElement(index);
   else
-    fval = makeFieldGEP(llst, index, sval);
+    fval = makeFieldGEP(index, sval);
   Btype *bft = elementTypeByIndex(bstruct->btype(), index);
 
   // Wrap result in a Bexpression
