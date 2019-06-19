@@ -16,6 +16,24 @@
       "revId": "49655e71ef68f71cab2ad3ca737e45c9e87ea013",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0a348d52_57639284",
+        "filename": "libgo/runtime/go-memops.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-06-19T15:06:43Z",
+      "side": 1,
+      "message": "Done. They mostly come from lowering LLVM intrinsics, which don\u0027t have return value. But it doesn\u0027t hurt to have one, to be safe.",
+      "parentUuid": "958c2539_6d550d56",
+      "revId": "49655e71ef68f71cab2ad3ca737e45c9e87ea013",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
