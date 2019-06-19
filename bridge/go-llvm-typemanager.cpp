@@ -985,6 +985,13 @@ bool TypeManager::setPlaceholderPointerType(Btype *placeholder,
   assert(to_type);
   if (placeholder == errorType_ || to_type == errorType_)
     return false;
+
+  // The frontend may pass a C function type as a function pointer
+  // type (e.g. in the interface mtable struct). Make a function
+  // pointer type here.
+  if (to_type->castToBFunctionType())
+    to_type = pointerType(to_type);
+
   assert(to_type->type()->isPointerTy());
   assert(placeholders_.find(placeholder) != placeholders_.end());
 
