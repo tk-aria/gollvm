@@ -16,6 +16,24 @@
       "revId": "f497997f758a238621e9f53f275cc779215bc04b",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2fda603c_96b7daa9",
+        "filename": "passes/GoNilChecks.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 699,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-06-19T19:47:50Z",
+      "side": 1,
+      "message": "I removed these because the pass runs at the end and I think nothing will consume this information. The original pass was not run at the end, although quite late.",
+      "parentUuid": "5299a44d_1d5257d1",
+      "revId": "f497997f758a238621e9f53f275cc779215bc04b",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
