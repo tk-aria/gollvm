@@ -480,8 +480,7 @@ public:
                                       Location location);
 
   // Field GEP helper
-  llvm::Value *makeFieldGEP(llvm::StructType *llst,
-                            unsigned fieldIndex,
+  llvm::Value *makeFieldGEP(unsigned fieldIndex,
                             llvm::Value *sptr);
 
   // Array indexing GEP helper
