@@ -102,6 +102,7 @@ void BuiltinTable::defineAllBuiltins() {
 void BuiltinTable::defineIntrinsicBuiltins() {
   Btype *boolType = tman_->boolType();
   Btype *ptrType = tman_->pointerType(boolType);
+  Btype *uint16Type = tman_->integerType(true, 16);
   Btype *uint32Type = tman_->integerType(true, 32);
   Btype *int32Type = tman_->integerType(false, 32);
   unsigned bitsInPtr = tman_->datalayout()->getPointerSizeInBits();
@@ -156,6 +157,31 @@ void BuiltinTable::defineIntrinsicBuiltins() {
   // equivalent is named "cttz".
   defineIntrinsicBuiltin("__builtin_ctzll", "ctzll", llvm::Intrinsic::cttz,
                          uint64Type, nullptr);
+
+  // go runtime refers to this intrinsic as "clz", however the LLVM
+  // equivalent is named "ctlz".
+  defineIntrinsicBuiltin("__builtin_clz", "clz", llvm::Intrinsic::ctlz,
+                         uint32Type, nullptr);
+
+  // go runtime refers to this intrinsic as "clzll", however the LLVM
+  // equivalent is named "ctlz".
+  defineIntrinsicBuiltin("__builtin_clzll", "clzll", llvm::Intrinsic::ctlz,
+                         uint64Type, nullptr);
+
+  // go runtime refers to this intrinsic as "popcount", however the LLVM
+  // equivalent is named "ctpop".
+  defineIntrinsicBuiltin("__builtin_popcount", "popcount", llvm::Intrinsic::ctpop,
+                         uint32Type, nullptr);
+
+  // go runtime refers to this intrinsic as "popcountll", however the LLVM
+  // equivalent is named "ctpop".
+  defineIntrinsicBuiltin("__builtin_popcountll", "popcountll", llvm::Intrinsic::ctpop,
+                         uint64Type, nullptr);
+
+  // go runtime refers to this intrinsic as "bswap16", however the LLVM
+  // equivalent is named just "bswap"
+  defineIntrinsicBuiltin("__builtin_bswap16", "bswap16", llvm::Intrinsic::bswap,
+                         uint16Type, nullptr);
 
   // go runtime refers to this intrinsic as "bswap32", however the LLVM
   // equivalent is named just "bswap"

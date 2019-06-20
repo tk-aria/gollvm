@@ -1390,7 +1390,8 @@ Bexpression *Llvm_backend::materializeCall(Bexpression *callExpr)
   if (llvm::isa<llvm::Function>(fnval)) {
     llvm::Function *fcn = llvm::cast<llvm::Function>(fnval);
     switch (fcn->getIntrinsicID()) {
-      case llvm::Intrinsic::cttz: {
+      case llvm::Intrinsic::cttz:
+      case llvm::Intrinsic::ctlz: {
         // @llvm.cttz.i32  (i32 <src>, i1 <is_zero_undef>)
         // Add the <is_zero_undef> arg.
         // GCC's __builtin_ctz results undefined for 0 input.
