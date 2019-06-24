@@ -59,6 +59,9 @@ GoWrappers::runOnMachineFunction(MachineFunction &MF) {
   if (Disabled)
     return false;
 
+  if (!MF.shouldSplitStack())
+    return false;
+
   for (MachineBasicBlock &MBB : MF)
     for (MachineInstr &MI : MBB)
       if (MI.isCall()) {
@@ -80,6 +83,8 @@ GoWrappers::runOnMachineFunction(MachineFunction &MF) {
           NewName = "__go_memcpy";
         else if (strcmp(Name, "memset") == 0)
           NewName = "__go_memset";
+        else if (strcmp(Name, "memcmp") == 0)
+          NewName = "__go_memcmp";
         else if (strcmp(Name, "_Unwind_Resume") == 0)
           NewName = "__go_Unwind_Resume";
         else

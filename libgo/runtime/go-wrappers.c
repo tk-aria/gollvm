@@ -26,6 +26,12 @@ void *__go_memset(void *dst, int c, size_t n)
 	return __builtin_memset(dst, c, n);
 }
 
+int __go_memcmp(const void*, const void*, size_t) __attribute__((no_split_stack));
+int __go_memcmp(const void *a, const void *b, size_t n)
+{
+	return __builtin_memcmp(a, b, n);
+}
+
 // Not no_split_stack -- _Unwind_Resume does use some stack.
 // This wrapper is useful in that it forces a split in here, not in
 // the caller. So the forced split happens only when _Unwind_Resume
