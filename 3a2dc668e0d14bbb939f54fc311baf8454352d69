@@ -69,6 +69,24 @@
       "revId": "3a2dc668e0d14bbb939f54fc311baf8454352d69",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9d498586_1e88bfa9",
+        "filename": "bridge/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2691,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-06-25T23:06:29Z",
+      "side": 1,
+      "message": "OK, SGTM.",
+      "parentUuid": "dfeb5fb5_744c1c13",
+      "revId": "3a2dc668e0d14bbb939f54fc311baf8454352d69",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
