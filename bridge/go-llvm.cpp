@@ -55,6 +55,7 @@ Llvm_backend::Llvm_backend(llvm::LLVMContext &context,
     , noInline_(false)
     , noFpElim_(false)
     , useSplitStack_(true)
+    , compilingRuntime_(false)
     , checkIntegrity_(true)
     , createDebugMetaData_(true)
     , exportDataStarted_(false)
@@ -2657,6 +2658,73 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
     // attribute for GC leaf function (i.e. not a statepoint)
     if (isGCLeaf(fns))
       fcn->addFnAttr("gc-leaf-function");
+
+    // attributes about runtime functions, to help the optimizer
+    if (fns == "runtime.newobject" ||
+        fns == "runtime.makeslice" ||
+        fns == "runtime.makeslice64" ||
+        fns == "runtime.makechan" ||
+        fns == "runtime.makechan64") {
+      fcn->addAttribute(llvm::AttributeList::ReturnIndex,
+                        llvm::Attribute::NonNull);
+      fcn->addAttribute(llvm::AttributeList::ReturnIndex,
+                        llvm::Attribute::NoAlias);
+    }
+
+    // makemap may return its argument, so not noalias.
+    if (fns == "runtime.makemap" ||
+        fns == "runtime.makemap64" ||
+        fns == "runtime.makemap_small")
+      fcn->addAttribute(llvm::AttributeList::ReturnIndex,
+                        llvm::Attribute::NonNull);
+
+    // mapaccess1 and mapassign never return nil.
+    if (fns == "runtime.mapaccess1" ||
+        fns == "runtime.mapaccess1_fast32" ||
+        fns == "runtime.mapaccess1_fast64" ||
+        fns == "runtime.mapaccess1_faststr" ||
+        fns == "runtime.mapaccess1_fat" ||
+        fns == "runtime.mapassign" ||
+        fns == "runtime.mapassign_fast32" ||
+        fns == "runtime.mapassign_fast64" ||
+        fns == "runtime.mapassign_fast32ptr" ||
+        fns == "runtime.mapassign_fast64ptr" ||
+        fns == "runtime.mapassign_faststr")
+      fcn->addAttribute(llvm::AttributeList::ReturnIndex,
+                        llvm::Attribute::NonNull);
+
+    // mapaccess is pure function.
+    if (!compilingRuntime_ &&
+        (fns == "runtime.mapaccess1" ||
+         fns == "runtime.mapaccess1_fast32" ||
+         fns == "runtime.mapaccess1_fast64" ||
+         fns == "runtime.mapaccess1_faststr" ||
+         fns == "runtime.mapaccess1_fat" ||
+         fns == "runtime.mapaccess2" ||
+         fns == "runtime.mapaccess2_fast32" ||
+         fns == "runtime.mapaccess2_fast64" ||
+         fns == "runtime.mapaccess2_faststr" ||
+         fns == "runtime.mapaccess2_fat"))
+      fcn->addFnAttr(llvm::Attribute::ReadOnly);
+
+    // memcmp-like.
+    if (fns == "runtime.memequal" ||
+        fns == "runtime.cmpstring") {
+      fcn->addFnAttr(llvm::Attribute::ReadOnly);
+      fcn->addFnAttr(llvm::Attribute::ArgMemOnly);
+    }
+
+    if (fns == "runtime.memclrNoHeapPointers")
+      fcn->addFnAttr(llvm::Attribute::ArgMemOnly);
+
+    // These functions are called in unlikely branches. But they
+    // themselves are not actually cold in the runtime. So only
+    // mark cold when we are not compiling the runtime.
+    if (!compilingRuntime_ &&
+        (fns == "runtime.gcWriteBarrier" ||
+         fns == "runtime.typedmemmove" ||
+         fns == "runtime.growslice"))
+      fcn->addFnAttr(llvm::Attribute::Cold);
 
     fcnValue = fcn;
 
