@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "44140818_1b374431",
+        "filename": "bridge/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2691,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-06-25T16:51:04Z",
+      "side": 1,
+      "message": "In general this seems like a good idea. I worry a little about the exact semantics of ReadOnly (I\u0027ve been hunting around for some real documentation on it) -- strictly speaking a call to one of these map routines could trigger a stack split, which could write to memory... but I this maybe this is ok, since there is no way to access the memory from any LLVM-compiled function. Maybe I am being too paranoid.",
+      "revId": "3a2dc668e0d14bbb939f54fc311baf8454352d69",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
