@@ -692,6 +692,9 @@ bool CompileGoImpl::initBridge()
   args.backend = bridge_.get();
   go_create_gogo (&args);
 
+  if (args.compiling_runtime)
+    bridge_->setCompilingRuntime();
+
   /* The default precision for floating point numbers.  This is used
      for floating point constants with abstract type.  This may
      eventually be controllable by a command line option.  */

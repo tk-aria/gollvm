@@ -387,20 +387,23 @@ public:
   unsigned traceLevel() const { return traceLevel_; }
 
   // Disable inlining if set to true.
-  void setNoInline(bool b) { noInline_ = b; };
+  void setNoInline(bool b) { noInline_ = b; }
 
   // Disable frame pointer elimination if set to true.
-  void setNoFpElim(bool b) { noFpElim_ = b; };
+  void setNoFpElim(bool b) { noFpElim_ = b; }
 
   // Enable/disable the use of split stacks.
-  void setUseSplitStack(bool b) { useSplitStack_ = b; };
+  void setUseSplitStack(bool b) { useSplitStack_ = b; }
 
   // Target CPU and features
   void setTargetCpuAttr(const std::string &cpu);
   void setTargetFeaturesAttr(const std::string &attrs);
 
   // Set GC strategy
-  void setGCStrategy(std::string s) { gcStrategy_ = s; };
+  void setGCStrategy(std::string s) { gcStrategy_ = s; }
+
+  // Whether we are compiling the runtime package
+  void setCompilingRuntime() { compilingRuntime_ = true; }
 
   // Personality function
   llvm::Function *personalityFunction();
@@ -752,6 +755,9 @@ public:
 
   // Whether to use split stacks.
   bool useSplitStack_;
+
+  // Whether we are compiling the runtime.
+  bool compilingRuntime_;
 
   // Whether to check for unexpected node sharing (e.g. same Bexpression
   // or statement pointed to by multiple parents).
