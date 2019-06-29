@@ -27,7 +27,7 @@ typedef std::vector<Btype*> BuiltinEntryTypeVec;
 
 typedef llvm::Value *(*BuiltinExprMaker)(llvm::SmallVectorImpl<llvm::Value*> &args,
                                          BinstructionsLIRBuilder *builder,
-                                         TypeManager *tm);
+                                         Llvm_backend *be);
 
 // An entry in a table of interesting builtin functions. A given entry
 // is either an intrinsic or a libcall builtin.
