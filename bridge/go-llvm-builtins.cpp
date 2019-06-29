@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "go-llvm.h"
 #include "go-llvm-builtins.h"
 #include "go-llvm-bfunction.h"
 #include "go-llvm-typemanager.h"
@@ -347,7 +348,7 @@ void BuiltinTable::defineIntrinsicBuiltin(const char *name,
 
 static llvm::Value *builtinExtractReturnAddrMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
                                                   BinstructionsLIRBuilder *builder,
-                                                  TypeManager *tm)
+                                                  Llvm_backend *be)
 {
   // __builtin_extract_return_addr(uintptr) uintptr
   // extracts the actual encoded address from the address as returned
@@ -362,10 +363,27 @@ static llvm::Value *builtinExtractReturnAddrMaker(llvm::SmallVectorImpl<llvm::Va
 
 static llvm::Value *builtinUnreachableMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
                                             BinstructionsLIRBuilder *builder,
-                                            TypeManager *tm)
+                                            Llvm_backend *be)
 {
   llvm::UnreachableInst *unr = builder->CreateUnreachable();
   return unr;
+}
+
+static llvm::Value *builtinMemsetMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
+                                       BinstructionsLIRBuilder *builder,
+                                       Llvm_backend *be)
+{
+  // __builtin_memset takes int32 as its second argument, whereas
+  // LLVM intrinsic memset takes an i8. We wrap the intrinsic in
+  // an expression builtin, which does a cast first.
+  assert(args.size() == 3);
+  llvm::Value *cast = builder->CreateTrunc(args[1], be->llvmInt8Type());
+  llvm::Function* fn =
+      llvm::Intrinsic::getDeclaration(&be->module(),
+                                      llvm::Intrinsic::memset,
+                                      {args[0]->getType(), args[2]->getType()});
+  // LLVM memset takes an extra isVolatile argument.
+  return builder->CreateCall(fn, {args[0], cast, args[2], builder->getFalse()});
 }
 
 static llvm::AtomicOrdering llvmOrder(int o)
@@ -389,10 +407,10 @@ static llvm::AtomicOrdering llvmOrder(int o)
 
 static llvm::Value *atomicLoadMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
                                     BinstructionsLIRBuilder *builder,
-                                    TypeManager *tm, int sz)
+                                    Llvm_backend *be, int sz)
 {
   assert(args.size() == 2);
-  llvm::Type *t = sz == 8 ? tm->llvmInt64Type() : tm->llvmInt32Type();
+  llvm::Type *t = sz == 8 ? be->llvmInt64Type() : be->llvmInt32Type();
   llvm::LoadInst *load = builder->CreateLoad(t, args[0]);
   // FIXME: we assume the FE always emits constant memory order.
   // in case it doesn't, conservatively use SequentiallyConsistent.
@@ -407,21 +425,21 @@ static llvm::Value *atomicLoadMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
 
 static llvm::Value *atomicLoad4Maker(llvm::SmallVectorImpl<llvm::Value*> &args,
                                      BinstructionsLIRBuilder *builder,
-                                     TypeManager *tm)
+                                     Llvm_backend *be)
 {
-  return atomicLoadMaker(args, builder, tm, 4);
+  return atomicLoadMaker(args, builder, be, 4);
 }
 
 static llvm::Value *atomicLoad8Maker(llvm::SmallVectorImpl<llvm::Value*> &args,
                                      BinstructionsLIRBuilder *builder,
-                                     TypeManager *tm)
+                                     Llvm_backend *be)
 {
-  return atomicLoadMaker(args, builder, tm, 8);
+  return atomicLoadMaker(args, builder, be, 8);
 }
 
 static llvm::Value *atomicStoreMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
                                      BinstructionsLIRBuilder *builder,
-                                     TypeManager *tm, int sz)
+                                     Llvm_backend *be, int sz)
 {
   assert(args.size() == 3);
   llvm::StoreInst *store = builder->CreateStore(args[1], args[0]);
@@ -437,22 +455,22 @@ static llvm::Value *atomicStoreMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
 
 static llvm::Value *atomicStore4Maker(llvm::SmallVectorImpl<llvm::Value*> &args,
                                       BinstructionsLIRBuilder *builder,
-                                      TypeManager *tm)
+                                      Llvm_backend *be)
 {
-  return atomicStoreMaker(args, builder, tm, 4);
+  return atomicStoreMaker(args, builder, be, 4);
 }
 
 static llvm::Value *atomicStore8Maker(llvm::SmallVectorImpl<llvm::Value*> &args,
                                       BinstructionsLIRBuilder *builder,
-                                      TypeManager *tm)
+                                      Llvm_backend *be)
 {
-  return atomicStoreMaker(args, builder, tm, 8);
+  return atomicStoreMaker(args, builder, be, 8);
 }
 
 static llvm::Value *atomicRMWMaker(llvm::AtomicRMWInst::BinOp op,
                                    llvm::SmallVectorImpl<llvm::Value*> &args,
                                    BinstructionsLIRBuilder *builder,
-                                   TypeManager *tm)
+                                   Llvm_backend *be)
 {
   assert(args.size() == 3);
   // FIXME: see atomicLoadMaker.
@@ -465,41 +483,41 @@ static llvm::Value *atomicRMWMaker(llvm::AtomicRMWInst::BinOp op,
 
 static llvm::Value *atomicXchgMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
                                     BinstructionsLIRBuilder *builder,
-                                    TypeManager *tm)
+                                    Llvm_backend *be)
 {
-  return atomicRMWMaker(llvm::AtomicRMWInst::Xchg, args, builder, tm);
+  return atomicRMWMaker(llvm::AtomicRMWInst::Xchg, args, builder, be);
 }
 
 static llvm::Value *atomicAddMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
                                    BinstructionsLIRBuilder *builder,
-                                   TypeManager *tm)
+                                   Llvm_backend *be)
 {
   // atomicrmw returns the old content. We need to do the add.
-  llvm::Value* old = atomicRMWMaker(llvm::AtomicRMWInst::Add, args, builder, tm);
+  llvm::Value* old = atomicRMWMaker(llvm::AtomicRMWInst::Add, args, builder, be);
   return builder->CreateAdd(old, args[1]);
 }
 
 static llvm::Value *atomicAndMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
                                    BinstructionsLIRBuilder *builder,
-                                   TypeManager *tm)
+                                   Llvm_backend *be)
 {
   // atomicrmw returns the old content. We need to do the and.
-  llvm::Value* old = atomicRMWMaker(llvm::AtomicRMWInst::And, args, builder, tm);
+  llvm::Value* old = atomicRMWMaker(llvm::AtomicRMWInst::And, args, builder, be);
   return builder->CreateAnd(old, args[1]);
 }
 
 static llvm::Value *atomicOrMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
                                   BinstructionsLIRBuilder *builder,
-                                  TypeManager *tm)
+                                  Llvm_backend *be)
 {
   // atomicrmw returns the old content. We need to do the or.
-  llvm::Value* old = atomicRMWMaker(llvm::AtomicRMWInst::Or, args, builder, tm);
+  llvm::Value* old = atomicRMWMaker(llvm::AtomicRMWInst::Or, args, builder, be);
   return builder->CreateOr(old, args[1]);
 }
 
 static llvm::Value *atomicCasMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
                                    BinstructionsLIRBuilder *builder,
-                                   TypeManager *tm)
+                                   Llvm_backend *be)
 {
   assert(args.size() == 6);
   // GCC __atomic_compare_exchange_n takes a pointer to the old value.
@@ -525,7 +543,7 @@ static llvm::Value *atomicCasMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
   // LLVM cmpxchg instruction returns { valType, i1 }. Extract the second
   // value, and cast to Go bool type (i8).
   llvm::Value *ret = builder->CreateExtractValue(cas, {1});
-  return builder->CreateZExt(ret, tm->llvmInt8Type());
+  return builder->CreateZExt(ret, be->llvmInt8Type());
 }
 
 void BuiltinTable::defineExprBuiltins()
@@ -551,6 +569,12 @@ void BuiltinTable::defineExprBuiltins()
     BuiltinEntryTypeVec typeVec;
     registerExprBuiltin("__builtin_unreachable", nullptr,
                         typeVec, builtinUnreachableMaker);
+  }
+
+  {
+    BuiltinEntryTypeVec typeVec = {nullptr, uint8Type, int32Type, uintPtrType};
+    registerExprBuiltin("__builtin_memset", nullptr,
+                        typeVec, builtinMemsetMaker);
   }
 
   {
