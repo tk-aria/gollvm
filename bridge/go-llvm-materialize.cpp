@@ -1360,6 +1360,25 @@ void Llvm_backend::genCallEpilog(GenCallState &state,
   }
 }
 
+// Inline runtime.getg, generate a load of g.
+// This is not done as a builtin because, unlike other builtins,
+// we need the FE to tell us the result type.
+static llvm::Value *makeGetg(Btype *resType,
+                             BinstructionsLIRBuilder *builder,
+                             Llvm_backend *be)
+{
+  llvm::GlobalValue* g = be->module().getGlobalVariable("runtime.g");
+  if (!g) {
+    bool is_external = true, is_hidden = false, in_unique_section = false;
+    Location location; // dummy
+    Bvariable* bv = be->global_variable("runtime.g", "runtime.g", resType, is_external,
+                                        is_hidden, in_unique_section, location);
+    g = llvm::cast<llvm::GlobalValue>(bv->value());
+    g->setThreadLocal(true);
+  }
+  return builder->CreateLoad(g);
+}
+
 Bexpression *Llvm_backend::materializeCall(Bexpression *callExpr)
 {
   Location location = callExpr->location();
@@ -1461,7 +1480,8 @@ Bexpression *Llvm_backend::materializeCall(Bexpression *callExpr)
       BuiltinExprMaker makerfn = be->exprMaker();
       if (makerfn)
         callValue = makerfn(state.llargs, &state.builder, this);
-    }
+    } else if (fcn->getName() == "runtime.getg")
+      callValue = makeGetg(rbtype, &state.builder, this);
   }
   if (!callValue) {
     llvm::FunctionType *llft =
