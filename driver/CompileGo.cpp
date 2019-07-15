@@ -914,6 +914,8 @@ bool CompileGoImpl::invokeBackEnd()
       createTargetTransformInfoWrapperPass(target_->getTargetIRAnalysis()));
   createPasses(modulePasses, functionPasses);
 
+  modulePasses.add(createGoSafeGetgPass());
+
   // Add statepoint insertion pass to the end of optimization pipeline,
   // right before lowering to machine IR.
   if (enable_gc_) {
