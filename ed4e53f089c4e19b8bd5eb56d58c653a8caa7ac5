@@ -104,6 +104,24 @@
       "revId": "ed4e53f089c4e19b8bd5eb56d58c653a8caa7ac5",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3781025f_4063a58e",
+        "filename": "passes/GoSafeGetg.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-07-17T01:51:02Z",
+      "side": 1,
+      "message": "It seems that GlobalIsel is not able to compile any Go functions at the moment. And it doesn\u0027t seem to handle thread-local variables.",
+      "parentUuid": "08607c52_5983ca05",
+      "revId": "ed4e53f089c4e19b8bd5eb56d58c653a8caa7ac5",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
