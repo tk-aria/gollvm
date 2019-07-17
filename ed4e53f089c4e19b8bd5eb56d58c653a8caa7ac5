@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "8e05f196_f12f6fde",
+        "filename": "bridge/go-llvm-materialize.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1484,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-07-17T01:08:04Z",
+      "side": 1,
+      "message": "Done. Added a hidden option.",
+      "parentUuid": "56f9ae58_83966a12",
+      "revId": "ed4e53f089c4e19b8bd5eb56d58c653a8caa7ac5",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "e36435fc_5b6ac6dc",
         "filename": "passes/GoSafeGetg.cpp",
         "patchSetId": 2
@@ -36,6 +54,24 @@
     },
     {
       "key": {
+        "uuid": "290a6d87_f1581d87",
+        "filename": "passes/GoSafeGetg.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-07-17T01:08:04Z",
+      "side": 1,
+      "message": "Good point. The Go code doesn\u0027t take the address of g, so I don\u0027t think it will store the address of g somewhere. I added an assert.",
+      "parentUuid": "e36435fc_5b6ac6dc",
+      "revId": "ed4e53f089c4e19b8bd5eb56d58c653a8caa7ac5",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "6054dbf3_0bae6628",
         "filename": "passes/GoSafeGetg.cpp",
         "patchSetId": 2
@@ -47,6 +83,24 @@
       "writtenOn": "2019-07-16T14:29:31Z",
       "side": 1,
       "message": "LLVM also has GlobalIsel in addition to SelectionDag -- do we need to be concerned about that? Or are TLS expansions one of those things not handled in GlobalIsel yet?",
+      "revId": "ed4e53f089c4e19b8bd5eb56d58c653a8caa7ac5",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "08607c52_5983ca05",
+        "filename": "passes/GoSafeGetg.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-07-17T01:08:04Z",
+      "side": 1,
+      "message": "Good point. I haven\u0027t looked at GlobalIsel. Will do.",
+      "parentUuid": "6054dbf3_0bae6628",
       "revId": "ed4e53f089c4e19b8bd5eb56d58c653a8caa7ac5",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
