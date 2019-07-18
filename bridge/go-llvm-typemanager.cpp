@@ -450,6 +450,14 @@ Btype *TypeManager::placeholderStructType(const std::string &name,
   llvm::Type *opaque = makeOpaqueLlvmType(name.c_str());
   pst->setType(opaque);
   placeholders_.insert(pst);
+
+  if (traceLevel() > 1) {
+    std::cerr << "\n^ created placeholder struct type "
+              << ((void*)pst) << " [llvm type "
+              << ((void*) opaque) << "]\n";
+    pst->dump();
+  }
+
   return pst;
 }
 
@@ -1133,6 +1141,58 @@ TypeManager::setPlaceholderStructType(Btype *placeholder,
     postProcessResolvedPlaceholder(phst);
 
   return true;
+}
+
+void TypeManager::diagnosePlaceholder(Btype *typ)
+{
+  if (typ == NULL) {
+    std::cerr << "^ <null type pointer>\n";
+    return;
+  }
+  if (!typ->isPlaceholder()) {
+    std::cerr << "^ type " << ((void*)typ) << " is not a placholder\n";
+    return;
+  }
+
+  // Walk the placeholder refs graph to see what edges we have pointing
+  // to this type. Then walk any edges to the sources of those edges, etc.
+  std::vector<Btype*> worklist;
+  std::set<Btype*> visited;
+  worklist.push_back(typ);
+  visited.insert(typ);
+  while (! worklist.empty()) {
+    Btype *t = worklist.back();
+    worklist.pop_back();
+
+    bool preambleShown = false;
+    for (auto it = placeholderRefs_.begin(); it != placeholderRefs_.end(); ++it)
+    {
+      Btype *ph = it->first;
+      if (!ph->isPlaceholder())
+        continue;
+      std::set<Btype *> &refs = it->second;
+      for (auto rit = refs.begin(); rit != refs.end(); ++rit) {
+        Btype *reft = *rit;
+        if (reft == t) {
+          if (!preambleShown) {
+            std::cerr << "unresolved references to PHT "
+                      << ((void*)t) << " ";
+            t->dump();
+            preambleShown = true;
+          }
+          std::cerr << "  PHT "
+                      << ((void*)ph) << " ";
+          ph->dump();
+          if (visited.find(ph) == visited.end()) {
+            visited.insert(ph);
+            worklist.push_back(ph);
+          }
+        }
+      }
+    }
+    if (preambleShown)
+      std::cerr << "\n";
+  }
 }
 
 // Fill in the components of a placeholder array type.

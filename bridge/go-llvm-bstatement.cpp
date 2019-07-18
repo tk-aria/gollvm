@@ -174,6 +174,12 @@ void Blabel::setPlaceholder(llvm::Value *ph)
   placeholder_ = ph;
 }
 
+void Blabel::srcDump(Llvm_linemap *linemap)
+{
+  std::cerr << "label L" << lab_ << ": ";
+  std::cerr << linemap->to_string(location()) << "\n";
+}
+
 Bblock::Bblock(Bfunction *func,
                const std::vector<Bvariable *> &vars,
                Location loc)
