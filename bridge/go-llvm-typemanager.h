@@ -264,6 +264,13 @@ class TypeManager {
 
  private:
 
+  // For debugging only. Examines a placeholder type to try to explain
+  // why it is still a placeholder. This is mainly useful for placeholder struct
+  // types that are still classified as placeholders even after
+  // Llvm_backend::set_placeholder_struct_type() has been invoked on them
+  // (typically because one or more fields is still a placeholder).
+  void diagnosePlaceholder(Btype *typ);
+
   std::string typToStringRec(Btype *typ, std::map<Btype *, std::string> &tab);
 
   llvm::DIType *buildStructDIType(BStructType *bst, DIBuildHelper &helper);

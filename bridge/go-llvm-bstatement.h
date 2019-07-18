@@ -136,6 +136,9 @@ public:
   llvm::Value *placeholder() const { return placeholder_; }
   void setPlaceholder(llvm::Value *ph);
 
+  // dump with source line info
+  void srcDump(Llvm_linemap *);
+
 private:
   Bfunction *function_;
   llvm::Value *placeholder_;
