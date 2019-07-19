@@ -75,17 +75,16 @@ function(setup_libbacktrace)
   add_library(libbacktrace_nonpiclib
     OBJECT EXCLUDE_FROM_ALL ${libbacktracecfiles})
   set_target_properties(libbacktrace_nonpiclib
-    PROPERTIES COMPILE_FLAGS "${libbacktraceflags}")
+    PROPERTIES COMPILE_FLAGS "-fno-PIC ${libbacktraceflags}")
   target_include_directories(libbacktrace_nonpiclib
     BEFORE PRIVATE "${libgo_binroot}/libbacktrace")
 
   # pic
-  string(APPEND libbacktraceflags " -fPIC")
   add_library(libbacktrace_piclib
     OBJECT EXCLUDE_FROM_ALL ${libbacktracecfiles})
   target_include_directories(libbacktrace_piclib
     BEFORE PRIVATE "${libgo_binroot}/libbacktrace")
   set_target_properties(libbacktrace_piclib
-    PROPERTIES COMPILE_FLAGS "${libbacktraceflags}")
+    PROPERTIES COMPILE_FLAGS "-fPIC ${libbacktraceflags}")
 
 endfunction()

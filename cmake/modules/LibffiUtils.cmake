@@ -82,12 +82,11 @@ function(setup_libffi libffi_srcroot)
 
   # Create libffi object libraries
   add_library(libffi_nonpiclib OBJECT EXCLUDE_FROM_ALL ${c_srcs} ${asm_srcs})
-  set_target_properties(libffi_nonpiclib PROPERTIES COMPILE_FLAGS "${libffiflags}")
+  set_target_properties(libffi_nonpiclib PROPERTIES COMPILE_FLAGS "-fno-PIC ${libffiflags}")
   target_include_directories(libffi_nonpiclib PUBLIC "${libffi_srcroot}/include")
 
-  string(APPEND libffiflags " -fPIC")
   add_library(libffi_piclib OBJECT EXCLUDE_FROM_ALL ${c_srcs} ${asm_srcs})
-  set_target_properties(libffi_piclib PROPERTIES COMPILE_FLAGS "${libffiflags}")
+  set_target_properties(libffi_piclib PROPERTIES COMPILE_FLAGS "-fPIC ${libffiflags}")
   target_include_directories(libffi_piclib PUBLIC "${libffi_srcroot}/include")
 
 endfunction()

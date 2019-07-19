@@ -477,7 +477,7 @@ add_dependencies(libgo_c_piclib runtimeinctarg)
 
 # Library with non-PIC-compiled objects from libgo C code
 add_library(libgo_c_nonpiclib OBJECT EXCLUDE_FROM_ALL ${runtimecpaths})
-set_target_properties(libgo_c_nonpiclib PROPERTIES COMPILE_FLAGS "${baseopts}")
+set_target_properties(libgo_c_nonpiclib PROPERTIES COMPILE_FLAGS "-fno-PIC ${baseopts}")
 target_include_directories(libgo_c_nonpiclib PUBLIC
   "${libgo_csrcroot}/runtime"
   "${libgo_binroot}/runtime"
