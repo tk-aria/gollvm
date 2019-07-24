@@ -55,7 +55,7 @@ do
 done
 export GC
 export GOLIBS
-export LD_LIBRARY_PATH="${BINDIR}:${LD_LIBARY_PATH}"
+export LD_LIBRARY_PATH="${BINDIR}:${LD_LIBRARY_PATH}"
 if [ ! -z "${ADDTOPATH}" ]; then
   export PATH=${ADDTOPATH}:${PATH}
 fi
