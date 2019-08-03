@@ -43,6 +43,7 @@ namespace gollvm { namespace arch {
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/RemarkStreamer.h"
+#include "llvm/Remarks/YAMLRemarkSerializer.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Option/Arg.h"
@@ -440,7 +441,8 @@ bool CompileGoImpl::setup()
       }
       context_.setRemarkStreamer(llvm::make_unique<llvm::RemarkStreamer>(
           fname,
-          llvm::make_unique<llvm::remarks::YAMLSerializer>(optRecordFile_->os())));
+          llvm::make_unique<llvm::remarks::YAMLRemarkSerializer>(optRecordFile_->os(),
+                                    llvm::remarks::SerializerMode::Separate)));
       if (! sampleProfileFile_.empty())
         context_.setDiagnosticsHotnessRequested(true);
       optRecordFile_->keep();

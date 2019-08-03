@@ -131,7 +131,7 @@ void BuiltinTable::defineIntrinsicBuiltins() {
                          uint32Type, nullptr);
 
   defineIntrinsicBuiltin("__builtin_prefetch", nullptr, llvm::Intrinsic::prefetch,
-                         ptrType, int32Type, int32Type, nullptr);
+                         ptrType, nullptr);
 
   defineIntrinsicBuiltin("__builtin_expect", nullptr, llvm::Intrinsic::expect,
                          int64Type, int64Type, nullptr);
