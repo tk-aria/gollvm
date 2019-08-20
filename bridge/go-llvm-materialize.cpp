@@ -717,10 +717,11 @@ Bexpression *Llvm_backend::materializeBinary(Bexpression *binExpr)
   assert((blitype == nullptr) == (britype == nullptr));
   bool isUnsigned = false;
   if (blitype) {
-    if (op == OPERATOR_LSHIFT || op == OPERATOR_RSHIFT)
-      assert(britype->isUnsigned());
-    else
-      assert(blitype->isUnsigned() == britype->isUnsigned());
+    // As of Go 1.13, shift amount is allowed to be a signed integer.
+    // Note that the front end emits tests to guard against negative
+    // shift amounts.
+    assert(op == OPERATOR_LSHIFT || op == OPERATOR_RSHIFT &&
+           blitype->isUnsigned() == britype->isUnsigned());
     isUnsigned = blitype->isUnsigned();
   }
   LIRBuilder builder(context_, llvm::ConstantFolder());
