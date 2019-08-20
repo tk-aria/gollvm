@@ -67,7 +67,7 @@ import (
 )
 
 const prog = `
-#include <inttypes.h>
+typedef unsigned long long uint64_t;
 typedef struct  {
   uint64_t a[512];
   uint64_t b[512];
