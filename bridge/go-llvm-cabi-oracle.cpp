@@ -619,11 +619,34 @@ CABIParamInfo CABIOracle::analyzeABIReturn(Btype *resultType, ABIState &state)
   return CABIParamInfo(abiTyp, ParmDirect, AttrNone, -1);
 }
 
+// Given the number of registers that we think a param is going to consume, and
+// a state object storing the registers used so far, canPassDirectly() makes a
+// decision as to whether a given param can be passed directly in registers vs
+// in memory.
+//
+// Note the first clause, "if (regsInt + regsSSE == 1) return true". This may
+// seem counter-intuitive (why no check against the state object?), but this way
+// of doing things is the convention used by other front ends (e.g. clang). What
+// is happening here is that for larger aggregate/array params (things that
+// don't fit into a single register), we'll make the pass-through-memory
+// semantics explicit in the function signature and generate the explict code to
+// copy things into memory. For params that do fit into a single register,
+// however, we just leave them all as by-value parameters and then assume that
+// the back end will do the right thing (e.g. pass the first few in registers
+// and then the remaining ones in memory).
+//
+// Doing things this way has performance advantages in that the middle-end
+// (all of the machine-independent LLVM optimization passes) won't have
+// to deal with the additional chunks of stack memory and code to copy
+// things onto and off of the stack (not to mention the aliasing concerns
+// when a local variable's address is taken and then passed in a function
+// call).
+
 bool CABIOracle::canPassDirectly(unsigned regsInt,
                                  unsigned regsSSE,
                                  ABIState &state)
 {
-  if (regsInt + regsSSE == 1)
+  if (regsInt + regsSSE == 1) // see comment above
     return true;
   if (regsInt <= state.availIntRegs() && regsSSE <= state.availSSERegs())
     return true;
