@@ -22,6 +22,30 @@
       "revId": "f42fe7129f03d3ad6b68743ba90aa4d95303b8d7",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "431e45c6_f948a693",
+        "filename": "bridge/go-llvm-materialize.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 723,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-08-20T16:54:28Z",
+      "side": 1,
+      "message": "Yes, thanks. That was the intended code, but never quite got there. Fixed.",
+      "parentUuid": "e8a72ba4_24e7bb8d",
+      "range": {
+        "startLine": 723,
+        "startChar": 58,
+        "endLine": 723,
+        "endChar": 60
+      },
+      "revId": "f42fe7129f03d3ad6b68743ba90aa4d95303b8d7",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
