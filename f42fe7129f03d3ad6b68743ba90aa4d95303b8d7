@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "e8a72ba4_24e7bb8d",
+        "filename": "bridge/go-llvm-materialize.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 723,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-08-20T16:29:17Z",
+      "side": 1,
+      "message": "This \u0026\u0026 should be || ? (If it is a shift, I think we don\u0027t need to check signed-ness now.)",
+      "range": {
+        "startLine": 723,
+        "startChar": 58,
+        "endLine": 723,
+        "endChar": 60
+      },
+      "revId": "f42fe7129f03d3ad6b68743ba90aa4d95303b8d7",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
