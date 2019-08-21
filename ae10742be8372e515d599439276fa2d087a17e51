@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "def45752_cb7be4c5",
+        "filename": "driver/Compilation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 138,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-08-21T18:05:59Z",
+      "side": 1,
+      "message": "Fix the indentation?",
+      "revId": "ae10742be8372e515d599439276fa2d087a17e51",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "476ab187_7eabab1a",
+        "filename": "driver/CompileGo.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 317,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-08-21T18:05:59Z",
+      "side": 1,
+      "message": "Also here.",
+      "revId": "ae10742be8372e515d599439276fa2d087a17e51",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9c32a32a_c10fca3f",
+        "filename": "libgo/godumpspec/godumpspec.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1269,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-08-21T18:05:59Z",
+      "side": 1,
+      "message": "Maybe also here. (it wasn\u0027t aligned before)",
+      "revId": "ae10742be8372e515d599439276fa2d087a17e51",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
