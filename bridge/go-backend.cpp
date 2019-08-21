@@ -63,11 +63,10 @@ readExportDataFromObject(llvm::object::ObjectFile *obj,
   for (llvm::object::section_iterator si = obj->section_begin(),
            se = obj->section_end(); si != se; ++si) {
     llvm::object::SectionRef sref = *si;
-    llvm::StringRef sname;
-    std::error_code error = sref.getName(sname);
-    if (error)
+    llvm::Expected<llvm::StringRef> sname = sref.getName();
+    if (! sname)
       break;
-    if (sname == GO_EXPORT_SECTION_NAME) {
+    if (*sname == GO_EXPORT_SECTION_NAME) {
       // Extract section of interest
       llvm::Expected<llvm::StringRef> bytes = sref.getContents();
       if (! bytes) {
