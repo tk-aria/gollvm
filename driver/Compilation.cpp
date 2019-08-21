@@ -134,7 +134,7 @@ void Compilation::addCommand(const Action &srcAction,
                              const char *executable,
                              llvm::opt::ArgStringList &args)
 {
-  ownedCommands_.push_back(llvm::make_unique<Command>(srcAction,
+  ownedCommands_.push_back(std::make_unique<Command>(srcAction,
                                                       creatingTool,
                                                       executable,
                                                       args));
