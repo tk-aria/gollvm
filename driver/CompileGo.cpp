@@ -313,8 +313,8 @@ bool CompileGoImpl::resolveInputOutput(const Action &jobAction,
   // Open output file.
   std::error_code EC;
   sys::fs::OpenFlags OpenFlags = sys::fs::F_Text;
-  auto FDOut = llvm::make_unique<ToolOutputFile>(asmOutFileName_, EC,
-                                                 OpenFlags);
+  auto FDOut = std::make_unique<ToolOutputFile>(asmOutFileName_, EC,
+                                                OpenFlags);
   if (EC) {
     errs() << progname_ << ": error opening " << asmOutFileName_ << ": "
            << EC.message() << '\n';
@@ -432,16 +432,16 @@ bool CompileGoImpl::setup()
     if (fnamearg != nullptr) {
       StringRef fname = fnamearg->getValue();
       std::error_code EC;
-      optRecordFile_ = llvm::make_unique<llvm::ToolOutputFile>(
+      optRecordFile_ = std::make_unique<llvm::ToolOutputFile>(
           fname, EC, llvm::sys::fs::F_None);
       if (EC) {
         errs() << "error: unable to open file '"
                << fname << "' to emit optimization remarks\n";
         return false;
       }
-      context_.setRemarkStreamer(llvm::make_unique<llvm::RemarkStreamer>(
+      context_.setRemarkStreamer(std::make_unique<llvm::RemarkStreamer>(
           fname,
-          llvm::make_unique<llvm::remarks::YAMLRemarkSerializer>(optRecordFile_->os(),
+          std::make_unique<llvm::remarks::YAMLRemarkSerializer>(optRecordFile_->os(),
                                     llvm::remarks::SerializerMode::Separate)));
       if (! sampleProfileFile_.empty())
         context_.setDiagnosticsHotnessRequested(true);
@@ -580,7 +580,8 @@ bool CompileGoImpl::initBridge()
 {
   // Set up the LLVM context
   context_.setDiagnosticHandler(
-      llvm::make_unique<BEDiagnosticHandler>(&this->hasError_, this->remarkCtl_));
+      std::make_unique<BEDiagnosticHandler>(&this->hasError_,
+                                            this->remarkCtl_));
 
   llvm::Optional<unsigned> enable_gc =
       driver_.getLastArgAsInteger(gollvm::options::OPT_enable_gc_EQ, 0u);
