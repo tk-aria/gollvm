@@ -1265,7 +1265,7 @@ int main(int argc, char **argv) {
   std::unique_ptr<ToolOutputFile> OutputFile;
   if (!OutputFilename.empty()) {
     std::error_code EC;
-    OutputFile = llvm::make_unique<ToolOutputFile>(OutputFilename, EC,
+    OutputFile = std::make_unique<ToolOutputFile>(OutputFilename, EC,
                                                      sys::fs::F_None);
     // Don't remove output file if we exit with an error.
     OutputFile->keep();
