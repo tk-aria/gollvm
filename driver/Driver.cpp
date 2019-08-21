@@ -301,7 +301,7 @@ ToolChain *Driver::setup()
   if (!tc) {
     switch (triple_.getOS()) {
       case Triple::Linux:
-        tc = make_unique<toolchains::Linux>(*this, triple_);
+        tc = std::make_unique<toolchains::Linux>(*this, triple_);
         break;
       default:
         errs() << progname_ << ": error: unsupported target "

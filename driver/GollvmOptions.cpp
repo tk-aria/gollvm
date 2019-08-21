@@ -40,7 +40,7 @@ public:
 }
 
 std::unique_ptr<OptTable> createGollvmDriverOptTable() {
-  auto Result = llvm::make_unique<DriverOptTable>();
+  auto Result = std::make_unique<DriverOptTable>();
   return std::move(Result);
 }
 

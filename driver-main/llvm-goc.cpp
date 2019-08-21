@@ -150,7 +150,7 @@ bool CommandLineParser::parseCommandLine(int argc, char **argv)
   auto llvmargs = args_.getAllArgValues(gollvm::options::OPT_mllvm);
   if (! llvmargs.empty()) {
     unsigned nargs = llvmargs.size();
-    auto args = llvm::make_unique<const char*[]>(nargs + 2);
+    auto args = std::make_unique<const char*[]>(nargs + 2);
     args[0] = "gollvm (LLVM option parsing)";
     for (unsigned i = 0; i != nargs; ++i)
       args[i + 1] = llvmargs[i].c_str();
