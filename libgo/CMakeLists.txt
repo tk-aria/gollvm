@@ -438,7 +438,6 @@ list(APPEND runtimecfiles
 # Linux-specific C files.
 if(${goos} STREQUAL "linux")
   list(APPEND runtimecfiles
-    "runtime/getncpu-linux.c"
     "go/syscall/clone_linux.c")
 endif()
 
