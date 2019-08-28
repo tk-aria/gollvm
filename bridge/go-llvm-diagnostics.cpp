@@ -103,3 +103,12 @@ go_be_get_quotechars(const char** open_qu, const char** close_qu)
   *open_qu = "'";
   *close_qu = "'";
 }
+
+void go_assert_fail(const char *expr, const char *filename,
+                    int line, const char *function)
+{
+  llvm::errs() << "llvm-goc: " << filename << ":" << line << ": "
+               << function << ": assertion '"
+               << expr << "' failed.\n";
+  abort();
+}
