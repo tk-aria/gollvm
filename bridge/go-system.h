@@ -41,9 +41,23 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#define go_assert assert
-
 #define _(x) x
+
+// In a previous version of this file, go_assert was simply #define'd to
+// 'assert', meaning that gofrontend assertions would be compiled away for
+// release builds, which was problematic. This version of go_assert applies for
+// all build flavors, meaning that we'll get assertion checking for release
+// builds. FWIW turning on assertions for all of LLVM can be very expensive from
+// a compile time perspective, but keeping the assertion checks in gofrontend
+// comes with more modest overhead.
+
+extern void go_assert_fail(const char *expr, const char *filename,
+                           int line, const char *function);
+
+#define go_assert(expr) \
+     (static_cast <bool> (expr)						\
+      ? void (0)							\
+      : go_assert_fail (#expr, __FILE__, __LINE__, __PRETTY_FUNCTION__))
 
 #include "llvm-includes.h"
 
