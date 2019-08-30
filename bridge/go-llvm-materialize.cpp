@@ -467,7 +467,7 @@ Bexpression *Llvm_backend::materializeConditional(Bexpression *condExpr)
 
   // FIXME: add lifetime intrinsics for temp var below.
   Bstatement *thenStmt = nullptr;
-  if (!btype || then_expr->btype() == void_type())
+  if (!btype || then_expr->btype() == void_type() || btype == void_type())
     thenStmt = expression_statement(function, then_expr);
   else
     tempv = temporary_variable(function, nullptr,
