@@ -33,6 +33,10 @@ static void addIfPathExists(pathlist &paths, const llvm::Twine &path)
 
 static llvm::StringRef getOSLibDir(const llvm::Triple &triple)
 {
+  // multilib is not supported on major aarch64/arm64 linux distributions
+  // subject to change when more scenarios to be taken into account
+  if (triple.getArch() == llvm::Triple::aarch64)
+    return "lib";
   // x86 uses the lib32 variant, unlike other archs.
   if (triple.getArch() == llvm::Triple::x86)
     return "lib32";
@@ -112,6 +116,10 @@ std::string Linux::getDynamicLinker(const llvm::opt::ArgList &args)
     default:
       assert(false && "unsupported architecture");
       return "<unknown_dynamic_linker>";
+    case llvm::Triple::aarch64:
+      LibDir = "lib";
+      Loader = "ld-linux-aarch64.so.1";
+      break;
     case llvm::Triple::x86:
       LibDir = "lib";
       Loader = "ld-linux.so.2";

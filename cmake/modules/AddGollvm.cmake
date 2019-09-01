@@ -1,6 +1,10 @@
 
 # Library subdir within installation.
 # FIXME: select 32/64 based on default target triple
+# NOTE: default target triple has not been set at this point,
+#       we remain libsubdir unchanged with arm64 linux configuration
+#       for now, so libgo libraries and go*begin.a are put
+#       under 'lib64' as well, further fix required
 set(libsubdir "lib64")
 
 # Set version number string (used by install rules)

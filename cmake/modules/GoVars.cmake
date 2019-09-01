@@ -8,6 +8,9 @@ list(GET lht_components 2 goos)
 # LLVM's "x86_64" is the same as Go's "amd64".
 if( ${llarch} STREQUAL "x86_64" )
   set(goarch "amd64")
+# LLVM's "aarch64" is the same as Go's "arm64".
+elseif( ${llarch} STREQUAL "aarch64" )
+  set(goarch "arm64")
 else()
   message(SEND_ERROR "Arch ${llarch} not yet supported")
 endif()
@@ -19,6 +22,10 @@ set(allgoos "aix" "android" "darwin" "dragonfly" "freebsd" "irix" "linux" "netbs
 
 # Set library suffix based on target triple
 if( ${llarch} STREQUAL "x86_64" )
+  set(library_suffix "64")
+elseif( ${llarch} STREQUAL "aarch64" )
+# Driver::installedLibDir honors ./lib64 only
+# Future change needed (along with those in AddGollvm.cmake)
   set(library_suffix "64")
 else()
   message(SEND_ERROR "Arch ${llarch} not yet supported")
