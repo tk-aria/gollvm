@@ -439,12 +439,16 @@ list(APPEND runtimecfiles
   "go/log/syslog/syslog_c.c"
   "go/reflect/makefunc_ffi_c.c"
   "go/runtime/internal/atomic/atomic.c"
-  "go/golang.org/x/sys/cpu/cpu_gccgo.c"
   "go/internal/cpu/cpu_gccgo.c"
   "go/sync/atomic/atomic.c"
   "go/syscall/errno.c"
   "go/syscall/signame.c"
   "go/syscall/wait.c")
+
+if (NOT ${goarch} STREQUAL "arm64")
+  list(APPEND runtimecfiles
+    "go/golang.org/x/sys/cpu/cpu_gccgo.c")
+endif()
 
 # Linux-specific C files.
 if(${goos} STREQUAL "linux")
@@ -474,7 +478,11 @@ string(APPEND baseopts "${GOLLVM_EXTRA_CFLAGS} ")
 # Special flags required for aeshash.c (functions in this file are called
 # only when running on the proper architecture, so it is safe to ask for
 # specific architectural features).
-set_source_files_properties(${libgo_csrcroot}/runtime/aeshash.c PROPERTIES COMPILE_FLAGS "-maes -mssse3")
+if (${goarch} STREQUAL "arm64")
+  set_source_files_properties(${libgo_csrcroot}/runtime/aeshash.c PROPERTIES COMPILE_FLAGS "-march=armv8-a+crypto")
+else()
+  set_source_files_properties(${libgo_csrcroot}/runtime/aeshash.c PROPERTIES COMPILE_FLAGS "-maes -mssse3")
+endif()
 
 # Object library based on libgo C code, PIC-compiled
 add_library(libgo_c_piclib OBJECT EXCLUDE_FROM_ALL ${runtimecpaths})

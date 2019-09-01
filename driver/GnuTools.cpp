@@ -115,6 +115,8 @@ bool Assembler::constructCommand(Compilation &compilation,
       // NB: no GNUX32 support yet
       cmdArgs.push_back("--64");
       break;
+    case llvm::Triple::aarch64:
+      break;
     default:
       break;
   }
@@ -211,6 +213,9 @@ void Linker::addLDM(llvm::opt::ArgStringList &cmdArgs)
     case llvm::Triple::x86_64:
       // NB: no GNUX32 support
       cmdArgs.push_back("elf_x86_64");
+      break;
+    case llvm::Triple::aarch64:
+      cmdArgs.push_back("aarch64elf");
       break;
     default:
       // unhandled architecture

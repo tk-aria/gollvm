@@ -5,6 +5,15 @@ include(CheckFunctionExists)
 
 function(setup_libffi libffi_srcroot)
 
+  if(${llarch} STREQUAL "aarch64")
+    set(arch_dir "aarch64")
+  elseif(${llarch} STREQUAL "x86_64")
+    set(arch_dir "x86")
+  else()
+    message(SEND_ERROR "Arch ${llarch} not yet supported")
+  endif()
+
+
   # FIXME: currently hard-coded
   set(VERSION "3.99999")
 
@@ -26,7 +35,9 @@ function(setup_libffi libffi_srcroot)
     set(HAVE_64BIT 0)
   else()
     set(HAVE_64BIT 1)
-    set(HAVE_AS_X86_64_UNWIND_SECTION_TYPE 1)
+    if(NOT ${llarch} STREQUAL "aarch64")
+      set(HAVE_AS_X86_64_UNWIND_SECTION_TYPE 1)
+    endif()
   endif()
 
   # Pick up correct sources based on arch.
@@ -36,10 +47,11 @@ function(setup_libffi libffi_srcroot)
     "${libffi_srcroot}/src/types.c"
     "${libffi_srcroot}/src/raw_api.c"
     "${libffi_srcroot}/src/java_raw_api.c"
-    "${libffi_srcroot}/src/x86/ffi.c")
-  set(asm_srcs
-    "${libffi_srcroot}/src/x86/sysv.S")
-  if(HAVE_64BIT)
+    "${libffi_srcroot}/src/${arch_dir}/ffi.c")
+
+    set(asm_srcs "${libffi_srcroot}/src/${arch_dir}/sysv.S")
+
+  if(HAVE_64BIT AND ${llarch} STREQUAL "x86_64")
     list(APPEND c_srcs "${libffi_srcroot}/src/x86/ffi64.c" "${libffi_srcroot}/src/x86/ffiw64.c")
     list(APPEND asm_srcs "${libffi_srcroot}/src/x86/unix64.S")
     list(APPEND asm_srcs "${libffi_srcroot}/src/x86/win64.S")
@@ -47,7 +59,9 @@ function(setup_libffi libffi_srcroot)
   set_source_files_properties(${asm_srcs} PROPERTIES LANGUAGE C)
 
   # Set target based on arch.
-  if(HAVE_64BIT)
+  if(HAVE_64BIT AND ${llarch} STREQUAL "aarch64")
+    set(TARGET AARCH64)
+  elseif(HAVE_64BIT)
     set(TARGET X86_64)
   else()
     set(TARGET X86)
@@ -74,7 +88,7 @@ function(setup_libffi libffi_srcroot)
   string(APPEND libffiflags " ${GOLLVM_EXTRA_CFLAGS}")
 
   # Copy correct version of ffitarget.h to libgo binary root.
-  file(COPY "${libffi_srcroot}/src/x86/ffitarget.h" DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+  file(COPY "${libffi_srcroot}/src/${arch_dir}/ffitarget.h" DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
   # At this point we can generate the necessary headers.
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/fficonfig.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/fficonfig.h")
