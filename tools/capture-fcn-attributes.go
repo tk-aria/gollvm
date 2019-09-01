@@ -42,9 +42,11 @@
 //
 // Representative usage:
 //
-// % go build capture-fcn-attributes
+// % go build capture-fcn-attributes.go
 // % export PATH=<llvm bin dir>:$PATH
 // % ./capture-fcn-attributes -o HeaderFile.h -triples x86_64-unknown-linux-gnu
+// To generate attributes for multiple targets
+// % ./capture-fcn-attributes -o HeaderFile.h -triples triple{,triple}+
 // %
 
 package main

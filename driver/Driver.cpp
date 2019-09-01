@@ -59,7 +59,20 @@ Driver::~Driver()
 std::string Driver::installedLibDir()
 {
   llvm::SmallString<256> ldir(installDir_);
-  llvm::sys::path::append(ldir, "../lib64");
+  const llvm::Triple::ArchType arch = triple().getArch();
+
+  switch (arch) {
+    // multilib is not supported on major aarch64/arm64 linux distributions
+    // (subject to change when more scenarios to be taken into account)
+    // NOTE: set aarch64's lib dir to "lib64" temporarily, until necessary
+    //       change is made to cmake module files
+    case llvm::Triple::aarch64:
+      llvm::sys::path::append(ldir, "../lib64");
+      break;
+    default:
+      llvm::sys::path::append(ldir, "../lib64");
+      break;
+  }
   return std::string(ldir.str());
 }
 

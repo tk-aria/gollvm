@@ -176,6 +176,18 @@ bool GCCInstallationDetector::selectLibDirs(state &s)
         s.suffixes = {""};
       }
       break;
+    case llvm::Triple::aarch64:
+      // more triples to be identified and added
+      s.tripleAliases = {
+        triple_.str(),
+        "aarch64-linux-gnu", "aarch64-unknown-linux-gnu"
+      };
+      // multilib is not supported on major aarch64/arm64 linux distributions
+      // subject to change when more scenarios to be taken into account
+      s.libdirs.push_back("lib");
+      s.triple.setTriple(triple_.str());
+      s.suffixes = {""};
+      break;
     default:
       llvm::errs() << "error: unsupported triple "
                    << triple_.str() << " in " << __FUNCTION__ << "\n";
