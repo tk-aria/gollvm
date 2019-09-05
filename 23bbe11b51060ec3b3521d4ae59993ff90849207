@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d55710b3_e5707049",
+        "filename": "bridge/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3282,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-09-05T20:07:47Z",
+      "side": 1,
+      "message": "Emmm. I thought that if tblock is null, walk on line 3280 would always return null, so tsucc would be null. So if we get here, tblock wouldn\u0027t be null. When could the else branch be taken here? Did I miss something?",
+      "revId": "23bbe11b51060ec3b3521d4ae59993ff90849207",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
