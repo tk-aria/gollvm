@@ -25,7 +25,7 @@ function(mkversion goos goarch outfile bindir srcroot scriptroot)
   # as part of the original build.
 
   # Tools subdir within the install.
-  file(APPEND ${outfile} "func init() { DefaultGoroot = \"${CMAKE_INSTALL_PREFIX}\" }\n")
+  file(APPEND ${outfile} "func defaultGOROOTValue() string { return \"${CMAKE_INSTALL_PREFIX}\" }\n")
 
   # Compiler version
   file(STRINGS "${srcroot}/../VERSION" rawver)
@@ -53,7 +53,6 @@ function(mkversion goos goarch outfile bindir srcroot scriptroot)
     set(physpagesize "4096")
     set(pcquantum "1")
     set(int64align "8")
-    set(hugepagesize "1 << 21")
     set(minframesize 0)
   endif()
 
@@ -80,7 +79,7 @@ function(mkversion goos goarch outfile bindir srcroot scriptroot)
   endforeach()
   file(APPEND ${outfile} "\n")
 
-  set(constants "ArchFamily:family" "BigEndian:bigendian" "CacheLineSize:cachelinesize" "PhysPageSize:defaultphyspagesize" "PCQuantum:pcquantum" "Int64Align:int64align" "HugePageSize:hugepagesize" "MinFrameSize:minframesize")
+  set(constants "ArchFamily:family" "BigEndian:bigendian" "CacheLineSize:cachelinesize" "PhysPageSize:defaultphyspagesize" "PCQuantum:pcquantum" "Int64Align:int64align" "MinFrameSize:minframesize")
 
   file(APPEND ${outfile} "const (\n")
   foreach(item ${constants})
@@ -234,15 +233,17 @@ function(mkobjabi outfile binroot srcroot)
   file(WRITE ${outfile} "package objabi\n\n")
   file(APPEND ${outfile} "import \"runtime\"\n")
 
-  file(APPEND ${outfile} "func init() { defaultGOROOT = \"${GOLLVM_INSTALL_DIR}\" }\n")
+  file(APPEND ${outfile} "func defaultGOROOTValue() string { return \"${GOLLVM_INSTALL_DIR}\" }\n")
 
   file(APPEND ${outfile} "const defaultGO386 = `sse2`\n")
   file(APPEND ${outfile} "const defaultGOARM = `5`\n")
   file(APPEND ${outfile} "const defaultGOMIPS = `hardfloat`\n")
   file(APPEND ${outfile} "const defaultGOMIPS64 = `hardfloat`\n")
   file(APPEND ${outfile} "const defaultGOOS = runtime.GOOS\n")
+  file(APPEND ${outfile} "const defaultGOPPC64 = `power8`\n")
   file(APPEND ${outfile} "const defaultGOARCH = runtime.GOARCH\n")
   file(APPEND ${outfile} "const defaultGO_EXTLINK_ENABLED = ``\n")
+  file(APPEND ${outfile} "const defaultGO_LDSO = ``\n")
   file(APPEND ${outfile} "const version = ")
   emitversionstring(${outfile} ${srcroot})
   file(APPEND ${outfile} "\n")

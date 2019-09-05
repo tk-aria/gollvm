@@ -429,6 +429,7 @@ list(APPEND runtimecfiles
   "go/log/syslog/syslog_c.c"
   "go/reflect/makefunc_ffi_c.c"
   "go/runtime/internal/atomic/atomic.c"
+  "go/golang.org/x/sys/cpu/cpu_gccgo.c"
   "go/internal/cpu/cpu_gccgo.c"
   "go/sync/atomic/atomic.c"
   "go/syscall/errno.c"
