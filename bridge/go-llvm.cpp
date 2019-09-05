@@ -3278,14 +3278,28 @@ llvm::BasicBlock *GenBlocks::genIf(Bstatement *ifst,
 
   // Visit true block
   llvm::BasicBlock *tsucc = walk(trueStmt, nullptr, tblock);
-  if (tsucc && ! tsucc->getTerminator())
-    llvm::BranchInst::Create(ft, tsucc);
+  if (tsucc && ! tsucc->getTerminator()) {
+    if (tblock)
+      llvm::BranchInst::Create(ft, tsucc);
+    else {
+      LIRBuilder builder(context_, llvm::ConstantFolder());
+      llvm::Instruction *unreachable = builder.CreateUnreachable();
+      tsucc->getInstList().push_back(unreachable);
+    }
+  }
 
   // Walk false block if present
   if (falseStmt) {
     llvm::BasicBlock *fsucc = walk(falseStmt, nullptr, fblock);
-    if (fsucc && ! fsucc->getTerminator())
-      llvm::BranchInst::Create(ft, fsucc);
+    if (fsucc && ! fsucc->getTerminator()) {
+      if (fblock)
+        llvm::BranchInst::Create(ft, fsucc);
+      else {
+        LIRBuilder builder(context_, llvm::ConstantFolder());
+        llvm::Instruction *unreachable = builder.CreateUnreachable();
+        fsucc->getInstList().push_back(unreachable);
+      }
+    }
   }
 
   // Remove fallthrough block if it was never used
