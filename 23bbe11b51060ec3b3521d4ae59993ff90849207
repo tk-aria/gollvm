@@ -16,6 +16,24 @@
       "revId": "23bbe11b51060ec3b3521d4ae59993ff90849207",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b61b6f42_3d6ff4ac",
+        "filename": "bridge/go-llvm.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3282,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-09-05T20:11:01Z",
+      "side": 1,
+      "message": "In general that is true (if you pass in a NULL block to walk, you\u0027ll get one back out), but not always. In particular if the true branch contains a loop (which uses a GOTO), we\u0027ll create a block for the goto. That\u0027s the scenario that\u0027s happening here.",
+      "parentUuid": "d55710b3_e5707049",
+      "revId": "23bbe11b51060ec3b3521d4ae59993ff90849207",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
