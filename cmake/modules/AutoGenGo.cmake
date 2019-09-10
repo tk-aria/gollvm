@@ -152,6 +152,36 @@ function(mkcpugen goarch outfile scriptroot)
 
 endfunction()
 
+#----------------------------------------------------------------------
+# Emit 'gcpugen.go', another cpu-specific generated Go file. Based
+# on the libgo Makefile recipe.
+#
+# Unnamed parameters:
+#
+#   * GOARCH setting (target architecture)
+#   * output file
+#   * root of src containing libgo script files
+#
+function(mkgcpugen goarch outfile scriptroot)
+
+  file(REMOVE ${outfile})
+  file(WRITE ${outfile} "package cpu\n")
+
+  # Invoke goarch.sh
+  execute_process(COMMAND ${shell} "${scriptroot}/goarch.sh"
+    ${goarch} "cachelinesize"
+      OUTPUT_VARIABLE result
+      ERROR_VARIABLE errmsg
+      RESULT_VARIABLE exitstatus)
+    if(${exitstatus} MATCHES 0)
+      file(APPEND ${outfile} "const cacheLineSize = ${result}\n")
+    else()
+      message(FATAL_ERROR "goarch.sh invocation failed: ${errmsg}")
+    endif()
+    file(APPEND ${outfile} "\n")
+
+endfunction()
+
 macro(upperfirst name result)
   string(SUBSTRING ${name} 0 1 c1)
   string(SUBSTRING ${name} 1 -1 crem)

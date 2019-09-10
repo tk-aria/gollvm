@@ -104,6 +104,7 @@ set(runtime_extra_go_files "runtime_sysinfo.go" "sigtab.go")
 set(cmd_internal_objabi_extra_go_files "objabi.go")
 set(internal_goroot_extra_go_files "zstdpkglist.go")
 set(internal_cpu_extra_go_files "cpugen.go")
+set(golang_org_x_sys_cpu_extra_go_files "gcpugen.go")
 set(cmd_go_internal_cfg_extra_go_files "zdefaultcc.go")
 set(runtime_internal_sys_extra_go_files "version.go")
 set(go_types_extra_go_files "gccgosizes.go")
@@ -120,7 +121,8 @@ foreach( pack ${allpackages})
     message(SEND_ERROR "Package directory ${pack} does not exist.")
   else()
 
-    string(REPLACE "/" "_" ptarget "${pack}")
+    string(REPLACE "/" "_" ptarget2 "${pack}")
+    string(REPLACE "." "_" ptarget "${ptarget2}")
     set(packfilestmp "${libgo_binroot}/${ptarget}.gofiles")
 
     # Package-specific match args
@@ -161,7 +163,8 @@ macro(collect_package_inputs pack)
   set(packsrcs)
   set(packopts)
 
-  string(REPLACE "/" "_" ptarget "${pack}")
+  string(REPLACE "/" "_" ptarget2 "${pack}")
+  string(REPLACE "." "_" ptarget "${ptarget2}")
   set(packfilestmp "${libgo_binroot}/${ptarget}.gofiles")
   file(STRINGS ${packfilestmp} matchoutput)
   separate_arguments(matchoutput)
@@ -326,6 +329,12 @@ set(cpugentmp "${libgo_binroot}/cpugen.go.tmp")
 mkcpugen(${goarch} ${cpugentmp} ${libgo_scriptroot})
 copy_if_different(${cpugentmp} ${cpugendotgo})
 
+# Generated file gcpugen.go
+set(gcpugendotgo "${libgo_binroot}/gcpugen.go")
+set(gcpugentmp "${libgo_binroot}/gcpugen.go.tmp")
+mkgcpugen(${goarch} ${gcpugentmp} ${libgo_scriptroot})
+copy_if_different(${gcpugentmp} ${gcpugendotgo})
+
 #........................................................................
 
 message(STATUS "Libgo: creating stdlib package targets")
@@ -337,7 +346,8 @@ set(libgotool_nonpicobjects)
 
 # Process each package
 foreach( pack ${allpackages})
-  string(REPLACE "/" "_" ptarget "${pack}")
+  string(REPLACE "/" "_" ptarget2 "${pack}")
+  string(REPLACE "." "_" ptarget "${ptarget2}")
 
   collect_package_inputs(${pack})
 
@@ -585,7 +595,8 @@ set(checktargets)
 
 message(STATUS "Libgo: generating check targets")
 foreach( pack ${checkpackages})
-  string(REPLACE "/" "_" ptarget "${pack}")
+  string(REPLACE "/" "_" ptarget2 "${pack}")
+  string(REPLACE "." "_" ptarget "${ptarget}")
   set(runner "${CMAKE_CURRENT_SOURCE_DIR}/checkpackage.sh")
 
   # This will set 'packsrcs' and 'packopts'
