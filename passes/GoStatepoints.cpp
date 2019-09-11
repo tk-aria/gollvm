@@ -181,8 +181,6 @@ public:
                        GO_FUNC_SYM);
 
     bool Changed = false;
-    const TargetLibraryInfo &TLI =
-        getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
     for (Function &F : M) {
       // Nothing to do for declarations.
       if (F.isDeclaration() || F.empty())
@@ -192,6 +190,9 @@ public:
       // we're compiling code without a GCStrategy.
       if (!shouldRewriteStatepointsIn(F))
         continue;
+
+      const TargetLibraryInfo &TLI =
+          getAnalysis<TargetLibraryInfoWrapperPass>().getTLI(F);
 
       TargetTransformInfo &TTI =
           getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
