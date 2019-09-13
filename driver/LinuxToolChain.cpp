@@ -58,9 +58,8 @@ Linux::Linux(gollvm::driver::Driver &driver,
   pathlist &ppaths = programPaths();
   auto ftrip = gccDetector_.foundTriple().str();
   addIfPathExists(ppaths, llvm::Twine(gccDetector_.getParentLibPath() +
-                                      "/../" + ftrip +
+                                      "/../../" + ftrip +
                                       "/bin").str());
-
 
   // File paths
   pathlist &fpaths = filePaths();

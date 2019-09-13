@@ -240,13 +240,16 @@ void GCCInstallationDetector::scanCandidate(state &s,
 
 void GCCInstallationDetector::scanPrefix(state &s, const std::string &pref)
 {
+  const char *infixes[] = { "/gcc/", "/gcc-cross/" };
   for (auto &lib : s.libdirs) {
     // Form candidate dir
-    for (auto &tripleAlias : s.tripleAliases) {
-      std::stringstream ss;
-      ss << pref << "/" << lib << "/gcc/" << tripleAlias;
-      for (auto &suffix : s.suffixes)
-        scanCandidate(s, ss.str(), tripleAlias, suffix);
+    for (auto &infix : infixes) {
+      for (auto &tripleAlias : s.tripleAliases) {
+        std::stringstream ss;
+        ss << pref << "/" << lib << infix << tripleAlias;
+        for (auto &suffix : s.suffixes)
+          scanCandidate(s, ss.str(), tripleAlias, suffix);
+      }
     }
   }
 }
