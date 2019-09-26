@@ -440,9 +440,10 @@ bool CompileGoImpl::setup()
         return false;
       }
       context_.setRemarkStreamer(std::make_unique<llvm::RemarkStreamer>(
-          fname,
-          std::make_unique<llvm::remarks::YAMLRemarkSerializer>(optRecordFile_->os(),
-                                    llvm::remarks::SerializerMode::Separate)));
+          std::make_unique<llvm::remarks::YAMLRemarkSerializer>(
+               optRecordFile_->os(),
+               llvm::remarks::SerializerMode::Separate),
+          fname));
       if (! sampleProfileFile_.empty())
         context_.setDiagnosticsHotnessRequested(true);
       optRecordFile_->keep();
