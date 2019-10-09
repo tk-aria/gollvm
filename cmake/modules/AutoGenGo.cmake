@@ -30,6 +30,7 @@ function(mkversion goos goarch outfile bindir srcroot scriptroot)
   # Compiler version
   file(STRINGS "${srcroot}/../VERSION" rawver)
   string(STRIP ${rawver} ver)
+  file(APPEND ${outfile} "func init() { DefaultGoroot = \"${CMAKE_INSTALL_PREFIX}\" }\n")
   file(APPEND ${outfile} "const TheVersion = ")
   emitversionstring(${outfile} ${srcroot})
   file(APPEND ${outfile} "\n")
