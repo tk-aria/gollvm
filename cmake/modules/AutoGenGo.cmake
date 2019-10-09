@@ -24,12 +24,11 @@ function(mkversion goos goarch outfile bindir srcroot scriptroot)
   # not currently supported -- the install prefix has to be set properly
   # as part of the original build.
 
-  # Tools subdir within the install.
-  file(APPEND ${outfile} "func defaultGOROOTValue() string { return \"${CMAKE_INSTALL_PREFIX}\" }\n")
-
   # Compiler version
   file(STRINGS "${srcroot}/../VERSION" rawver)
   string(STRIP ${rawver} ver)
+  # Default GOROOT var initialization.
+  file(APPEND ${outfile} "func init() { DefaultGoroot = \"${CMAKE_INSTALL_PREFIX}\" }\n")
   file(APPEND ${outfile} "const TheVersion = ")
   emitversionstring(${outfile} ${srcroot})
   file(APPEND ${outfile} "\n")
