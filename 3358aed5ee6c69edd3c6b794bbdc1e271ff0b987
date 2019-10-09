@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d829f1ef_93aadc06",
+        "filename": "cmake/modules/AutoGenGo.cmake",
+        "patchSetId": 1
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2019-10-09T20:28:24Z",
+      "side": 1,
+      "message": "Delete this line?",
+      "revId": "3358aed5ee6c69edd3c6b794bbdc1e271ff0b987",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
