@@ -21,10 +21,12 @@
 #define LLVMGOFRONTEND_GO_LLVM_CABI_ORACLE_H
 
 #include "go-llvm-btype.h"
+#include "llvm/IR/CallingConv.h"
 
 class TypeManager;
 class EightByteInfo;
 class ABIState;
+class CABIOracleArgumentAnalyzer;
 
 namespace llvm {
 class DataLayout;
@@ -34,7 +36,7 @@ class raw_ostream;
 
 // Disposition of a specific function argument or function return value.
 
-enum CABIParamDisp : uint8_t  {
+enum CABIParamDisp : uint8_t {
 
   // Pass argument directly (not in memory).
   ParmDirect,
@@ -50,7 +52,7 @@ enum CABIParamDisp : uint8_t  {
 // Attributes on parameters. These correspond directly to the LLVM attrs
 // of the same name.
 
-enum CABIParamAttr : uint8_t  {
+enum CABIParamAttr : uint8_t {
   AttrNone=0,
   AttrStructReturn,
   AttrByVal,
@@ -128,6 +130,12 @@ class CABIParamInfo {
   void dump();
   void osdump(llvm::raw_ostream &os);
 
+  // This constant specifies the maximum possible size of vectors abiTypes_
+  // in the direct parameter passing case.
+  // For X86_64_SysV, the size of paramInfo.abiTypes() can't be larger than 2,
+  // because parameters that are larger than 16 bytes are passed indirectly.
+  static const unsigned int ABI_TYPES_MAX_SIZE = 2;
+
  private:
   std::vector<llvm::Type *> abiTypes_;
   CABIParamDisp disp_;
@@ -143,7 +151,6 @@ class CABIParamInfo {
 
 class CABIOracle {
  public:
-
   // Given information on the param types and result type for a
   // function, create an oracle object that can answer C ABI
   // queries about the function.
@@ -155,9 +162,6 @@ class CABIOracle {
   // This constructor draws param/result info from an existing BFunctionType
   CABIOracle(BFunctionType *ft,
              TypeManager *typeManager);
-
-  // Returns TRUE if this cc supported, FALSE otherwise.
-  bool supported() const;
 
   // Return the appropriate "cooked" LLVM function type for this
   // abstract function type.
@@ -174,7 +178,7 @@ class CABIOracle {
   const CABIParamInfo &chainInfo();
 
   // Type manager used with this oracle.
-  TypeManager *tm() const { return typeManager_; }
+  TypeManager *tm() const;
 
   // Various dump methods.
   void dump();
@@ -188,13 +192,39 @@ class CABIOracle {
   TypeManager *typeManager_;
   std::vector<CABIParamInfo> infov_;
   bool followsCabi_;
+  llvm::CallingConv::ID ccID_;
+  std::unique_ptr<CABIOracleArgumentAnalyzer> cc_;
 
+  // The main entry for cabi analysis.
   void analyze();
   void analyzeRaw();
-  CABIParamInfo analyzeABIReturn(Btype *resultType, ABIState &state);
+  // Set calling convention.
+  void setCC();
+};
+
+// This is a pure virtual class for architecture-independent interfaces.
+class CABIOracleArgumentAnalyzer {
+ public:
+  CABIOracleArgumentAnalyzer(TypeManager *tm) : tm_(tm) {}
+  virtual ~CABIOracleArgumentAnalyzer() {}
+  virtual CABIParamInfo analyzeABIReturn(Btype *resultType, ABIState &state) = 0;
+  virtual CABIParamInfo analyzeABIParam(Btype *pType, ABIState &state) = 0;
+ protected:
+  TypeManager *tm_;
+};
+
+// This class implements x86_64 SysV calling convention.
+class CABIOracleX86_64_SysV : public CABIOracleArgumentAnalyzer {
+ public:
+  // Given information on the param types and result type for a
+  // function, create an oracle object that can answer C ABI
+  // queries about the function.
+  CABIOracleX86_64_SysV(TypeManager *typeManager);
   CABIParamInfo analyzeABIParam(Btype *pType, ABIState &state);
+  CABIParamInfo analyzeABIReturn(Btype *resultType, ABIState &state);
+
+ private:
   bool canPassDirectly(unsigned regsInt, unsigned regsSSE, ABIState &state);
-  const llvm::DataLayout *datalayout() const;
   CABIParamDisp classifyArgType(Btype *btype);
 };
 
