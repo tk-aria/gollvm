@@ -965,8 +965,8 @@ bool CompileGoImpl::invokeBackEnd()
     // Set PassConfig options provided by TargetMachine.
     passConfig->setDisableVerify(noverify);
     codeGenPasses.add(passConfig);
-    MachineModuleInfo *MMI = new MachineModuleInfo(lltm);
-    codeGenPasses.add(MMI);
+    MachineModuleInfoWrapperPass *MMIWP = new MachineModuleInfoWrapperPass(lltm);
+    codeGenPasses.add(MMIWP);
     passConfig->addISelPasses();
     passConfig->addMachinePasses();
     passConfig->setInitialized();
@@ -977,7 +977,7 @@ bool CompileGoImpl::invokeBackEnd()
     if (enable_gc_)
       codeGenPasses.add(createGoAnnotationPass());
 
-    lltm->addAsmPrinter(codeGenPasses, *OS, nullptr, ft, MMI->getContext());
+    lltm->addAsmPrinter(codeGenPasses, *OS, nullptr, ft, MMIWP->getMMI().getContext());
 
     codeGenPasses.add(createFreeMachineFunctionPass());
   }
