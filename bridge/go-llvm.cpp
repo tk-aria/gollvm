@@ -43,8 +43,9 @@
 Llvm_backend::Llvm_backend(llvm::LLVMContext &context,
                            llvm::Module *module,
                            Llvm_linemap *linemap,
-                           unsigned addrspace)
-    : TypeManager(context, llvm::CallingConv::X86_64_SysV, addrspace)
+                           unsigned addrspace,
+                           llvm::CallingConv::ID cconv)
+    : TypeManager(context, cconv, addrspace)
     , context_(context)
     , module_(module)
     , datalayout_(module ? &module->getDataLayout() : nullptr)

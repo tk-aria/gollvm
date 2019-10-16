@@ -165,6 +165,7 @@ class TypeManager {
   llvm::Type *makeLLVMTwoElementStructType(llvm::Type *f1, llvm::Type *f2);
   llvm::Type *makeLLVMPointerType(llvm::Type *toTy);
   llvm::Type *makeLLVMStructType(const std::vector<Btyped_identifier> &fields);
+  llvm::Type *makeLLVMStructType(const std::vector<llvm::Type *> &fields);
   llvm::Type *makeLLVMFunctionType(const std::vector<Btype *> &paramTypes,
                                    Btype *rbtype, bool followsCabi);
 

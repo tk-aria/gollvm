@@ -79,7 +79,9 @@ public:
   Llvm_backend(llvm::LLVMContext &context,
                llvm::Module *module,
                Llvm_linemap *linemap,
-               unsigned addrspace);
+               unsigned addrspace,
+               /* Temporarily set the parameter as optional to workaround the unit tests. */
+               llvm::CallingConv::ID cconv=llvm::CallingConv::X86_64_SysV);
   ~Llvm_backend();
 
   // Types.
