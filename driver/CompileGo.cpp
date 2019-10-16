@@ -102,6 +102,7 @@ class CompileGoImpl {
   Triple triple_;
   const ToolChain &toolchain_;
   Driver &driver_;
+  CallingConv::ID cconv_;
   LLVMContext context_;
   const char *progname_;
   std::string executablePath_;
@@ -127,6 +128,7 @@ class CompileGoImpl {
   void createPasses(legacy::PassManager &MPM,
                     legacy::FunctionPassManager &FPM);
   void setupGoSearchPath();
+  void setCConv();
 
   // This routine emits output for -### and/or -v, then returns TRUE
   // of the compilation should be stubbed out (-###) or FALSE otherwise.
@@ -345,6 +347,9 @@ bool CompileGoImpl::setup()
 {
   // Set triple.
   triple_ = driver_.triple();
+
+  // Set calling convention.
+  setCConv();
 
   // Get the target specific parser.
   std::string Error;
@@ -607,7 +612,7 @@ bool CompileGoImpl::initBridge()
 
   // Now construct Llvm_backend helper.
   unsigned addrspace = enable_gc_ ? 1 : 0;
-  bridge_.reset(new Llvm_backend(context_, module_.get(), linemap_.get(), addrspace));
+  bridge_.reset(new Llvm_backend(context_, module_.get(), linemap_.get(), addrspace, cconv_));
 
   // Honor inline, tracelevel cmd line options
   llvm::Optional<unsigned> tl =
@@ -628,7 +633,6 @@ bool CompileGoImpl::initBridge()
                                   true);
   bridge_->setNoFpElim(!omitFp);
 
-  // -f[no-]split-stack
   bool useSplitStack =
       driver_.reconcileOptionPair(gollvm::options::OPT_fsplit_stack,
                                   gollvm::options::OPT_fno_split_stack,
@@ -795,6 +799,20 @@ void CompileGoImpl::setupGoSearchPath()
   // Second pass with raw dir.
   for (auto &dir : dirs)
     go_add_search_path(dir.c_str());
+}
+
+// Set cconv according to the triple_ value.
+void CompileGoImpl::setCConv()
+{
+  assert(triple_.getArch() != Triple::UnknownArch);
+  switch (triple_.getArch()) {
+    case Triple::x86_64:
+      cconv_ = CallingConv::X86_64_SysV;
+      break;
+    default:
+      assert(false && "unsupported architecture");
+      break;
+  }
 }
 
 bool CompileGoImpl::invokeFrontEnd()

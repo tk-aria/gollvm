@@ -187,11 +187,11 @@ Bvariable *Bfunction::parameterVariable(const std::string &name,
       if (paramInfo.abiTypes().size() == 1) {
         arguments_[soff]->setName(name);
       } else {
-        assert(paramInfo.abiTypes().size() == 2);
-        std::string argp1(name); argp1 += ".chunk0";
-        std::string argp2(name); argp2 += ".chunk1";
-        arguments_[soff]->setName(argp1);
-        arguments_[soff+1]->setName(argp2);
+        assert(paramInfo.abiTypes().size() <= CABIParamInfo::ABI_TYPES_MAX_SIZE);
+        for (unsigned i = 0; i < paramInfo.abiTypes().size(); ++i) {
+          std::string argp = name + ".chunk" + std::to_string(i);
+          arguments_[soff+i]->setName(argp);
+        }
       }
       std::string aname(name);
       aname += ".addr";
@@ -372,36 +372,31 @@ unsigned Bfunction::genArgSpill(Bvariable *paramVar,
     paramVar->setInitializer(si);
     return 1;
   }
-  assert(paramInfo.abiTypes().size() == 2);
 
-  // More complex case: param arrives in two registers.
+  assert(paramInfo.abiTypes().size() <= CABIParamInfo::ABI_TYPES_MAX_SIZE);
+  // More complex case: param arrives in multiple registers.
 
-  // Create struct type corresponding to first and second params
+  // Create struct type corresponding to multiple params.
   llvm::Type *llst = paramInfo.computeABIStructType(tm);
   llvm::Type *ptst = llvm::PointerType::get(llst, 0);
 
   // Cast the spill location to a pointer to the struct created above.
   std::string tag(namegen("cast"));
   llvm::Value *bitcast = builder.CreateBitCast(sploc, ptst, tag);
+  llvm::Instruction *stinst = nullptr;
 
-  // Generate a store to the first field
-  std::string tag0(namegen("field0"));
-  llvm::Value *field0gep =
-      builder.CreateConstInBoundsGEP2_32(llst, bitcast, 0, 0, tag0);
-  llvm::Value *argChunk0 = arguments_[paramInfo.sigOffset()];
-  builder.CreateStore(argChunk0, field0gep);
-
-  // Generate a store to the second field
-  std::string tag1(namegen("field1"));
-  llvm::Value *field1gep =
-      builder.CreateConstInBoundsGEP2_32(llst, bitcast, 0, 1, tag0);
-  llvm::Value *argChunk1 = arguments_[paramInfo.sigOffset()+1];
-  llvm::Instruction *stinst = builder.CreateStore(argChunk1, field1gep);
-
+  // Generate a store to each field.
+  for (unsigned i = 0; i < paramInfo.abiTypes().size(); ++i) {
+    std::string tag(namegen("field" + std::to_string(i)));
+    llvm::Value *fieldgep =
+        builder.CreateConstInBoundsGEP2_32(llst, bitcast, 0, i, tag);
+    llvm::Value *argChunk = arguments_[paramInfo.sigOffset() + i];
+    stinst = builder.CreateStore(argChunk, fieldgep);
+  }
   paramVar->setInitializer(stinst);
 
   // All done.
-  return 2;
+  return paramInfo.abiTypes().size();
 }
 
 void Bfunction::genProlog(llvm::BasicBlock *entry)
