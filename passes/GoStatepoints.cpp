@@ -2122,7 +2122,7 @@ bool GoStatepoints::runOnFunction(Function &F, DominatorTree &DT,
   // statepoints surviving this pass.  This makes testing easier and the
   // resulting IR less confusing to human readers.
   DomTreeUpdater DTU(DT, DomTreeUpdater::UpdateStrategy::Lazy);
-  bool MadeChange = removeUnreachableBlocks(F, nullptr, &DTU);
+  bool MadeChange = removeUnreachableBlocks(F, &DTU);
 
   // Rewrite all the calls that need statepoints to invokes, so we can
   // attach a stack map through its landing pad.
