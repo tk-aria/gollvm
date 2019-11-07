@@ -1194,6 +1194,24 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
         llvm::Type *pt = llvm::PointerType::get(vt->getPointerElementType(), 0);
         val = builder.CreateAddrSpaceCast(val, pt, castname);
       }
+
+      // For some architectures, such as arm64, the indirect parameter needs to
+      // be copied to the space allocated by the caller on the stack, and pass
+      // the address of the copied version to the callee.
+      if (paramInfo.attr() == AttrDoCopy) {
+        BlockLIRBuilder bbuilder(state.callerFcn->function(), this);
+        TypeManager *tm = state.oracle.tm();
+        Btype *bty = fnarg->btype();
+        uint64_t sz = tm->typeSize(bty);
+        uint64_t algn = tm->typeAlignment(bty);
+        std::string tname(namegen("doCopy.addr"));
+        llvm::Value *tmpV = state.callerFcn->createTemporary(bty, tname);
+        bbuilder.CreateMemCpy(tmpV, algn, val, algn, sz);
+        std::vector<llvm::Instruction *> instructions = bbuilder.instructions();
+        for (auto i : instructions)
+          state.instructions.appendInstruction(i);
+        val = tmpV;
+      }
       state.llargs.push_back(val);
       continue;
     }
@@ -1259,8 +1277,9 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
     }
 
     // This now corresponds to the case of passing the contents of
-    // a small structure via two pieces / params.
-    assert(paramInfo.abiTypes().size() == 2);
+    // a small structure via no more than CABIParamInfo::ABI_TYPES_MAX_SIZE
+    // pieces / params.
+    assert(paramInfo.abiTypes().size() <= CABIParamInfo::ABI_TYPES_MAX_SIZE);
     assert(paramInfo.attr() == AttrNone);
     assert(ctx == VE_lvalue);
 
@@ -1288,19 +1307,14 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
         builder.CreatePointerBitCastOrAddrSpaceCast(val, ptst, tag);
 
     // Load up each field
-    std::string ftag0(namegen("field0"));
-    llvm::Value *field0gep =
-        builder.CreateConstInBoundsGEP2_32(llst, bitcast, 0, 0, ftag0);
-    std::string ltag0(namegen("ld"));
-    llvm::Value *ld0 = builder.CreateLoad(field0gep, ltag0);
-    state.llargs.push_back(ld0);
-
-    std::string ftag1(namegen("field1"));
-    llvm::Value *field1gep =
-        builder.CreateConstInBoundsGEP2_32(llst, bitcast, 0, 1, ftag1);
-    std::string ltag1(namegen("ld"));
-    llvm::Value *ld1 = builder.CreateLoad(field1gep, ltag1);
-    state.llargs.push_back(ld1);
+    for ( unsigned i = 0; i < paramInfo.abiTypes().size(); ++i) {
+      std::string ftag(namegen("field"+std::to_string(i)));
+      llvm::Value *fieldgep =
+          builder.CreateConstInBoundsGEP2_32(llst, bitcast, 0, i, ftag);
+      std::string ltag(namegen("ld"));
+      llvm::Value *ld = builder.CreateLoad(fieldgep, ltag);
+      state.llargs.push_back(ld);
+    }
   }
 }
 

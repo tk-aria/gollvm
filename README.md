@@ -213,7 +213,7 @@ TEST(BackendCoreTests, ComplexTypes) {
   Type *ft = Type::getFloatTy(C);
   Type *dt = Type::getDoubleTy(C);
 
-  std::unique_ptr<Backend> be(go_get_backend(C));
+  std::unique_ptr<Backend> be(go_get_backend(C, llvm::CallingConv::X86_64_SysV));
   Btype *c32 = be->complex_type(64);
   ASSERT_TRUE(c32 != NULL);
   ASSERT_EQ(c32->type(), mkTwoFieldLLvmStruct(C, ft, ft));
@@ -264,7 +264,7 @@ inlining, vectorization, register allocation, etc.
 
 ## Which architectures and operating systems are supported for gollvm? <a name="supported"></a>
 
-Gollvm is currently supported only for x86_64 Linux.
+Gollvm is currently supported only for x86_64 and aarch64 Linux.
 
 ## How does the gollvm runtime differ from the main Go runtime?  <a name="runtimediffs"></a>
 

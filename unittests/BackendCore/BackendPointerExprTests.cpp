@@ -17,8 +17,21 @@ using namespace goBackendUnitTests;
 
 namespace {
 
-TEST(BackendPointerExprTests, TestAddrAndIndirection) {
-  FcnTestHarness h("foo");
+class BackendPointerExprTests
+    : public testing::TestWithParam<llvm::CallingConv::ID> {};
+
+INSTANTIATE_TEST_CASE_P(
+    UnitTest, BackendPointerExprTests,
+    testing::Values(llvm::CallingConv::X86_64_SysV,
+                    llvm::CallingConv::ARM_AAPCS),
+    [](const testing::TestParamInfo<BackendPointerExprTests::ParamType> &info) {
+      std::string name = goBackendUnitTests::ccName(info.param);
+      return name;
+    });
+
+TEST_P(BackendPointerExprTests, TestAddrAndIndirection) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   Bfunction *func = h.func();
 
@@ -68,7 +81,7 @@ TEST(BackendPointerExprTests, TestAddrAndIndirection) {
     store i64 %.ld.0, i64* %y
     %x.ld.1 = load i64*, i64** %x
     store i64 3, i64* %x.ld.1
-    )RAW_RESULT";
+  )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -77,9 +90,9 @@ TEST(BackendPointerExprTests, TestAddrAndIndirection) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendPointerExprTests, CreateFunctionCodeExpression) {
-
-  FcnTestHarness h("foo");
+TEST_P(BackendPointerExprTests, CreateFunctionCodeExpression) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   Bfunction *func = h.func();
   Location loc;
@@ -118,17 +131,17 @@ TEST(BackendPointerExprTests, CreateFunctionCodeExpression) {
   h.mkAssign(vex3, rvex3);
 
   const char *exp = R"RAW_RESULT(
-  %cast.0 = bitcast { i64 }* %fdloc1 to i8*
-  %cast.1 = bitcast { i64 }* @const.0 to i8*
-  call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 8, i1 false)
-  store { i64 }* %fdloc1, { i64 }** %fploc1
-  store { i64 (i8*, i32, i32, i64*)* }* null, { i64 (i8*, i32, i32, i64*)* }** %fploc2
-  %fploc1.ld.0 = load { i64 }*, { i64 }** %fploc1
-  %cast.2 = bitcast { i64 }* %fploc1.ld.0 to { i64 (i8*, i32, i32, i64*)* }*
-  store { i64 (i8*, i32, i32, i64*)* }* %cast.2, { i64 (i8*, i32, i32, i64*)* }** %fploc2
-  %fploc2.ld.0 = load { i64 (i8*, i32, i32, i64*)* }*, { i64 (i8*, i32, i32, i64*)* }** %fploc2
-  %cast.3 = bitcast { i64 (i8*, i32, i32, i64*)* }* %fploc2.ld.0 to { i64 }*
-  store { i64 }* %cast.3, { i64 }** %fploc1
+    %cast.0 = bitcast { i64 }* %fdloc1 to i8*
+    %cast.1 = bitcast { i64 }* @const.0 to i8*
+    call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 8, i1 false)
+    store { i64 }* %fdloc1, { i64 }** %fploc1
+    store { i64 (i8*, i32, i32, i64*)* }* null, { i64 (i8*, i32, i32, i64*)* }** %fploc2
+    %fploc1.ld.0 = load { i64 }*, { i64 }** %fploc1
+    %cast.2 = bitcast { i64 }* %fploc1.ld.0 to { i64 (i8*, i32, i32, i64*)* }*
+    store { i64 (i8*, i32, i32, i64*)* }* %cast.2, { i64 (i8*, i32, i32, i64*)* }** %fploc2
+    %fploc2.ld.0 = load { i64 (i8*, i32, i32, i64*)* }*, { i64 (i8*, i32, i32, i64*)* }** %fploc2
+    %cast.3 = bitcast { i64 (i8*, i32, i32, i64*)* }* %fploc2.ld.0 to { i64 }*
+    store { i64 }* %cast.3, { i64 }** %fploc1
   )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);
@@ -138,9 +151,9 @@ TEST(BackendPointerExprTests, CreateFunctionCodeExpression) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendPointerExprTests, CreateNilPointerExpression) {
-
-  FcnTestHarness h("foo");
+TEST_P(BackendPointerExprTests, CreateNilPointerExpression) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
 
   // Manufacture a nil pointer expression
@@ -177,17 +190,17 @@ TEST(BackendPointerExprTests, CreateNilPointerExpression) {
   }
 
   const char *exp2 = R"RAW_RESULT(
-      store i8 0, i8* %b1
-      store i8* null, i8** %pb1
-      %pb1.ld.0 = load i8*, i8** %pb1
-      %icmp.0 = icmp eq i8* %pb1.ld.0, null
-      %zext.0 = zext i1 %icmp.0 to i8
-      store i8 %zext.0, i8* %b1
-      %pb1.ld.1 = load i8*, i8** %pb1
-      %icmp.1 = icmp eq i8* null, %pb1.ld.1
-      %zext.1 = zext i1 %icmp.1 to i8
-      store i8 %zext.1, i8* %b1
-    )RAW_RESULT";
+    store i8 0, i8* %b1
+    store i8* null, i8** %pb1
+    %pb1.ld.0 = load i8*, i8** %pb1
+    %icmp.0 = icmp eq i8* %pb1.ld.0, null
+    %zext.0 = zext i1 %icmp.0 to i8
+    store i8 %zext.0, i8* %b1
+    %pb1.ld.1 = load i8*, i8** %pb1
+    %icmp.1 = icmp eq i8* null, %pb1.ld.1
+    %zext.1 = zext i1 %icmp.1 to i8
+    store i8 %zext.1, i8* %b1
+  )RAW_RESULT";
 
   bool isOK2 = h.expectBlock(exp2);
   EXPECT_TRUE(isOK2 && "Block does not have expected contents");
@@ -196,8 +209,9 @@ TEST(BackendPointerExprTests, CreateNilPointerExpression) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendPointerExprTests, TestDerefNilPointer) {
-  FcnTestHarness h("foo");
+TEST_P(BackendPointerExprTests, TestDerefNilPointer) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   Location loc;
 
@@ -227,7 +241,7 @@ TEST(BackendPointerExprTests, TestDerefNilPointer) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendPointerExprTests, CircularPointerExpressions1) {
+TEST_P(BackendPointerExprTests, CircularPointerExpressions1) {
 
   // This testpoint is intended to verify handling of expressions
   // involving circular pointer types. Go code:
@@ -240,8 +254,8 @@ TEST(BackendPointerExprTests, CircularPointerExpressions1) {
   //     b1 := (cpv1 == *cpv2)
   //     b2 := (&cpv1 != cpv2)
   //     b3 := (&cpv1 == ***cpv2)
-
-  FcnTestHarness h("foo");
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   Location loc;
 
@@ -310,39 +324,39 @@ TEST(BackendPointerExprTests, CircularPointerExpressions1) {
   }
 
   const char *exp = R"RAW_RESULT(
-  store %CPT.0* null, %CPT.0** %cpv1
-  store %CPT.0* null, %CPT.0** %cpv2
-  %cast.0 = bitcast %CPT.0** %cpv2 to %CPT.0*
-  store %CPT.0* %cast.0, %CPT.0** %cpv1
-  %cast.1 = bitcast %CPT.0** %cpv1 to %CPT.0*
-  store %CPT.0* %cast.1, %CPT.0** %cpv2
-  store i8 0, i8* %b1
-  store i8 0, i8* %b2
-  store i8 0, i8* %b3
-  %cpv1.ld.0 = load %CPT.0*, %CPT.0** %cpv1
-  %cast.2 = bitcast %CPT.0** %cpv2 to %CPT.0***
-  %cpv2.ld.0 = load %CPT.0**, %CPT.0*** %cast.2
-  %.ld.0 = load %CPT.0*, %CPT.0** %cpv2.ld.0
-  %icmp.0 = icmp eq %CPT.0* %cpv1.ld.0, %.ld.0
-  %zext.0 = zext i1 %icmp.0 to i8
-  store i8 %zext.0, i8* %b1
-  %cpv2.ld.1 = load %CPT.0*, %CPT.0** %cpv2
-  %cast.3 = bitcast %CPT.0* %cpv2.ld.1 to %CPT.0**
-  %icmp.1 = icmp eq %CPT.0** %cpv1, %cast.3
-  %zext.1 = zext i1 %icmp.1 to i8
-  store i8 %zext.1, i8* %b2
-  %cpv1.ld.1 = load %CPT.0*, %CPT.0** %cpv1
-  %cast.4 = bitcast %CPT.0** %cpv2 to %CPT.0***
-  %cpv2.ld.2 = load %CPT.0**, %CPT.0*** %cast.4
-  %cast.5 = bitcast %CPT.0** %cpv2.ld.2 to %CPT.0***
-  %deref.ld.0 = load %CPT.0**, %CPT.0*** %cast.5
-  %cast.6 = bitcast %CPT.0** %deref.ld.0 to %CPT.0***
-  %deref.ld.1 = load %CPT.0**, %CPT.0*** %cast.6
-  %.ld.1 = load %CPT.0*, %CPT.0** %deref.ld.1
-  %icmp.2 = icmp eq %CPT.0* %cpv1.ld.1, %.ld.1
-  %zext.2 = zext i1 %icmp.2 to i8
-  store i8 %zext.2, i8* %b3
-    )RAW_RESULT";
+    store %CPT.0* null, %CPT.0** %cpv1
+    store %CPT.0* null, %CPT.0** %cpv2
+    %cast.0 = bitcast %CPT.0** %cpv2 to %CPT.0*
+    store %CPT.0* %cast.0, %CPT.0** %cpv1
+    %cast.1 = bitcast %CPT.0** %cpv1 to %CPT.0*
+    store %CPT.0* %cast.1, %CPT.0** %cpv2
+    store i8 0, i8* %b1
+    store i8 0, i8* %b2
+    store i8 0, i8* %b3
+    %cpv1.ld.0 = load %CPT.0*, %CPT.0** %cpv1
+    %cast.2 = bitcast %CPT.0** %cpv2 to %CPT.0***
+    %cpv2.ld.0 = load %CPT.0**, %CPT.0*** %cast.2
+    %.ld.0 = load %CPT.0*, %CPT.0** %cpv2.ld.0
+    %icmp.0 = icmp eq %CPT.0* %cpv1.ld.0, %.ld.0
+    %zext.0 = zext i1 %icmp.0 to i8
+    store i8 %zext.0, i8* %b1
+    %cpv2.ld.1 = load %CPT.0*, %CPT.0** %cpv2
+    %cast.3 = bitcast %CPT.0* %cpv2.ld.1 to %CPT.0**
+    %icmp.1 = icmp eq %CPT.0** %cpv1, %cast.3
+    %zext.1 = zext i1 %icmp.1 to i8
+    store i8 %zext.1, i8* %b2
+    %cpv1.ld.1 = load %CPT.0*, %CPT.0** %cpv1
+    %cast.4 = bitcast %CPT.0** %cpv2 to %CPT.0***
+    %cpv2.ld.2 = load %CPT.0**, %CPT.0*** %cast.4
+    %cast.5 = bitcast %CPT.0** %cpv2.ld.2 to %CPT.0***
+    %deref.ld.0 = load %CPT.0**, %CPT.0*** %cast.5
+    %cast.6 = bitcast %CPT.0** %deref.ld.0 to %CPT.0***
+    %deref.ld.1 = load %CPT.0**, %CPT.0*** %cast.6
+    %.ld.1 = load %CPT.0*, %CPT.0** %deref.ld.1
+    %icmp.2 = icmp eq %CPT.0* %cpv1.ld.1, %.ld.1
+    %zext.2 = zext i1 %icmp.2 to i8
+    store i8 %zext.2, i8* %b3
+  )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -351,7 +365,7 @@ TEST(BackendPointerExprTests, CircularPointerExpressions1) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendPointerExprTests, CircularPointerExpressions2) {
+TEST_P(BackendPointerExprTests, CircularPointerExpressions2) {
 
   // More tests for circular pointers, this time
   // with multiple levels. Go code:
@@ -364,8 +378,8 @@ TEST(BackendPointerExprTests, CircularPointerExpressions2) {
   //     x = &y
   //     y = &x
   //     b1 := (x == *y)
-
-  FcnTestHarness h("foo");
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   Location loc;
 
@@ -411,19 +425,19 @@ TEST(BackendPointerExprTests, CircularPointerExpressions2) {
   }
 
   const char *exp = R"RAW_RESULT(
-  store %CPT.0* null, %CPT.0** %x
-  store %CPT.0** null, %CPT.0*** %y
-  %cast.0 = bitcast %CPT.0*** %y to %CPT.0*
-  store %CPT.0* %cast.0, %CPT.0** %x
-  store %CPT.0** %x, %CPT.0*** %y
-  store i8 0, i8* %b1
-  %x.ld.0 = load %CPT.0*, %CPT.0** %x
-  %y.ld.0 = load %CPT.0**, %CPT.0*** %y
-  %.ld.0 = load %CPT.0*, %CPT.0** %y.ld.0
-  %icmp.0 = icmp eq %CPT.0* %x.ld.0, %.ld.0
-  %zext.0 = zext i1 %icmp.0 to i8
-  store i8 %zext.0, i8* %b1
-    )RAW_RESULT";
+    store %CPT.0* null, %CPT.0** %x
+    store %CPT.0** null, %CPT.0*** %y
+    %cast.0 = bitcast %CPT.0*** %y to %CPT.0*
+    store %CPT.0* %cast.0, %CPT.0** %x
+    store %CPT.0** %x, %CPT.0*** %y
+    store i8 0, i8* %b1
+    %x.ld.0 = load %CPT.0*, %CPT.0** %x
+    %y.ld.0 = load %CPT.0**, %CPT.0*** %y
+    %.ld.0 = load %CPT.0*, %CPT.0** %y.ld.0
+    %icmp.0 = icmp eq %CPT.0* %x.ld.0, %.ld.0
+    %zext.0 = zext i1 %icmp.0 to i8
+    store i8 %zext.0, i8* %b1
+  )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -432,9 +446,9 @@ TEST(BackendPointerExprTests, CircularPointerExpressions2) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendPointerExprTests, CreatePointerOffsetExprs) {
-
-  FcnTestHarness h("foo");
+TEST_P(BackendPointerExprTests, CreatePointerOffsetExprs) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   Bfunction *func = h.func();
   Location loc;
@@ -466,14 +480,14 @@ TEST(BackendPointerExprTests, CreatePointerOffsetExprs) {
   }
 
   const char *exp = R"RAW_RESULT(
-  %param3.ld.0 = load i64*, i64** %param3.addr
-  %ptroff.0 = getelementptr i64, i64* %param3.ld.0, i32 5
-  store i64 9, i64* %ptroff.0
-  %param3.ld.1 = load i64*, i64** %param3.addr
-  %ptroff.1 = getelementptr i64, i64* %param3.ld.1, i32 7
-  %.ptroff.ld.0 = load i64, i64* %ptroff.1
-  %trunc.0 = trunc i64 %.ptroff.ld.0 to i32
-  store i32 %trunc.0, i32* %param1.addr
+    %param3.ld.0 = load i64*, i64** %param3.addr
+    %ptroff.0 = getelementptr i64, i64* %param3.ld.0, i32 5
+    store i64 9, i64* %ptroff.0
+    %param3.ld.1 = load i64*, i64** %param3.addr
+    %ptroff.1 = getelementptr i64, i64* %param3.ld.1, i32 7
+    %.ptroff.ld.0 = load i64, i64* %ptroff.1
+    %trunc.0 = trunc i64 %.ptroff.ld.0 to i32
+    store i32 %trunc.0, i32* %param1.addr
   )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);
@@ -483,9 +497,9 @@ TEST(BackendPointerExprTests, CreatePointerOffsetExprs) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendPointerExprTests, TestAddrDerefFold) {
-
-  FcnTestHarness h("foo");
+TEST_P(BackendPointerExprTests, TestAddrDerefFold) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   Bfunction *func = h.func();
   Location loc;
@@ -505,8 +519,8 @@ TEST(BackendPointerExprTests, TestAddrDerefFold) {
   h.mkAssign(vexl, ad3);
 
   const char *exp = R"RAW_RESULT(
-  store i64 0, i64* %x
-  store i64* %x, i64** %param3.addr
+    store i64 0, i64* %x
+    store i64* %x, i64** %param3.addr
   )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);
@@ -516,9 +530,9 @@ TEST(BackendPointerExprTests, TestAddrDerefFold) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendPointerExprTests, TestDerefPointerConstantLHS)
-{
-  FcnTestHarness h("foo");
+TEST_P(BackendPointerExprTests, TestDerefPointerConstantLHS) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   Location loc;
 
@@ -570,16 +584,15 @@ TEST(BackendPointerExprTests, TestDerefPointerConstantLHS)
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendPointerExprTests, TestCircularFunctionTypes)
-{
+TEST_P(BackendPointerExprTests, TestCircularFunctionTypes) {
   // Make sure we can handle circular function types, especially
   // those in which the cycle extends across multiple types. Example:
   //
   // type gf1 func(int, int, gf1, gf2) int
   // type gf2 func(int, int, gf2, gf1) int
   //
-
-  FcnTestHarness h("foo");
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   Location loc;
 
@@ -613,10 +626,10 @@ TEST(BackendPointerExprTests, TestCircularFunctionTypes)
   h.mkLocal("y", pbefty2);
 
   const char *exp = R"RAW_RESULT(
-   store i64 (i8*, i64, i64, %CFT.0*, %CFT.1*)* null, i64 (i8*, i64, i64, %CFT.0*, %CFT.1*)** %x
-   store i64 (i8*, i64, i64, %CFT.1*, %CFT.0*)* null, i64 (i8*, i64, i64, %CFT.1*, %CFT.0*)** %y
+    store i64 (i8*, i64, i64, %CFT.0*, %CFT.1*)* null, i64 (i8*, i64, i64, %CFT.0*, %CFT.1*)** %x
+    store i64 (i8*, i64, i64, %CFT.1*, %CFT.0*)* null, i64 (i8*, i64, i64, %CFT.1*, %CFT.0*)** %y
 
-    )RAW_RESULT";
+  )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -625,4 +638,4 @@ TEST(BackendPointerExprTests, TestCircularFunctionTypes)
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-}
+} // namespace

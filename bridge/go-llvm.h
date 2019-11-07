@@ -79,7 +79,8 @@ public:
   Llvm_backend(llvm::LLVMContext &context,
                llvm::Module *module,
                Llvm_linemap *linemap,
-               unsigned addrspace);
+               unsigned addrspace,
+               llvm::CallingConv::ID cconv);
   ~Llvm_backend();
 
   // Types.

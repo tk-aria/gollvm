@@ -331,6 +331,16 @@ TypeManager::makeLLVMStructType(const std::vector<Btyped_identifier> &fields) {
   return lst;
 }
 
+llvm::Type *
+TypeManager::makeLLVMStructType(const std::vector<llvm::Type *> &fields) {
+  llvm::SmallVector<llvm::Type *, 64> elems(fields.size());
+  for (unsigned i = 0; i < fields.size(); ++i) {
+    elems[i] = fields[i];
+  }
+  llvm::Type *lst = llvm::StructType::get(context_, elems);
+  return lst;
+}
+
 bool TypeManager::addPlaceholderRefs(Btype *btype)
 {
   bool rval = false;
