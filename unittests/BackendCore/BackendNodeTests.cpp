@@ -18,9 +18,21 @@ using namespace goBackendUnitTests;
 
 namespace {
 
+class BackendNodeTests : public testing::TestWithParam<llvm::CallingConv::ID> {
+};
+
+INSTANTIATE_TEST_CASE_P(
+    UnitTest, BackendNodeTests,
+    testing::Values(llvm::CallingConv::X86_64_SysV,
+                    llvm::CallingConv::ARM_AAPCS),
+    [](const testing::TestParamInfo<BackendNodeTests::ParamType> &info) {
+      std::string name = goBackendUnitTests::ccName(info.param);
+      return name;
+    });
+
 class SimpleVisitor {
  public:
-  SimpleVisitor(unsigned stopAt = 0xffffffff) : stopAt_(stopAt) { }
+  SimpleVisitor(unsigned stopAt = 0xffffffff) : stopAt_(stopAt) {}
 
   std::pair<VisitDisp, Bnode *> visitNodePre(Bnode *node) {
     ss_ << "node " << node->flavstr() << " pre " << id(node) << "\n";
@@ -56,9 +68,9 @@ class SimpleVisitor {
   unsigned stopAt_;
 };
 
-TEST(BackendNodeTests, VerifyVisitorBehavior) {
-
-  FcnTestHarness h("foo");
+TEST_P(BackendNodeTests, VerifyVisitorBehavior) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   Location loc;
 
@@ -111,7 +123,7 @@ TEST(BackendNodeTests, VerifyVisitorBehavior) {
     node deref post 17
     post child deref 18 17
     node - post 18
-    )RAW_RESULT";
+  )RAW_RESULT";
 
   std::string reason;
   bool equal = difftokens(exp, vis.str(), reason);
@@ -127,9 +139,9 @@ TEST(BackendNodeTests, VerifyVisitorBehavior) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendNodeTests, CloneSubtree) {
-
-  FcnTestHarness h("foo");
+TEST_P(BackendNodeTests, CloneSubtree) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   Location loc = h.loc();
 
@@ -152,14 +164,14 @@ TEST(BackendNodeTests, CloneSubtree) {
   EXPECT_NE(add, matclone);
 
   const char *exp = R"RAW_RESULT(
-  %x.ld.0 = load i32, i32* %x
-  %z.ld.0 = load i16, i16* %z
-  %sext.0 = sext i16 %z.ld.0 to i32
-  %add.0 = add i32 %x.ld.0, %sext.0
-  %y.ld.0 = load i32*, i32** %y
-  %.ld.0 = load i32, i32* %y.ld.0
-  %add.1 = add i32 %add.0, %.ld.0
-    )RAW_RESULT";
+    %x.ld.0 = load i32, i32* %x
+    %z.ld.0 = load i16, i16* %z
+    %sext.0 = sext i16 %z.ld.0 to i32
+    %add.0 = add i32 %x.ld.0, %sext.0
+    %y.ld.0 = load i32*, i32** %y
+    %.ld.0 = load i32, i32* %y.ld.0
+    %add.1 = add i32 %add.0, %.ld.0
+  )RAW_RESULT";
 
   bool isOK = h.expectRepr(matadd, exp);
   EXPECT_TRUE(isOK && "expr does not have expected contents");
@@ -171,12 +183,11 @@ TEST(BackendNodeTests, CloneSubtree) {
 
   bool broken = h.finish(PreserveDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
-
 }
 
-TEST(BackendNodeTests, FixSharing) {
-
-  FcnTestHarness h("foo");
+TEST_P(BackendNodeTests, FixSharing) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   Location loc = h.loc();
 
@@ -195,16 +206,16 @@ TEST(BackendNodeTests, FixSharing) {
   Bexpression *matadd = be->materialize(add);
 
   const char *exp2 = R"RAW_RESULT(
-  %field.0 = getelementptr inbounds { { i32*, i32 }, { i32*, i32 } }, { { i32*, i32 }, { i32*, i32 } }* %x, i32 0, i32 0
-  %field.1 = getelementptr inbounds { i32*, i32 }, { i32*, i32 }* %field.0, i32 0, i32 0
-  %x.field.field.ld.0 = load i32*, i32** %field.1
-  %.ld.0 = load i32, i32* %x.field.field.ld.0
-  %field.2 = getelementptr inbounds { { i32*, i32 }, { i32*, i32 } }, { { i32*, i32 }, { i32*, i32 } }* %x, i32 0, i32 0
-  %field.3 = getelementptr inbounds { i32*, i32 }, { i32*, i32 }* %field.2, i32 0, i32 0
-  %.field.field.ld.0 = load i32*, i32** %field.3
-  %.ld.1 = load i32, i32* %.field.field.ld.0
-  %add.0 = add i32 %.ld.0, %.ld.1
-    )RAW_RESULT";
+    %field.0 = getelementptr inbounds { { i32*, i32 }, { i32*, i32 } }, { { i32*, i32 }, { i32*, i32 } }* %x, i32 0, i32 0
+    %field.1 = getelementptr inbounds { i32*, i32 }, { i32*, i32 }* %field.0, i32 0, i32 0
+    %x.field.field.ld.0 = load i32*, i32** %field.1
+    %.ld.0 = load i32, i32* %x.field.field.ld.0
+    %field.2 = getelementptr inbounds { { i32*, i32 }, { i32*, i32 } }, { { i32*, i32 }, { i32*, i32 } }* %x, i32 0, i32 0
+    %field.3 = getelementptr inbounds { i32*, i32 }, { i32*, i32 }* %field.2, i32 0, i32 0
+    %.field.field.ld.0 = load i32*, i32** %field.3
+    %.ld.1 = load i32, i32* %.field.field.ld.0
+    %add.0 = add i32 %.ld.0, %.ld.1
+  )RAW_RESULT";
 
   bool isOK = h.expectRepr(matadd, exp2);
   EXPECT_TRUE(isOK && "expr does not have expected contents");
@@ -215,4 +226,4 @@ TEST(BackendNodeTests, FixSharing) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-}
+} // namespace

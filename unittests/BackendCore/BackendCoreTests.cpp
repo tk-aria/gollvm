@@ -15,16 +15,28 @@ using namespace goBackendUnitTests;
 
 namespace {
 
-TEST(BackendCoreTests, MakeBackend) {
-  LLVMContext C;
+class BackendCoreTests : public testing::TestWithParam<llvm::CallingConv::ID> {
+};
 
-  std::unique_ptr<Backend> makeit(go_get_backend(C));
+INSTANTIATE_TEST_CASE_P(
+    UnitTest, BackendCoreTests,
+    testing::Values(llvm::CallingConv::X86_64_SysV,
+                    llvm::CallingConv::ARM_AAPCS),
+    [](const testing::TestParamInfo<BackendCoreTests::ParamType> &info) {
+      std::string name = goBackendUnitTests::ccName(info.param);
+      return name;
+    });
+
+TEST_P(BackendCoreTests, MakeBackend) {
+  LLVMContext C;
+  auto cc = GetParam();
+  std::unique_ptr<Backend> makeit(go_get_backend(C, cc));
 }
 
-TEST(BackendCoreTests, ScalarTypes) {
+TEST_P(BackendCoreTests, ScalarTypes) {
   LLVMContext C;
-
-  std::unique_ptr<Backend> be(go_get_backend(C));
+  auto cc = GetParam();
+  std::unique_ptr<Backend> be(go_get_backend(C, cc));
 
   Btype *et = be->error_type();
   EXPECT_TRUE(et != nullptr);
@@ -55,10 +67,10 @@ TEST(BackendCoreTests, ScalarTypes) {
   }
 }
 
-TEST(BackendCoreTests, StructTypes) {
+TEST_P(BackendCoreTests, StructTypes) {
   LLVMContext C;
-
-  std::unique_ptr<Backend> be(go_get_backend(C));
+  auto cc = GetParam();
+  std::unique_ptr<Backend> be(go_get_backend(C, cc));
 
   // Empty struct
   std::vector<Backend::Btyped_identifier> nofields;
@@ -91,10 +103,10 @@ TEST(BackendCoreTests, StructTypes) {
   EXPECT_EQ(st1, st2);
 }
 
-TEST(BackendCoreTests, TypeHashAndCompare) {
+TEST_P(BackendCoreTests, TypeHashAndCompare) {
   LLVMContext C;
-
-  std::unique_ptr<Backend> be(go_get_backend(C));
+  auto cc = GetParam();
+  std::unique_ptr<Backend> be(go_get_backend(C, cc));
 
   Btype *st1 = mkBackendThreeFieldStruct(be.get());
   Btype *st2 = mkBackendThreeFieldStruct(be.get());
@@ -102,13 +114,13 @@ TEST(BackendCoreTests, TypeHashAndCompare) {
   EXPECT_TRUE(st1->equal(*st1));
 }
 
-TEST(BackendCoreTests, ComplexTypes) {
+TEST_P(BackendCoreTests, ComplexTypes) {
   LLVMContext C;
 
   Type *ft = Type::getFloatTy(C);
   Type *dt = Type::getDoubleTy(C);
-
-  std::unique_ptr<Backend> be(go_get_backend(C));
+  auto cc = GetParam();
+  std::unique_ptr<Backend> be(go_get_backend(C, cc));
   Btype *c32 = be->complex_type(64);
   ASSERT_TRUE(c32 != nullptr);
   EXPECT_EQ(c32->type(), mkTwoFieldLLvmStruct(C, ft, ft));
@@ -117,12 +129,12 @@ TEST(BackendCoreTests, ComplexTypes) {
   EXPECT_EQ(c64->type(), mkTwoFieldLLvmStruct(C, dt, dt));
 }
 
-TEST(BackendCoreTests, FunctionTypes) {
+TEST_P(BackendCoreTests, FunctionTypes) {
   LLVMContext C;
 
   Type *i64t = IntegerType::get(C, 64);
-
-  std::unique_ptr<Backend> be(go_get_backend(C));
+  auto cc = GetParam();
+  std::unique_ptr<Backend> be(go_get_backend(C, cc));
 
   // func foo() {}
   Btype *emptyf = mkFuncTyp(be.get(), L_END);
@@ -133,8 +145,7 @@ TEST(BackendCoreTests, FunctionTypes) {
   {
     // func (Blah) foo() {}
     Btype *pt = be->pointer_type(mkBackendThreeFieldStruct(be.get()));
-    Btype *befn =
-        mkFuncTyp(be.get(), L_RCV, pt, L_END);
+    Btype *befn = mkFuncTyp(be.get(), L_RCV, pt, L_END);
     llvm::PointerType *llpt =
         llvm::PointerType::get(mkLlvmThreeFieldStruct(C), 0);
     Type *llfn = mkLLFuncTyp(&C, L_RCV, llpt, L_END);
@@ -161,10 +172,10 @@ TEST(BackendCoreTests, FunctionTypes) {
   }
 }
 
-TEST(BackendCoreTests, PlaceholderTypes) {
+TEST_P(BackendCoreTests, PlaceholderTypes) {
   LLVMContext C;
-
-  std::unique_ptr<Backend> be(go_get_backend(C));
+  auto cc = GetParam();
+  std::unique_ptr<Backend> be(go_get_backend(C, cc));
 
   // Create a placeholder pointer type
   Location loc;
@@ -225,10 +236,10 @@ TEST(BackendCoreTests, PlaceholderTypes) {
   EXPECT_EQ(php4->type(), cpt->type());
 }
 
-TEST(BackendCoreTests, ArrayTypes) {
+TEST_P(BackendCoreTests, ArrayTypes) {
   LLVMContext C;
-
-  std::unique_ptr<Backend> be(go_get_backend(C));
+  auto cc = GetParam();
+  std::unique_ptr<Backend> be(go_get_backend(C, cc));
   Location loc;
 
   // Very basic tests of array type creation: array of integers
@@ -260,10 +271,10 @@ TEST(BackendCoreTests, ArrayTypes) {
   EXPECT_EQ(badt2, be->error_type());
 }
 
-TEST(BackendCoreTests, NamedTypes) {
+TEST_P(BackendCoreTests, NamedTypes) {
   LLVMContext C;
-
-  std::unique_ptr<Backend> be(go_get_backend(C));
+  auto cc = GetParam();
+  std::unique_ptr<Backend> be(go_get_backend(C, cc));
   Location loc;
   Btype *nt = be->named_type("named_int32", be->integer_type(false, 32), loc);
   ASSERT_TRUE(nt != nullptr);
@@ -274,12 +285,12 @@ TEST(BackendCoreTests, NamedTypes) {
   EXPECT_TRUE(nt->equivalent(*nt2));
 }
 
-TEST(BackendCoreTests, TypeUtils) {
+TEST_P(BackendCoreTests, TypeUtils) {
   LLVMContext C;
   Location loc;
-
+  auto cc = GetParam();
   // Type size and alignment. Size and align are in bytes.
-  std::unique_ptr<Backend> be(go_get_backend(C));
+  std::unique_ptr<Backend> be(go_get_backend(C, cc));
   Btype *i8t = be->integer_type(false, 8);
   Btype *bs1f = mkBackendStruct(be.get(), i8t, "f1", nullptr);
   EXPECT_EQ(be->type_size(i8t), int64_t(1));
@@ -318,10 +329,10 @@ TEST(BackendCoreTests, TypeUtils) {
   EXPECT_EQ(be->type_field_alignment(u32), 4);
 }
 
-TEST(BackendCoreTests, TestTypeEquivalence) {
+TEST_P(BackendCoreTests, TestTypeEquivalence) {
   LLVMContext C;
-
-  std::unique_ptr<Backend> be(go_get_backend(C));
+  auto cc = GetParam();
+  std::unique_ptr<Backend> be(go_get_backend(C, cc));
 
   // Two structs with same field type but different field names
   Btype *bi32t = be->integer_type(false, 32);
@@ -351,9 +362,9 @@ TEST(BackendCoreTests, TestTypeEquivalence) {
   EXPECT_TRUE(phst1->equivalent(*phst2));
 }
 
-TEST(BackendCoreTests, TestFcnPointerCompatible) {
-
-  FcnTestHarness h("foo");
+TEST_P(BackendCoreTests, TestFcnPointerCompatible) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   TypeManager *tm = be->typeManager();
   Location loc;
@@ -395,9 +406,9 @@ TEST(BackendCoreTests, TestFcnPointerCompatible) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendCoreTests, TestCompositeInitGvarConvert) {
-
-  FcnTestHarness h("foo");
+TEST_P(BackendCoreTests, TestCompositeInitGvarConvert) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   Location loc;
 
@@ -459,9 +470,11 @@ TEST(BackendCoreTests, TestCompositeInitGvarConvert) {
   bool broken = h.finish(StripDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
 
-  bool ok = h.expectModuleDumpContains("@gv = global { { i8, i8*, i32 }, %ph.0 } { { i8, i8*, i32 } { i8 0, i8* null, i32 101 }, %ph.0 { i8 0, i8* null, i32 101 } }");
+  bool ok = h.expectModuleDumpContains(
+      "@gv = global { { i8, i8*, i32 }, %ph.0 } { { i8, i8*, i32 } { i8 0, "
+      "i8* "
+      "null, i32 101 }, %ph.0 { i8 0, i8* null, i32 101 } }");
   EXPECT_TRUE(ok);
-
 }
 
-}
+} // namespace

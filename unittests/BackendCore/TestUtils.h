@@ -32,6 +32,9 @@
 
 namespace goBackendUnitTests {
 
+// Convert llvm::CallingConv::ID to its coresponding string name.
+std::string ccName(llvm::CallingConv::ID);
+
 // Return string representation of LLVM value (handling null ptr)
 std::string repr(llvm::Value *val);
 
@@ -152,7 +155,7 @@ class FcnTestHarness {
  public:
   // Create test harness. If name specified, then create a
   // default function "fcnName(i1, i2 int32) int64".
-  FcnTestHarness(const char *fcnName = nullptr);
+  FcnTestHarness(llvm::CallingConv::ID cconv, const char *fcnName = nullptr);
   ~FcnTestHarness();
 
   // Create function to work on
@@ -206,8 +209,8 @@ class FcnTestHarness {
 
   // Create and append a switch statement
   Bstatement *mkSwitch(Bexpression *swval,
-                       const std::vector<std::vector<Bexpression*> >& cases,
-                       const std::vector<Bstatement*>& statements,
+                       const std::vector<std::vector<Bexpression*>> &cases,
+                       const std::vector<Bstatement*> &statements,
                        AppendDisp disp = YesAppend);
 
   // Add a previously created statement to the current block
@@ -258,6 +261,9 @@ class FcnTestHarness {
   //
   bool finish(DebugDisposition disp);
 
+  // Return calling convention.
+  llvm::CallingConv::ID getCConv();
+
  private:
   llvm::LLVMContext context_;
   std::unique_ptr<Llvm_backend> be_;
@@ -272,6 +278,7 @@ class FcnTestHarness {
   bool returnAdded_;
   bool emitDumpFilesOnDiff_;
   bool findOrphanBBs_;
+  llvm::CallingConv::ID cconv_;
 };
 
 } // end namespace goBackendUnitTests

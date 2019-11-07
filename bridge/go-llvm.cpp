@@ -43,8 +43,9 @@
 Llvm_backend::Llvm_backend(llvm::LLVMContext &context,
                            llvm::Module *module,
                            Llvm_linemap *linemap,
-                           unsigned addrspace)
-    : TypeManager(context, llvm::CallingConv::X86_64_SysV, addrspace)
+                           unsigned addrspace,
+                           llvm::CallingConv::ID cconv)
+    : TypeManager(context, cconv, addrspace)
     , context_(context)
     , module_(module)
     , datalayout_(module ? &module->getDataLayout() : nullptr)
@@ -4073,6 +4074,6 @@ const char *go_localize_identifier(const char *ident) { return ident; }
 
 // Return a new backend generator.
 
-Backend *go_get_backend(llvm::LLVMContext &context) {
-  return new Llvm_backend(context, nullptr, nullptr, 0);
+Backend *go_get_backend(llvm::LLVMContext &context, llvm::CallingConv::ID cconv) {
+  return new Llvm_backend(context, nullptr, nullptr, 0, cconv);
 }

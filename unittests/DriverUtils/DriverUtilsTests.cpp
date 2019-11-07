@@ -317,6 +317,31 @@ TEST(DriverUtilsTests, GCCInstallationDetectorBasic) {
   EXPECT_TRUE(isOK2);
 }
 
+TEST(DriverUtilsTests, GCCInstallationDetectorBasicARM64) {
+
+  // Here we have two installations, version 6 and version 7.
+  const char *install = R"RAW_RESULT(
+      /mumble
+      /usr/lib/gcc/aarch64-linux-gnu/blah
+      /usr/lib/gcc/aarch64-linux-gnu/6/crtbegin.o
+      /usr/lib/gcc/aarch64-linux-gnu/7/crtbegin.o
+    )RAW_RESULT";
+
+  // Case 1: no sysroot, looking for 64-bit compiler.
+  // Gcc doesn't support multilib on Arm64, so don't need
+  // to test that case.
+  DetectorHarness harness1(install, "aarch64-linux-gnu", "");
+  const char *exp64 = R"RAW_RESULT(
+      version: 7
+      foundTriple: aarch64-linux-gnu
+      libPath: /usr/lib/gcc/aarch64-linux-gnu/7
+      parentLibPath: /usr/lib/gcc/aarch64-linux-gnu/7/../..
+      installPath: /usr/lib/gcc/aarch64-linux-gnu/7
+    )RAW_RESULT";
+  bool isOK1 = expectToString(harness1.detector(), exp64);
+  EXPECT_TRUE(isOK1);
+}
+
 TEST(DriverUtilsTests, GCCInstallationDetectorSysRoot) {
 
   const char *install = R"RAW_RESULT(
@@ -334,6 +359,28 @@ TEST(DriverUtilsTests, GCCInstallationDetectorSysRoot) {
       libPath: /mysysroot/usr/lib/gcc/x86_64-linux-gnu/6.2.3
       parentLibPath: /mysysroot/usr/lib/gcc/x86_64-linux-gnu/6.2.3/../..
       installPath: /mysysroot/usr/lib/gcc/x86_64-linux-gnu/6.2.3
+    )RAW_RESULT";
+  bool isOK1 = expectToString(harness1.detector(), exp64);
+  EXPECT_TRUE(isOK1);
+}
+
+TEST(DriverUtilsTests, GCCInstallationDetectorSysRootARM64) {
+
+  const char *install = R"RAW_RESULT(
+      /mumble
+      /usr/lib/gcc/aarch64-linux-gnu/7/crtbegin.o
+      /mysysroot/usr/lib/gcc/aarch64-linux-gnu/6.2.3/crtbegin.o
+    )RAW_RESULT";
+
+  // We have GCC 7 installed on the host, but GCC 6 in sysroot,
+  // which in this case is what we want.
+  DetectorHarness harness1(install, "aarch64-linux-gnu", "/mysysroot");
+  const char *exp64 = R"RAW_RESULT(
+      version: 6.2.3
+      foundTriple: aarch64-linux-gnu
+      libPath: /mysysroot/usr/lib/gcc/aarch64-linux-gnu/6.2.3
+      parentLibPath: /mysysroot/usr/lib/gcc/aarch64-linux-gnu/6.2.3/../..
+      installPath: /mysysroot/usr/lib/gcc/aarch64-linux-gnu/6.2.3
     )RAW_RESULT";
   bool isOK1 = expectToString(harness1.detector(), exp64);
   EXPECT_TRUE(isOK1);
@@ -378,8 +425,46 @@ TEST(DriverUtilsTests, GCCInstallationDetectorTripleAliases) {
   EXPECT_TRUE(isOK2);
 }
 
-TEST(DriverUtilsTests, GCCInstallationDetectorBiarchAliases)
-{
+TEST(DriverUtilsTests, GCCInstallationDetectorTripleAliasesARM64) {
+
+  // Regrettably, there is a fair amount of variation in terms
+  // of target triples and how GCC is installed. This test checks
+  // to make sure we can accommodate such differences.
+
+  const char *install = R"RAW_RESULT(
+      /mumble
+      /usr/lib/gcc/aarch64-linux-gnu/5/crtbegin.o
+      /usr/lib/gcc/aarch64-linux-gnu/7/crtbegin.o
+    )RAW_RESULT";
+
+  // Case 1: install is aarch64-linux-gnu, but we are looking for
+  // aarch64-unknown-linux-gnu
+  DetectorHarness harness1(install, "aarch64-unknown-linux-gnu", "");
+  const char *exp1 = R"RAW_RESULT(
+      version: 7
+      foundTriple: aarch64-linux-gnu
+      libPath: /usr/lib/gcc/aarch64-linux-gnu/7
+      parentLibPath: /usr/lib/gcc/aarch64-linux-gnu/7/../..
+      installPath: /usr/lib/gcc/aarch64-linux-gnu/7
+    )RAW_RESULT";
+  bool isOK1 = expectToString(harness1.detector(), exp1);
+  EXPECT_TRUE(isOK1);
+
+  // Case 2: install is aarch64-linux-gnu, but we are looking for
+  // aarch64-redhat-linux-gnu
+  DetectorHarness harness2(install, "aarch64-redhat-linux-gnu", "");
+  const char *exp2 = R"RAW_RESULT(
+      version: 7
+      foundTriple: aarch64-linux-gnu
+      libPath: /usr/lib/gcc/aarch64-linux-gnu/7
+      parentLibPath: /usr/lib/gcc/aarch64-linux-gnu/7/../..
+      installPath: /usr/lib/gcc/aarch64-linux-gnu/7
+    )RAW_RESULT";
+  bool isOK2 = expectToString(harness2.detector(), exp2);
+  EXPECT_TRUE(isOK2);
+}
+
+TEST(DriverUtilsTests, GCCInstallationDetectorBiarchAliases) {
   const char *install = R"RAW_RESULT(
       /mumble
       /usr/lib/gcc/x86_64-redhat-linux/6/lib32/crtbegin.o

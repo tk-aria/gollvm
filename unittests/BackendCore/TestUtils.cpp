@@ -12,6 +12,19 @@
 
 namespace goBackendUnitTests {
 
+std::string ccName(llvm::CallingConv::ID cc) {
+  assert(cc == llvm::CallingConv::X86_64_SysV ||
+         cc == llvm::CallingConv::ARM_AAPCS);
+  switch (cc) {
+  case llvm::CallingConv::X86_64_SysV:
+    return "X8664SysV";
+  case llvm::CallingConv::ARM_AAPCS:
+    return "ARMAAPCS";
+  default:
+    return "";
+  }
+}
+
 std::string repr(llvm::Value *val) {
   std::string res;
   llvm::raw_string_ostream os(res);
@@ -209,10 +222,9 @@ Bfunction *mkFunci32o64(Backend *be, const char *fname, bool mkParams) {
   Btype *bi64t = be->integer_type(false, 64);
   Btype *bi32t = be->integer_type(false, 32);
   Btype *bpi64t = be->pointer_type(bi64t);
-  Btype *befty =
-      mkFuncTyp(be,
-                L_PARM, bi32t, L_PARM, bi32t, L_PARM, bpi64t,
-                L_RES, bi64t, L_END);
+  Btype *befty = mkFuncTyp(be,
+                           L_PARM, bi32t, L_PARM, bi32t, L_PARM, bpi64t,
+                           L_RES, bi64t, L_END);
   unsigned fflags = (Backend::function_is_visible |
                      Backend::function_is_inlinable);
   Location loc;
@@ -372,9 +384,9 @@ std::string repr(Bnode *node) {
   return trimsp(vis.result());
 }
 
-FcnTestHarness::FcnTestHarness(const char *fcnName)
+FcnTestHarness::FcnTestHarness(llvm::CallingConv::ID cconv, const char *fcnName)
     : context_()
-    , be_(new Llvm_backend(context_, nullptr, nullptr, 0))
+    , be_(new Llvm_backend(context_, nullptr, nullptr, 0, cconv))
     , func_(nullptr)
     , entryBlock_(nullptr)
     , curBlock_(nullptr)
@@ -384,6 +396,7 @@ FcnTestHarness::FcnTestHarness(const char *fcnName)
     , returnAdded_(false)
     , emitDumpFilesOnDiff_(false)
     , findOrphanBBs_(true)
+    , cconv_(cconv)
 {
   // establish initial file so as to make verifier happy
   be_->linemap()->start_file("unit_testing.go", 1);
@@ -513,9 +526,9 @@ Bstatement *FcnTestHarness::mkIf(Bexpression *cond,
 }
 
 Bstatement *FcnTestHarness::mkSwitch(Bexpression *swval,
-                       const std::vector<std::vector<Bexpression*> >& cases,
-                       const std::vector<Bstatement*>& statements,
-                                     AppendDisp disp)
+                       const std::vector<std::vector<Bexpression *>> &cases,
+                       const std::vector<Bstatement *> &statements,
+                       AppendDisp disp)
 {
   assert(func_);
   Bstatement *swst = be()->switch_statement(func_, swval,
@@ -524,7 +537,6 @@ Bstatement *FcnTestHarness::mkSwitch(Bexpression *swval,
     addStmtToBlock(be(), curBlock_, swst);
   return swst;
 }
-
 
 void FcnTestHarness::addStmt(Bstatement *stmt)
 {
@@ -562,8 +574,8 @@ void FcnTestHarness::newBlock(std::vector<Bvariable *> *varlist)
 
 bool FcnTestHarness::expectStmt(Bstatement *st, const std::string &expected)
 {
- std::string reason;
- std::string actual(repr(st));
+  std::string reason;
+  std::string actual(repr(st));
   bool equal = difftokens(expected, actual, reason);
   if (! equal)
     complainOnNequal(reason, expected, actual, emitDumpFilesOnDiff_);
@@ -634,10 +646,9 @@ bool FcnTestHarness::finish(DebugDisposition whatToDoWithDebugInfo)
 
     // Set function body
     be()->function_set_body(func_, entryBlock_);
-
   }
-    // Finalize export data. This has the side effect of finalizing
-    // debug meta-data, which we need to do before invoking the verifier.
+  // Finalize export data. This has the side effect of finalizing
+  // debug meta-data, which we need to do before invoking the verifier.
   be()->finalizeExportData();
 
   // Strip debug info now if requested
@@ -676,4 +687,9 @@ bool FcnTestHarness::finish(DebugDisposition whatToDoWithDebugInfo)
   return broken || brokenBlock;
 }
 
-} // end namespace goBackEndUnitTests
+llvm::CallingConv::ID FcnTestHarness::getCConv() {
+  assert(cconv_);
+  return cconv_;
+}
+
+} // namespace goBackendUnitTests
