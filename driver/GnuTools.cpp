@@ -266,7 +266,6 @@ void Linker::addSysLibsStatic(llvm::opt::ArgList &args,
   cmdArgs.push_back("-lm");
   cmdArgs.push_back("-u");
   cmdArgs.push_back("pthread_create");
-  cmdArgs.push_back("--wrap=pthread_create");
 
   // Libgcc and libc.
   cmdArgs.push_back("--start-group");
@@ -291,7 +290,6 @@ void Linker::addSysLibsShared(llvm::opt::ArgList &args,
   if (isStaticLibgo || havePthreadFlag)
     cmdArgs.push_back("-lpthread");
   cmdArgs.push_back("-lm");
-  cmdArgs.push_back("--wrap=pthread_create");
 
   // Libgcc and libc.
   addLibGcc(args, cmdArgs);

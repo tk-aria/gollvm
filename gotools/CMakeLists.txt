@@ -219,7 +219,7 @@ add_custom_target(
   VERBATIM)
 list(APPEND checktargets ${targetname})
 
-# Run `go test misc/cgo/testcarchive/carchive_test.go` in the build env.
+# Run `go test misc/cgo/testcarchive/*_test.go` in the build env.
 set(targetname "check_carchive_tool")
 add_custom_target(
   ${targetname}
@@ -231,7 +231,6 @@ add_custom_target(
     "TIMEOUT" ${default_check_timeout}
     "GOC" "${rungoc}"
     "CC" "${runcc}"
-    "TESTARG" "carchive_test.go"
     "BINDIR" ${gotools_binroot}
     "LIBDIR" ${libgo_binroot}
   DEPENDS ${libgo_goxfiles} libgotool libgo_shared gotools_all libgobegin libgolibbegin
