@@ -176,6 +176,16 @@ bool CommandLineParser::parseCommandLine(int argc, char **argv)
     return false;
   }
 
+  // Check if '-fsplit-stack' is supported by this compiler configuration.
+#ifndef USING_SPLIT_STACK
+  if (args_.hasArg(gollvm::options::OPT_fsplit_stack)) {
+    errs() << progname
+           << ": '-fsplit-stack' is not supported by this compiler "
+              "configuration\n";
+    return false;
+  }
+#endif
+
   return true;
 }
 

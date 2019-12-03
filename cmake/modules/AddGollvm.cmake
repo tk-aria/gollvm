@@ -21,9 +21,19 @@ set(GOLLVM_LIBVERSION "${libversion}")
 set(GOLLVM_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}")
 set(GOLLVM_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/${libsubdir}")
 
+# We need to check if '-fsplit-stack' is supported with 'USING_SPLIT_STACK'
+# at compile time. So define this macro in GollvmConfig.h if it's supported.
+if(GOLLVM_USE_SPLIT_STACK)
+  check_c_compiler_flag("-fsplit-stack" C_SUPPORTS_SPLIT_STACK)
+  if(NOT C_SUPPORTS_SPLIT_STACK)
+    message(SEND_ERROR "C compiler does not support -fsplit-stack")
+  else()
+    set(USING_SPLIT_STACK 1)
+  endif()
+endif()
+
 macro(add_gollvm_library name)
   llvm_add_library(${name} ${ARGN})
-
   # Configure for install.
   install(TARGETS ${name}
     COMPONENT ${name}
