@@ -15,6 +15,9 @@
 // Library version (e.g. 7, 4.5, 8.0.1)
 #cmakedefine GOLLVM_LIBVERSION "@GOLLVM_LIBVERSION@"
 
+// Define if the compiler supports -fsplit-stack
+#cmakedefine USING_SPLIT_STACK
+
 // Compiler version. Same as library version currently.
 #define GOLLVM_COMPILERVERSION GOLLVM_LIBVERSION
 

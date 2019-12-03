@@ -21,9 +21,27 @@ set(GOLLVM_LIBVERSION "${libversion}")
 set(GOLLVM_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}")
 set(GOLLVM_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/${libsubdir}")
 
+# We need to check if '-fsplit-stack' is supported with 'USING_SPLIT_STACK'
+# at compile time. So define this macro in GollvmConfig.h if it's supported.
+if(GOLLVM_USE_SPLIT_STACK)
+  # For amd64, as gcc, clang, ld and ld.gold all support -fsplit-stack, so all
+  # going well. For arm64, the situation is very complicated, none of gcc, ld
+  # and ld.gold support this option, but clang does. When using clang compiler
+  # and ld linker, the test passes, but in fact ld does not support stack
+  # splitting. So here we do this test with ld.gold linker.
+  # FIXME: update here once one day there is a linker that supports '-fsplit-stack'
+  # on arm64.
+  SET(CMAKE_REQUIRED_FLAGS "-fuse-ld=gold -fsplit-stack")
+  check_c_source_compiles("#include<stdio.h>\nint main(){printf(\"hello\");\nreturn 0;}" C_SUPPORTS_SPLIT_STACK)
+  if(NOT C_SUPPORTS_SPLIT_STACK)
+    message(SEND_ERROR "C compiler does not support -fsplit-stack")
+  else()
+    set(USING_SPLIT_STACK 1)
+  endif()
+endif()
+
 macro(add_gollvm_library name)
   llvm_add_library(${name} ${ARGN})
-
   # Configure for install.
   install(TARGETS ${name}
     COMPONENT ${name}
