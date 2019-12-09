@@ -4073,6 +4073,6 @@ const char *go_localize_identifier(const char *ident) { return ident; }
 
 // Return a new backend generator.
 
-Backend *go_get_backend(llvm::LLVMContext &context) {
-  return new Llvm_backend(context, nullptr, nullptr, 0);
+Backend *go_get_backend(llvm::LLVMContext &context, llvm::CallingConv::ID cconv) {
+  return new Llvm_backend(context, nullptr, nullptr, 0, cconv);
 }

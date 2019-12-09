@@ -20,8 +20,20 @@ namespace {
 // changed). Perhaps there is some other way to verify this
 // functionality.
 
-TEST(BackendDebugEmit, TestSimpleDecl) {
-  FcnTestHarness h;
+class BackendDebugEmit : public testing::TestWithParam<llvm::CallingConv::ID> {
+};
+
+INSTANTIATE_TEST_CASE_P(
+    UnitTest, BackendDebugEmit,
+    testing::Values(llvm::CallingConv::X86_64_SysV),
+    [](const testing::TestParamInfo<BackendDebugEmit::ParamType> &info) {
+      std::string name = goBackendUnitTests::ccName(info.param);
+      return name;
+    });
+
+TEST_P(BackendDebugEmit, TestSimpleDecl) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc);
   Llvm_backend *be = h.be();
   BFunctionType *befty = mkFuncTyp(be, L_END);
   Bfunction *func = h.mkFunction("foo", befty);
@@ -30,14 +42,14 @@ TEST(BackendDebugEmit, TestSimpleDecl) {
   h.mkLocal("x", bu32t);
 
   const char *exp = R"RAW_RESULT(
-      define void @foo(i8* nest %nest.0) #0 {
-      entry:
-        %x = alloca i32
-        store i32 0, i32* %x
-        call void @llvm.dbg.declare(metadata i32* %x, metadata !5,
-                                    metadata !DIExpression()), !dbg !12
-        ret void
-      }
+    define void @foo(i8* nest %nest.0) #0 {
+    entry:
+      %x = alloca i32
+      store i32 0, i32* %x
+      call void @llvm.dbg.declare(metadata i32* %x, metadata !5,
+                                  metadata !DIExpression()), !dbg !12
+      ret void
+    }
   )RAW_RESULT";
 
   bool broken = h.finish(PreserveDebugInfo);
@@ -47,9 +59,9 @@ TEST(BackendDebugEmit, TestSimpleDecl) {
   EXPECT_TRUE(isOK && "Function does not have expected contents");
 }
 
-TEST(BackendDebugEmit, TestSimpleDecl2) {
+TEST(BackendDebugEmit, TestSimpleDecl2Amd64) {
   // Test that parameters of empty function are handled correctly.
-  FcnTestHarness h;
+  FcnTestHarness h(llvm::CallingConv::X86_64_SysV);
   Llvm_backend *be = h.be();
   Btype *bi64t = be->integer_type(false, 64);
   Btype *bst = mkBackendStruct(be, bi64t, "f1",
@@ -81,9 +93,9 @@ TEST(BackendDebugEmit, TestSimpleDecl2) {
 // handles corner clases like vars with zero size (empty struct).
 
 // working propery
-TEST(BackendDebugEmit, MoreComplexVarDecls) {
-
-  FcnTestHarness h;
+TEST_P(BackendDebugEmit, MoreComplexVarDecls) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc);
   Llvm_backend *be = h.be();
 
   Btype *bi32t = be->integer_type(false, 32);
@@ -159,9 +171,10 @@ TEST(BackendDebugEmit, MoreComplexVarDecls) {
     std::cerr << fdump;
 }
 
-TEST(BackendDebugEmit, TestDeadLocalVar) {
+TEST_P(BackendDebugEmit, TestDeadLocalVar) {
+  auto cc = GetParam();
   // Test that dead local variable doesn't cause problem.
-  FcnTestHarness h;
+  FcnTestHarness h(cc);
   Llvm_backend *be = h.be();
   BFunctionType *befty = mkFuncTyp(be, L_END);
   Bfunction *func = h.mkFunction("foo", befty);
@@ -185,8 +198,9 @@ TEST(BackendDebugEmit, TestDeadLocalVar) {
   EXPECT_TRUE(isOK && "Function does not have expected contents");
 }
 
-TEST(BackendVarTests, TestGlobalVarDebugEmit) {
-  FcnTestHarness h("foo");
+TEST_P(BackendDebugEmit, TestGlobalVarDebugEmit) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   Location loc = h.loc();
 
@@ -207,12 +221,11 @@ TEST(BackendVarTests, TestGlobalVarDebugEmit) {
   // wasn't skipped.
   bool ok = h.expectModuleDumpContains("!DIGlobalVariable(name: \"bar\",");
   EXPECT_TRUE(ok);
-
 }
 
-TEST(BackendDebugEmit, TestDebugPrefixMap) {
-
-  FcnTestHarness h;
+TEST_P(BackendDebugEmit, TestDebugPrefixMap) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc);
   Llvm_backend *be = h.be();
   Btype *bi64t = be->integer_type(false, 64);
   BFunctionType *befty = mkFuncTyp(be, L_PARM, bi64t, L_RES, bi64t, L_END);
@@ -235,9 +248,9 @@ TEST(BackendDebugEmit, TestDebugPrefixMap) {
   EXPECT_TRUE(ok);
 }
 
-TEST(BackendDebugEmit, TestFileLineDirectives) {
-
-  FcnTestHarness h;
+TEST_P(BackendDebugEmit, TestFileLineDirectives) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc);
   Llvm_backend *be = h.be();
   Btype *bi64t = be->integer_type(false, 64);
   BFunctionType *befty = mkFuncTyp(be, L_PARM, bi64t, L_RES, bi64t, L_END);
@@ -271,4 +284,4 @@ TEST(BackendDebugEmit, TestFileLineDirectives) {
   EXPECT_TRUE(ok);
 }
 
-}
+} // namespace

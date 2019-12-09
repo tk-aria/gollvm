@@ -15,8 +15,20 @@ using namespace goBackendUnitTests;
 
 namespace {
 
-TEST(BackendTreeIntegrity, CheckTreeIntegrity1) {
-  FcnTestHarness h("foo");
+class BackendTreeIntegrity
+    : public testing::TestWithParam<llvm::CallingConv::ID> {};
+
+INSTANTIATE_TEST_CASE_P(
+    UnitTest, BackendTreeIntegrity,
+    testing::Values(llvm::CallingConv::X86_64_SysV),
+    [](const testing::TestParamInfo<BackendTreeIntegrity::ParamType> &info) {
+      std::string name = goBackendUnitTests::ccName(info.param);
+      return name;
+    });
+
+TEST_P(BackendTreeIntegrity, CheckTreeIntegrity1) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   Bfunction *func = h.func();
   Location loc;
@@ -60,11 +72,13 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrity1) {
   h.finish(PreserveDebugInfo);
 }
 
-TEST(BackendTreeIntegrity, CheckTreeIntegrity2) {
+TEST_P(BackendTreeIntegrity, CheckTreeIntegrity2) {
 
   // Add the same Expression to more than one statement
   LLVMContext C;
-  std::unique_ptr<Llvm_backend> be(new Llvm_backend(C, nullptr, nullptr, 0));
+  auto cc = GetParam();
+  std::unique_ptr<Llvm_backend> be(
+      new Llvm_backend(C, nullptr, nullptr, 0, cc));
   be->disableIntegrityChecks();
 
   Location loc;
@@ -81,8 +95,7 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrity2) {
   addStmtToBlock(be.get(), block, es2);
 
   TreeIntegCtl control(NoDumpPointers, ReportRepairableSharing, BatchMode);
-  std::pair<bool, std::string> result =
-      be->checkTreeIntegrity(block, control);
+  std::pair<bool, std::string> result = be->checkTreeIntegrity(block, control);
   EXPECT_FALSE(result.first);
   EXPECT_TRUE(containstokens(result.second, "expr has multiple parents"));
 
@@ -97,11 +110,13 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrity2) {
   be->function_set_body(func, block2);
 }
 
-TEST(BackendTreeIntegrity, CheckTreeIntegrity3) {
+TEST_P(BackendTreeIntegrity, CheckTreeIntegrity3) {
 
   // Same statement with more than one parent.
   LLVMContext C;
-  std::unique_ptr<Llvm_backend> be(new Llvm_backend(C, nullptr, nullptr, 0));
+  auto cc = GetParam();
+  std::unique_ptr<Llvm_backend> be(
+      new Llvm_backend(C, nullptr, nullptr, 0, cc));
   be->disableIntegrityChecks();
   Location loc;
   Bfunction *func = mkFunci32o64(be.get(), "foo");
@@ -113,8 +128,7 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrity3) {
   addStmtToBlock(be.get(), block, es);
 
   TreeIntegCtl control(NoDumpPointers, ReportRepairableSharing, BatchMode);
-  std::pair<bool, std::string> result =
-      be->checkTreeIntegrity(block, control);
+  std::pair<bool, std::string> result = be->checkTreeIntegrity(block, control);
   EXPECT_FALSE(result.first);
   EXPECT_TRUE(containstokens(result.second, "stmt has multiple parents"));
 
@@ -127,8 +141,9 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrity3) {
   be->function_set_body(func, block2);
 }
 
-TEST(BackendTreeIntegrity, CheckTreeIntegrityRepairableSubtree) {
-  FcnTestHarness h;
+TEST_P(BackendTreeIntegrity, CheckTreeIntegrityRepairableSubtree) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc);
   Llvm_backend *be = h.be();
   Btype *bi32t = be->integer_type(false, 32);
   Btype *bpi32t = be->pointer_type(bi32t);
@@ -152,8 +167,7 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrityRepairableSubtree) {
   // p0 == nil ? 1 : *p0
   Bexpression *vex2 = be->var_expression(p0v, loc);
   Bexpression *npe = be->nil_pointer_expression();
-  Bexpression *cmp =
-      be->binary_expression(OPERATOR_EQEQ, npe, vex2, loc);
+  Bexpression *cmp = be->binary_expression(OPERATOR_EQEQ, npe, vex2, loc);
   Bexpression *der2 = be->indirect_expression(bi32t, vex2, false, loc);
   Bexpression *const1 = mkInt32Const(be, 1);
   Bexpression *condex = be->conditional_expression(func, bi32t, cmp, const1,
@@ -178,11 +192,9 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrityRepairableSubtree) {
   Bfunction *rtefcn = be->function(bfterr, rtename, rtename, fflags, loc);
 
   // p0 != nil ? *p0 + 3 : runtime_error(6)
-  Bexpression *cmp2 =
-      be->binary_expression(OPERATOR_NOTEQ, vex3, npe, loc);
+  Bexpression *cmp2 = be->binary_expression(OPERATOR_NOTEQ, vex3, npe, loc);
   Bexpression *der3 = be->indirect_expression(bi32t, vex3, false, loc);
-  Bexpression *add2 =
-      be->binary_expression(OPERATOR_PLUS, mkInt32Const(be, 3), der3, loc);
+  Bexpression *add2 = be->binary_expression(OPERATOR_PLUS, mkInt32Const(be, 3), der3, loc);
   Bexpression *const6 = mkInt32Const(be, 6);
   Bexpression *call3 = h.mkCallExpr(be, rtefcn, const6, nullptr);
   Bexpression *condex2 = be->conditional_expression(func, bi32t, cmp2, add2,
@@ -201,4 +213,4 @@ TEST(BackendTreeIntegrity, CheckTreeIntegrityRepairableSubtree) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-}
+} // namespace

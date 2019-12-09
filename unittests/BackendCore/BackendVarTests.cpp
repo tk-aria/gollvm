@@ -20,8 +20,19 @@ using namespace goBackendUnitTests;
 
 namespace {
 
-TEST(BackendVarTests, MakeLocalVar) {
-  FcnTestHarness h("foo");
+class BackendVarTests : public testing::TestWithParam<llvm::CallingConv::ID> {};
+
+INSTANTIATE_TEST_CASE_P(
+    UnitTest, BackendVarTests,
+    testing::Values(llvm::CallingConv::X86_64_SysV),
+    [](const testing::TestParamInfo<BackendVarTests::ParamType> &info) {
+      std::string name = goBackendUnitTests::ccName(info.param);
+      return name;
+    });
+
+TEST_P(BackendVarTests, MakeLocalVar) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   Bfunction *func1 = h.func();
   Bfunction *func2 = mkFunci32o64(be, "bar");
@@ -66,10 +77,10 @@ TEST(BackendVarTests, MakeLocalVar) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendVarTests, MakeParamVar) {
+TEST_P(BackendVarTests, MakeParamVar) {
   LLVMContext C;
-
-  std::unique_ptr<Backend> be(go_get_backend(C));
+  auto cc = GetParam();
+  std::unique_ptr<Backend> be(go_get_backend(C, cc));
   bool dontMakeParams = false;
   Bfunction *func = mkFunci32o64(be.get(), "foo", dontMakeParams);
 
@@ -99,10 +110,10 @@ TEST(BackendVarTests, MakeParamVar) {
   EXPECT_TRUE(p3 == be->error_variable());
 }
 
-TEST(BackendVarTests, MakeGlobalVar) {
+TEST_P(BackendVarTests, MakeGlobalVar) {
   LLVMContext C;
-
-  std::unique_ptr<Backend> be(go_get_backend(C));
+  auto cc = GetParam();
+  std::unique_ptr<Backend> be(go_get_backend(C, cc));
 
   Btype *bi32t = be->integer_type(false, 32);
   Bvariable *g1 =
@@ -133,8 +144,9 @@ TEST(BackendVarTests, MakeGlobalVar) {
   EXPECT_TRUE(gerr == be->error_variable());
 }
 
-TEST(BackendVarTests, MakeTemporaryVar) {
-  FcnTestHarness h("foo");
+TEST_P(BackendVarTests, MakeTemporaryVar) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   Bfunction *func = h.func();
 
@@ -159,8 +171,9 @@ TEST(BackendVarTests, MakeTemporaryVar) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendVarTests, MakeImmutableStruct) {
-  FcnTestHarness h("foo");
+TEST_P(BackendVarTests, MakeImmutableStruct) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
 
   Btype *bi32t = be->integer_type(false, 32);
@@ -198,10 +211,10 @@ TEST(BackendVarTests, MakeImmutableStruct) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendVarTests, MakeImplicitVariable) {
+TEST_P(BackendVarTests, MakeImplicitVariable) {
   LLVMContext C;
-
-  std::unique_ptr<Backend> be(go_get_backend(C));
+  auto cc = GetParam();
+  std::unique_ptr<Backend> be(go_get_backend(C, cc));
 
   Btype *bi32t = be->integer_type(false, 32);
   Btype *bst = mkTwoFieldStruct(be.get(), bi32t, bi32t);
@@ -234,14 +247,13 @@ TEST(BackendVarTests, MakeImplicitVariable) {
 
   // error case
   Bvariable *gerr =
-      be->implicit_variable("", "", be->error_type(), false, false,
-                            false, 0);
+      be->implicit_variable("", "", be->error_type(), false, false, false, 0);
   EXPECT_TRUE(gerr == be->error_variable());
 }
 
-TEST(BackendVarTests, MakeImmutableStructReference) {
-
-  FcnTestHarness h("foo");
+TEST_P(BackendVarTests, MakeImmutableStructReference) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
 
   Location loc;
@@ -264,9 +276,9 @@ TEST(BackendVarTests, MakeImmutableStructReference) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendVarTests, ImmutableStructSetInit) {
-
-  FcnTestHarness h("foo");
+TEST_P(BackendVarTests, ImmutableStructSetInit) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   Bfunction *func = h.func();
 
@@ -297,7 +309,7 @@ TEST(BackendVarTests, ImmutableStructSetInit) {
   }
 
   Bvariable *ims2 = be->immutable_struct("xyz", "abc",
-                                        false, true, desct, loc);
+                                         false, true, desct, loc);
   be->immutable_struct_set_init(ims2, "", false, true,
                                 desct, loc, be->zero_expression(desct));
 
@@ -320,9 +332,9 @@ TEST(BackendVarTests, ImmutableStructSetInit) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendVarTests, MakeImmutableStructReferenceWithSameName) {
-
-  FcnTestHarness h("foo");
+TEST_P(BackendVarTests, MakeImmutableStructReferenceWithSameName) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
 
   Location loc;
@@ -338,8 +350,7 @@ TEST(BackendVarTests, MakeImmutableStructReferenceWithSameName) {
       be->immutable_struct("name", "asmname", hidden, common, bst, loc);
   ASSERT_TRUE(ims != nullptr);
 
-  Bvariable *imsr =
-      be->immutable_struct_reference("name", "asmname", bst, loc);
+  Bvariable *imsr = be->immutable_struct_reference("name", "asmname", bst, loc);
   ASSERT_TRUE(imsr != nullptr);
   EXPECT_TRUE(isa<GlobalVariable>(imsr->value()));
   EXPECT_TRUE(imsr->value() == ims->value());
@@ -348,9 +359,9 @@ TEST(BackendVarTests, MakeImmutableStructReferenceWithSameName) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendVarTests, ImplicitVariableSetInit) {
-
-  FcnTestHarness h("foo");
+TEST_P(BackendVarTests, ImplicitVariableSetInit) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
 
   Location loc;
@@ -374,8 +385,8 @@ TEST(BackendVarTests, ImplicitVariableSetInit) {
                                  isHidden, isConst, isCommon, con1);
 
   const char *exp1 = R"RAW_RESULT(
-     @v1 = global { i32, i32 } { i32 101, i32 202 }, align 8
-    )RAW_RESULT";
+    @v1 = global { i32, i32 } { i32 101, i32 202 }, align 8
+  )RAW_RESULT";
 
   bool isOK1 = h.expectValue(ims1->value(), exp1);
   EXPECT_TRUE(isOK1 && "Value does not have expected contents");
@@ -383,15 +394,14 @@ TEST(BackendVarTests, ImplicitVariableSetInit) {
   // Case 2: const, common, no init value.
   isConst = true;
   isCommon = true;
-  Bvariable *ims2 =
-      be->implicit_variable("second", "v2", bst,
-                            isHidden, isConst, isCommon, 8);
+  Bvariable *ims2 = be->implicit_variable("second", "v2", bst,
+                                          isHidden, isConst, isCommon, 8);
   be->implicit_variable_set_init(ims2, "x", bst,
                                  isHidden, isConst, isCommon, nullptr);
 
   const char *exp2 = R"RAW_RESULT(
     @v2 = weak constant { i32, i32 } zeroinitializer, comdat, align 8
-    )RAW_RESULT";
+  )RAW_RESULT";
 
   bool isOK2 = h.expectValue(ims2->value(), exp2);
   EXPECT_TRUE(isOK2 && "Value does not have expected contents");
@@ -407,10 +417,10 @@ TEST(BackendVarTests, ImplicitVariableSetInit) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendVarTests, GlobalVarSetInitToComposite) {
+TEST_P(BackendVarTests, GlobalVarSetInitToComposite) {
   LLVMContext C;
-
-  std::unique_ptr<Backend> be(go_get_backend(C));
+  auto cc = GetParam();
+  std::unique_ptr<Backend> be(go_get_backend(C, cc));
   Location loc;
 
   Btype *bt = be->bool_type();
@@ -433,9 +443,9 @@ TEST(BackendVarTests, GlobalVarSetInitToComposite) {
   be->global_variable_set_init(g1, scon);
 }
 
-TEST(BackendVarTests, GlobalVarsWithSameName) {
-
-  FcnTestHarness h("foo");
+TEST_P(BackendVarTests, GlobalVarsWithSameName) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
 
   Location loc;
@@ -464,7 +474,7 @@ TEST(BackendVarTests, GlobalVarsWithSameName) {
   EXPECT_TRUE(isa<GlobalVariable>(gv->value()));
   EXPECT_EQ(repr(gv->value()), "@x = global { i32 } zeroinitializer");
   EXPECT_EQ(repr(gvdecl->value()),
-      "i32* getelementptr inbounds ({ i32 }, { i32 }* @x, i32 0, i32 0)");
+            "i32* getelementptr inbounds ({ i32 }, { i32 }* @x, i32 0, i32 0)");
 
   // Create them in the other order: definition first,
   // then external declaration.
@@ -490,9 +500,9 @@ TEST(BackendVarTests, GlobalVarsWithSameName) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendVarTests, TestVarLifetimeInsertion) {
-
-  FcnTestHarness h;
+TEST_P(BackendVarTests, TestVarLifetimeInsertion) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc);
   Llvm_backend *be = h.be();
   BFunctionType *befty1 = mkFuncTyp(be, L_END);
   Bfunction *func = h.mkFunction("foo", befty1);
@@ -524,36 +534,36 @@ TEST(BackendVarTests, TestVarLifetimeInsertion) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 
   const char *exp = R"RAW_RESULT(
-  define void @foo(i8* nest %nest.0) #0 {
-  entry:
-    %x = alloca i32
-    %y = alloca { i32, i32 }
-    %0 = bitcast i32* %x to i8*
-    call void @llvm.lifetime.start.p0i8(i64 4, i8* %0)
-    %1 = bitcast { i32, i32 }* %y to i8*
-    call void @llvm.lifetime.start.p0i8(i64 8, i8* %1)
-    store i32 0, i32* %x
-    %cast.0 = bitcast { i32, i32 }* %y to i8*
-    %cast.1 = bitcast { i32, i32 }* @const.0 to i8*
-    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.0, i8* align 4 %cast.1, i64 8, i1 false)
-    %field.0 = getelementptr inbounds { i32, i32 }, { i32, i32 }* %y, i32 0, i32 1
-    %y.field.ld.0 = load i32, i32* %field.0
-    store i32 %y.field.ld.0, i32* %x
-    %2 = bitcast i32* %x to i8*
-    call void @llvm.lifetime.end.p0i8(i64 4, i8* %2)
-    %3 = bitcast { i32, i32 }* %y to i8*
-    call void @llvm.lifetime.end.p0i8(i64 8, i8* %3)
-    ret void
-  }
-    )RAW_RESULT";
+    define void @foo(i8* nest %nest.0) #0 {
+    entry:
+      %x = alloca i32
+      %y = alloca { i32, i32 }
+      %0 = bitcast i32* %x to i8*
+      call void @llvm.lifetime.start.p0i8(i64 4, i8* %0)
+      %1 = bitcast { i32, i32 }* %y to i8*
+      call void @llvm.lifetime.start.p0i8(i64 8, i8* %1)
+      store i32 0, i32* %x
+      %cast.0 = bitcast { i32, i32 }* %y to i8*
+      %cast.1 = bitcast { i32, i32 }* @const.0 to i8*
+      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.0, i8* align 4 %cast.1, i64 8, i1 false)
+      %field.0 = getelementptr inbounds { i32, i32 }, { i32, i32 }* %y, i32 0, i32 1
+      %y.field.ld.0 = load i32, i32* %field.0
+      store i32 %y.field.ld.0, i32* %x
+      %2 = bitcast i32* %x to i8*
+      call void @llvm.lifetime.end.p0i8(i64 4, i8* %2)
+      %3 = bitcast { i32, i32 }* %y to i8*
+      call void @llvm.lifetime.end.p0i8(i64 8, i8* %3)
+      ret void
+    }
+  )RAW_RESULT";
 
   bool isOK = h.expectValue(func->function(), exp);
   EXPECT_TRUE(isOK && "Value does not have expected contents");
 }
 
-TEST(BackendVarTests, ZeroSizedGlobals) {
-
-  FcnTestHarness h;
+TEST_P(BackendVarTests, ZeroSizedGlobals) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc);
   Llvm_backend *be = h.be();
   BFunctionType *befty1 = mkFuncTyp(be, L_END);
   Bfunction *func = h.mkFunction("foo", befty1);
@@ -678,14 +688,14 @@ TEST(BackendVarTests, ZeroSizedGlobals) {
       %localemptyintar = alloca [0 x i32]
       ret void
     }
-    )RAW_RESULT";
+  )RAW_RESULT";
   bool isOK = h.expectValue(func->function(), exp);
   EXPECT_TRUE(isOK && "Value does not have expected contents");
-
 }
 
-TEST(BackendVarTests, MakeLocalWithDeclVar) {
-  FcnTestHarness h("foo");
+TEST_P(BackendVarTests, MakeLocalWithDeclVar) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   Bfunction *func1 = h.func();
 
@@ -728,4 +738,4 @@ TEST(BackendVarTests, MakeLocalWithDeclVar) {
   EXPECT_EQ(h.countInstancesInModuleDump(expected), 1u);
 }
 
-}
+} // namespace
