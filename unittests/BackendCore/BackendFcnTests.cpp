@@ -16,10 +16,20 @@ using namespace goBackendUnitTests;
 
 namespace {
 
-TEST(BackendFcnTests, MakeEmptyFunction) {
+class BackendFcnTests : public testing::TestWithParam<llvm::CallingConv::ID> {};
 
+INSTANTIATE_TEST_CASE_P(
+    UnitTest, BackendFcnTests,
+    testing::Values(llvm::CallingConv::X86_64_SysV),
+    [](const testing::TestParamInfo<BackendFcnTests::ParamType> &info) {
+      std::string name = goBackendUnitTests::ccName(info.param);
+      return name;
+    });
+
+TEST_P(BackendFcnTests, MakeEmptyFunction) {
+  auto cc = GetParam();
   // Create empty function
-  FcnTestHarness h;
+  FcnTestHarness h(cc);
   Llvm_backend *be = h.be();
   BFunctionType *befty1 = mkFuncTyp(be, L_END);
   h.mkFunction("foo", befty1);
@@ -34,10 +44,10 @@ TEST(BackendFcnTests, MakeEmptyFunction) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendFcnTests, MakeFuncWithLotsOfArgs) {
-
+TEST_P(BackendFcnTests, MakeFuncWithLotsOfArgs) {
+  auto cc = GetParam();
   // Create empty function
-  FcnTestHarness h;
+  FcnTestHarness h(cc);
   Llvm_backend *be = h.be();
   Btype *bi32t = be->integer_type(false, 32);
   Btype *bi64t = be->integer_type(false, 64);
@@ -66,10 +76,10 @@ TEST(BackendFcnTests, MakeFuncWithLotsOfArgs) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendFcnTests, MakeFunction) {
+TEST_P(BackendFcnTests, MakeFunction) {
   LLVMContext C;
-
-  std::unique_ptr<Backend> be(go_get_backend(C));
+  auto cc = GetParam();
+  std::unique_ptr<Backend> be(go_get_backend(C, cc));
 
   Btype *bi64t = be->integer_type(false, 64);
   Btype *bi32t = be->integer_type(false, 32);
@@ -134,10 +144,10 @@ TEST(BackendFcnTests, MakeFunction) {
   EXPECT_EQ(mistake, be_error_fcn);
 }
 
-TEST(BackendFcnTests, BuiltinFunctionsMisc) {
+TEST_P(BackendFcnTests, BuiltinFunctionsMisc) {
   LLVMContext C;
-
-  std::unique_ptr<Backend> be(go_get_backend(C));
+  auto cc = GetParam();
+  std::unique_ptr<Backend> be(go_get_backend(C, cc));
 
   std::unordered_set<Bfunction *> results;
   std::vector<std::string> tocheck = {
@@ -158,10 +168,10 @@ TEST(BackendFcnTests, BuiltinFunctionsMisc) {
   EXPECT_TRUE(results.size() == tocheck.size());
 }
 
-TEST(BackendFcnTests, BuiltinFunctionsTrig) {
+TEST_P(BackendFcnTests, BuiltinFunctionsTrig) {
   LLVMContext C;
-
-  std::unique_ptr<Backend> be(go_get_backend(C));
+  auto cc = GetParam();
+  std::unique_ptr<Backend> be(go_get_backend(C, cc));
 
   std::unordered_set<Bfunction *> results;
   std::vector<std::string> tocheck = {
@@ -187,20 +197,20 @@ TEST(BackendFcnTests, BuiltinFunctionsTrig) {
   EXPECT_TRUE(results.size() == tocheck.size());
 }
 
-TEST(BackendFcnTests, MakeBlocks) {
+TEST_P(BackendFcnTests, MakeBlocks) {
   LLVMContext C;
-
-  std::unique_ptr<Backend> be(go_get_backend(C));
+  auto cc = GetParam();
+  std::unique_ptr<Backend> be(go_get_backend(C, cc));
   Bfunction *bfcn = mkFunci32o64(be.get(), "foo");
   const std::vector<Bvariable *> vars;
   Bblock *bb = be->block(bfcn, nullptr, vars, Location(), Location());
   ASSERT_TRUE(bb != nullptr);
 }
 
-TEST(BackendFcnTests, MakeFuncWithRecursiveTypeParam) {
-
+TEST_P(BackendFcnTests, MakeFuncWithRecursiveTypeParam) {
+  auto cc = GetParam();
   // Create empty function
-  FcnTestHarness h;
+  FcnTestHarness h(cc);
   Llvm_backend *be = h.be();
   Location loc;
 
@@ -239,9 +249,9 @@ TEST(BackendFcnTests, MakeFuncWithRecursiveTypeParam) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendFcnTests, MakeMultipleDeclarations) {
-
-  FcnTestHarness h("foo");
+TEST_P(BackendFcnTests, MakeMultipleDeclarations) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   Location loc;
 
@@ -270,8 +280,9 @@ TEST(BackendFcnTests, MakeMultipleDeclarations) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendFcnTests, TestIntrinsicCall) {
-  FcnTestHarness h("foo");
+TEST_P(BackendFcnTests, TestIntrinsicCall) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   Location loc;
 
@@ -281,7 +292,7 @@ TEST(BackendFcnTests, TestIntrinsicCall) {
 
   // __builtin_ctzll(x);
   Bfunction *bfcn = be->lookup_builtin("__builtin_ctzll");
-  //Bexpression *fnexpr = be->function_code_expression(bfcn, loc);
+  // Bexpression *fnexpr = be->function_code_expression(bfcn, loc);
   Bexpression *ve = be->var_expression(x, loc);
   Bexpression *call = h.mkCallExpr(be, bfcn, ve, nullptr);
   h.mkExprStmt(call);
@@ -299,8 +310,9 @@ TEST(BackendFcnTests, TestIntrinsicCall) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendFcnTests, TestCallMemBuiltins) {
-  FcnTestHarness h("foo");
+TEST_P(BackendFcnTests, TestCallMemBuiltins) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   Location loc;
 
@@ -313,58 +325,56 @@ TEST(BackendFcnTests, TestCallMemBuiltins) {
 
   // memcmp(&x,&y,sizeof(x))
   {
-  Bfunction *bmemcmp = be->lookup_builtin("memcmp");
-  Bexpression *vex = be->var_expression(x, loc);
-  Bexpression *vey = be->var_expression(y, loc);
-  Bexpression *call =
-      h.mkCallExpr(be, bmemcmp,
-                   be->address_expression(vex, loc),
-                   be->address_expression(vey, loc),
-                   mkUint64Const(be, be->type_size(bu64t)),
-                   nullptr);
-  h.mkExprStmt(call);
+    Bfunction *bmemcmp = be->lookup_builtin("memcmp");
+    Bexpression *vex = be->var_expression(x, loc);
+    Bexpression *vey = be->var_expression(y, loc);
+    Bexpression *call =
+        h.mkCallExpr(be, bmemcmp,
+                     be->address_expression(vex, loc),
+                     be->address_expression(vey, loc),
+                     mkUint64Const(be, be->type_size(bu64t)),
+                     nullptr);
+    h.mkExprStmt(call);
   }
 
   // memmove(&x,&y,sizeof(x))
   {
-  Bfunction *bmemmove = be->lookup_builtin("memmove");
-  Bexpression *vex = be->var_expression(x, loc);
-  Bexpression *vey = be->var_expression(y, loc);
-  Bexpression *call =
-      h.mkCallExpr(be, bmemmove,
-                   be->address_expression(vex, loc),
-                   be->address_expression(vey, loc),
-                   mkUint64Const(be, be->type_size(bu64t)),
-                   nullptr);
-  h.mkExprStmt(call);
+    Bfunction *bmemmove = be->lookup_builtin("memmove");
+    Bexpression *vex = be->var_expression(x, loc);
+    Bexpression *vey = be->var_expression(y, loc);
+    Bexpression *call =
+        h.mkCallExpr(be, bmemmove,
+                     be->address_expression(vex, loc),
+                     be->address_expression(vey, loc),
+                     mkUint64Const(be, be->type_size(bu64t)),
+                     nullptr);
+    h.mkExprStmt(call);
   }
 
   // memcpy(&y,&x,sizeof(y))
   {
-  Bfunction *bmemcpy = be->lookup_builtin("memcpy");
-  Bexpression *vey = be->var_expression(y, loc);
-  Bexpression *vex = be->var_expression(x, loc);
-  Bexpression *call =
-      h.mkCallExpr(be, bmemcpy,
-                   be->address_expression(vey, loc),
-                   be->address_expression(vex, loc),
-                   mkUint64Const(be, be->type_size(bu64t)),
-                   nullptr);
-  h.mkExprStmt(call);
+    Bfunction *bmemcpy = be->lookup_builtin("memcpy");
+    Bexpression *vey = be->var_expression(y, loc);
+    Bexpression *vex = be->var_expression(x, loc);
+    Bexpression *call =
+        h.mkCallExpr(be, bmemcpy, be->address_expression(vey, loc),
+                     be->address_expression(vex, loc),
+                     mkUint64Const(be, be->type_size(bu64t)), nullptr);
+    h.mkExprStmt(call);
   }
 
   const char *exp = R"RAW_RESULT(
-  store i64 0, i64* %x
-  store i64 10101, i64* %y
-  %cast.0 = bitcast i64* %x to i8*
-  %cast.1 = bitcast i64* %y to i8*
-  %call.0 = call addrspace(0) i32 @memcmp(i8* %cast.0, i8* %cast.1, i64 8)
-  %cast.2 = bitcast i64* %x to i8*
-  %cast.3 = bitcast i64* %y to i8*
-  call addrspace(0) void @llvm.memmove.p0i8.p0i8.i64(i8* %cast.2, i8* %cast.3, i64 8, i1 false)
-  %cast.4 = bitcast i64* %y to i8*
-  %cast.5 = bitcast i64* %x to i8*
-  call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.4, i8* %cast.5, i64 8, i1 false)
+    store i64 0, i64* %x
+    store i64 10101, i64* %y
+    %cast.0 = bitcast i64* %x to i8*
+    %cast.1 = bitcast i64* %y to i8*
+    %call.0 = call addrspace(0) i32 @memcmp(i8* %cast.0, i8* %cast.1, i64 8)
+    %cast.2 = bitcast i64* %x to i8*
+    %cast.3 = bitcast i64* %y to i8*
+    call addrspace(0) void @llvm.memmove.p0i8.p0i8.i64(i8* %cast.2, i8* %cast.3, i64 8, i1 false)
+    %cast.4 = bitcast i64* %y to i8*
+    %cast.5 = bitcast i64* %x to i8*
+    call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* %cast.4, i8* %cast.5, i64 8, i1 false)
   )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);
@@ -374,8 +384,9 @@ TEST(BackendFcnTests, TestCallMemBuiltins) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendFcnTests, TestMultipleExternalFcnsWithSameName) {
-  FcnTestHarness h("foo");
+TEST_P(BackendFcnTests, TestMultipleExternalFcnsWithSameName) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   Location loc;
 
@@ -414,11 +425,11 @@ TEST(BackendFcnTests, TestMultipleExternalFcnsWithSameName) {
   h.mkLocal("y", bi32t, call32);
 
   const char *exp = R"RAW_RESULT(
-     %call.0 = call addrspace(0) i64 @syscall(i8* nest undef, i64 64)
-     store i64 %call.0, i64* %x
-     %call.1 = call addrspace(0) i32 bitcast (i64 (i8*, i64)*
-           @syscall to i32 (i8*, i32)*)(i8* nest undef, i32 32)
-     store i32 %call.1, i32* %y
+    %call.0 = call addrspace(0) i64 @syscall(i8* nest undef, i64 64)
+    store i64 %call.0, i64* %x
+    %call.1 = call addrspace(0) i32 bitcast (i64 (i8*, i64)*
+          @syscall to i32 (i8*, i32)*)(i8* nest undef, i32 32)
+    store i32 %call.1, i32* %y
   )RAW_RESULT";
 
   bool isOK = h.expectBlock(exp);
@@ -428,8 +439,9 @@ TEST(BackendFcnTests, TestMultipleExternalFcnsWithSameName) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-TEST(BackendFcnTests, TestDeclAndDefWithSameName) {
-  FcnTestHarness h("foo");
+TEST_P(BackendFcnTests, TestDeclAndDefWithSameName) {
+  auto cc = GetParam();
+  FcnTestHarness h(cc, "foo");
   Llvm_backend *be = h.be();
   Location loc;
 
@@ -504,4 +516,4 @@ TEST(BackendFcnTests, TestDeclAndDefWithSameName) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 }
 
-}
+} // namespace
