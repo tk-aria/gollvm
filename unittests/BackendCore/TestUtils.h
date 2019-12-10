@@ -27,10 +27,15 @@
 #include "DiffUtils.h"
 
 #include <stdarg.h>
+#include "gtest/gtest.h"
 
 #define RAW_RESULT(x) #x
 
 namespace goBackendUnitTests {
+
+// All supported calling conventions
+auto CConvs = testing::Values(llvm::CallingConv::X86_64_SysV,
+                              llvm::CallingConv::ARM_AAPCS);
 
 // Convert llvm::CallingConv::ID to its coresponding string name.
 std::string ccName(llvm::CallingConv::ID);

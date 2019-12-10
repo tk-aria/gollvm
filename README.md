@@ -264,7 +264,7 @@ inlining, vectorization, register allocation, etc.
 
 ## Which architectures and operating systems are supported for gollvm? <a name="supported"></a>
 
-Gollvm is currently supported only for x86_64 Linux.
+Gollvm is currently supported only for x86_64 and aarch64 Linux.
 
 ## How does the gollvm runtime differ from the main Go runtime?  <a name="runtimediffs"></a>
 

@@ -132,7 +132,8 @@ void Bfunction::lazyAbiSetup()
       case ParmIndirect: {
         paramValues_.push_back(arguments_[argIdx]);
         assert(paramInfo.numArgSlots() == 1);
-        arguments_[argIdx]->addAttr(llvm::Attribute::ByVal);
+        if (paramInfo.attr() == AttrByVal)
+          arguments_[argIdx]->addAttr(llvm::Attribute::ByVal);
         argIdx += 1;
         break;
       }
