@@ -1194,6 +1194,24 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
         llvm::Type *pt = llvm::PointerType::get(vt->getPointerElementType(), 0);
         val = builder.CreateAddrSpaceCast(val, pt, castname);
       }
+
+      // For some architectures, such as arm64, the indirect parameter needs to
+      // be copied to the space allocated by the caller on the stack, and pass
+      // the address of the copied version to the callee.
+      if (paramInfo.attr() == AttrDoCopy) {
+        BlockLIRBuilder bbuilder(state.callerFcn->function(), this);
+        TypeManager *tm = state.oracle.tm();
+        Btype *bty = fnarg->btype();
+        uint64_t sz = tm->typeSize(bty);
+        uint64_t algn = tm->typeAlignment(bty);
+        std::string tname(namegen("doCopy.addr"));
+        llvm::Value *tmpV = state.callerFcn->createTemporary(bty, tname);
+        bbuilder.CreateMemCpy(tmpV, algn, val, algn, sz);
+        std::vector<llvm::Instruction *> instructions = bbuilder.instructions();
+        for (auto i : instructions)
+          state.instructions.appendInstruction(i);
+        val = tmpV;
+      }
       state.llargs.push_back(val);
       continue;
     }

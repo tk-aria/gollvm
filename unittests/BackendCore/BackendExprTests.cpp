@@ -22,7 +22,7 @@ class BackendExprTests : public testing::TestWithParam<llvm::CallingConv::ID> {
 
 INSTANTIATE_TEST_CASE_P(
     UnitTest, BackendExprTests,
-    testing::Values(llvm::CallingConv::X86_64_SysV),
+    goBackendUnitTests::CConvs,
     [](const testing::TestParamInfo<BackendExprTests::ParamType> &info) {
       std::string name = goBackendUnitTests::ccName(info.param);
       return name;
@@ -1462,6 +1462,82 @@ TEST(BackendExprTests, TestConditionalExpression3Amd64) {
 
   const char *exp = R"RAW_RESULT(
     define void @foo({ [16 x i32], i32 }* sret %sret.formal.0, i8* nest %nest.0, { [16 x i32], i32 }* byval %p0, i32 %p1) #0 {
+    entry:
+      %p1.addr = alloca i32
+      %a = alloca { [16 x i32], i32 }
+      %tmpv.0 = alloca { [16 x i32], i32 }
+      store i32 %p1, i32* %p1.addr
+      %p1.ld.0 = load i32, i32* %p1.addr
+      %icmp.0 = icmp slt i32 %p1.ld.0, 7
+      %zext.0 = zext i1 %icmp.0 to i8
+      %trunc.0 = trunc i8 %zext.0 to i1
+      br i1 %trunc.0, label %then.0, label %else.0
+
+    then.0:                                           ; preds = %entry
+      %cast.0 = bitcast { [16 x i32], i32 }* %tmpv.0 to i8*
+      %cast.1 = bitcast { [16 x i32], i32 }* %p0 to i8*
+      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.0, i8* align 4 %cast.1, i64 68, i1 false)
+      br label %fallthrough.0
+
+    fallthrough.0:                                    ; preds = %else.0, %then.0
+      %cast.4 = bitcast { [16 x i32], i32 }* %a to i8*
+      %cast.5 = bitcast { [16 x i32], i32 }* %tmpv.0 to i8*
+      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.4, i8* align 4 %cast.5, i64 68, i1 false)
+      ret void
+
+    else.0:                                           ; preds = %entry
+      %cast.2 = bitcast { [16 x i32], i32 }* %tmpv.0 to i8*
+      %cast.3 = bitcast { [16 x i32], i32 }* @const.0 to i8*
+      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.2, i8* align 4 %cast.3, i64 68, i1 false)
+      br label %fallthrough.0
+    }
+  )RAW_RESULT";
+
+  bool broken = h.finish(StripDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+
+  bool isOK = h.expectValue(func->function(), exp);
+  EXPECT_TRUE(isOK && "Block does not have expected contents");
+}
+
+TEST(BackendExprTests, TestConditionalExpression3Arm64) {
+  FcnTestHarness h(llvm::CallingConv::ARM_AAPCS);
+  Llvm_backend *be = h.be();
+  Btype *bi32t = be->integer_type(false, 32);
+  Btype *abt = be->array_type(bi32t, mkInt64Const(be, int64_t(16)));
+  // type s2t struct {
+  //   f1 [16]int32
+  //   f2 int32
+  // }
+  Btype *s2t = mkBackendStruct(be, abt, "f1", bi32t, "f2", nullptr);
+
+  // func foo(p0v s2t, p1v int32) (a s2t)
+  BFunctionType *befty1 =
+      mkFuncTyp(be, L_RES, s2t, L_PARM, s2t, L_PARM, bi32t, L_END);
+  Bfunction *func = h.mkFunction("foo", befty1);
+  Location loc;
+
+  // Local var with conditional expression as init
+  Bvariable *p0v = func->getNthParamVar(0);
+  Bvariable *p1v = func->getNthParamVar(1);
+  Bexpression *vep1 = be->var_expression(p1v, loc);
+  // p1v < 7
+  Bexpression *cmp = be->binary_expression(OPERATOR_LT, vep1,
+                                           mkInt32Const(be, int32_t(7)), loc);
+  Bexpression *vep0 = be->var_expression(p0v, loc);
+  Bexpression *bzero = be->zero_expression(s2t);
+
+  // if (p1v < 7) {
+  //   a = p0v
+  // } else {
+  //   a = nil
+  // }
+  Bexpression *cond =
+      be->conditional_expression(func, s2t, cmp, vep0, bzero, loc);
+  h.mkLocal("a", s2t, cond);
+
+  const char *exp = R"RAW_RESULT(
+    define void @foo({ [16 x i32], i32 }* sret %sret.formal.0, i8* nest %nest.0, { [16 x i32], i32 }* %p0, i32 %p1) #0 {
     entry:
       %p1.addr = alloca i32
       %a = alloca { [16 x i32], i32 }

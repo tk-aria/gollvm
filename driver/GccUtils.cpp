@@ -180,7 +180,9 @@ bool GCCInstallationDetector::selectLibDirs(state &s)
       // more triples to be identified and added
       s.tripleAliases = {
         triple_.str(),
-        "aarch64-linux-gnu", "aarch64-unknown-linux-gnu"
+        "aarch64-linux-gnu", "aarch64-unknown-linux-gnu",
+        "aarch64-pc-linux-gnu", "aarch64-redhat-linux",
+        "aarch64-suse-linux"
       };
       // multilib is not supported on major aarch64/arm64 linux distributions
       // subject to change when more scenarios to be taken into account
