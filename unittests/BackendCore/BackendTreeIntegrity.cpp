@@ -20,7 +20,7 @@ class BackendTreeIntegrity
 
 INSTANTIATE_TEST_CASE_P(
     UnitTest, BackendTreeIntegrity,
-    testing::Values(llvm::CallingConv::X86_64_SysV),
+    goBackendUnitTests::CConvs,
     [](const testing::TestParamInfo<BackendTreeIntegrity::ParamType> &info) {
       std::string name = goBackendUnitTests::ccName(info.param);
       return name;

@@ -20,7 +20,7 @@ class BackendCoreTests : public testing::TestWithParam<llvm::CallingConv::ID> {
 
 INSTANTIATE_TEST_CASE_P(
     UnitTest, BackendCoreTests,
-    testing::Values(llvm::CallingConv::X86_64_SysV),
+    goBackendUnitTests::CConvs,
     [](const testing::TestParamInfo<BackendCoreTests::ParamType> &info) {
       std::string name = goBackendUnitTests::ccName(info.param);
       return name;

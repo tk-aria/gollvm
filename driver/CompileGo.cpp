@@ -634,10 +634,15 @@ bool CompileGoImpl::initBridge()
                                   true);
   bridge_->setNoFpElim(!omitFp);
 
+  bool supportSplitStack = true;
+#ifndef USING_SPLIT_STACK
+  supportSplitStack = false;
+#endif
+
   bool useSplitStack =
       driver_.reconcileOptionPair(gollvm::options::OPT_fsplit_stack,
                                   gollvm::options::OPT_fno_split_stack,
-                                  true);
+                                  supportSplitStack);
   bridge_->setUseSplitStack(useSplitStack);
 
   // Honor -fdebug-prefix=... option.
@@ -809,6 +814,9 @@ void CompileGoImpl::setCConv()
   switch (triple_.getArch()) {
     case Triple::x86_64:
       cconv_ = CallingConv::X86_64_SysV;
+      break;
+    case Triple::aarch64:
+      cconv_ = CallingConv::ARM_AAPCS;
       break;
     default:
       errs() << "currently Gollvm is not supported on architecture "

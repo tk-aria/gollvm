@@ -22,7 +22,7 @@ class BackendPointerExprTests
 
 INSTANTIATE_TEST_CASE_P(
     UnitTest, BackendPointerExprTests,
-    testing::Values(llvm::CallingConv::X86_64_SysV),
+    goBackendUnitTests::CConvs,
     [](const testing::TestParamInfo<BackendPointerExprTests::ParamType> &info) {
       std::string name = goBackendUnitTests::ccName(info.param);
       return name;

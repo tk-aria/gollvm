@@ -141,5 +141,5 @@ if(C_SUPPORTS_SPLIT_STACK)
 endif()
 set(USE_LIBFFI 1)
 
-# _Unwind_GetIPInfo is defined on Linux/AMD46.
+# _Unwind_GetIPInfo is defined on Linux/AMD64.
 set(HAVE_GETIPINFO 1)
