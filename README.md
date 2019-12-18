@@ -47,9 +47,9 @@ To set up a work area for Gollvm, check out a copy of LLVM, the overlay the goll
 % cd workarea
 
 // Sources
-% git clone http://llvm.org/git/llvm.git
+% git clone https://github.com/llvm/llvm-project.git
 ...
-% cd llvm/tools
+% cd llvm-project/llvm/tools
 % git clone https://go.googlesource.com/gollvm
 ...
 % cd gollvm
@@ -73,7 +73,7 @@ Create a build directory (separate from the source tree) and run 'cmake' within 
 % cd workarea
 % mkdir build-debug
 % cd build-debug
-% cmake -DCMAKE_BUILD_TYPE=Debug -DLLVM_USE_LINKER=gold -G Ninja ../llvm
+% cmake -DCMAKE_BUILD_TYPE=Debug -DLLVM_USE_LINKER=gold -G Ninja ../llvm-project/llvm
 ...
 % ninja gollvm
 ...
@@ -91,7 +91,7 @@ The installation directory for gollvm needs to be specified when invoking cmake 
 ```
 % mkdir build.rel
 % cd build.rel
-% cmake -DCMAKE_INSTALL_PREFIX=/my/install/dir -DCMAKE_BUILD_TYPE=Release -DLLVM_USE_LINKER=gold -G Ninja ../llvm
+% cmake -DCMAKE_INSTALL_PREFIX=/my/install/dir -DCMAKE_BUILD_TYPE=Release -DLLVM_USE_LINKER=gold -G Ninja ../llvm-project/llvm
 
 // Build all of gollvm
 % ninja gollvm

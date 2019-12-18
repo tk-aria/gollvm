@@ -136,9 +136,7 @@ check_c_source_compiles("int main() { __asm__(\"aesenc %xmm0, %xmm1\"); return 0
 # Issue an error if the C compiler doesn't support -fsplit-stack
 # (in theory you can build libgo without it, so I suppose this could
 # be changed to a warning).
-if(NOT C_SUPPORTS_SPLIT_STACK)
-  message(SEND_ERROR "C compiler does not support -fsplit-stack")
-else()
+if(C_SUPPORTS_SPLIT_STACK)
   set(USING_SPLIT_STACK 1)
 endif()
 set(USE_LIBFFI 1)
