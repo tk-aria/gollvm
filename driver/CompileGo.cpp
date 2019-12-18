@@ -960,7 +960,7 @@ bool CompileGoImpl::invokeBackEnd()
 
   legacy::PassManager codeGenPasses;
   bool noverify = args_.hasArg(gollvm::options::OPT_noverify);
-  TargetMachine::CodeGenFileType ft = TargetMachine::CGFT_AssemblyFile;
+  CodeGenFileType ft = CGFT_AssemblyFile;
 
   // Add passes to emit bitcode or LLVM IR as appropriate. Here we mimic
   // clang behavior, which is to emit bitcode when "-emit-llvm" is specified
