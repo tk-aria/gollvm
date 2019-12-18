@@ -24,6 +24,7 @@
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/CommandLine.h"
 #include <vector>
 
 using namespace llvm;
