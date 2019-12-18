@@ -59,6 +59,7 @@
 #include "llvm/IR/Value.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Pass.h"
+#include "llvm/InitializePasses.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
@@ -1701,7 +1702,7 @@ zeroAmbiguouslyLiveSlots(Function &F, SetVector<Value *> &ToZero,
               IRBuilder<> Builder(&I);
               Value *Zero = Constant::getNullValue(Int8Ty);
               Value *Siz = I.getOperand(0);
-              Builder.CreateMemSet(V, Zero, Siz, 0);
+              Builder.CreateMemSet(V, Zero, Siz, MaybeAlign(0));
             }
             InstToDelete.push_back(&I);
           }
@@ -2913,7 +2914,7 @@ static void findLiveSetAtInst(Instruction *Inst, GCPtrLivenessData &Data,
       for (Value *Alloca : ToClobber) {
         unsigned Siz =
             DL.getTypeStoreSize(Alloca->getType()->getPointerElementType());
-        Builder.CreateMemSet(Alloca, Bad, Siz, 0);
+        Builder.CreateMemSet(Alloca, Bad, Siz, MaybeAlign(0));
         //dbgs() << "clobber " << *Alloca << " at " << *Inst << "\n";
       }
     }
