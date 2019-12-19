@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "34402fde_b9a22c04",
+        "filename": "unittests/BackendCore/BackendArrayStruct.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-12-19T14:56:14Z",
+      "side": 1,
+      "message": "This looks like a good approach overall -- I wasn\u0027t familiar with INSTANTIATE_TEST_CASE_P but it seems like a good use case. \n\nAt some point it seems like it might be useful to have a centralized way of controlling what\u0027s passed to testing::Values (as opposed to having the list hard-coded), but I suppose that can be added later.",
+      "revId": "f7f249aea07f123824091344b570857c66cad019",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
