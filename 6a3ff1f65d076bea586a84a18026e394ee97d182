@@ -1,0 +1,78 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "84380bb9_45226287",
+        "filename": "bridge/go-llvm-cabi-oracle.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-12-19T14:44:43Z",
+      "side": 1,
+      "message": "Would be a good idea to add a default initializer to the CABIOracle constructors for this.",
+      "revId": "6a3ff1f65d076bea586a84a18026e394ee97d182",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9bc92bf7_de9e9e2d",
+        "filename": "bridge/go-llvm-cabi-oracle.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 206,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-12-19T14:44:43Z",
+      "side": 1,
+      "message": "Normally the convention is that if a class has virtual methods you give it a virtual destructor as well -- not needed right now but I think it would be a good idea to start with it since it might be needed at some point in the future.",
+      "revId": "6a3ff1f65d076bea586a84a18026e394ee97d182",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8b0065a5_3708effa",
+        "filename": "driver/CompileGo.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 105,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-12-19T14:44:43Z",
+      "side": 1,
+      "message": "I think it would be a good idea to add an initializer for this in the CompileGoImpl constructor.",
+      "revId": "6a3ff1f65d076bea586a84a18026e394ee97d182",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2035f0ef_9b9859d4",
+        "filename": "driver/CompileGo.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 813,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-12-19T14:44:43Z",
+      "side": 1,
+      "message": "For a release build, this assert winds up being compiled away -- I think we need to explicit report the error and insure that the compile fails here.",
+      "range": {
+        "startLine": 813,
+        "startChar": 0,
+        "endLine": 813,
+        "endChar": 50
+      },
+      "revId": "6a3ff1f65d076bea586a84a18026e394ee97d182",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
