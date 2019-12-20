@@ -16,6 +16,24 @@
       "revId": "75e1a7203dd7bfe7a520914efb52b396d883375a",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0299c8b8_75f32bcf",
+        "filename": "bridge/go-llvm-cabi-oracle.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 24534
+      },
+      "writtenOn": "2019-12-20T11:18:42Z",
+      "side": 0,
+      "message": "Sorry I don\u0027t understand what LGTM means. Are you saying that we should keep the deleted two if statements?\nMy understanding is: as the explore function flattens all the data structures, there is no longer a composite type here, so we can delete this logic. If my understanding is incorrect, please correct me, thank you.",
+      "parentUuid": "a7a6e07a_eda304ac",
+      "revId": "75e1a7203dd7bfe7a520914efb52b396d883375a",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }

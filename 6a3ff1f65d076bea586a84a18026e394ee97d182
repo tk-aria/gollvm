@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "e6c1271a_6c88a8c4",
+        "filename": "bridge/go-llvm-cabi-oracle.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 24534
+      },
+      "writtenOn": "2019-12-20T11:18:42Z",
+      "side": 1,
+      "message": "Do you mean giving it a initial value ? such as \"ccID_ \u003d llvm::CallingConv::MaxID\"",
+      "parentUuid": "84380bb9_45226287",
+      "revId": "6a3ff1f65d076bea586a84a18026e394ee97d182",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "9bc92bf7_de9e9e2d",
         "filename": "bridge/go-llvm-cabi-oracle.h",
         "patchSetId": 2
@@ -30,6 +48,24 @@
       "writtenOn": "2019-12-19T14:44:43Z",
       "side": 1,
       "message": "Normally the convention is that if a class has virtual methods you give it a virtual destructor as well -- not needed right now but I think it would be a good idea to start with it since it might be needed at some point in the future.",
+      "revId": "6a3ff1f65d076bea586a84a18026e394ee97d182",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cb0023ff_ff81aa0a",
+        "filename": "bridge/go-llvm-cabi-oracle.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 206,
+      "author": {
+        "id": 24534
+      },
+      "writtenOn": "2019-12-20T11:18:42Z",
+      "side": 1,
+      "message": "We have this virtual destructor, see line 209",
+      "parentUuid": "9bc92bf7_de9e9e2d",
       "revId": "6a3ff1f65d076bea586a84a18026e394ee97d182",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
