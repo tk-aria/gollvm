@@ -67,6 +67,12 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifndef USING_SPLIT_STACK
+constexpr bool using_splitstack = false;
+#else
+constexpr bool using_splitstack = true;
+#endif
+
 using namespace llvm;
 using namespace gollvm::driver;
 
@@ -204,7 +210,7 @@ int main(int argc, char **argv)
     return 1;
 
   // Create driver.
-  Driver driver(clp.args(), opts.get(), argv[0]);
+  Driver driver(clp.args(), opts.get(), argv[0], using_splitstack);
 
   // Set up driver, select target and toolchain.
   ToolChain *toolchain = driver.setup();
