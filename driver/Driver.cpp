@@ -28,10 +28,12 @@ namespace driver {
 
 Driver::Driver(opt::InputArgList &args,
                opt::OptTable *optTable,
-               const char *argv0)
+               const char *argv0,
+               bool using_splitstack)
     : args_(args),
       opts_(optTable),
-      progname_(argv0)
+      progname_(argv0),
+      usingSplitStack_(using_splitstack)
 {
   if (const opt::Arg *arg = args.getLastArg(gollvm::options::OPT_sysroot_EQ))
     sysroot_ = arg->getValue();
