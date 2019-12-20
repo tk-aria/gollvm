@@ -16,6 +16,24 @@
       "revId": "f7f249aea07f123824091344b570857c66cad019",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "aafff56f_98700c42",
+        "filename": "unittests/BackendCore/BackendArrayStruct.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 24534
+      },
+      "writtenOn": "2019-12-20T07:37:45Z",
+      "side": 1,
+      "message": "Thanks, I\u0027ll try if we can define a calling convention list in\nunittests/BackendCore/TestUtils.h and initialize testing::Values with that list.",
+      "parentUuid": "34402fde_b9a22c04",
+      "revId": "f7f249aea07f123824091344b570857c66cad019",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
