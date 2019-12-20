@@ -45,7 +45,8 @@ class Driver {
  public:
   Driver(llvm::opt::InputArgList &args,
          llvm::opt::OptTable *optTable,
-         const char *argv0);
+         const char *argv0,
+         bool using_splitstack);
   ~Driver();
 
   // Set up target and select toolchain. Returns nullptr on error.
@@ -104,6 +105,7 @@ class Driver {
   llvm::PIELevel::Level getPieLevel();
   bool picIsPIE();
   bool isPIE();
+  bool usingSplitStack() const { return usingSplitStack_; }
   template<typename IT>
   llvm::Optional<IT> getLastArgAsInteger(gollvm::options::ID id,
                                          IT defaultValue);
@@ -132,6 +134,7 @@ class Driver {
   // Maps non-input actions to output artifacts.
   std::unordered_map<Action *, Artifact*> artmap_;
   std::vector<std::string> prefixes_;
+  bool usingSplitStack_;
 
   bool processAction(Action *act, Compilation &compilation, bool lastAct);
   ArtifactList collectInputArtifacts(Action *act, InternalTool *it);
