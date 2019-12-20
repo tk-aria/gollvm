@@ -34,6 +34,24 @@
       "revId": "75e1a7203dd7bfe7a520914efb52b396d883375a",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "099694b0_f7f2db7b",
+        "filename": "bridge/go-llvm-cabi-oracle.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2019-12-20T13:10:51Z",
+      "side": 0,
+      "message": "Sorry for the jargon. LGTM \u003d\u003d \"Looks Good To Me\", in other words, looks like a good cleanup (getting rid of code that is not needed any more or maybe was never needed).",
+      "parentUuid": "0299c8b8_75f32bcf",
+      "revId": "75e1a7203dd7bfe7a520914efb52b396d883375a",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
