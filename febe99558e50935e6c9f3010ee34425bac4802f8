@@ -16,6 +16,24 @@
       "revId": "febe99558e50935e6c9f3010ee34425bac4802f8",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "13ae3cb1_53b31ca4",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 5
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2020-01-03T15:04:06Z",
+      "side": 1,
+      "message": "This CL is based on the assumption of how LLVM backend CSEs TLS addresses, which is architecture specific. If this assumption does not hold on ARM64, the intrinsic probably needs to be disabled there.",
+      "parentUuid": "e2abaf4d_6e467c36",
+      "revId": "febe99558e50935e6c9f3010ee34425bac4802f8",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
