@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "e2abaf4d_6e467c36",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 5
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 33289
+      },
+      "writtenOn": "2020-01-03T07:12:22Z",
+      "side": 1,
+      "message": "Hi Cherry,\n\nOn arm64, take \u0027runtime.chansend\u0027 as an example\n\n156\t\tif getg().preempt {\n\u003d\u003e 0x0000ffffbee344cc \u003c+32\u003e:\tadrp\tx0, 0xffffbf66b000 \u003cruntime.runtime.gcSweepBuf..hash@got.plt\u003e\n   0x0000ffffbee344d0 \u003c+36\u003e:\tldr\tx1, [x0, #4080]\n   0x0000ffffbee344d4 \u003c+40\u003e:\tadd\tx0, x0, #0xff0\n   0x0000ffffbee344d8 \u003c+44\u003e:\tblr\tx1\n   0x0000ffffbee344dc \u003c+48\u003e:\tmrs\tx24, tpidr_el0\n   0x0000ffffbee344e0 \u003c+52\u003e:\tldr\tx8, [x24, x0]\n   0x0000ffffbee344e4 \u003c+56\u003e:\tcbz\tx8, 0xffffbee348c8 \u003cruntime.chansend+1052\u003e\n\n\n\n236\t\t// Block on the channel. Some receiver will complete our operation for us.\n237\t\tgp :\u003d getg()\n   0x0000ffffbee34648 \u003c+412\u003e:\tadrp\tx0, 0xffffbf66b000 \u003cruntime.runtime.gcSweepBuf..hash@got.plt\u003e\n   0x0000ffffbee3464c \u003c+416\u003e:\tldr\tx1, [x0, #4080]\n   0x0000ffffbee34650 \u003c+420\u003e:\tadd\tx0, x0, #0xff0\n   0x0000ffffbee34654 \u003c+424\u003e:\tblr\tx1\n   0x0000ffffbee34658 \u003c+428\u003e:\tldr\tx22, [x24, x0]\n   0x0000ffffbee3465c \u003c+432\u003e:\tcbz\tx22, 0xffffbee348c8 \u003cruntime.chansend+1052\u003e\n\n\u0027x24\u0027 is reused, if thread switching happens after line 156 a wrong \u0027gp\u0027 will be encapsulated to \u0027sudog\u0027, which leads to unexpected crash later.",
+      "revId": "febe99558e50935e6c9f3010ee34425bac4802f8",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
