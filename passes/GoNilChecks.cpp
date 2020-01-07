@@ -675,7 +675,7 @@ GoNilChecks::insertLandingPad(MachineInstr *FaultMI,
   //   load/store // handler: faultBB
   //   ...
   // faultBB:
-  //   invoke __go_runtime_error(...) unwind label padBB
+  //   invoke runtime.panicmem() unwind label padBB
   // padBB:
   //   exception handler
   //
@@ -717,7 +717,7 @@ GoNilChecks::insertLandingPad(MachineInstr *FaultMI,
     // call).
     for (MachineInstr &MI : *FaultBB)
       if (MI.isCall() && MI.getOperand(0).isGlobal() &&
-          MI.getOperand(0).getGlobal()->getName() == "__go_runtime_error") {
+          MI.getOperand(0).getGlobal()->getName() == "runtime.panicmem") {
         MI.eraseFromParent();
         break;
       }

@@ -217,7 +217,7 @@ bool IntegrityVisitor::repairableSubTree(Bexpression *root)
     if (e->flavor() == N_Call) {
       // ok to duplicate runtime error calls, but not other calls
       Bfunction *target = e->getCallTarget();
-      if (!target || target->name() != "__go_runtime_error")
+      if (!target || target->name().compare(0, 13, "runtime.panic") != 0)
         return false;
     }
     if (e->flavor() == N_BinaryOp &&

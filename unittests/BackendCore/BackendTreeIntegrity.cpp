@@ -181,22 +181,19 @@ TEST_P(BackendTreeIntegrity, CheckTreeIntegrityRepairableSubtree) {
   EXPECT_FALSE(ivis.repairableSubTree(call2));
 
   // Create runtime error function.
-  const char *rtename = "__go_runtime_error";
-  BFunctionType *bfterr = mkFuncTyp(be,
-                                    L_PARM, bi32t,
-                                    L_END);
+  const char *rtename = "runtime.panicmem";
+  BFunctionType *bfterr = mkFuncTyp(be, L_END);
   unsigned fflags = (Backend::function_is_visible |
                      Backend::function_is_inlinable |
                      Backend::function_does_not_return |
                      Backend::function_is_declaration);
   Bfunction *rtefcn = be->function(bfterr, rtename, rtename, fflags, loc);
 
-  // p0 != nil ? *p0 + 3 : runtime_error(6)
+  // p0 != nil ? *p0 + 3 : runtime.panicmem()
   Bexpression *cmp2 = be->binary_expression(OPERATOR_NOTEQ, vex3, npe, loc);
   Bexpression *der3 = be->indirect_expression(bi32t, vex3, false, loc);
   Bexpression *add2 = be->binary_expression(OPERATOR_PLUS, mkInt32Const(be, 3), der3, loc);
-  Bexpression *const6 = mkInt32Const(be, 6);
-  Bexpression *call3 = h.mkCallExpr(be, rtefcn, const6, nullptr);
+  Bexpression *call3 = h.mkCallExpr(be, rtefcn, nullptr);
   Bexpression *condex2 = be->conditional_expression(func, bi32t, cmp2, add2,
                                                    call3, loc);
 
