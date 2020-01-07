@@ -417,7 +417,6 @@ set(runtimecfiles
   "runtime/go-now.c"
   "runtime/go-nosys.c"
   "runtime/go-reflect-call.c"
-  "runtime/go-runtime-error.c"
   "runtime/go-setenv.c"
   "runtime/go-signal.c"
   "runtime/go-unsafe-pointer.c"

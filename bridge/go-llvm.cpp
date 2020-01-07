@@ -3216,7 +3216,7 @@ llvm::BasicBlock *GenBlocks::walkExpr(llvm::BasicBlock *curblock,
       // Mark nil checks "make_implicit". GoNilChecks pass will
       // try to elide the branch.
       if (llvm::Function *fn = llvm::cast<llvm::CallBase>(inst)->getCalledFunction())
-        if (fn->getName() == "__go_runtime_error")
+        if (fn->getName() == "runtime.panicmem")
           if (llvm::BasicBlock *pred = inst->getParent()->getSinglePredecessor()) {
             llvm::Instruction *br = pred->getTerminator();
             br->setMetadata(llvm::LLVMContext::MD_make_implicit,
