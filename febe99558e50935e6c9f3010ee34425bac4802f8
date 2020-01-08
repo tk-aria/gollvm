@@ -34,6 +34,24 @@
       "revId": "febe99558e50935e6c9f3010ee34425bac4802f8",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b836868a_ac97076c",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 5
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 33289
+      },
+      "writtenOn": "2020-01-08T01:49:44Z",
+      "side": 1,
+      "message": "According to GoSafeGetg, a load to \u0027g\u0027 following function call will be made a call to \u0027getg\u0027, does that indicate function call is the only point where a thread switching may happen? Thanks.",
+      "parentUuid": "13ae3cb1_53b31ca4",
+      "revId": "febe99558e50935e6c9f3010ee34425bac4802f8",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
