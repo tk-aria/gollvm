@@ -371,11 +371,12 @@ bool Linker::constructCommand(Compilation &compilation,
   if (useStdLib)
     addBeginFiles(cmdArgs);
 
-  // Incorporate inputs and -l/-L flags with -Wl,.. and -Xlinker args, in
+  // Incorporate inputs and -l/-L/-z flags with -Wl,.. and -Xlinker args, in
   // correct order.
   std::set<unsigned> ldFlags;
   ldFlags.insert(gollvm::options::OPT_l);
   ldFlags.insert(gollvm::options::OPT_L);
+  ldFlags.insert(gollvm::options::OPT_z);
   std::set<unsigned> ldEscapes;
   ldEscapes.insert(gollvm::options::OPT_Wl_COMMA);
   ldEscapes.insert(gollvm::options::OPT_Xlinker);
