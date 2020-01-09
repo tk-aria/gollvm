@@ -125,6 +125,9 @@ def L : JoinedOrSeparate<["-"], "L">, Group<Link_Group>,
 def l : JoinedOrSeparate<["-"], "l">, Flags<[RenderJoined]>,
         Group<Link_Group>;
 
+def z : JoinedOrSeparate<["-"], "z">, Flags<[RenderJoined]>,
+        Group<Link_Group>;
+
 def D : JoinedOrSeparate<["-"], "D">, Group<CompileOnly_Group>,
     Flags<[Ignored]>, MetaVarName<"<macro>=<value>">,
     HelpText<"This option is ignored">;
