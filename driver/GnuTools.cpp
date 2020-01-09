@@ -382,6 +382,11 @@ bool Linker::constructCommand(Compilation &compilation,
   combineInputsWithEscapes(ldEscapes, ldFlags,
                            inputArtifacts, args, cmdArgs);
 
+  // Add -z<keyword> flag if present.
+  ldarg = args.getLastArg(gollvm::options::OPT_z);
+  if (ldarg != nullptr)
+    ldarg->render(args, cmdArgs);
+
   // Add -m flag.
   addLDM(cmdArgs);
 
