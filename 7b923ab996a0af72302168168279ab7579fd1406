@@ -1,0 +1,107 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1d47bcce_e230f9e1",
+        "filename": "bridge/go-llvm-cabi-oracle.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 416,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-01-09T17:53:50Z",
+      "side": 1,
+      "message": "The equivalent routine for amd64 has a float case here as well -- is this not needed for arm64? just curious",
+      "revId": "7b923ab996a0af72302168168279ab7579fd1406",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b4409839_208ac20a",
+        "filename": "bridge/go-llvm-cabi-oracle.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 958,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-01-09T17:53:50Z",
+      "side": 1,
+      "message": "regsSIMDFP",
+      "range": {
+        "startLine": 958,
+        "startChar": 41,
+        "endLine": 958,
+        "endChar": 48
+      },
+      "revId": "7b923ab996a0af72302168168279ab7579fd1406",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b6570114_e86df345",
+        "filename": "bridge/go-llvm-cabi-oracle.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1015,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-01-09T17:53:50Z",
+      "side": 1,
+      "message": "indentation is a little off here",
+      "range": {
+        "startLine": 1015,
+        "startChar": 5,
+        "endLine": 1015,
+        "endChar": 6
+      },
+      "revId": "7b923ab996a0af72302168168279ab7579fd1406",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "49f2cb5d_ddb6acc8",
+        "filename": "bridge/go-llvm-cabi-oracle.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1105,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-01-09T17:53:50Z",
+      "side": 1,
+      "message": "same here with the indentation",
+      "range": {
+        "startLine": 1105,
+        "startChar": 5,
+        "endLine": 1105,
+        "endChar": 6
+      },
+      "revId": "7b923ab996a0af72302168168279ab7579fd1406",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9b1f30b0_4586c780",
+        "filename": "bridge/go-llvm-materialize.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1200,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-01-09T17:53:50Z",
+      "side": 1,
+      "message": "Why? I assume this is because callee is allowed to write to it? Just curious",
+      "revId": "7b923ab996a0af72302168168279ab7579fd1406",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
