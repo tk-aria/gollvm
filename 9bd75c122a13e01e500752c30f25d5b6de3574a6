@@ -16,6 +16,24 @@
       "revId": "9bd75c122a13e01e500752c30f25d5b6de3574a6",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0d07fe74_dd39e93c",
+        "filename": "driver/LinuxToolChain.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 34836
+      },
+      "writtenOn": "2020-01-13T21:43:12Z",
+      "side": 1,
+      "message": "I agree it didn\u0027t _feel_ right, but at the same time I\u0027m not sure the best way to handle it. I figured if I pushed up what worked someone could enlighten us on what the proper handling of this is.",
+      "parentUuid": "65a7c196_84e0db10",
+      "revId": "9bd75c122a13e01e500752c30f25d5b6de3574a6",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
