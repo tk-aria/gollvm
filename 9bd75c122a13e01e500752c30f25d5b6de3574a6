@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "65a7c196_84e0db10",
+        "filename": "driver/LinuxToolChain.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2020-01-13T21:41:45Z",
+      "side": 1,
+      "message": "This does not look correct when building a cross-compiler, though I don\u0027t know how that is handled in gollvm.",
+      "revId": "9bd75c122a13e01e500752c30f25d5b6de3574a6",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
