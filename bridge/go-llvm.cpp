@@ -2642,7 +2642,7 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
       fcn->addFnAttr("split-stack");
 
     // allow elim frame pointer or not
-    fcn->addFnAttr("no-frame-pointer-elim", noFpElim_ ? "true" : "false");
+    fcn->addFnAttr("frame-pointer", noFpElim_ ? "all" : "none");
 
     // set suffix elision policy if autoFDO in effect
     if (autoFDO_)
