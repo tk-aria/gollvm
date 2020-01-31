@@ -255,7 +255,7 @@ void CompileGoImpl::quoteDump(const std::string &str, bool doquote)
 void CompileGoImpl::dumpArg(opt::Arg &arg, bool doquote)
 {
   if (arg.getOption().getKind() != opt::Option::InputClass)
-    quoteDump(arg.getSpelling(), doquote);
+    quoteDump(arg.getSpelling().str(), doquote);
   for (auto &val : arg.getValues())
     quoteDump(val, doquote);
 }
@@ -422,7 +422,7 @@ bool CompileGoImpl::setup()
         errs() << progname_ << ": unable to access file: " << fname << "\n";
         return false;
       }
-      sampleProfileFile_ = fname;
+      sampleProfileFile_ = fname.str();
     }
   }
 
@@ -526,7 +526,7 @@ bool CompileGoImpl::setup()
   if (cpuarg != nullptr) {
     std::string val(cpuarg->getValue());
     if (val == "native")
-      cpuStr = sys::getHostCPUName();
+      cpuStr = sys::getHostCPUName().str();
     else
       cpuStr = cpuarg->getValue();
   }

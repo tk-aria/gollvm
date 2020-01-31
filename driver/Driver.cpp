@@ -50,7 +50,7 @@ Driver::Driver(opt::InputArgList &args,
   }
   SmallString<128> abspath(executablePath_);
   llvm::sys::fs::make_absolute(abspath);
-  installDir_ = llvm::sys::path::parent_path(abspath);
+  installDir_ = llvm::sys::path::parent_path(abspath).str();
   prefixes_ = args.getAllArgValues(gollvm::options::OPT_B);
 }
 
@@ -105,17 +105,17 @@ std::string Driver::getFilePath(llvm::StringRef name,
   llvm::SmallString<256> installed(installedLibDir());
   llvm::sys::path::append(installed, name);
   if (llvm::sys::fs::exists(llvm::Twine(installed)))
-    return installed.str();
+    return std::string(installed);
 
   // Examine toolchain file paths.
   for (const auto &dir : toolchain.filePaths()) {
     llvm::SmallString<256> candidate(dir);
     llvm::sys::path::append(candidate, name);
     if (llvm::sys::fs::exists(llvm::Twine(candidate)))
-      return candidate.str();
+      return std::string(candidate);
   }
 
-  return name;
+  return name.str();
 }
 
 std::string Driver::getProgramPath(llvm::StringRef name,
@@ -126,7 +126,7 @@ std::string Driver::getProgramPath(llvm::StringRef name,
   for (auto p : prefixes_)
     candidates.push_back((p + name).str());
   candidates.push_back((triple_.str() + "-" + name).str());
-  candidates.push_back(name);
+  candidates.push_back(name.str());
 
   // Examine toolchain program paths.
   for (auto &dir : toolchain.programPaths()) {
@@ -134,7 +134,7 @@ std::string Driver::getProgramPath(llvm::StringRef name,
       llvm::SmallString<256> candidate(dir);
       llvm::sys::path::append(candidate, cand);
       if (llvm::sys::fs::can_execute(llvm::Twine(candidate)))
-        return candidate.str();
+        return std::string(candidate);
     }
   }
 
@@ -146,7 +146,7 @@ std::string Driver::getProgramPath(llvm::StringRef name,
       return *pcand;
   }
 
-  return name;
+  return name.str();
 }
 
 // FIXME: some  platforms have PIE enabled by default; we don't
