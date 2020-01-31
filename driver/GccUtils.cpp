@@ -87,7 +87,7 @@ GCCVersion GCCVersion::parse(llvm::StringRef vtext)
       llvm::StringRef(tokens[0]).getAsInteger(10, result.maj_) ||
       result.maj_ < 4)
     return bad;
-  result.text_ = vtext;
+  result.text_ = vtext.str();
   if (tokens.size() == 1)
     return result;
 

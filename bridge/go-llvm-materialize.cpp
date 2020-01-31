@@ -1496,7 +1496,7 @@ Bexpression *Llvm_backend::materializeCall(Bexpression *callExpr)
   llvm::Value *callValue = nullptr;
   if (llvm::isa<llvm::Function>(fnval)) {
     llvm::Function *fcn = llvm::cast<llvm::Function>(fnval);
-    BuiltinEntry *be = builtinTable_->lookup(fcn->getName());
+    BuiltinEntry *be = builtinTable_->lookup(fcn->getName().str());
     if (be) {
       BuiltinExprMaker makerfn = be->exprMaker();
       if (makerfn)

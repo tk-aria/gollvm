@@ -64,7 +64,7 @@ Linux::Linux(gollvm::driver::Driver &driver,
   // File paths
   pathlist &fpaths = filePaths();
   addIfPathExists(fpaths, gccDetector_.getLibPath());
-  std::string osLibDir = getOSLibDir(targetTriple);
+  std::string osLibDir = getOSLibDir(targetTriple).str();
   if (!driver.sysRoot().empty())
     osLibDir = driver.sysRoot() + "/" + osLibDir;
   addIfPathExists(fpaths, llvm::Twine(gccDetector_.getParentLibPath() +
