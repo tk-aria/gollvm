@@ -159,7 +159,7 @@ emitCallsiteEntries(StackMaps &SM, MCStreamer &OS) {
       if (Sym->isDefined())
         // We may have emitted one, due to tail duplication.
         continue;
-      OS.EmitLabel(Sym);
+      OS.emitLabel(Sym);
 
       // Stack map entry:
       //   uint32_t nbits;
@@ -167,11 +167,11 @@ emitCallsiteEntries(StackMaps &SM, MCStreamer &OS) {
       uint32_t Size;
       std::vector<uint8_t> V =
           computeBitVector(FR.second.StackSize, (*CSI).Locations, Size);
-      OS.EmitIntValue(Size, 4);
+      OS.emitIntValue(Size, 4);
       for (uint8_t Byte : V)
-        OS.EmitIntValue(Byte, 1);
+        OS.emitIntValue(Byte, 1);
     }
-    OS.EmitValueToAlignment(8);
+    OS.emitValueToAlignment(8);
   }
 }
 
