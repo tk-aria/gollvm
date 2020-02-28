@@ -25,14 +25,14 @@ typedef llvm::IRBuilder<> LIRBuilder;
 // Insertion helper for Bexpressions; inserts any instructions
 // created by IRBuilder into the specified Bexpression's inst list.
 
-class BexprInserter {
+class BexprInserter : public llvm::IRBuilderDefaultInserter {
  public:
   BexprInserter() : expr_(nullptr) { }
   void setDest(Bexpression *expr) { assert(!expr_); expr_ = expr; }
 
-  void InsertHelper(llvm::Instruction *I, const llvm::Twine &Name,
-                    llvm::BasicBlock *BB,
-                    llvm::BasicBlock::iterator InsertPt) const {
+  virtual void InsertHelper(llvm::Instruction *I, const llvm::Twine &Name,
+                            llvm::BasicBlock *BB,
+                            llvm::BasicBlock::iterator InsertPt) const {
     assert(expr_);
     expr_->appendInstruction(I);
     I->setName(Name);
@@ -46,17 +46,17 @@ class BexprInserter {
 
 class BexprLIRBuilder :
     public llvm::IRBuilder<llvm::ConstantFolder, BexprInserter> {
-  typedef llvm::IRBuilder<llvm::ConstantFolder, BexprInserter> IRBuilderBase;
+  typedef llvm::IRBuilder<llvm::ConstantFolder, BexprInserter> IRBuilderB;
  public:
   BexprLIRBuilder(llvm::LLVMContext &context, Bexpression *expr) :
-      IRBuilderBase(context, llvm::ConstantFolder()) {
-    setDest(expr);
+      IRBuilderB(context, llvm::ConstantFolder(), getInserter(), nullptr, llvm::None) {
+    getInserter().setDest(expr);
   }
 };
 
 // Similar to the above, but adds to a Binstructions object.
 
-class BinstructionsInserter {
+class BinstructionsInserter : public llvm::IRBuilderDefaultInserter {
  public:
   BinstructionsInserter() : insns_(nullptr) { }
   void setDest(Binstructions *insns) { assert(!insns_); insns_ = insns; }
@@ -78,11 +78,11 @@ class BinstructionsInserter {
 class BinstructionsLIRBuilder :
     public llvm::IRBuilder<llvm::ConstantFolder, BinstructionsInserter> {
   typedef llvm::IRBuilder<llvm::ConstantFolder,
-                          BinstructionsInserter> IRBuilderBase;
+                          BinstructionsInserter> IRBuilderB;
  public:
   BinstructionsLIRBuilder(llvm::LLVMContext &context, Binstructions *insns) :
-      IRBuilderBase(context, llvm::ConstantFolder()) {
-    setDest(insns);
+      IRBuilderB(context, llvm::ConstantFolder(), getInserter(), nullptr, llvm::None) {
+    getInserter().setDest(insns);
   }
 };
 
