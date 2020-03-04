@@ -17,6 +17,7 @@
 
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/FileSystem.h"
 
 namespace gollvm {
 namespace driver {
@@ -61,7 +62,7 @@ bool ReadStdin::performAction(Compilation &compilation,
   // Emit to the output artifact.
   std::error_code errc;
   llvm::raw_fd_ostream ostr(output.file(), errc,
-                            llvm::sys::fs::OpenFlags::F_None);
+                            llvm::sys::fs::OpenFlags::OF_None);
   if (errc) {
     llvm::errs() << compilation.driver().progname()
                  << ": cannot open " << output.file() << " for writing: "

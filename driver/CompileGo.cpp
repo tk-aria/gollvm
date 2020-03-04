@@ -439,7 +439,7 @@ bool CompileGoImpl::setup()
       StringRef fname = fnamearg->getValue();
       std::error_code EC;
       optRecordFile_ = std::make_unique<llvm::ToolOutputFile>(
-          fname, EC, llvm::sys::fs::F_None);
+          fname, EC, llvm::sys::fs::OF_None);
       if (EC) {
         errs() << "error: unable to open file '"
                << fname << "' to emit optimization remarks\n";
