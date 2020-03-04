@@ -120,8 +120,7 @@ TEST_P(BackendCallTests, MultiReturnCall) {
   {
     const char *exp = R"RAW_RESULT(
       %cast.0 = bitcast { i8*, i32*, i64*, i64 }* %sret.formal.0 to i8*
-      %cast.1 = bitcast { i8*, i32*, i64*, i64 }* @const.0 to i8*
-      call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 %cast.1, i64 32, i1 false)
+      call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 bitcast ({ i8*, i32*, i64*, i64 }* @const.0 to i8*), i64 32, i1 false)
       ret void
     )RAW_RESULT";
 
@@ -153,9 +152,9 @@ TEST_P(BackendCallTests, MultiReturnCall) {
       store i64* null, i64** %field.2
       %field.3 = getelementptr inbounds { i8*, i32*, i64*, i64 }, { i8*, i32*, i64*, i64 }* %tmp.0, i32 0, i32 3
       store i64 101, i64* %field.3
-      %cast.3 = bitcast { i8*, i32*, i64*, i64 }* %sret.formal.0 to i8*
-      %cast.4 = bitcast { i8*, i32*, i64*, i64 }* %tmp.0 to i8*
-      call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.3, i8* align 8 %cast.4, i64 32, i1 false)
+      %cast.2 = bitcast { i8*, i32*, i64*, i64 }* %sret.formal.0 to i8*
+      %cast.3 = bitcast { i8*, i32*, i64*, i64 }* %tmp.0 to i8*
+      call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.2, i8* align 8 %cast.3, i64 32, i1 false)
       ret void
     )RAW_RESULT";
 

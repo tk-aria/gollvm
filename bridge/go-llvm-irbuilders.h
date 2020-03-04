@@ -49,7 +49,7 @@ class BexprLIRBuilder :
   typedef llvm::IRBuilder<llvm::ConstantFolder, BexprInserter> IRBuilderB;
  public:
   BexprLIRBuilder(llvm::LLVMContext &context, Bexpression *expr) :
-      IRBuilderB(context, llvm::ConstantFolder(), getInserter(), nullptr, llvm::None) {
+      IRBuilderB(context, llvm::ConstantFolder()) {
     getInserter().setDest(expr);
   }
 };
@@ -81,7 +81,7 @@ class BinstructionsLIRBuilder :
                           BinstructionsInserter> IRBuilderB;
  public:
   BinstructionsLIRBuilder(llvm::LLVMContext &context, Binstructions *insns) :
-      IRBuilderB(context, llvm::ConstantFolder(), getInserter(), nullptr, llvm::None) {
+      IRBuilderB(context, llvm::ConstantFolder()) {
     getInserter().setDest(insns);
   }
 };

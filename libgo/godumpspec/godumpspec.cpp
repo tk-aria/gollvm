@@ -1266,7 +1266,7 @@ int main(int argc, char **argv) {
   if (!OutputFilename.empty()) {
     std::error_code EC;
     OutputFile = std::make_unique<ToolOutputFile>(OutputFilename, EC,
-                                                  sys::fs::F_None);
+                                                  sys::fs::OF_None);
     // Don't remove output file if we exit with an error.
     OutputFile->keep();
     error("Unable to open output file" + OutputFilename, EC);
