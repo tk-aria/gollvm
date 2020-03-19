@@ -15,6 +15,7 @@
 
 #include "ToolChain.h"
 #include "GccUtils.h"
+#include "Distro.h"
 
 namespace toolchains {
 
@@ -34,6 +35,7 @@ class Linux : public gollvm::driver::ToolChain {
  private:
   gnutools::gccdetect::InspectRealFS inspectFS_;
   gnutools::gccdetect::GCCInstallationDetector gccDetector_;
+  distro::DistroVariety distro_;
 };
 
 } // end namespace toolchains
