@@ -50,7 +50,8 @@ Linux::Linux(gollvm::driver::Driver &driver,
       gccDetector_(targetTriple,
                    driver.gccToolchainDir(),
                    driver.sysRoot(),
-                   inspectFS_)
+                   inspectFS_),
+      distro_(distro::DetectDistro(inspectFS_, targetTriple))
 {
   gccDetector_.init();
 

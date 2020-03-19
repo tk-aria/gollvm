@@ -12,6 +12,7 @@
 
 #include "Driver.h"
 #include "GccUtils.h"
+#include "Distro.h"
 
 #include "gtest/gtest.h"
 
@@ -484,6 +485,22 @@ TEST(DriverUtilsTests, GCCInstallationDetectorBiarchAliasesAmd64) {
     )RAW_RESULT";
   bool isOK = expectToString(harness.detector(), exp32);
   EXPECT_TRUE(isOK);
+}
+
+TEST(DriverUtilsTests, DistroDetector) {
+  const char *install = R"RAW_RESULT(
+      /etc/lsb-release
+      /etc/motd
+    )RAW_RESULT";
+  InspectFakeFS ffs(install);
+
+  llvm::Triple target1("aarch64-none-linux-gnu");
+  auto whichDistro1 = distro::DetectDistro(ffs, target1);
+  EXPECT_EQ(whichDistro1, distro::DistroUbuntu);
+
+  llvm::Triple target2("i686--windows-msvc");
+  auto whichDistro2 = distro::DetectDistro(ffs, target2);
+  EXPECT_EQ(whichDistro2, distro::DistroUnknown);
 }
 
 } // namespace
