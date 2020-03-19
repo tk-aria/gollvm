@@ -30,6 +30,7 @@ add_llvm_library(LLVMDriverUtils
   Command.cpp
   Compilation.cpp
   CompileGo.cpp
+  Distro.cpp
   Driver.cpp
   GccUtils.cpp
   GnuTools.cpp
