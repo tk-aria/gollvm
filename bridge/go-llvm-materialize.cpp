@@ -853,7 +853,7 @@ Bexpression *Llvm_backend::materializeComposite(Bexpression *comExpr)
   llvm::Type *llt = btype->type();
   unsigned numElements = 0;
   assert(llt->isStructTy() || llt->isArrayTy());
-  llvm::CompositeType *llct = nullptr;
+  llvm::Type *llct = nullptr;
   if (llt->isStructTy()) {
     llvm::StructType *llst = llvm::cast<llvm::StructType>(llt);
     numElements = llst->getNumElements();
@@ -877,7 +877,7 @@ Bexpression *Llvm_backend::materializeComposite(Bexpression *comExpr)
 
 Bexpression *
 Llvm_backend::makeDelayedCompositeExpr(Btype *btype,
-                                       llvm::CompositeType *llct,
+                                       llvm::Type *llct,
                                        unsigned numElements,
                                        const std::vector<unsigned long> *indexes,
                                        const std::vector<Bexpression *> &vals,
@@ -916,7 +916,7 @@ Llvm_backend::makeDelayedCompositeExpr(Btype *btype,
 
 Bexpression *
 Llvm_backend::makeConstCompositeExpr(Btype *btype,
-                                     llvm::CompositeType *llct,
+                                     llvm::Type *llct,
                                      unsigned numElements,
                                      const std::vector<unsigned long> *indexes,
                                      const std::vector<Bexpression *> &vals,
@@ -949,7 +949,7 @@ Llvm_backend::makeConstCompositeExpr(Btype *btype,
           touched.insert(idx);
         Bexpression *bex = vals[ii];
         llvm::Constant *con = llvm::cast<llvm::Constant>(bex->value());
-        llvm::Type *elt = llct->getTypeAtIndex(ii);
+        llvm::Type *elt = TypeManager::getLlvmTypeAtIndex(llct, ii);
         if (elt != con->getType()) {
           con = genConvertedConstant(con, elt);
           assert(con != nullptr);
@@ -959,7 +959,7 @@ Llvm_backend::makeConstCompositeExpr(Btype *btype,
       if (numElements != nvals) {
         for (unsigned long ii = 0; ii < numElements; ++ii) {
           if (touched.find(ii) == touched.end()) {
-            llvm::Type *elt = llct->getTypeAtIndex(ii);
+            llvm::Type *elt = TypeManager::getLlvmTypeAtIndex(llct, ii);
             llvals[ii] = llvm::Constant::getNullValue(elt);
           }
         }
@@ -967,7 +967,7 @@ Llvm_backend::makeConstCompositeExpr(Btype *btype,
     } else {
       for (unsigned long ii = 0; ii < numElements; ++ii) {
         llvm::Constant *con = llvm::cast<llvm::Constant>(vals[ii]->value());
-        llvm::Type *elt = llct->getTypeAtIndex(ii);
+        llvm::Type *elt = TypeManager::getLlvmTypeAtIndex(llct, ii);
         if (elt != con->getType()) {
           con = genConvertedConstant(con, elt);
           assert(con != nullptr);
