@@ -1382,6 +1382,23 @@ llvm::FunctionType *TypeManager::personalityFunctionType()
   return llft;
 }
 
+bool TypeManager::isLlvmCompositeType(llvm::Type *t)
+{
+  return llvm::isa<llvm::StructType>(t) || llvm::isa<llvm::SequentialType>(t);
+}
+
+llvm::Type *TypeManager::getLlvmTypeAtIndex(llvm::Type *t, unsigned i)
+{
+  if (llvm::isa<llvm::StructType>(t)) {
+    llvm::StructType *st = llvm::cast<llvm::StructType>(t);
+    return st->getTypeAtIndex(i);
+  } else {
+    assert(llvm::isa<llvm::SequentialType>(t));
+    llvm::SequentialType *st = llvm::cast<llvm::SequentialType>(t);
+    return st->getElementType();
+  }
+}
+
 llvm::Type *TypeManager::placeholderProxyType(Btype *typ,
                                               pproxymap *pmap)
 {
@@ -1614,7 +1631,7 @@ bool TypeManager::isPtrToArrayOf(llvm::Type *typ, llvm::Type *arElmTyp)
   if (! elt->isArrayTy())
     return false;
   llvm::ArrayType *llat = llvm::cast<llvm::ArrayType>(elt);
-  llvm::Type *aelt = llat->getTypeAtIndex(0u);
+  llvm::Type *aelt = llat->getElementType();
   if (aelt == arElmTyp)
     return true;
   if (isCircularFunctionType(aelt) && isCircularFunctionType(arElmTyp))
