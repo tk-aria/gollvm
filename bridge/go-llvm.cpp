@@ -743,8 +743,8 @@ llvm::Constant *Llvm_backend::genConvertedConstant(llvm::Constant *fromVal,
     return fromVal;
 
   // There must be agreement in type class (struct -> struct, etc).
-  bool isFromComposite = llvm::isa<llvm::CompositeType>(llFromType);
-  bool isToComposite = llvm::isa<llvm::CompositeType>(llToType);
+  bool isFromComposite = TypeManager::isLlvmCompositeType(llFromType);
+  bool isToComposite = TypeManager::isLlvmCompositeType(llToType);
   if (isFromComposite != isToComposite)
     return nullptr;
 
@@ -789,16 +789,10 @@ llvm::Constant *Llvm_backend::genConvertedConstant(llvm::Constant *fromVal,
   if (it != genConvConstMap_.end())
     return it->second;
 
-  // Grab from/to types as composites.
-  llvm::CompositeType *llFromCT = llvm::cast<llvm::CompositeType>(llFromType);
-  llvm::CompositeType *llToCT = llvm::cast<llvm::CompositeType>(llToType);
-  assert(llFromCT != nullptr);
-  assert(llToCT != nullptr);
-
   // Walk through the child values and convert them.
   llvm::SmallVector<llvm::Constant *, 64> newvals(numElements);
   for (unsigned idx = 0; idx < numElements; idx++) {
-    llvm::Type *toEltType = llToCT->getTypeAtIndex(idx);
+    llvm::Type *toEltType = TypeManager::getLlvmTypeAtIndex(llToType, idx);
     llvm::Constant *constElt = fromVal->getAggregateElement(idx);
     llvm::Constant *convElt = genConvertedConstant(constElt, toEltType);
     if (convElt == nullptr)

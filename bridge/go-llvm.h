@@ -460,7 +460,7 @@ public:
 
   // Helper for creating a constant-valued array/struct expression.
   Bexpression *makeConstCompositeExpr(Btype *btype,
-                                      llvm::CompositeType *llct,
+                                      llvm::Type *llct,
                                       unsigned numElements,
                                       const std::vector<unsigned long> *indexes,
                                       const std::vector<Bexpression *> &vals,
@@ -468,7 +468,7 @@ public:
 
   // Helper for creating a non-constant-valued array or struct expression.
   Bexpression *makeDelayedCompositeExpr(Btype *btype,
-                                        llvm::CompositeType *llct,
+                                        llvm::Type *llct,
                                         unsigned numElements,
                                         const std::vector<unsigned long> *idxs,
                                         const std::vector<Bexpression *> &vals,

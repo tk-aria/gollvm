@@ -130,6 +130,10 @@ class TypeManager {
   llvm::Type *landingPadExceptionType();
   llvm::FunctionType *personalityFunctionType();
 
+  // Composite LLVM type helpers.
+  static bool isLlvmCompositeType(llvm::Type *t);
+  static llvm::Type *getLlvmTypeAtIndex(llvm::Type *t, unsigned i);
+
   // Size calculation methods for LLVM types.
 
   // Returns the offset in bytes between successive objects of a
