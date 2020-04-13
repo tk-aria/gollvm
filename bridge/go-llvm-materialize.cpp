@@ -30,6 +30,7 @@
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/IR/InlineAsm.h"
 
 static llvm::cl::opt<bool> DisableInlineGetg("disable-inline-getg",
                                              llvm::cl::desc("Disable inlining getg"),
@@ -1378,6 +1379,54 @@ void Llvm_backend::genCallEpilog(GenCallState &state,
   }
 }
 
+// makeGetgArm64 uses inline asm to implement the function of
+// runtime.getg used in Go files on linux arm64.
+static llvm::Value *makeGetgArm64(Btype *resType,
+                                  BlockLIRBuilder *builder,
+                                  Llvm_backend *be)
+{
+  std::string asmStr;
+  std::string constr;
+  if (be->module().getPICLevel() > llvm::PICLevel::Level::NotPIC ||
+      be->module().getPIELevel() > llvm::PIELevel::Level::Default ) {
+    // Dynamic link.
+    asmStr += "adrp x0, :tlsdesc:runtime.g\n";
+    asmStr += "ldr  $0, [x0, :tlsdesc_lo12:runtime.g]\n";
+    asmStr += "add  x0, x0, :tlsdesc_lo12:runtime.g\n";
+    asmStr += ".tlsdesccall runtime.g\n";
+    asmStr += "blr  $0\n";
+    asmStr += "mrs  $0, TPIDR_EL0\n";
+    asmStr += "ldr  $0, [$0, x0]\n";
+    // We need to clobber x0 because we have to use it to pass parameters.
+    // We also only need to clobber x0, because the TLS descriptor helper
+    // function only modifies x0
+    constr += "=r,~{x0}";
+    llvm::FunctionType *fnType =
+        llvm::FunctionType::get(resType->type(), llvm::ArrayRef<llvm::Type*>{}, false);
+    llvm::Value *callee = llvm::InlineAsm::get(fnType, llvm::StringRef(asmStr),
+                                               llvm::StringRef(constr), true);
+    return builder->CreateCall(fnType, callee);
+  } else {
+    // Static link.
+    asmStr += "adrp $0, :gottprel:runtime.g\n";
+    asmStr += "ldr  $0, [$0, #:gottprel_lo12:runtime.g]\n";
+    asmStr += "mrs  $1, tpidr_el0\n";
+    asmStr += "ldr  $0, [$1, $0]\n";
+    // In order not to clobber registers, we declare a temporary variable
+    // as the second output and return the first output.
+    constr += "=r,=r";
+    llvm::Type *tempRegType = llvm::IntegerType::get(builder->getContext(), 64);
+    llvm::Type *fnResType = llvm::StructType::create(
+        builder->getContext(), {resType->type(), tempRegType});
+    llvm::FunctionType *fnType =
+        llvm::FunctionType::get(fnResType, llvm::ArrayRef<llvm::Type*>{}, false);
+    llvm::Value *callee = llvm::InlineAsm::get(fnType, llvm::StringRef(asmStr),
+                                               llvm::StringRef(constr), true);
+    llvm::Instruction *calI = builder->CreateCall(fnType, callee);
+    return builder->CreateExtractValue(calI, {0});
+  }
+}
+
 // Inline runtime.getg, generate a load of g.
 // This is not done as a builtin because, unlike other builtins,
 // we need the FE to tell us the result type.
@@ -1394,7 +1443,10 @@ static llvm::Value *makeGetg(Btype *resType,
     g = llvm::cast<llvm::GlobalValue>(bv->value());
     g->setThreadLocal(true);
   }
-  return builder->CreateLoad(g);
+  if (be->typeManager()->callingConv() == llvm::CallingConv::ARM_AAPCS)
+    return makeGetgArm64(resType, builder, be);
+  else
+    return builder->CreateLoad(g);
 }
 
 Bexpression *Llvm_backend::materializeCall(Bexpression *callExpr)
