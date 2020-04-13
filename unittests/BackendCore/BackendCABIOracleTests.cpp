@@ -33,7 +33,7 @@ TEST_P(BackendCABIOracleTests, Basic) {
   LLVMContext C;
   auto cc = GetParam();
   std::unique_ptr<Llvm_backend> bep(
-      new Llvm_backend(C, nullptr, nullptr, 0, cc));
+      new Llvm_backend(C, nullptr, nullptr, 0, llvm::Triple(), cc));
   Llvm_backend *be = bep.get();
 
   Btype *bi8t = be->integer_type(false, 8);
@@ -72,7 +72,7 @@ TEST_P(BackendCABIOracleTests, Basic) {
 TEST(BackendCABIOracleTests, ExtendedAmd64) {
   LLVMContext C;
   std::unique_ptr<Llvm_backend> bep(
-      new Llvm_backend(C, nullptr, nullptr, 0, llvm::CallingConv::X86_64_SysV));
+      new Llvm_backend(C, nullptr, nullptr, 0, llvm::Triple(), llvm::CallingConv::X86_64_SysV));
   Llvm_backend *be = bep.get();
 
   Btype *bi8t = be->integer_type(false, 8);
@@ -256,7 +256,7 @@ TEST(BackendCABIOracleTests, ExtendedAmd64) {
 TEST(BackendCABIOracleTests, ExtendedArm64) {
   LLVMContext C;
   std::unique_ptr<Llvm_backend> bep(
-      new Llvm_backend(C, nullptr, nullptr, 0, llvm::CallingConv::ARM_AAPCS));
+      new Llvm_backend(C, nullptr, nullptr, 0, llvm::Triple(), llvm::CallingConv::ARM_AAPCS));
   Llvm_backend *be = bep.get();
 
   Btype *bi8t = be->integer_type(false, 8);
