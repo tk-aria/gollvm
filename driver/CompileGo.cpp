@@ -949,7 +949,10 @@ bool CompileGoImpl::invokeBackEnd()
       createTargetTransformInfoWrapperPass(target_->getTargetIRAnalysis()));
   createPasses(modulePasses, functionPasses);
 
-  modulePasses.add(createGoSafeGetgPass());
+  // ARM_AAPCS does not use this pass to process g.
+  if (cconv_ != llvm::CallingConv::ARM_AAPCS) {
+      modulePasses.add(createGoSafeGetgPass());
+  }
 
   // Add statepoint insertion pass to the end of optimization pipeline,
   // right before lowering to machine IR.
