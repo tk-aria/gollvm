@@ -31,7 +31,6 @@ namespace gollvm { namespace arch {
 } }
 
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Bitcode/BitcodeWriterPass.h"
 #include "llvm/Config/llvm-config.h"
@@ -616,7 +615,7 @@ bool CompileGoImpl::initBridge()
 
   // Now construct Llvm_backend helper.
   unsigned addrspace = enable_gc_ ? 1 : 0;
-  bridge_.reset(new Llvm_backend(context_, module_.get(), linemap_.get(), addrspace, cconv_));
+  bridge_.reset(new Llvm_backend(context_, module_.get(), linemap_.get(), addrspace, triple_, cconv_));
 
   // Honor inline, tracelevel cmd line options
   llvm::Optional<unsigned> tl =
@@ -949,7 +948,10 @@ bool CompileGoImpl::invokeBackEnd()
       createTargetTransformInfoWrapperPass(target_->getTargetIRAnalysis()));
   createPasses(modulePasses, functionPasses);
 
-  modulePasses.add(createGoSafeGetgPass());
+  // Disable inlining getg in some cases on x86_64.
+  if (triple_.getArch() == llvm::Triple::x86_64) {
+      modulePasses.add(createGoSafeGetgPass());
+  }
 
   // Add statepoint insertion pass to the end of optimization pipeline,
   // right before lowering to machine IR.

@@ -386,7 +386,7 @@ std::string repr(Bnode *node) {
 
 FcnTestHarness::FcnTestHarness(llvm::CallingConv::ID cconv, const char *fcnName)
     : context_()
-    , be_(new Llvm_backend(context_, nullptr, nullptr, 0, cconv))
+    , be_(new Llvm_backend(context_, nullptr, nullptr, 0, llvm::Triple(), cconv))
     , func_(nullptr)
     , entryBlock_(nullptr)
     , curBlock_(nullptr)

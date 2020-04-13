@@ -65,6 +65,7 @@ class BlockLIRBuilder;
 struct GenCallState;
 
 #include "llvm/IR/GlobalValue.h"
+#include "llvm/ADT/Triple.h"
 
 //
 // LLVM-specific implementation of the Backend class; the code in
@@ -79,6 +80,7 @@ public:
                llvm::Module *module,
                Llvm_linemap *linemap,
                unsigned addrspace,
+               llvm::Triple triple,
                /* Temporarily set the parameter as optional to workaround the unit tests. */
                llvm::CallingConv::ID cconv=llvm::CallingConv::X86_64_SysV);
   ~Llvm_backend();
@@ -328,9 +330,10 @@ public:
 
   Llvm_linemap *linemap() const { return linemap_; }
 
-  // Module and datalayout
+  // Module, datalayout and triple
   llvm::Module &module() { return *module_; }
   const llvm::DataLayout &datalayout() { return *datalayout_; }
+  const llvm::Triple &triple() const { return triple_; }
 
   // Type manager functionality
   TypeManager *typeManager() const;
@@ -730,6 +733,9 @@ public:
 
   // Data layout info from the module.
   const llvm::DataLayout *datalayout_;
+
+  // The target triple.
+  llvm::Triple triple_;
 
   // Builder for constructing Bexpressions and Bstatements.
   BnodeBuilder nbuilder_;

@@ -78,7 +78,7 @@ TEST_P(BackendTreeIntegrity, CheckTreeIntegrity2) {
   LLVMContext C;
   auto cc = GetParam();
   std::unique_ptr<Llvm_backend> be(
-      new Llvm_backend(C, nullptr, nullptr, 0, cc));
+      new Llvm_backend(C, nullptr, nullptr, 0, llvm::Triple(), cc));
   be->disableIntegrityChecks();
 
   Location loc;
@@ -116,7 +116,7 @@ TEST_P(BackendTreeIntegrity, CheckTreeIntegrity3) {
   LLVMContext C;
   auto cc = GetParam();
   std::unique_ptr<Llvm_backend> be(
-      new Llvm_backend(C, nullptr, nullptr, 0, cc));
+      new Llvm_backend(C, nullptr, nullptr, 0, llvm::Triple(), cc));
   be->disableIntegrityChecks();
   Location loc;
   Bfunction *func = mkFunci32o64(be.get(), "foo");
