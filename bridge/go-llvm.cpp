@@ -44,10 +44,12 @@ Llvm_backend::Llvm_backend(llvm::LLVMContext &context,
                            llvm::Module *module,
                            Llvm_linemap *linemap,
                            unsigned addrspace,
+                           llvm::Triple triple,
                            llvm::CallingConv::ID cconv)
     : TypeManager(context, cconv, addrspace)
     , context_(context)
     , module_(module)
+    , triple_(triple)
     , datalayout_(module ? &module->getDataLayout() : nullptr)
     , nbuilder_(this)
     , linemap_(linemap)
@@ -80,8 +82,20 @@ Llvm_backend::Llvm_backend(llvm::LLVMContext &context,
   // Similarly for the LLVM module (unit testing)
   if (!module_) {
     ownModule_.reset(new llvm::Module("gomodule", context));
-    ownModule_->setTargetTriple("x86_64-unknown-linux-gnu");
-    ownModule_->setDataLayout("e-m:e-i64:64-f80:128-n8:16:32:64-S128");
+    switch (cconv) {
+      case llvm::CallingConv::X86_64_SysV:
+        ownModule_->setTargetTriple("x86_64-unknown-linux-gnu");
+        ownModule_->setDataLayout("e-m:e-i64:64-f80:128-n8:16:32:64-S128");
+        triple_ = llvm::Triple("x86_64-unknown-linux-gnu");
+        break;
+      case llvm::CallingConv::ARM_AAPCS:
+        ownModule_->setTargetTriple("aarch64-unknown-linux-gnu");
+        ownModule_->setDataLayout("e-m:e-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128");
+        triple_ = llvm::Triple("aarch64-unknown-linux-gnu");
+        break;
+      default:
+        std::cerr <<"Unsupported calling convention\n";
+    }
     module_ = ownModule_.get();
   }
 
@@ -4087,5 +4101,5 @@ const char *go_localize_identifier(const char *ident) { return ident; }
 // Return a new backend generator.
 
 Backend *go_get_backend(llvm::LLVMContext &context, llvm::CallingConv::ID cconv) {
-  return new Llvm_backend(context, nullptr, nullptr, 0, cconv);
+  return new Llvm_backend(context, nullptr, nullptr, 0, llvm::Triple(), cconv);
 }
