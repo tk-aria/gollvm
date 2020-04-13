@@ -229,4 +229,80 @@ TEST_P(BackendCallTests, CallToNoReturnFunction) {
   EXPECT_TRUE(isOK && "Function does not have expected contents");
 }
 
+// TODO: We should have written a test for static link, but because in static
+// link mode, the return type of getg is a temporary type, such as %"type
+// 0xaaaafc36b690", this value is not fixed, so we can not determine the
+// expected result. However, the processing method of static link and dynamic
+// link is the same, but the instruction is slightly different.
+TEST(BackendCallTests, TestMakeGetgDynamicArm64) {
+  FcnTestHarness h(llvm::CallingConv::ARM_AAPCS, "foo");
+  Llvm_backend *be = h.be();
+  be->module().setPICLevel(llvm::PICLevel::BigPIC);
+  Bfunction *func = h.func();
+  Location loc;
+
+  // Declare a function "func runtime.getg() *int64", in fact, the prototype of
+  // runtime.getg is "func runtime.getg() *g", but it is difficult to construct
+  // the structure of g, so we use *int64 to simulate.
+  Btype *bi64t = be->integer_type(false, 64);
+  Btype *bpi64t = be->pointer_type(bi64t);
+  Btype *befty1 = mkFuncTyp(be, L_RES, bpi64t, L_END);
+  unsigned fflags =
+      (Backend::function_is_visible | Backend::function_is_declaration);
+  Bfunction *befcn1 =
+      be->function(befty1, "runtime.getg", "runtime.getg", fflags, loc);
+
+  // Declare a function bar with no args and no return.
+  Btype *befty2 = mkFuncTyp(be, L_END);
+  Bfunction *befcn2 = be->function(befty2, "bar", "bar", fflags, loc);
+
+  // x := getg()
+  Bexpression *fn = be->function_code_expression(befcn1, loc);
+  std::vector<Bexpression *> args;
+  Bexpression *call = be->call_expression(func, fn, args, nullptr, loc);
+  Bvariable *x = h.mkLocal("x", bpi64t, call);
+  Bexpression *vex = be->var_expression(x, loc);
+
+  // Create call to bar()
+  fn = be->function_code_expression(befcn2, loc);
+  call = be->call_expression(func, fn, args, nullptr, loc);
+  h.mkExprStmt(call);
+
+  // y := getg()
+  fn = be->function_code_expression(befcn1, loc);
+  call = be->call_expression(func, fn, args, nullptr, loc);
+  Bvariable *y = h.mkLocal("y", bpi64t, call);
+  Bexpression *vey = be->var_expression(y, loc);
+
+  // z := *x + *y, this makes no sense, just to make x and y be used.
+  Bexpression *xpy = be->binary_expression(
+      OPERATOR_PLUS, be->indirect_expression(bi64t, vex, false, loc),
+      be->indirect_expression(bi64t, vey, false, loc), loc);
+  Bvariable *z = h.mkLocal("z", bi64t, xpy);
+  // return z
+  h.mkReturn(be->var_expression(z, loc));
+
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
+    <badref> = call addrspace(0) i64* asm sideeffect "adrp x0, :tlsdesc:runtime.g\0Aldr  $0, [x0, :tlsdesc_lo12:runtime.g]\0Aadd  x0, x0, :tlsdesc_lo12:runtime.g\0A.tlsdesccall runtime.g\0Ablr  $0\0Amrs  $0, TPIDR_EL0\0Aldr  $0, [$0, x0]\0A", "=r,~{x0}"()
+    store i64* <badref>, i64** %x, align 8
+    call addrspace(0) void @bar(i8* nest undef)
+    <badref> = call addrspace(0) i64* asm sideeffect "adrp x0, :tlsdesc:runtime.g\0Aldr  $0, [x0, :tlsdesc_lo12:runtime.g]\0Aadd  x0, x0, :tlsdesc_lo12:runtime.g\0A.tlsdesccall runtime.g\0Ablr  $0\0Amrs  $0, TPIDR_EL0\0Aldr  $0, [$0, x0]\0A", "=r,~{x0}"()
+    store i64* <badref>, i64** %y, align 8
+    %x.ld.0 = load i64*, i64** %x, align 8
+    %.ld.0 = load i64, i64* %x.ld.0, align 8
+    %y.ld.0 = load i64*, i64** %y, align 8
+    %.ld.1 = load i64, i64* %y.ld.0, align 8
+    %add.0 = add i64 %.ld.0, %.ld.1
+    store i64 %add.0, i64* %z, align 8
+    %z.ld.0 = load i64, i64* %z, align 8
+    ret i64 %z.ld.0
+  )RAW_RESULT");
+
+  bool isOK = h.expectBlock(exp);
+  EXPECT_TRUE(isOK && "Block does not have expected contents");
+
+  bool broken = h.finish(StripDebugInfo);
+  EXPECT_FALSE(broken && "Module failed to verify.");
+}
+
 } // namespace
