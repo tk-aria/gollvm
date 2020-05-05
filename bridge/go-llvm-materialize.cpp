@@ -1099,8 +1099,7 @@ Bexpression *Llvm_backend::materializeArrayIndex(Bexpression *arindExpr)
 
 struct GenCallState {
   CABIOracle oracle;
-  Binstructions instructions;
-  BinstructionsLIRBuilder builder;
+  BlockLIRBuilder builder;
   std::vector<Bexpression *> resolvedArgs;
   llvm::SmallVector<llvm::Value *, 16> llargs;
   llvm::Value *chainVal;
@@ -1111,10 +1110,11 @@ struct GenCallState {
   GenCallState(llvm::LLVMContext &context,
                Bfunction *callerFunc,
                BFunctionType *calleeFcnTyp,
-               TypeManager *tm)
+               TypeManager *tm,
+               NameGen *namegen,
+               llvm::Function *dummyFcn)
       : oracle(calleeFcnTyp, tm),
-        instructions(),
-        builder(context, &instructions),
+        builder(dummyFcn, namegen),
         chainVal(nullptr),
         sretTemp(nullptr),
         calleeFcnType(calleeFcnTyp),
@@ -1169,7 +1169,7 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
     if (paramInfo.attr() == AttrNest)
       continue;
 
-    BinstructionsLIRBuilder &builder = state.builder;
+    BlockLIRBuilder &builder = state.builder;
 
     // For arguments not passed by value, no call to resolveVarContext
     // (we want var address, not var value).
@@ -1199,17 +1199,14 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
       // be copied to the space allocated by the caller on the stack, and pass
       // the address of the copied version to the callee.
       if (paramInfo.attr() == AttrDoCopy) {
-        BlockLIRBuilder bbuilder(state.callerFcn->function(), this);
         TypeManager *tm = state.oracle.tm();
         Btype *bty = fnarg->btype();
         uint64_t sz = tm->typeSize(bty);
         uint64_t algn = tm->typeAlignment(bty);
+        llvm::MaybeAlign malgn(algn);
         std::string tname(namegen("doCopy.addr"));
         llvm::Value *tmpV = state.callerFcn->createTemporary(bty, tname);
-        bbuilder.CreateMemCpy(tmpV, algn, val, algn, sz);
-        std::vector<llvm::Instruction *> instructions = bbuilder.instructions();
-        for (auto i : instructions)
-          state.instructions.appendInstruction(i);
+        builder.CreateMemCpy(tmpV, malgn, val, malgn, sz);
         val = tmpV;
       }
       state.llargs.push_back(val);
@@ -1356,7 +1353,6 @@ void Llvm_backend::genCallEpilog(GenCallState &state,
 {
   const CABIParamInfo &returnInfo = state.oracle.returnInfo();
 
-
   if (needSretTemp(returnInfo, state.calleeFcnType)) {
     assert(state.sretTemp);
     assert(callExpr->value() == state.sretTemp);
@@ -1367,16 +1363,17 @@ void Llvm_backend::genCallEpilog(GenCallState &state,
       // the expected abstract result type of the function. Cast the
       // sret storage location to a pointer to the abi type and store
       // the ABI return value into it.
-      BinstructionsLIRBuilder builder(context_, callExpr);
       llvm::Type *rt = (returnInfo.abiTypes().size() == 1 ?
                         returnInfo.abiType()  :
                         returnInfo.computeABIStructType(typeManager()));
       llvm::Type *ptrt = llvm::PointerType::get(rt, 0);
       std::string castname(namegen("cast"));
-      llvm::Value *bitcast = builder.CreateBitCast(state.sretTemp,
-                                                   ptrt, castname);
+      llvm::Value *bitcast =
+          state.builder.CreateBitCast(state.sretTemp,
+                                      ptrt, castname);
       std::string stname(namegen("st"));
-      builder.CreateStore(callInst, bitcast);
+      state.builder.CreateStore(callInst, bitcast);
+      callExpr->appendInstructions(state.builder.instructions());
     }
   }
 }
@@ -1385,7 +1382,7 @@ void Llvm_backend::genCallEpilog(GenCallState &state,
 // This is not done as a builtin because, unlike other builtins,
 // we need the FE to tell us the result type.
 static llvm::Value *makeGetg(Btype *resType,
-                             BinstructionsLIRBuilder *builder,
+                             BlockLIRBuilder *builder,
                              Llvm_backend *be)
 {
   llvm::GlobalValue* g = be->module().getGlobalVariable("runtime.g");
@@ -1473,7 +1470,9 @@ Bexpression *Llvm_backend::materializeCall(Bexpression *callExpr)
   }
 
   // State object to help with marshalling of call arguments, etc.
-  GenCallState state(context_, caller, calleeFcnTyp, typeManager());
+  llvm::Function *dummyFcn = errorFunction_->function();
+  GenCallState state(context_, caller, calleeFcnTyp, typeManager(),
+                     nameTags(), dummyFcn);
 
   // Static chain expression if applicable
   if (chain_expr->btype() != void_type()) {
@@ -1515,10 +1514,14 @@ Bexpression *Llvm_backend::materializeCall(Bexpression *callExpr)
     callValue = (state.sretTemp ? state.sretTemp : call);
   }
 
+  Binstructions callInstructions;
+  std::vector<llvm::Instruction *> binstructions = state.builder.instructions();
+  for (auto i : binstructions)
+    callInstructions.appendInstruction(i);
+
   Bexpression *rval =
       nbuilder_.mkCall(rbtype, callValue, caller, fn_expr, chain_expr,
-                       state.resolvedArgs, state.instructions, location);
-  state.instructions.clear();
+                       state.resolvedArgs, callInstructions, location);
 
   if (call)
     genCallEpilog(state, call, rval);

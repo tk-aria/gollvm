@@ -1257,7 +1257,8 @@ normalizeForInvokeSafepoint(BasicBlock *BB, BasicBlock *InvokeParent,
 
 // Create new attribute set containing only attributes which can be transferred
 // from original call to the safepoint.
-static AttributeList legalizeCallAttributes(AttributeList AL) {
+static AttributeList legalizeCallAttributes(LLVMContext &Ctx,
+                                            AttributeList AL) {
   if (AL.isEmpty())
     return AL;
 
@@ -1270,7 +1271,6 @@ static AttributeList legalizeCallAttributes(AttributeList AL) {
       FnAttrs.remove(A);
   }
 
-  LLVMContext &Ctx = AL.getContext();
   AttributeList Ret = AttributeList::get(Ctx, AttributeList::FunctionIndex,
                                          AttributeSet::get(Ctx, FnAttrs));
 
@@ -1456,7 +1456,7 @@ makeStatepointExplicitImpl(CallBase *Call, /* to replace */
   if (SD.StatepointID)
     StatepointID = *SD.StatepointID;
 
-  Value *CallTarget = Call->getCalledValue();
+  Value *CallTarget = Call->getCalledOperand();
   if (Function *F = dyn_cast<Function>(CallTarget)) {
     if (F->getIntrinsicID() == Intrinsic::experimental_deoptimize) {
       // Calls to llvm.experimental.deoptimize are lowered to calls to the
@@ -1508,7 +1508,8 @@ makeStatepointExplicitImpl(CallBase *Call, /* to replace */
     // function attributes.  In case if we can handle this set of attributes -
     // set up function attrs directly on statepoint and return attrs later for
     // gc_result intrinsic.
-    Invoke->setAttributes(legalizeCallAttributes(ToReplace->getAttributes()));
+    Invoke->setAttributes(
+        legalizeCallAttributes(Invoke->getContext(), ToReplace->getAttributes()));
 
     Token = Invoke;
 
@@ -2967,7 +2968,8 @@ fixStackWriteBarriers(Function &F, DefiningValueMapTy &DVCache) {
           Value *GEP = Builder.CreateConstInBoundsGEP2_32(
               TD->getType()->getPointerElementType(), TD, 0, 0);
           Value *Siz = Builder.CreateLoad(GEP);
-          Builder.CreateMemMove(Dst, 0, Src, 0, Siz);
+          llvm::MaybeAlign malgn(0);
+          Builder.CreateMemMove(Dst, malgn, Src, malgn, Siz);
           ToDel.insert(CI);
         }
       }
