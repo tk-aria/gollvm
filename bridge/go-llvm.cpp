@@ -612,7 +612,8 @@ Bexpression *Llvm_backend::genLoad(Bexpression *expr,
     std::string ldname(tag);
     ldname += ".ld";
     ldname = namegen(ldname);
-    llvm::Instruction *loadInst = new llvm::LoadInst(spaceVal, ldname);
+    llvm::Type *vt = spaceVal->getType()->getPointerElementType();
+    llvm::Instruction *loadInst = new llvm::LoadInst(vt, spaceVal, ldname);
     rval = nbuilder_.mkDeref(loadResultType, loadInst, space, loc);
     rval->appendInstruction(loadInst);
   } else {
@@ -886,9 +887,11 @@ llvm::Value *Llvm_backend::genStore(BlockLIRBuilder *builder,
 
   // alignment of src expr
   unsigned algn = typeAlignment(srcType);
+  llvm::MaybeAlign malgn(algn);
 
   // Q: should we be using memmove here instead?
-  llvm::CallInst *call = builder->CreateMemCpy(dstLoc, algn, srcVal, algn, sz);
+  llvm::CallInst *call =
+      builder->CreateMemCpy(dstLoc, malgn, srcVal, malgn, sz);
 
   return call;
 }
@@ -2094,7 +2097,7 @@ Llvm_backend::makeModuleVar(Btype *btype,
           glob->setComdat(module().getOrInsertComdat(gname));
         }
         if (alignment)
-          glob->setAlignment(alignment);
+          glob->setAlignment(llvm::MaybeAlign(alignment));
         if (initializer)
           glob->setInitializer(initializer);
       }
@@ -2138,7 +2141,7 @@ Llvm_backend::makeModuleVar(Btype *btype,
                                   threadlocal, addressSpace_);
 
   if (alignment)
-    glob->setAlignment(alignment);
+    glob->setAlignment(llvm::MaybeAlign(alignment));
   if (inComdat == MV_InComdat) {
     assert(! gname.empty());
     glob->setComdat(module().getOrInsertComdat(gname));
@@ -3064,9 +3067,13 @@ GenBlocks::rewriteToMayThrowCall(llvm::CallInst *call,
   // target, operands, etc) to the CallInst 'call', but uses a
   // possibly-excepting call with landing pad.
   llvm::SmallVector<llvm::Value *, 8> args(call->arg_begin(), call->arg_end());
+  llvm::Value *callop = call->getCalledOperand();
+  llvm::PointerType *pft =
+      llvm::cast<llvm::PointerType>(callop->getType());
+  llvm::FunctionType *fty =
+      llvm::cast<llvm::FunctionType>(pft->getElementType());
   llvm::InvokeInst *invcall =
-      llvm::InvokeInst::Create(call->getCalledValue(),
-                               contbb, padbb, args,
+      llvm::InvokeInst::Create(fty, callop, contbb, padbb, args,
                                call->getName());
 
   // Rewrite uses of the original call's return value to be the new call's

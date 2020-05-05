@@ -62,7 +62,6 @@ class raw_ostream;
 class BuiltinEntry;
 class BuiltinTable;
 class BlockLIRBuilder;
-class BinstructionsLIRBuilder;
 struct GenCallState;
 
 #include "llvm/IR/GlobalValue.h"

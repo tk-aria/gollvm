@@ -354,8 +354,8 @@ unsigned Bfunction::genArgSpill(Bvariable *paramVar,
 {
   lazyAbiSetup();
   assert(paramInfo.disp() == ParmDirect);
-  BinstructionsLIRBuilder builder(function()->getContext(), spillInstructions);
   TypeManager *tm = abiOracle_->tm();
+  BlockLIRBuilder builder(function(), this);
 
   // Simple case: param arrived in single register.
   if (paramInfo.abiTypes().size() == 1) {
@@ -371,6 +371,7 @@ unsigned Bfunction::genArgSpill(Bvariable *paramVar,
     }
     llvm::Instruction *si = builder.CreateStore(arg, sploc);
     paramVar->setInitializer(si);
+    spillInstructions->appendInstructions(builder.instructions());
     return 1;
   }
 
@@ -395,6 +396,7 @@ unsigned Bfunction::genArgSpill(Bvariable *paramVar,
     stinst = builder.CreateStore(argChunk, fieldgep);
   }
   paramVar->setInitializer(stinst);
+  spillInstructions->appendInstructions(builder.instructions());
 
   // All done.
   return paramInfo.abiTypes().size();
@@ -508,10 +510,9 @@ llvm::Value *Bfunction::genReturnSequence(Bexpression *toRet,
     BlockLIRBuilder bbuilder(function(), inamegen);
     uint64_t sz = tm->typeSize(fcnType_->resultType());
     uint64_t algn = tm->typeAlignment(fcnType_->resultType());
-    bbuilder.CreateMemCpy(rtnValueMem_, algn, toRet->value(), algn, sz);
-    std::vector<llvm::Instruction*> instructions = bbuilder.instructions();
-    for (auto i : instructions)
-      retInstrs->appendInstruction(i);
+    llvm::MaybeAlign malgn(algn);
+    bbuilder.CreateMemCpy(rtnValueMem_, malgn, toRet->value(), malgn, sz);
+    retInstrs->appendInstructions(bbuilder.instructions());
     llvm::Value *rval = nullptr;
     return rval;
   }
@@ -529,11 +530,12 @@ llvm::Value *Bfunction::genReturnSequence(Bexpression *toRet,
                       returnInfo.computeABIStructType(tm) :
                       returnInfo.abiType());
   llvm::Type *ptst = llvm::PointerType::get(llrt, 0);
-  BinstructionsLIRBuilder builder(function()->getContext(), retInstrs);
+  BlockLIRBuilder builder(function(), inamegen);
   std::string castname(namegen("cast"));
   llvm::Value *bitcast = builder.CreateBitCast(toRet->value(), ptst, castname);
   std::string loadname(namegen("ld"));
   llvm::Instruction *ldinst = builder.CreateLoad(bitcast, loadname);
+  retInstrs->appendInstructions(builder.instructions());
   return ldinst;
 }
 

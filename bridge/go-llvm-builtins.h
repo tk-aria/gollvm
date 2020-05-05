@@ -26,7 +26,7 @@ class TypeManager;
 typedef std::vector<Btype*> BuiltinEntryTypeVec;
 
 typedef llvm::Value *(*BuiltinExprMaker)(llvm::SmallVectorImpl<llvm::Value*> &args,
-                                         BinstructionsLIRBuilder *builder,
+                                         BlockLIRBuilder *builder,
                                          Llvm_backend *be);
 
 // An entry in a table of interesting builtin functions. A given entry
