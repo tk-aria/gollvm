@@ -31,8 +31,9 @@ gollvm::passes::hasPointer(Type *T) {
     return true;
   case Type::ArrayTyID:
     return hasPointer(T->getArrayElementType());
-  case Type::VectorTyID:
-    return hasPointer(T->getVectorElementType());
+  case Type::FixedVectorTyID:
+  case Type::ScalableVectorTyID:
+    return hasPointer(T->getScalarType());
   case Type::StructTyID: {
     for (unsigned i = 0, e = T->getStructNumElements(); i < e; ++i)
       if (hasPointer(T->getStructElementType(i)))
@@ -66,9 +67,11 @@ getPtrBitmapForTypeHelper(Type *T, const DataLayout &DL, uint64_t BaseOffset, Bi
     }
     break;
   }
-  case Type::VectorTyID: {
-    Type *ET = T->getVectorElementType();
-    for (unsigned i = 0, n = T->getVectorNumElements(); i < n; ++i) {
+  case Type::FixedVectorTyID:
+  case Type::ScalableVectorTyID: {
+    auto *VT = llvm::cast<llvm::VectorType>(T);
+    Type *ET = T->getScalarType();
+    for (unsigned i = 0, n = VT->getNumElements(); i < n; ++i) {
       Value *ivals[2] = { ConstantInt::get(Int32Ty, 0),
                           ConstantInt::get(Int32Ty, i) };
       ArrayRef<Value*> Idx = makeArrayRef(ivals, 2);

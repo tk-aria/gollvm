@@ -11,6 +11,7 @@
 
 #include "go-sha1.h"
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/SHA1.h"
 
 class Llvm_Sha1_Helper : public Go_sha1_helper
