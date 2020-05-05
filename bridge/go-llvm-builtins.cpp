@@ -347,7 +347,7 @@ void BuiltinTable::defineIntrinsicBuiltin(const char *name,
 }
 
 static llvm::Value *builtinExtractReturnAddrMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
-                                                  BinstructionsLIRBuilder *builder,
+                                                  BlockLIRBuilder *builder,
                                                   Llvm_backend *be)
 {
   // __builtin_extract_return_addr(uintptr) uintptr
@@ -362,7 +362,7 @@ static llvm::Value *builtinExtractReturnAddrMaker(llvm::SmallVectorImpl<llvm::Va
 }
 
 static llvm::Value *builtinUnreachableMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
-                                            BinstructionsLIRBuilder *builder,
+                                            BlockLIRBuilder *builder,
                                             Llvm_backend *be)
 {
   llvm::UnreachableInst *unr = builder->CreateUnreachable();
@@ -370,7 +370,7 @@ static llvm::Value *builtinUnreachableMaker(llvm::SmallVectorImpl<llvm::Value*> 
 }
 
 static llvm::Value *builtinMemsetMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
-                                       BinstructionsLIRBuilder *builder,
+                                       BlockLIRBuilder *builder,
                                        Llvm_backend *be)
 {
   // __builtin_memset takes int32 as its second argument, whereas
@@ -406,7 +406,7 @@ static llvm::AtomicOrdering llvmOrder(int o)
 }
 
 static llvm::Value *atomicLoadMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
-                                    BinstructionsLIRBuilder *builder,
+                                    BlockLIRBuilder *builder,
                                     Llvm_backend *be, int sz)
 {
   assert(args.size() == 2);
@@ -424,21 +424,21 @@ static llvm::Value *atomicLoadMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
 }
 
 static llvm::Value *atomicLoad4Maker(llvm::SmallVectorImpl<llvm::Value*> &args,
-                                     BinstructionsLIRBuilder *builder,
+                                     BlockLIRBuilder *builder,
                                      Llvm_backend *be)
 {
   return atomicLoadMaker(args, builder, be, 4);
 }
 
 static llvm::Value *atomicLoad8Maker(llvm::SmallVectorImpl<llvm::Value*> &args,
-                                     BinstructionsLIRBuilder *builder,
+                                     BlockLIRBuilder *builder,
                                      Llvm_backend *be)
 {
   return atomicLoadMaker(args, builder, be, 8);
 }
 
 static llvm::Value *atomicStoreMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
-                                     BinstructionsLIRBuilder *builder,
+                                     BlockLIRBuilder *builder,
                                      Llvm_backend *be, int sz)
 {
   assert(args.size() == 3);
@@ -454,14 +454,14 @@ static llvm::Value *atomicStoreMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
 }
 
 static llvm::Value *atomicStore4Maker(llvm::SmallVectorImpl<llvm::Value*> &args,
-                                      BinstructionsLIRBuilder *builder,
+                                      BlockLIRBuilder *builder,
                                       Llvm_backend *be)
 {
   return atomicStoreMaker(args, builder, be, 4);
 }
 
 static llvm::Value *atomicStore8Maker(llvm::SmallVectorImpl<llvm::Value*> &args,
-                                      BinstructionsLIRBuilder *builder,
+                                      BlockLIRBuilder *builder,
                                       Llvm_backend *be)
 {
   return atomicStoreMaker(args, builder, be, 8);
@@ -469,7 +469,7 @@ static llvm::Value *atomicStore8Maker(llvm::SmallVectorImpl<llvm::Value*> &args,
 
 static llvm::Value *atomicRMWMaker(llvm::AtomicRMWInst::BinOp op,
                                    llvm::SmallVectorImpl<llvm::Value*> &args,
-                                   BinstructionsLIRBuilder *builder,
+                                   BlockLIRBuilder *builder,
                                    Llvm_backend *be)
 {
   assert(args.size() == 3);
@@ -482,14 +482,14 @@ static llvm::Value *atomicRMWMaker(llvm::AtomicRMWInst::BinOp op,
 }
 
 static llvm::Value *atomicXchgMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
-                                    BinstructionsLIRBuilder *builder,
+                                    BlockLIRBuilder *builder,
                                     Llvm_backend *be)
 {
   return atomicRMWMaker(llvm::AtomicRMWInst::Xchg, args, builder, be);
 }
 
 static llvm::Value *atomicAddMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
-                                   BinstructionsLIRBuilder *builder,
+                                   BlockLIRBuilder *builder,
                                    Llvm_backend *be)
 {
   // atomicrmw returns the old content. We need to do the add.
@@ -498,7 +498,7 @@ static llvm::Value *atomicAddMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
 }
 
 static llvm::Value *atomicAndMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
-                                   BinstructionsLIRBuilder *builder,
+                                   BlockLIRBuilder *builder,
                                    Llvm_backend *be)
 {
   // atomicrmw returns the old content. We need to do the and.
@@ -507,7 +507,7 @@ static llvm::Value *atomicAndMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
 }
 
 static llvm::Value *atomicOrMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
-                                  BinstructionsLIRBuilder *builder,
+                                  BlockLIRBuilder *builder,
                                   Llvm_backend *be)
 {
   // atomicrmw returns the old content. We need to do the or.
@@ -516,7 +516,7 @@ static llvm::Value *atomicOrMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
 }
 
 static llvm::Value *atomicCasMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
-                                   BinstructionsLIRBuilder *builder,
+                                   BlockLIRBuilder *builder,
                                    Llvm_backend *be)
 {
   assert(args.size() == 6);

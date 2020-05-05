@@ -54,39 +54,7 @@ class BexprLIRBuilder :
   }
 };
 
-// Similar to the above, but adds to a Binstructions object.
-
-class BinstructionsInserter : public llvm::IRBuilderDefaultInserter {
- public:
-  BinstructionsInserter() : insns_(nullptr) { }
-  void setDest(Binstructions *insns) { assert(!insns_); insns_ = insns; }
-
-  void InsertHelper(llvm::Instruction *I, const llvm::Twine &Name,
-                    llvm::BasicBlock *BB,
-                    llvm::BasicBlock::iterator InsertPt) const {
-    assert(insns_);
-    insns_->appendInstruction(I);
-    I->setName(Name);
-  }
-
- private:
-    mutable Binstructions *insns_;
-};
-
-// Builder that appends to a specified Binstructions object
-
-class BinstructionsLIRBuilder :
-    public llvm::IRBuilder<llvm::ConstantFolder, BinstructionsInserter> {
-  typedef llvm::IRBuilder<llvm::ConstantFolder,
-                          BinstructionsInserter> IRBuilderB;
- public:
-  BinstructionsLIRBuilder(llvm::LLVMContext &context, Binstructions *insns) :
-      IRBuilderB(context, llvm::ConstantFolder()) {
-    getInserter().setDest(insns);
-  }
-};
-
-// Some of the methods in the LLVM IRBuilder class (ex: CreateMemCpy)
+// Many of the methods in the LLVM IRBuilder class (ex: CreateMemCpy)
 // assume that you are appending to an existing basic block (which is
 // typically not what we want to do in many cases in the bridge code).
 // Furthermore it is required that the block in question be already

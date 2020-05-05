@@ -1384,7 +1384,7 @@ llvm::FunctionType *TypeManager::personalityFunctionType()
 
 bool TypeManager::isLlvmCompositeType(llvm::Type *t)
 {
-  return llvm::isa<llvm::StructType>(t) || llvm::isa<llvm::SequentialType>(t);
+  return llvm::isa<llvm::StructType>(t) || llvm::isa<llvm::ArrayType>(t) || llvm::isa<llvm::VectorType>(t);
 }
 
 llvm::Type *TypeManager::getLlvmTypeAtIndex(llvm::Type *t, unsigned i)
@@ -1392,10 +1392,12 @@ llvm::Type *TypeManager::getLlvmTypeAtIndex(llvm::Type *t, unsigned i)
   if (llvm::isa<llvm::StructType>(t)) {
     llvm::StructType *st = llvm::cast<llvm::StructType>(t);
     return st->getTypeAtIndex(i);
+  } else if (llvm::isa<llvm::ArrayType>(t)) {
+    llvm::ArrayType *at = llvm::cast<llvm::ArrayType>(t);
+    return at->getElementType();
   } else {
-    assert(llvm::isa<llvm::SequentialType>(t));
-    llvm::SequentialType *st = llvm::cast<llvm::SequentialType>(t);
-    return st->getElementType();
+    assert(llvm::isa<llvm::VectorType>(t));
+    return t->getScalarType();
   }
 }
 
