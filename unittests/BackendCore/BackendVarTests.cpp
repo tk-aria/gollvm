@@ -299,10 +299,10 @@ TEST_P(BackendVarTests, ImmutableStructSetInit) {
                                 desct, loc, scon);
 
   {
-    const char *exp = R"RAW_RESULT(
+    DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
       @desc = internal constant { i64 } { i64 ptrtoint
       (i64 (i8*, i32, i32, i64*)* @foo to i64) }
-    )RAW_RESULT";
+    )RAW_RESULT");
 
     bool isOK = h.expectValue(ims->value(), exp);
     EXPECT_TRUE(isOK && "Value does not have expected contents");
@@ -314,9 +314,9 @@ TEST_P(BackendVarTests, ImmutableStructSetInit) {
                                 desct, loc, be->zero_expression(desct));
 
   {
-    const char *exp = R"RAW_RESULT(
+    DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
       @abc = weak constant { i64 } zeroinitializer, comdat
-    )RAW_RESULT";
+    )RAW_RESULT");
 
     bool isOK = h.expectValue(ims2->value(), exp);
     EXPECT_TRUE(isOK && "Value does not have expected contents");
@@ -384,9 +384,9 @@ TEST_P(BackendVarTests, ImplicitVariableSetInit) {
   be->implicit_variable_set_init(ims1, "x", bst,
                                  isHidden, isConst, isCommon, con1);
 
-  const char *exp1 = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp1, R"RAW_RESULT(
     @v1 = global { i32, i32 } { i32 101, i32 202 }, align 8
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK1 = h.expectValue(ims1->value(), exp1);
   EXPECT_TRUE(isOK1 && "Value does not have expected contents");
@@ -399,9 +399,9 @@ TEST_P(BackendVarTests, ImplicitVariableSetInit) {
   be->implicit_variable_set_init(ims2, "x", bst,
                                  isHidden, isConst, isCommon, nullptr);
 
-  const char *exp2 = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp2, R"RAW_RESULT(
     @v2 = weak constant { i32, i32 } zeroinitializer, comdat, align 8
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK2 = h.expectValue(ims2->value(), exp2);
   EXPECT_TRUE(isOK2 && "Value does not have expected contents");
@@ -533,7 +533,7 @@ TEST_P(BackendVarTests, TestVarLifetimeInsertion) {
   bool broken = h.finish(StripDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 {
       entry:
       %x = alloca i32
@@ -554,7 +554,7 @@ TEST_P(BackendVarTests, TestVarLifetimeInsertion) {
       call void @llvm.lifetime.end.p0i8(i64 8, i8* %3)
       ret void
     }
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectValue(func->function(), exp);
   EXPECT_TRUE(isOK && "Value does not have expected contents");
@@ -628,30 +628,30 @@ TEST_P(BackendVarTests, ZeroSizedGlobals) {
   be->global_variable_set_init(ga2, ear2);
 
   {
-    const char *exp = R"RAW_RESULT(
+    DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
       @emptystruct = global { i8 } zeroinitializer
-    )RAW_RESULT";
+    )RAW_RESULT");
     bool isOK = h.expectValue(gs1->value(), exp);
     EXPECT_TRUE(isOK && "Value does not have expected contents");
   }
   {
-    const char *exp = R"RAW_RESULT(
+    DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
       @emptys2f = global { { i8 }, {} } zeroinitializer
-    )RAW_RESULT";
+    )RAW_RESULT");
     bool isOK = h.expectValue(gs2->value(), exp);
     EXPECT_TRUE(isOK && "Value does not have expected contents");
   }
   {
-    const char *exp = R"RAW_RESULT(
+    DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
       @emptyar = global [1 x { { i8 }, {} }] zeroinitializer
-    )RAW_RESULT";
+    )RAW_RESULT");
     bool isOK = h.expectValue(ga1->value(), exp);
     EXPECT_TRUE(isOK && "Value does not have expected contents");
   }
   {
-    const char *exp = R"RAW_RESULT(
+    DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
       @emptyintar = global [1 x i32] zeroinitializer
-    )RAW_RESULT";
+    )RAW_RESULT");
     bool isOK = h.expectValue(ga2->value(), exp);
     EXPECT_TRUE(isOK && "Value does not have expected contents");
   }
@@ -680,14 +680,14 @@ TEST_P(BackendVarTests, ZeroSizedGlobals) {
   bool broken = h.finish(StripDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 {
     entry:
       %localemptys2f = alloca { {}, {} }
       %localemptyintar = alloca [0 x i32]
       ret void
     }
-  )RAW_RESULT";
+  )RAW_RESULT");
   bool isOK = h.expectValue(func->function(), exp);
   EXPECT_TRUE(isOK && "Value does not have expected contents");
 }

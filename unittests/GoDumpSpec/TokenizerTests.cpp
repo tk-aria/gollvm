@@ -50,8 +50,9 @@ std::string dump(MacroTokenizer &t)
   return ss.str();
 }
 
-bool expectTokens(MacroTokenizer &t, const std::string &expected)
+bool expectTokens(MacroTokenizer &t, const ExpectedDump &ed)
 {
+  const std::string &expected = ed.content;
   std::string reason;
   std::string actual(dump(t));
   bool equal = difftokens(expected, actual, reason);
@@ -64,13 +65,13 @@ TEST(GoDumpSpecTokenizerTests, BasicTokenizer) {
   std::string input("1 2l .3f");
   MacroTokenizer t(input);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     NCONST '1'
     SPACE ' '
     NCONST '2'
     SPACE ' '
     NCONST '.3'
-    )RAW_RESULT";
+    )RAW_RESULT");
 
   bool isOK = expectTokens(t, exp);
   EXPECT_TRUE(isOK);
@@ -80,13 +81,13 @@ TEST(GoDumpSpecTokenizerTests, StringConstantTokens) {
   std::string input("\"s1\"'\\t''\\n''\\''\"internal \\\" here\"");
   MacroTokenizer t(input);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     SCONST '"s1"'
     SCONST ''\t''
     SCONST ''\n''
     SCONST ''\'''
     SCONST '"internal \" here"'
-    )RAW_RESULT";
+    )RAW_RESULT");
 
   bool isOK = expectTokens(t, exp);
   EXPECT_TRUE(isOK);
@@ -96,7 +97,7 @@ TEST(GoDumpSpecTokenizerTests, NumericConstantTokens) {
   std::string input(std::string("2.898e-1 0xdeadbeef9 101ull"));
   MacroTokenizer t(input);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     NCONST '2.898e'
     ADDSUB '-'
     NCONST '1'
@@ -104,7 +105,7 @@ TEST(GoDumpSpecTokenizerTests, NumericConstantTokens) {
     NCONST '0xdeadbeef9'
     SPACE ' '
     NCONST '101'
-    )RAW_RESULT";
+    )RAW_RESULT");
 
   bool isOK = expectTokens(t, exp);
   EXPECT_TRUE(isOK);
@@ -114,7 +115,7 @@ TEST(GoDumpSpecTokenizerTests, MiscOps) {
   std::string input(std::string("1(2/3)%3*_A_==1<<9>Q"));
   MacroTokenizer t(input);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     NCONST '1'
     OPEN_PAREN '('
     NCONST '2'
@@ -131,7 +132,7 @@ TEST(GoDumpSpecTokenizerTests, MiscOps) {
     NCONST '9'
     BINOP '>'
     IDENTIFIER 'Q'
-    )RAW_RESULT";
+    )RAW_RESULT");
 
   bool isOK = expectTokens(t, exp);
   EXPECT_TRUE(isOK);
@@ -140,7 +141,7 @@ TEST(GoDumpSpecTokenizerTests, MoreOps) {
   std::string input(std::string("1|2&A^z!/!=~F"));
   MacroTokenizer t(input);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     NCONST '1'
     BINOP '|'
     NCONST '2'
@@ -153,7 +154,7 @@ TEST(GoDumpSpecTokenizerTests, MoreOps) {
     BINOP '!='
     UNOP '^'
     IDENTIFIER 'F'
-    )RAW_RESULT";
+    )RAW_RESULT");
 
   bool isOK = expectTokens(t, exp);
   EXPECT_TRUE(isOK);
@@ -163,10 +164,10 @@ TEST(GoDumpSpecTokenizerTests, ErrorTokenizer) {
   std::string input(std::string("A=1"));
   MacroTokenizer t(input);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     IDENTIFIER 'A'
     ERROR '='
-    )RAW_RESULT";
+    )RAW_RESULT");
 
   bool isOK = expectTokens(t, exp);
   EXPECT_TRUE(isOK);
@@ -176,9 +177,9 @@ TEST(GoDumpSpecTokenizerTests, BadLiteral1) {
   std::string input(std::string("'abc"));
   MacroTokenizer t(input);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     ERROR ''
-    )RAW_RESULT";
+    )RAW_RESULT");
 
   bool isOK = expectTokens(t, exp);
   EXPECT_TRUE(isOK);
@@ -188,9 +189,9 @@ TEST(GoDumpSpecTokenizerTests, BadLiteral2) {
   std::string input(std::string("'\0'"));
   MacroTokenizer t(input);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     ERROR ''
-    )RAW_RESULT";
+    )RAW_RESULT");
 
   bool isOK = expectTokens(t, exp);
   EXPECT_TRUE(isOK);

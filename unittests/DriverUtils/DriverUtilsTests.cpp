@@ -217,8 +217,9 @@ std::string InspectFakeFS::toString()
 }
 
 template<class T>
-bool expectToString(T &cand, const std::string &expected)
+bool expectToString(T &cand, const ExpectedDump &ed)
 {
+  const std::string &expected = ed.content;
   std::string reason;
   std::string actual(cand.toString());
   bool equal = difftokens(expected, actual, reason);
@@ -233,9 +234,9 @@ TEST(DriverUtilsTests, TestFakeFS) {
     std::vector<std::string> t = { "/" };
     InspectFakeFS fake(t);
 
-    const char *exp = R"RAW_RESULT(
+    DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
        dir /:
-    )RAW_RESULT";
+    )RAW_RESULT");
 
     bool isOK = expectToString(fake, exp);
     EXPECT_TRUE(isOK);
@@ -245,10 +246,10 @@ TEST(DriverUtilsTests, TestFakeFS) {
     std::vector<std::string> t = { "/foo", "/bar", "/bar/baz" };
     InspectFakeFS fake(t);
 
-    const char *exp = R"RAW_RESULT(
+    DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
       dir /:  *bar foo
       dir /bar:  baz
-    )RAW_RESULT";
+    )RAW_RESULT");
 
     bool isOK = expectToString(fake, exp);
     EXPECT_TRUE(isOK);
@@ -283,23 +284,23 @@ class DetectorHarness {
 TEST(DriverUtilsTests, GCCInstallationDetectorBasicAmd64) {
 
   // Here we have two installations, version 6 and version 7.
-  const char *install = R"RAW_RESULT(
+  const char *install = R"RAW_INPUT(
       /mumble
       /usr/lib/gcc/x86_64-linux-gnu/6/32/crtbegin.o
       /usr/lib/gcc/x86_64-linux-gnu/blah
       /usr/lib/gcc/x86_64-linux-gnu/6/crtbegin.o
       /usr/lib/gcc/x86_64-linux-gnu/7/crtbegin.o
-    )RAW_RESULT";
+    )RAW_INPUT";
 
   // Case 1: no sysroot, looking for 64-bit compiler.
   DetectorHarness harness1(install, "x86_64-linux-gnu", "");
-  const char *exp64 = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp64, R"RAW_RESULT(
       version: 7
       foundTriple: x86_64-linux-gnu
       libPath: /usr/lib/gcc/x86_64-linux-gnu/7
       parentLibPath: /usr/lib/gcc/x86_64-linux-gnu/7/../..
       installPath: /usr/lib/gcc/x86_64-linux-gnu/7
-    )RAW_RESULT";
+    )RAW_RESULT");
   bool isOK1 = expectToString(harness1.detector(), exp64);
   EXPECT_TRUE(isOK1);
 
@@ -307,13 +308,13 @@ TEST(DriverUtilsTests, GCCInstallationDetectorBasicAmd64) {
   // compiler. Here we pick up version 6 since version 7 in this case
   // has no 32-bit libraries.
   DetectorHarness harness2(install, "i386-linux-gnu", "");
-  const char *exp32 = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp32, R"RAW_RESULT(
       version: 6
       foundTriple: x86_64-linux-gnu
       libPath: /usr/lib/gcc/x86_64-linux-gnu/6/32
       parentLibPath: /usr/lib/gcc/x86_64-linux-gnu/6/../../..
       installPath: /usr/lib/gcc/x86_64-linux-gnu/6
-    )RAW_RESULT";
+    )RAW_RESULT");
   bool isOK2 = expectToString(harness2.detector(), exp32);
   EXPECT_TRUE(isOK2);
 }
@@ -321,68 +322,68 @@ TEST(DriverUtilsTests, GCCInstallationDetectorBasicAmd64) {
 TEST(DriverUtilsTests, GCCInstallationDetectorBasicARM64) {
 
   // Here we have two installations, version 6 and version 7.
-  const char *install = R"RAW_RESULT(
+  const char *install = R"RAW_INPUT(
       /mumble
       /usr/lib/gcc/aarch64-linux-gnu/blah
       /usr/lib/gcc/aarch64-linux-gnu/6/crtbegin.o
       /usr/lib/gcc/aarch64-linux-gnu/7/crtbegin.o
-    )RAW_RESULT";
+    )RAW_INPUT";
 
   // Case 1: no sysroot, looking for 64-bit compiler.
   // Gcc doesn't support multilib on Arm64, so don't need
   // to test that case.
   DetectorHarness harness1(install, "aarch64-linux-gnu", "");
-  const char *exp64 = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp64, R"RAW_RESULT(
       version: 7
       foundTriple: aarch64-linux-gnu
       libPath: /usr/lib/gcc/aarch64-linux-gnu/7
       parentLibPath: /usr/lib/gcc/aarch64-linux-gnu/7/../..
       installPath: /usr/lib/gcc/aarch64-linux-gnu/7
-    )RAW_RESULT";
+    )RAW_RESULT");
   bool isOK1 = expectToString(harness1.detector(), exp64);
   EXPECT_TRUE(isOK1);
 }
 
 TEST(DriverUtilsTests, GCCInstallationDetectorSysRootAmd64) {
 
-  const char *install = R"RAW_RESULT(
+  const char *install = R"RAW_INPUT(
       /mumble
       /usr/lib/gcc/x86_64-linux-gnu/7/crtbegin.o
       /mysysroot/usr/lib/gcc/x86_64-linux-gnu/6.2.3/crtbegin.o
-    )RAW_RESULT";
+    )RAW_INPUT";
 
   // We have GCC 7 installed on the host, but GCC 6 in sysroot,
   // which in this case is what we want.
   DetectorHarness harness1(install, "x86_64-linux-gnu", "/mysysroot");
-  const char *exp64 = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp64, R"RAW_RESULT(
       version: 6.2.3
       foundTriple: x86_64-linux-gnu
       libPath: /mysysroot/usr/lib/gcc/x86_64-linux-gnu/6.2.3
       parentLibPath: /mysysroot/usr/lib/gcc/x86_64-linux-gnu/6.2.3/../..
       installPath: /mysysroot/usr/lib/gcc/x86_64-linux-gnu/6.2.3
-    )RAW_RESULT";
+    )RAW_RESULT");
   bool isOK1 = expectToString(harness1.detector(), exp64);
   EXPECT_TRUE(isOK1);
 }
 
 TEST(DriverUtilsTests, GCCInstallationDetectorSysRootARM64) {
 
-  const char *install = R"RAW_RESULT(
+  const char *install = R"RAW_INPUT(
       /mumble
       /usr/lib/gcc/aarch64-linux-gnu/7/crtbegin.o
       /mysysroot/usr/lib/gcc/aarch64-linux-gnu/6.2.3/crtbegin.o
-    )RAW_RESULT";
+    )RAW_INPUT";
 
   // We have GCC 7 installed on the host, but GCC 6 in sysroot,
   // which in this case is what we want.
   DetectorHarness harness1(install, "aarch64-linux-gnu", "/mysysroot");
-  const char *exp64 = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp64, R"RAW_RESULT(
       version: 6.2.3
       foundTriple: aarch64-linux-gnu
       libPath: /mysysroot/usr/lib/gcc/aarch64-linux-gnu/6.2.3
       parentLibPath: /mysysroot/usr/lib/gcc/aarch64-linux-gnu/6.2.3/../..
       installPath: /mysysroot/usr/lib/gcc/aarch64-linux-gnu/6.2.3
-    )RAW_RESULT";
+    )RAW_RESULT");
   bool isOK1 = expectToString(harness1.detector(), exp64);
   EXPECT_TRUE(isOK1);
 }
@@ -393,35 +394,35 @@ TEST(DriverUtilsTests, GCCInstallationDetectorTripleAliasesAmd64) {
   // of target triples and how GCC is installed. This test checks
   // to make sure we can accommodate such differences.
 
-  const char *install = R"RAW_RESULT(
+  const char *install = R"RAW_INPUT(
       /mumble
       /usr/lib/gcc/x86_64-linux-gnu/5/crtbegin.o
       /usr/lib/gcc/x86_64-linux-gnu/7/crtbegin.o
-    )RAW_RESULT";
+    )RAW_INPUT";
 
   // Case 1: install is x86_64-linux-gnu, but we are looking for
   // x86_64-unknown-linux-gnu
   DetectorHarness harness1(install, "x86_64-unknown-linux-gnu", "");
-  const char *exp1 = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp1, R"RAW_RESULT(
       version: 7
       foundTriple: x86_64-linux-gnu
       libPath: /usr/lib/gcc/x86_64-linux-gnu/7
       parentLibPath: /usr/lib/gcc/x86_64-linux-gnu/7/../..
       installPath: /usr/lib/gcc/x86_64-linux-gnu/7
-    )RAW_RESULT";
+    )RAW_RESULT");
   bool isOK1 = expectToString(harness1.detector(), exp1);
   EXPECT_TRUE(isOK1);
 
   // Case 2: install is x86_64-linux-gnu, but we are looking for
   // x86_64-redhat-linux-gnu
   DetectorHarness harness2(install, "x86_64-redhat-linux-gnu", "");
-  const char *exp2 = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp2, R"RAW_RESULT(
       version: 7
       foundTriple: x86_64-linux-gnu
       libPath: /usr/lib/gcc/x86_64-linux-gnu/7
       parentLibPath: /usr/lib/gcc/x86_64-linux-gnu/7/../..
       installPath: /usr/lib/gcc/x86_64-linux-gnu/7
-    )RAW_RESULT";
+    )RAW_RESULT");
   bool isOK2 = expectToString(harness2.detector(), exp2);
   EXPECT_TRUE(isOK2);
 }
@@ -432,66 +433,66 @@ TEST(DriverUtilsTests, GCCInstallationDetectorTripleAliasesARM64) {
   // of target triples and how GCC is installed. This test checks
   // to make sure we can accommodate such differences.
 
-  const char *install = R"RAW_RESULT(
+  const char *install = R"RAW_INPUT(
       /mumble
       /usr/lib/gcc/aarch64-linux-gnu/5/crtbegin.o
       /usr/lib/gcc/aarch64-linux-gnu/7/crtbegin.o
-    )RAW_RESULT";
+    )RAW_INPUT";
 
   // Case 1: install is aarch64-linux-gnu, but we are looking for
   // aarch64-unknown-linux-gnu
   DetectorHarness harness1(install, "aarch64-unknown-linux-gnu", "");
-  const char *exp1 = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp1, R"RAW_RESULT(
       version: 7
       foundTriple: aarch64-linux-gnu
       libPath: /usr/lib/gcc/aarch64-linux-gnu/7
       parentLibPath: /usr/lib/gcc/aarch64-linux-gnu/7/../..
       installPath: /usr/lib/gcc/aarch64-linux-gnu/7
-    )RAW_RESULT";
+    )RAW_RESULT");
   bool isOK1 = expectToString(harness1.detector(), exp1);
   EXPECT_TRUE(isOK1);
 
   // Case 2: install is aarch64-linux-gnu, but we are looking for
   // aarch64-redhat-linux-gnu
   DetectorHarness harness2(install, "aarch64-redhat-linux-gnu", "");
-  const char *exp2 = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp2, R"RAW_RESULT(
       version: 7
       foundTriple: aarch64-linux-gnu
       libPath: /usr/lib/gcc/aarch64-linux-gnu/7
       parentLibPath: /usr/lib/gcc/aarch64-linux-gnu/7/../..
       installPath: /usr/lib/gcc/aarch64-linux-gnu/7
-    )RAW_RESULT";
+    )RAW_RESULT");
   bool isOK2 = expectToString(harness2.detector(), exp2);
   EXPECT_TRUE(isOK2);
 }
 
 TEST(DriverUtilsTests, GCCInstallationDetectorBiarchAliasesAmd64) {
-  const char *install = R"RAW_RESULT(
+  const char *install = R"RAW_INPUT(
       /mumble
       /usr/lib/gcc/x86_64-redhat-linux/6/lib32/crtbegin.o
       /usr/lib/gcc/x86_64-redhat-linux/6/crtbegin.o
       /usr/lib/gcc/x86_64-redhat-linux/7/crtbegin.o
-    )RAW_RESULT";
+    )RAW_INPUT";
 
   // On 64-bit machine looking for 32-bit libraries, but here the
   // distro has decided to install 32-bit libraries in /lib32, not /32.
   DetectorHarness harness(install, "i386-linux-gnu", "");
-  const char *exp32 = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp32, R"RAW_RESULT(
       version: 6
       foundTriple: x86_64-redhat-linux
       libPath: /usr/lib/gcc/x86_64-redhat-linux/6/lib32
       parentLibPath: /usr/lib/gcc/x86_64-redhat-linux/6/../../..
       installPath: /usr/lib/gcc/x86_64-redhat-linux/6
-    )RAW_RESULT";
+    )RAW_RESULT");
   bool isOK = expectToString(harness.detector(), exp32);
   EXPECT_TRUE(isOK);
 }
 
 TEST(DriverUtilsTests, DistroDetector) {
-  const char *install = R"RAW_RESULT(
+  const char *install = R"RAW_INPUT(
       /etc/lsb-release
       /etc/motd
-    )RAW_RESULT";
+    )RAW_INPUT";
   InspectFakeFS ffs(install);
 
   llvm::Triple target1("aarch64-none-linux-gnu");

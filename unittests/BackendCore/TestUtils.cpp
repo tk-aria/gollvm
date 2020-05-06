@@ -571,8 +571,9 @@ void FcnTestHarness::newBlock(std::vector<Bvariable *> *varlist)
   curBlock_ = be()->block(func_, nullptr, *varlist, loc_, loc_);
 }
 
-bool FcnTestHarness::expectStmt(Bstatement *st, const std::string &expected)
+bool FcnTestHarness::expectStmt(Bstatement *st, const ExpectedDump &ed)
 {
+  const std::string &expected = ed.content;
   std::string reason;
   std::string actual(repr(st));
   bool equal = difftokens(expected, actual, reason);
@@ -581,8 +582,9 @@ bool FcnTestHarness::expectStmt(Bstatement *st, const std::string &expected)
   return equal;
 }
 
-bool FcnTestHarness::expectValue(llvm::Value *val, const std::string &expected)
+bool FcnTestHarness::expectValue(llvm::Value *val, const ExpectedDump &ed)
 {
+  const std::string &expected = ed.content;
   std::string reason;
   std::string actual(repr(val));
   bool equal = difftokens(expected, actual, reason);
@@ -591,8 +593,9 @@ bool FcnTestHarness::expectValue(llvm::Value *val, const std::string &expected)
   return equal;
 }
 
-bool FcnTestHarness::expectBlock(const std::string &expected)
+bool FcnTestHarness::expectBlock(const ExpectedDump &ed)
 {
+  const std::string &expected = ed.content;
   std::string reason;
   std::string actual(repr(curBlock_));
   bool equal = difftokens(expected, actual, reason);
@@ -619,8 +622,9 @@ unsigned FcnTestHarness::countInstancesInModuleDump(const std::string &expected)
   return countinstances(actual, expected);
 }
 
-bool FcnTestHarness::expectRepr(Bnode *node, const std::string &expected)
+bool FcnTestHarness::expectRepr(Bnode *node, const ExpectedDump &ed)
 {
+  const std::string &expected = ed.content;
   std::string reason;
   std::string actual(repr(node));
   bool equal = difftokens(expected, actual, reason);

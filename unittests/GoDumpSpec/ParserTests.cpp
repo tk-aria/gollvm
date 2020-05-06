@@ -52,8 +52,9 @@ std::string processMacros(const char *input)
   return postProcessAndEmit(parser);
 }
 
-bool expectEqualTokens(const std::string &actual, const std::string &expected)
+bool expectEqualTokens(const std::string &actual, const ExpectedDump &ed)
 {
+  const std::string &expected = ed.content;
   std::string reason;
   bool equal = difftokens(expected, actual, reason);
   if (! equal)
@@ -63,106 +64,106 @@ bool expectEqualTokens(const std::string &actual, const std::string &expected)
 
 TEST(GoDumpSpecParserTests, BasicParser) {
 
-  const char *input = R"RAW_RESULT(
+  const char *input = R"RAW_INPUT(
     #define FOO BAR
     #define BLIX
     #define BAR 10
-    )RAW_RESULT";
+    )RAW_INPUT";
   EXPECT_TRUE(true);
 
   std::string result = processMacros(input);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     const _BAR = 10
     const _FOO = _BAR
-    )RAW_RESULT";
+    )RAW_RESULT");
 
   EXPECT_TRUE(expectEqualTokens(result, exp));
 }
 
 TEST(GoDumpSpecParserTests, MacroDefCycle) {
 
-  const char *input = R"RAW_RESULT(
+  const char *input = R"RAW_INPUT(
     #define FOO BAR
     #define BLIX "hello world"
     #define BAR FOO
-    )RAW_RESULT";
+    )RAW_INPUT";
   EXPECT_TRUE(true);
 
   std::string result = processMacros(input);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     const _BLIX = "hello world"
-    )RAW_RESULT";
+    )RAW_RESULT");
 
   EXPECT_TRUE(expectEqualTokens(result, exp));
 }
 
 TEST(GoDumpSpecParserTests, FunctionMacros) {
 
-  const char *input = R"RAW_RESULT(
+  const char *input = R"RAW_INPUT(
     #define ISFUNC() 99
     #define FOO(x,y) x+y
     #define BLIX (7.8e-2*9.01e-8+.00001)<<4u
     #define GLIX() FOO(3,4)
-    )RAW_RESULT";
+    )RAW_INPUT";
   EXPECT_TRUE(true);
 
   std::string result = processMacros(input);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     const _BLIX = (7.8e-2*9.01e-8+.00001)<<4
-    )RAW_RESULT";
+    )RAW_RESULT");
 
   EXPECT_TRUE(expectEqualTokens(result, exp));
 }
 
 TEST(GoDumpSpecParserTests, BadStringLiterals) {
 
-  const char *input = R"RAW_RESULT(
+  const char *input = R"RAW_INPUT(
     #define BAD1 '\0'
     #define BAD2 "ok up until this: \0 "
     #define BAD3 '\xa'
     #define GOOD ""
-    )RAW_RESULT";
+    )RAW_INPUT";
   EXPECT_TRUE(true);
 
   std::string result = processMacros(input);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     const _GOOD = ""
-    )RAW_RESULT";
+    )RAW_RESULT");
 
   EXPECT_TRUE(expectEqualTokens(result, exp));
 }
 
 TEST(GoDumpSpecParserTests, EmptyMacros) {
 
-  const char *input = R"RAW_RESULT(
+  const char *input = R"RAW_INPUT(
     #define EMPTY1
     #define EMPTY2 EMPTY1
     #define EMPTY3 EMPTY2 EMPTY1
     #define BAD (1+2)<<
     #define GOOD (1+2)<<9
-    )RAW_RESULT";
+    )RAW_INPUT";
   EXPECT_TRUE(true);
 
   std::string result = processMacros(input);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     const _GOOD = (1+2)<<9
-    )RAW_RESULT";
+    )RAW_RESULT");
 
   EXPECT_TRUE(expectEqualTokens(result, exp));
 }
 
 TEST(GoDumpSpecParserTests, MacrosAndEnums) {
 
-  const char *input = R"RAW_RESULT(
+  const char *input = R"RAW_INPUT(
     #define E1 10
     #define E2 (EX + E1)
     #define EX "ignored"
-    )RAW_RESULT";
+    )RAW_INPUT";
   EXPECT_TRUE(true);
 
   MacroParser parser;
@@ -175,11 +176,11 @@ TEST(GoDumpSpecParserTests, MacrosAndEnums) {
 
   std::string result = postProcessAndEmit(parser);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     const _E1 = 10
     const _E2 = (_EX + _E1)
     const _EX = 9
-    )RAW_RESULT";
+    )RAW_RESULT");
 
   EXPECT_TRUE(expectEqualTokens(result, exp));
 }

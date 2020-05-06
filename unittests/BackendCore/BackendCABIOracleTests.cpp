@@ -53,16 +53,16 @@ TEST_P(BackendCABIOracleTests, Basic) {
                                       L_RES, st2,
                                       L_END);
     CABIOracle cab(befty1, be->typeManager());
-    const char *exp = R"RAW_RESULT(
+    DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
       Return: Direct { { double, double } } sigOffset: -1
       Param 1: Direct AttrNest { i8* } sigOffset: 0
       Param 2: Direct AttrSext { i8 } sigOffset: 1
       Param 3: Direct { float } sigOffset: 2
       Param 4: Ignore { void } sigOffset: -1
       Param 5: Direct { i64 } sigOffset: 3
-    )RAW_RESULT";
+    )RAW_RESULT");
     std::string reason;
-    bool equal = difftokens(exp, cab.toString(), reason);
+    bool equal = difftokens(exp.content, cab.toString(), reason);
     EXPECT_EQ("pass", equal ? "pass" : reason);
     EXPECT_EQ(repr(cab.getFunctionTypeForABI()),
               "{ double, double } (i8*, i8, float, i64)");
@@ -531,7 +531,7 @@ TEST(BackendCABIOracleTests, RecursiveCall1Amd64) {
   rvals2.push_back(call);
   Bstatement *rst2 = h.mkReturn(rvals2, FcnTestHarness::NoAppend);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %p3.ld.0 = load i8, i8* %p3.addr
     %sub.0 = sub i8 %p3.ld.0, 1
     %p4.ld.0 = load i8, i8* %p4.addr
@@ -551,7 +551,7 @@ TEST(BackendCABIOracleTests, RecursiveCall1Amd64) {
     %cast.4 = bitcast { double, float, float }* %sret.actual.0 to { double, <2 x float> }*
     %ld.5 = load { double, <2 x float> }, { double, <2 x float> }* %cast.4
     ret { double, <2 x float> } %ld.5
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectStmt(rst2, exp);
   EXPECT_TRUE(isOK && "Statement does not have expected contents");
@@ -650,7 +650,7 @@ TEST(BackendCABIOracleTests, RecursiveCall1Arm64) {
   rvals2.push_back(call);
   Bstatement *rst2 = h.mkReturn(rvals2, FcnTestHarness::NoAppend);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %p3.ld.0 = load i8, i8* %p3.addr
     %sub.0 = sub i8 %p3.ld.0, 1
     %p4.ld.0 = load i8, i8* %p4.addr
@@ -673,7 +673,7 @@ TEST(BackendCABIOracleTests, RecursiveCall1Arm64) {
     %cast.6 = bitcast { double, float, float }* %sret.actual.0 to { i64, i64 }*
     %ld.5 = load { i64, i64 }, { i64, i64 }* %cast.6
     ret { i64, i64 } %ld.5
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectStmt(rst2, exp);
   EXPECT_TRUE(isOK && "Statement does not have expected contents");
@@ -715,7 +715,7 @@ TEST(BackendCABIOracleTests, PassAndReturnArraysAmd64) {
   rvals.push_back(call);
   h.mkReturn(rvals);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %cast.0 = bitcast [2 x float]* %p0.addr to <2 x float>*
     %ld.0 = load <2 x float>, <2 x float>* %cast.0
     call addrspace(0) void @foo([3 x double]* sret "go_sret" %sret.actual.0, i8* nest undef, <2 x float> %ld.0)
@@ -723,7 +723,7 @@ TEST(BackendCABIOracleTests, PassAndReturnArraysAmd64) {
     %cast.2 = bitcast [3 x double]* %sret.actual.0 to i8*
     call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.1, i8* align 8 %cast.2, i64 24, i1 false)
     ret void
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -759,7 +759,7 @@ TEST(BackendCABIOracleTests, PassAndReturnArraysArm64) {
   rvals.push_back(call);
   h.mkReturn(rvals);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %ld.0 = load [2 x float], [2 x float]* %p0.addr
     %call.0 = call addrspace(0) { double, double, double } @foo(i8* nest undef, [2 x float] %ld.0)
     %cast.1 = bitcast [3 x double]* %sret.actual.0 to { double, double, double }*
@@ -767,7 +767,7 @@ TEST(BackendCABIOracleTests, PassAndReturnArraysArm64) {
     %cast.2 = bitcast [3 x double]* %sret.actual.0 to { double, double, double }*
     %ld.1 = load { double, double, double }, { double, double, double }* %cast.2
     ret { double, double, double } %ld.1
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -812,10 +812,10 @@ TEST_P(BackendCABIOracleTests, EmptyStructParamsAndReturns) {
   rvals.push_back(call);
   h.mkReturn(rvals);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     call addrspace(0) void @foo(i8* nest undef, i32 4)
     ret void
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -838,9 +838,9 @@ TEST_P(BackendCABIOracleTests, CallBuiltinFunction) {
   std::vector<Bexpression *> args;
   h.mkExprStmt(be->call_expression(func, fn, args, nullptr, h.loc()));
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     call addrspace(0) void @llvm.trap()
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -894,7 +894,7 @@ TEST(BackendCABIOracleTests, PassAndReturnComplexAmd64) {
   std::vector<Bexpression *> rvals = {call2};
   h.mkReturn(rvals);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %cast.0 = bitcast { float, float }* %p0.addr to <2 x float>*
     %ld.0 = load <2 x float>, <2 x float>* %cast.0
     %field0.0 = getelementptr inbounds { double, double }, { double, double }* %p1.addr, i32 0, i32 0
@@ -916,7 +916,7 @@ TEST(BackendCABIOracleTests, PassAndReturnComplexAmd64) {
     %cast.8 = bitcast { float, float }* %sret.actual.1 to <2 x float>*
     %ld.6 = load <2 x float>, <2 x float>* %cast.8
     ret <2 x float> %ld.6
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -967,7 +967,7 @@ TEST(BackendCABIOracleTests, PassAndReturnComplexArm64) {
   std::vector<Bexpression *> rvals = {call2};
   h.mkReturn(rvals);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %cast.0 = bitcast { float, float }* %p0.addr to [2 x float]*
     %ld.0 = load [2 x float], [2 x float]* %cast.0
     %cast.1 = bitcast { double, double }* %p1.addr to [2 x double]*
@@ -983,7 +983,7 @@ TEST(BackendCABIOracleTests, PassAndReturnComplexArm64) {
     store { float, float } %call.1, { float, float }* %sret.actual.1
     %ld.4 = load { float, float }, { float, float }* %sret.actual.1
     ret { float, float } %ld.4
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");

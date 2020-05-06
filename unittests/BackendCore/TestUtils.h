@@ -29,8 +29,6 @@
 #include <stdarg.h>
 #include "gtest/gtest.h"
 
-#define RAW_RESULT(x) #x
-
 namespace goBackendUnitTests {
 
 // All supported calling conventions
@@ -226,19 +224,19 @@ class FcnTestHarness {
 
   // Verify that block contains specified contents. Return false
   // and emit diagnostics if not.
-  bool expectBlock(const std::string &expected);
+  bool expectBlock(const ExpectedDump &expected);
 
   // Verify that stmt contains specified contents. Return false
   // and emit diagnostics if not.
-  bool expectStmt(Bstatement *st, const std::string &expected);
+  bool expectStmt(Bstatement *st, const ExpectedDump &expected);
 
   // Verify that value contains specified contents. Return false
   // and emit diagnostics if not.
-  bool expectValue(llvm::Value *val, const std::string &expected);
+  bool expectValue(llvm::Value *val, const ExpectedDump &expected);
 
   // Verify that repr() output contains specified contents. Return false
   // and emit diagnostics if not.
-  bool expectRepr(Bnode *node, const std::string &expected);
+  bool expectRepr(Bnode *node, const ExpectedDump &expected);
 
   // Verify that a dump of the module contains the specified token sequence
   // somewhere within it. To be used only if the various methods above
@@ -248,7 +246,7 @@ class FcnTestHarness {
 
   // Return a count of the number of times we see the specified
   // token sequence within the module dump.
-  unsigned countInstancesInModuleDump(const std::string &expected);
+  unsigned countInstancesInModuleDump(const std::string &token);
 
   // Skip the checking at finish time for orphan CFG blocks.
   void allowOrphans() { findOrphanBBs_ = false; }
