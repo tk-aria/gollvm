@@ -54,11 +54,12 @@ unsigned countinstances(const std::string &text, const std::string &pat);
 
 // Issue an error message to std:cerr to report the fact that
 // 'expected' does not match 'actual'; emit actual/expected debug dump
-// files if 'emitDump' is true.
+// files if 'emitDump' is true; emit script to perform output remastering
+// if 'emitRemasterScript' is true.
 void complainOnNequal(const std::string &reason,
-                      const std::string &expected,
+                      const ExpectedDump &ed,
                       const std::string &actual,
-                      bool emitDump);
+                      bool emitDump, bool emitRemasterScript);
 
 }
 

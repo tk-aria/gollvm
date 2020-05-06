@@ -411,6 +411,10 @@ FcnTestHarness::FcnTestHarness(llvm::CallingConv::ID cconv, const char *fcnName)
   // debugging
   if (getenv("GOLLVM_UNITTESTS_BACKENDCORE_EMITDUMPFILES"))
     emitDumpFilesOnDiff_ = true;
+  if (getenv("GOLLVM_UNITTESTS_EMIT_REMASTER_SCRIPT")) {
+    emitRemasterScript_ = true;
+    emitDumpFilesOnDiff_ = true;
+  }
 }
 
 FcnTestHarness::~FcnTestHarness()
@@ -578,7 +582,7 @@ bool FcnTestHarness::expectStmt(Bstatement *st, const ExpectedDump &ed)
   std::string actual(repr(st));
   bool equal = difftokens(expected, actual, reason);
   if (! equal)
-    complainOnNequal(reason, expected, actual, emitDumpFilesOnDiff_);
+    complainOnNequal(reason, ed, actual, emitDumpFilesOnDiff_, emitRemasterScript_);
   return equal;
 }
 
@@ -589,7 +593,7 @@ bool FcnTestHarness::expectValue(llvm::Value *val, const ExpectedDump &ed)
   std::string actual(repr(val));
   bool equal = difftokens(expected, actual, reason);
   if (! equal)
-    complainOnNequal(reason, expected, actual, emitDumpFilesOnDiff_);
+    complainOnNequal(reason, ed, actual, emitDumpFilesOnDiff_, emitRemasterScript_);
   return equal;
 }
 
@@ -600,7 +604,7 @@ bool FcnTestHarness::expectBlock(const ExpectedDump &ed)
   std::string actual(repr(curBlock_));
   bool equal = difftokens(expected, actual, reason);
   if (! equal)
-    complainOnNequal(reason, expected, actual, emitDumpFilesOnDiff_);
+    complainOnNequal(reason, ed, actual, emitDumpFilesOnDiff_, emitRemasterScript_);
   return equal;
 }
 
@@ -629,7 +633,7 @@ bool FcnTestHarness::expectRepr(Bnode *node, const ExpectedDump &ed)
   std::string actual(repr(node));
   bool equal = difftokens(expected, actual, reason);
   if (! equal)
-    complainOnNequal(reason, expected, actual, emitDumpFilesOnDiff_);
+    complainOnNequal(reason, ed, actual, emitDumpFilesOnDiff_, emitRemasterScript_);
   return equal;
 }
 

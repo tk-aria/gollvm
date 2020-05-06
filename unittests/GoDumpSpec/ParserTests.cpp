@@ -58,7 +58,7 @@ bool expectEqualTokens(const std::string &actual, const ExpectedDump &ed)
   std::string reason;
   bool equal = difftokens(expected, actual, reason);
   if (! equal)
-    complainOnNequal(reason, expected, actual, false);
+    complainOnNequal(reason, ed, actual, false, false);
   return equal;
 }
 

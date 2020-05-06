@@ -114,32 +114,52 @@ unsigned countinstances(const std::string &text, const std::string &pat)
   return instances;
 }
 
+std::string dumpfilename(const char *tag, unsigned version) {
+  std::stringstream ss;
+  ss << "/tmp/" << tag << ".dump." << version << ".txt";
+  return ss.str();
+}
+
 void emitStringToDumpFile(const char *tag,
                           unsigned version,
                           const std::string &payload)
 {
-  std::stringstream ss;
-  ss << "/tmp/" << tag << ".dump." << version << ".txt";
-  FILE *fp = fopen(ss.str().c_str(), "w");
+  auto fn = dumpfilename(tag, version);
+  FILE *fp = fopen(fn.c_str(), "w");
   if (fp) {
     fprintf(fp, "%s\n", payload.c_str());
     fclose(fp);
-    std::cerr << "emitted dump file " << ss.str() << "\n";
+    std::cerr << "emitted dump file " << fn << "\n";
   }
 }
 
 void complainOnNequal(const std::string &reason,
-                      const std::string &expected,
+                      const ExpectedDump &ed,
                       const std::string &actual,
-                      bool emitDump)
+                      bool emitDump,
+                      bool emitRemaster)
 {
   std::cerr << reason << "\n";
+  const std::string &expected = ed.content;
   std::cerr << "expected dump:\n" << expected << "\n";
   std::cerr << "actual dump:\n" << actual << "\n";
   if (emitDump) {
     static unsigned filecount;
+    static FILE *outfp; // script
     emitStringToDumpFile("expected", filecount, expected);
     emitStringToDumpFile("actual", filecount, actual);
+    if (emitRemaster) {
+      // HACK: no explicit close for this file. Assume that it will
+      // be closed when the unit test finishes running.
+      if (outfp == nullptr) {
+        outfp = fopen("/tmp/remaster-inputs.txt", "w");
+        fprintf(stderr, "... emitting remaster inputs to file '/tmp/remaster-inputs.txt'\n");
+      }
+      fprintf(outfp, "%s %d %s %s\n", ed.file, ed.line,
+              dumpfilename("expected", filecount).c_str(),
+              dumpfilename("actual", filecount).c_str());
+      fflush(outfp);
+    }
     filecount++;
   }
 }
