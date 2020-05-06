@@ -219,12 +219,11 @@ std::string InspectFakeFS::toString()
 template<class T>
 bool expectToString(T &cand, const ExpectedDump &ed)
 {
-  const std::string &expected = ed.content;
   std::string reason;
   std::string actual(cand.toString());
-  bool equal = difftokens(expected, actual, reason);
+  bool equal = difftokens(ed.content, actual, reason);
   if (! equal)
-    complainOnNequal(reason, expected, actual, false);
+    complainOnNequal(reason, ed, actual, false, false);
   return equal;
 }
 

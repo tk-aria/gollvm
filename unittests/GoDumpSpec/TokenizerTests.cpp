@@ -57,7 +57,7 @@ bool expectTokens(MacroTokenizer &t, const ExpectedDump &ed)
   std::string actual(dump(t));
   bool equal = difftokens(expected, actual, reason);
   if (! equal)
-    complainOnNequal(reason, expected, actual, false);
+    complainOnNequal(reason, ed, actual, false, false);
   return equal;
 }
 
