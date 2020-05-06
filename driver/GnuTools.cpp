@@ -215,7 +215,8 @@ void Linker::addLDM(llvm::opt::ArgStringList &cmdArgs)
       cmdArgs.push_back("elf_x86_64");
       break;
     case llvm::Triple::aarch64:
-      cmdArgs.push_back("aarch64elf");
+      // Currently only support linux/arm64
+      cmdArgs.push_back("aarch64linux");
       break;
     default:
       // unhandled architecture
