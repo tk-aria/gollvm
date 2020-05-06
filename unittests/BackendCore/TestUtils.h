@@ -277,6 +277,7 @@ class FcnTestHarness {
   bool finished_;
   bool returnAdded_;
   bool emitDumpFilesOnDiff_;
+  bool emitRemasterScript_;
   bool findOrphanBBs_;
 };
 

@@ -52,13 +52,14 @@ bool containstokens(const std::string &text, const std::string &pat);
 // and the text are tokenized prior to the search. Search is brute-force.
 unsigned countinstances(const std::string &text, const std::string &pat);
 
-// Issue an error message to std:cerr to report the fact that
-// 'expected' does not match 'actual'; emit actual/expected debug dump
-// files if 'emitDump' is true.
+// Issue an error message to std:cerr to report the fact that the expected dump
+// in 'ed' does not match the actual dump in 'actual'; emit actual/expected
+// debug dump files if 'emitDump' is true; emit script to perform output
+// remastering if 'emitRemasterScript' is true.
 void complainOnNequal(const std::string &reason,
-                      const std::string &expected,
+                      const ExpectedDump &ed,
                       const std::string &actual,
-                      bool emitDump);
+                      bool emitDump, bool emitRemasterScript);
 
 }
 
