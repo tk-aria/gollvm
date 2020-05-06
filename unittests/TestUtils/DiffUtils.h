@@ -13,6 +13,18 @@
 #include <vector>
 
 #define RAW_RESULT(x) #x
+#define RAW_INPUT(x) #x
+
+struct ExpectedDump {
+  ExpectedDump(const char *c, const char *f, int l) :
+      content(c), file(f), line(l) { }
+  const char *content;
+  const char *file;
+  int line;
+};
+
+#define DECLARE_EXPECTED_OUTPUT(vname, x) \
+  ExpectedDump vname(x, __FILE__, __LINE__)
 
 namespace goBackendUnitTests {
 

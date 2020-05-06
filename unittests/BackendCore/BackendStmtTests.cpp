@@ -79,13 +79,13 @@ TEST_P(BackendStmtTests, TestAssignmentStmt) {
   ASSERT_TRUE(as2 != nullptr);
   h.addStmt(as2);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     store i64 0, i64* %loc1
       store i64 123, i64* %loc1
       store i64 0, i64* %loc2
       %loc1.ld.0 = load i64, i64* %loc1
       store i64 %loc1.ld.0, i64* %loc2
-  )RAW_RESULT";
+  )RAW_RESULT");
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
 
@@ -115,12 +115,12 @@ TEST_P(BackendStmtTests, TestReturnStmt) {
   Bexpression *ve1 = be->var_expression(loc1, loc);
   Bstatement *ret = h.mkReturn(ve1);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %loc1.ld.0 = load i64, i64* %loc1
     ret i64 %loc1.ld.0
-  )RAW_RESULT";
+  )RAW_RESULT");
   std::string reason;
-  bool equal = difftokens(exp, repr(ret), reason);
+  bool equal = difftokens(exp.content, repr(ret), reason);
   EXPECT_EQ("pass", equal ? "pass" : reason);
 
   // error handling
@@ -156,7 +156,7 @@ TEST_P(BackendStmtTests, TestReturnStmt2) {
   Bexpression *addexpr = be->binary_expression(OPERATOR_PLUS, ve2, mkInt64Const(be, 20), loc);
   h.mkReturn(addexpr);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define i64 @foo(i8* nest %nest.0, i32 %param1, i32 %param2, i64* %param3) #0 {
     entry:
       %param1.addr = alloca i32
@@ -170,7 +170,7 @@ TEST_P(BackendStmtTests, TestReturnStmt2) {
       %x.ld.0 = load i64, i64* %x
       ret i64 %x.ld.0
     }
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool broken = h.finish(StripDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
@@ -239,7 +239,7 @@ TEST_P(BackendStmtTests, TestLabelAddressExpression) {
   bool broken = h.finish(StripDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 {
     entry:
       %loc1 = alloca i8
@@ -250,7 +250,7 @@ TEST_P(BackendStmtTests, TestLabelAddressExpression) {
       store i8 0, i8* %loc1
       ret void
     }
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectValue(func->function(), exp);
   EXPECT_TRUE(isOK && "Function does not have expected contents");
@@ -309,7 +309,7 @@ TEST_P(BackendStmtTests, TestIfStmt) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 
   // verify
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define i64 @foo(i8* nest %nest.0, i32 %param1, i32 %param2, i64* %param3) #0 {
     entry:
       %param1.addr = alloca i32
@@ -339,7 +339,7 @@ TEST_P(BackendStmtTests, TestIfStmt) {
       store i64 987, i64* %loc1
       br label %fallthrough.1
     }
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectValue(func->function(), exp);
   EXPECT_TRUE(isOK && "Function does not have expected contents");
@@ -427,7 +427,7 @@ TEST_P(BackendStmtTests, TestSwitchStmt) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 
   // verify
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define i64 @foo(i8* nest %nest.0, i32 %param1, i32 %param2, i64* %param3) #0 {
     entry:
       %param1.addr = alloca i32
@@ -487,7 +487,7 @@ TEST_P(BackendStmtTests, TestSwitchStmt) {
       store i64 %mul.0, i64* %tmpv.0
       br label %fallthrough.0
     }
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectValue(func->function(), exp);
   EXPECT_TRUE(isOK && "Function does not have expected contents");
@@ -576,7 +576,7 @@ TEST_P(BackendStmtTests, TestDeferStmt) {
   bool broken = h.finish(StripDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 personality i32 (i32, i32, i64, i8*, i8*)* @__gccgo_personality_v0 {
     entry:
       %x = alloca i8
@@ -599,7 +599,7 @@ TEST_P(BackendStmtTests, TestDeferStmt) {
     cont.0:                                           ; preds = %finish.0
       ret void
     }
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectValue(func->function(), exp);
   EXPECT_TRUE(isOK && "Function does not have expected contents");
@@ -689,7 +689,7 @@ TEST_P(BackendStmtTests, TestExceptionHandlingStmt) {
   bool broken = h.finish(StripDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @baz(i8* nest %nest.0) #0 personality i32 (i32, i32, i64, i8*, i8*)* @__gccgo_personality_v0 {
     entry:
       %ehtmp.0 = alloca { i8*, i32 }
@@ -778,7 +778,7 @@ TEST_P(BackendStmtTests, TestExceptionHandlingStmt) {
     finret.0:                                         ; preds = %cont.0
       ret void
     }
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectValue(func->function(), exp);
   EXPECT_TRUE(isOK && "Function does not have expected contents");
@@ -878,7 +878,7 @@ TEST_P(BackendStmtTests, TestExceptionHandlingStmtWithReturns) {
   bool broken = h.finish(StripDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define i64 @baz(i8* nest %nest.0, i64 %p0) #0 personality i32 (i32, i32, i64, i8*, i8*)* @__gccgo_personality_v0 {
     entry:
       %ehtmp.0 = alloca { i8*, i32 }
@@ -963,7 +963,7 @@ TEST_P(BackendStmtTests, TestExceptionHandlingStmtWithReturns) {
       %ret.ld.1 = load i64, i64* %ret
       ret i64 %ret.ld.1
     }
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectValue(func->function(), exp);
   EXPECT_TRUE(isOK && "Function does not have expected contents");

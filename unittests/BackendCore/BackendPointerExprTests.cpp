@@ -71,7 +71,7 @@ TEST_P(BackendPointerExprTests, TestAddrAndIndirection) {
     h.addStmt(as);
   }
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     store i64 10, i64* %y
     store i64* null, i64** %x
     store i64* %y, i64** %x
@@ -80,7 +80,7 @@ TEST_P(BackendPointerExprTests, TestAddrAndIndirection) {
     store i64 %.ld.0, i64* %y
     %x.ld.1 = load i64*, i64** %x
     store i64 3, i64* %x.ld.1
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -129,7 +129,7 @@ TEST_P(BackendPointerExprTests, CreateFunctionCodeExpression) {
   Bexpression *rvex3 = be->var_expression(bfpv2, loc);
   h.mkAssign(vex3, rvex3);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %cast.0 = bitcast { i64 }* %fdloc1 to i8*
     call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 bitcast ({ i64 }* @const.0 to i8*), i64 8, i1 false)
     store { i64 }* %fdloc1, { i64 }** %fploc1
@@ -140,7 +140,7 @@ TEST_P(BackendPointerExprTests, CreateFunctionCodeExpression) {
     %fploc2.ld.0 = load { i64 (i8*, i32, i32, i64*)* }*, { i64 (i8*, i32, i32, i64*)* }** %fploc2
     %cast.2 = bitcast { i64 (i8*, i32, i32, i64*)* }* %fploc2.ld.0 to { i64 }*
     store { i64 }* %cast.2, { i64 }** %fploc1
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -156,9 +156,9 @@ TEST_P(BackendPointerExprTests, CreateNilPointerExpression) {
 
   // Manufacture a nil pointer expression
   Bexpression *npe = be->nil_pointer_expression();
-  const char *exp1 = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp1, R"RAW_RESULT(
     i64* null
-  )RAW_RESULT";
+  )RAW_RESULT");
   bool isOK = h.expectValue(npe->value(), exp1);
   EXPECT_TRUE(isOK && "Value does not have expected contents");
 
@@ -187,7 +187,7 @@ TEST_P(BackendPointerExprTests, CreateNilPointerExpression) {
     h.mkAssign(vel, cmp);
   }
 
-  const char *exp2 = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp2, R"RAW_RESULT(
     store i8 0, i8* %b1
     store i8* null, i8** %pb1
     %pb1.ld.0 = load i8*, i8** %pb1
@@ -198,7 +198,7 @@ TEST_P(BackendPointerExprTests, CreateNilPointerExpression) {
     %icmp.1 = icmp eq i8* null, %pb1.ld.1
     %zext.1 = zext i1 %icmp.1 to i8
     store i8 %zext.1, i8* %b1
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK2 = h.expectBlock(exp2);
   EXPECT_TRUE(isOK2 && "Block does not have expected contents");
@@ -224,12 +224,12 @@ TEST_P(BackendPointerExprTests, TestDerefNilPointer) {
   Bexpression *deref2 = be->indirect_expression(bst, npe2, false, loc);
   h.mkLocal("y", bst, deref2);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %deref.ld.0 = load i32, i32* null
     store i32 %deref.ld.0, i32* %x
     %cast.2 = bitcast { i32, i32 }* %y to i8*
     call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.2, i8* align 4 null, i64 8, i1 false)
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -320,7 +320,7 @@ TEST_P(BackendPointerExprTests, CircularPointerExpressions1) {
     h.mkAssign(ve0, cmp);
   }
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     store %CPT.0* null, %CPT.0** %cpv1
     store %CPT.0* null, %CPT.0** %cpv2
     %cast.0 = bitcast %CPT.0** %cpv2 to %CPT.0*
@@ -353,7 +353,7 @@ TEST_P(BackendPointerExprTests, CircularPointerExpressions1) {
     %icmp.2 = icmp eq %CPT.0* %cpv1.ld.1, %.ld.1
     %zext.2 = zext i1 %icmp.2 to i8
     store i8 %zext.2, i8* %b3
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -421,7 +421,7 @@ TEST_P(BackendPointerExprTests, CircularPointerExpressions2) {
     h.mkAssign(ve0, cmp);
   }
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     store %CPT.0* null, %CPT.0** %x
     store %CPT.0** null, %CPT.0*** %y
     %cast.0 = bitcast %CPT.0*** %y to %CPT.0*
@@ -434,7 +434,7 @@ TEST_P(BackendPointerExprTests, CircularPointerExpressions2) {
     %icmp.0 = icmp eq %CPT.0* %x.ld.0, %.ld.0
     %zext.0 = zext i1 %icmp.0 to i8
     store i8 %zext.0, i8* %b1
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -476,7 +476,7 @@ TEST_P(BackendPointerExprTests, CreatePointerOffsetExprs) {
     h.mkAssign(ve, con32);
   }
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %param3.ld.0 = load i64*, i64** %param3.addr
     %ptroff.0 = getelementptr i64, i64* %param3.ld.0, i32 5
     store i64 9, i64* %ptroff.0
@@ -485,7 +485,7 @@ TEST_P(BackendPointerExprTests, CreatePointerOffsetExprs) {
     %.ptroff.ld.0 = load i64, i64* %ptroff.1
     %trunc.0 = trunc i64 %.ptroff.ld.0 to i32
     store i32 %trunc.0, i32* %param1.addr
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -515,10 +515,10 @@ TEST_P(BackendPointerExprTests, TestAddrDerefFold) {
   Bexpression *vexl = be->var_expression(p3, loc);
   h.mkAssign(vexl, ad3);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     store i64 0, i64* %x
     store i64* %x, i64** %param3.addr
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -568,11 +568,11 @@ TEST_P(BackendPointerExprTests, TestDerefPointerConstantLHS) {
     h.mkAssign(fex, val2);
   }
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     store i32 0, i32* inttoptr (i64 65793 to i32*)
     store i64 2, i64* getelementptr inbounds ({ i64, i64 }, { i64, i64 }*
       inttoptr (i64 34661 to { i64, i64 }*), i32 0, i32 1)
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -622,11 +622,11 @@ TEST_P(BackendPointerExprTests, TestCircularFunctionTypes) {
   h.mkLocal("x", pbefty1);
   h.mkLocal("y", pbefty2);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     store i64 (i8*, i64, i64, %CFT.0*, %CFT.1*)* null, i64 (i8*, i64, i64, %CFT.0*, %CFT.1*)** %x
     store i64 (i8*, i64, i64, %CFT.1*, %CFT.0*)* null, i64 (i8*, i64, i64, %CFT.1*, %CFT.0*)** %y
 
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");

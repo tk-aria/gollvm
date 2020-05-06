@@ -91,7 +91,7 @@ TEST_P(BackendNodeTests, VerifyVisitorBehavior) {
 
   EXPECT_EQ(res1, matsub);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     node - pre 18
     pre child + 18 15
     node + pre 15
@@ -122,13 +122,13 @@ TEST_P(BackendNodeTests, VerifyVisitorBehavior) {
     node deref post 17
     post child deref 18 17
     node - post 18
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   std::string reason;
-  bool equal = difftokens(exp, vis.str(), reason);
+  bool equal = difftokens(exp.content, vis.str(), reason);
   EXPECT_EQ("pass", equal ? "pass" : reason);
   if (!equal) {
-    std::cerr << "expected dump:\n" << exp << "\n";
+    std::cerr << "expected dump:\n" << exp.content << "\n";
     std::cerr << "result dump:\n" << vis.str() << "\n";
   }
 
@@ -162,7 +162,7 @@ TEST_P(BackendNodeTests, CloneSubtree) {
   Bexpression *matclone = be->nodeBuilder().cloneSubtree(matadd);
   EXPECT_NE(add, matclone);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %x.ld.0 = load i32, i32* %x
     %z.ld.0 = load i16, i16* %z
     %sext.0 = sext i16 %z.ld.0 to i32
@@ -170,7 +170,7 @@ TEST_P(BackendNodeTests, CloneSubtree) {
     %y.ld.0 = load i32*, i32** %y
     %.ld.0 = load i32, i32* %y.ld.0
     %add.1 = add i32 %add.0, %.ld.0
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectRepr(matadd, exp);
   EXPECT_TRUE(isOK && "expr does not have expected contents");
@@ -204,7 +204,7 @@ TEST_P(BackendNodeTests, FixSharing) {
   Bexpression *add = be->binary_expression(OPERATOR_PLUS, der, der, loc);
   Bexpression *matadd = be->materialize(add);
 
-  const char *exp2 = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp2, R"RAW_RESULT(
     %field.0 = getelementptr inbounds { { i32*, i32 }, { i32*, i32 } }, { { i32*, i32 }, { i32*, i32 } }* %x, i32 0, i32 0
     %field.1 = getelementptr inbounds { i32*, i32 }, { i32*, i32 }* %field.0, i32 0, i32 0
     %x.field.field.ld.0 = load i32*, i32** %field.1
@@ -214,7 +214,7 @@ TEST_P(BackendNodeTests, FixSharing) {
     %.field.field.ld.0 = load i32*, i32** %field.3
     %.ld.1 = load i32, i32* %.field.field.ld.0
     %add.0 = add i32 %.ld.0, %.ld.1
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectRepr(matadd, exp2);
   EXPECT_TRUE(isOK && "expr does not have expected contents");

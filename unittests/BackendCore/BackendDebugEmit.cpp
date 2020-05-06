@@ -41,7 +41,7 @@ TEST_P(BackendDebugEmit, TestSimpleDecl) {
   Btype *bu32t = be->integer_type(true, 32);
   h.mkLocal("x", bu32t);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 {
     entry:
       %x = alloca i32
@@ -50,7 +50,7 @@ TEST_P(BackendDebugEmit, TestSimpleDecl) {
                                   metadata !DIExpression()), !dbg !12
       ret void
     }
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool broken = h.finish(PreserveDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
@@ -76,14 +76,14 @@ TEST(BackendDebugEmit, TestSimpleDecl2Amd64) {
   bool broken = h.finish(PreserveDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0, { i64, i64, i64 }* byval %p0) #0 {
     entry:
       call void @llvm.dbg.declare(metadata { i64, i64, i64 }* %p0, metadata !5,
                                   metadata !DIExpression()), !dbg !18
       ret void
     }
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectValue(func->function(), exp);
   EXPECT_TRUE(isOK && "Function does not have expected contents");
@@ -104,14 +104,14 @@ TEST(BackendDebugEmit, TestSimpleDecl2Arm64) {
   bool broken = h.finish(PreserveDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0, { i64, i64, i64 }* %p0) #0 {
     entry:
       call void @llvm.dbg.declare(metadata { i64, i64, i64 }* %p0, metadata !5,
                                   metadata !DIExpression()), !dbg !18
       ret void
     }
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectValue(func->function(), exp);
   EXPECT_TRUE(isOK && "Function does not have expected contents");
@@ -211,13 +211,13 @@ TEST_P(BackendDebugEmit, TestDeadLocalVar) {
   Btype *bu32t = be->integer_type(true, 32);
   h.mkLocal("x", bu32t);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 !dbg !5 {
     entry:
       %x = alloca i32
       ret void, !dbg !10
     }
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool broken = h.finish(PreserveDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");

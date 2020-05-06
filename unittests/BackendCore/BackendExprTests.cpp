@@ -243,13 +243,13 @@ TEST_P(BackendExprTests, TestConversionExpressions) {
   Bexpression *fex = be->struct_field_expression(dex, 1, loc);
   h.mkAssign(fex, mkInt32Const(be, 22));
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     store i64 0, i64* %x
     %cast.0 = bitcast i64* %x to { i32, i32 }*
     %field.0 = getelementptr inbounds { i32, i32 },
         { i32, i32 }* %cast.0, i32 0, i32 1
     store i32 22, i32* %field.0
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -295,7 +295,7 @@ TEST_P(BackendExprTests, TestMoreConversionExpressions) {
     h.mkAssign(dex, mkInt32Const(be, 5));
   }
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %param3.ld.0 = load i64*, i64** %param3.addr
     %cast.0 = bitcast i64* %param3.ld.0 to i32*
     store i32 5, i32* %cast.0
@@ -304,7 +304,7 @@ TEST_P(BackendExprTests, TestMoreConversionExpressions) {
     %ftoui.0 = fptoui double %p.ld.0 to i64
     %itpcast.0 = inttoptr i64 %ftoui.0 to i32*
     store i32 5, i32* %itpcast.0
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -354,7 +354,7 @@ TEST_P(BackendExprTests, TestFloatConversionExpressions) {
     }
   }
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %p1.ld.0 = load double, double* %p1.addr
     %fptrunc.0 = fptrunc double %p1.ld.0 to float
     store float %fptrunc.0, float* %p0.addr
@@ -441,7 +441,7 @@ TEST_P(BackendExprTests, TestFloatConversionExpressions) {
     %p4.ld.4 = load i32, i32* %p4.addr
     %zext.1 = zext i32 %p4.ld.4 to i64
     store i64 %zext.1, i64* %p5.addr
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -493,7 +493,7 @@ TEST_P(BackendExprTests, TestComplexConversionExpression) {
   Bexpression *convex4 = be->convert_expression(bc128t, yvex4, loc);
   h.mkAssign(xvex4, convex4);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 {
     entry:
       %tmp.3 = alloca { double, double }
@@ -552,7 +552,7 @@ TEST_P(BackendExprTests, TestComplexConversionExpression) {
       call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.14, i8* align 8 %cast.15, i64 16, i1 false)
       ret void
     }
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool broken = h.finish(StripDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
@@ -630,7 +630,7 @@ TEST_P(BackendExprTests, TestCompareOps) {
     }
   }
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     store i64 0, i64* %x
     store i64 0, i64* %y
     store double 0.000000e+00, double* %z
@@ -688,7 +688,7 @@ TEST_P(BackendExprTests, TestCompareOps) {
     %z.ld.5 = load double, double* %z
     %fcmp.5 = fcmp oge double 9.000000e+00, %z.ld.5
     %zext.17 = zext i1 %fcmp.5 to i8
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -727,7 +727,7 @@ TEST_P(BackendExprTests, TestArithOps) {
     }
   }
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     store i64 0, i64* %x
     store double 0.000000e+00, double* %y
     %x.ld.0 = load i64, i64* %x
@@ -738,7 +738,7 @@ TEST_P(BackendExprTests, TestArithOps) {
     %fadd.0 = fadd double 9.000000e+00, %y.ld.0
     %y.ld.1 = load double, double* %y
     %fsub.0 = fsub double 9.000000e+00, %y.ld.1
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -769,7 +769,7 @@ TEST_P(BackendExprTests, TestMoreArith) {
   Bexpression *vex = be->var_expression(x, loc);
   h.mkAssign(vex, ypzpw);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     store i64 0, i64* %x
     store i64 9, i64* %y
     store i64 10, i64* %z
@@ -780,7 +780,7 @@ TEST_P(BackendExprTests, TestMoreArith) {
     %w.ld.0 = load i64, i64* %w
     %add.1 = add i64 %add.0, %w.ld.0
     store i64 %add.1, i64* %x
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -825,7 +825,7 @@ TEST_P(BackendExprTests, TestLogicalOps) {
     }
   }
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     store i64 0, i64* %x
     store i64 0, i64* %y
     store i8 0, i8* %z
@@ -886,7 +886,7 @@ TEST_P(BackendExprTests, TestLogicalOps) {
     %z.ld.5 = load i8, i8* %z
     %z2.ld.5 = load i8, i8* %z2
     %iand.8 = and i8 %z.ld.5, %z2.ld.5
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -931,7 +931,7 @@ TEST_P(BackendExprTests, TestMulDiv) {
     }
   }
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     store i16 0, i16* %x
     store i16 0, i16* %y
     store double 0.000000e+00, double* %z
@@ -951,7 +951,7 @@ TEST_P(BackendExprTests, TestMulDiv) {
     %fmul.0 = fmul double 9.000000e+00, %z.ld.0
     %z.ld.1 = load double, double* %z
     %fdiv.0 = fdiv double 9.000000e+00, %z.ld.1
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -1011,7 +1011,7 @@ TEST_P(BackendExprTests, TestShift) {
     h.addStmt(es);
   }
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     store i64 0, i64* %x
     store i64 0, i64* %y
     store i64 0, i64* %s
@@ -1036,7 +1036,7 @@ TEST_P(BackendExprTests, TestShift) {
     %y.ld.2 = load i64, i64* %y
     %trunc.0 = trunc i64 %y.ld.2 to i32
     %shr.2 = lshr i32 %z.ld.1, %trunc.0
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -1074,7 +1074,7 @@ TEST_P(BackendExprTests, TestComplexOps) {
     h.mkAssign(bvex, bop);
   }
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 {
     entry:
       %tmp.12 = alloca { double, double }
@@ -1224,7 +1224,7 @@ TEST_P(BackendExprTests, TestComplexOps) {
       store i8 %ior.0, i8* %b
       ret void
     }
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool broken = h.finish(StripDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
@@ -1266,7 +1266,7 @@ TEST_P(BackendExprTests, TestComplexExpressions) {
   Bexpression *compex = be->complex_expression(bvex3, avex3, loc);
   h.mkAssign(xvex3, compex);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     store double 0.000000e+00, double* %a
     store double 0.000000e+00, double* %b
     %cast.0 = bitcast { double, double }* %x to i8*
@@ -1283,7 +1283,7 @@ TEST_P(BackendExprTests, TestComplexExpressions) {
     store double %b.ld.0, double* %field.2
     %field.3 = getelementptr inbounds { double, double }, { double, double }* %x, i32 0, i32 1
     store double %a.ld.0, double* %field.3
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -1299,18 +1299,18 @@ TEST_P(BackendExprTests, CreateStringConstantExpressions) {
 
   {
     Bexpression *snil = be->string_constant_expression("");
-    const char *exp = R"RAW_RESULT(
+    DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
         i8* null
-      )RAW_RESULT";
+      )RAW_RESULT");
     bool isOK = h.expectValue(snil->value(), exp);
     EXPECT_TRUE(isOK && "Value does not have expected contents");
   }
 
   {
     Bexpression *sblah = be->string_constant_expression("blah");
-    const char *exp = R"RAW_RESULT(
+    DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
       i8* getelementptr inbounds ([5 x i8], [5 x i8]* @const.0, i32 0, i32 0)
-    )RAW_RESULT";
+    )RAW_RESULT");
     bool isOK = h.expectValue(sblah->value(), exp);
     EXPECT_TRUE(isOK && "Value does not have expected contents");
   }
@@ -1342,7 +1342,7 @@ TEST_P(BackendExprTests, TestConditionalExpression1) {
                                                    call2, loc);
   h.mkExprStmt(condex);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 {
     entry:
       %a = alloca i64
@@ -1367,7 +1367,7 @@ TEST_P(BackendExprTests, TestConditionalExpression1) {
       call void @foo(i8* nest undef)
       br label %fallthrough.0
     }
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool broken = h.finish(StripDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
@@ -1399,7 +1399,7 @@ TEST_P(BackendExprTests, TestConditionalExpression2) {
                                                    ve, loc);
   h.mkExprStmt(condex);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 {
     entry:
       %a = alloca i64
@@ -1417,7 +1417,7 @@ TEST_P(BackendExprTests, TestConditionalExpression2) {
       store i64 %a.ld.0, i64* %tmpv.0
       br label %fallthrough.0
     }
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool broken = h.finish(StripDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
@@ -1452,7 +1452,7 @@ TEST(BackendExprTests, TestConditionalExpression3Amd64) {
                                                  vep0, bzero, loc);
   h.mkLocal("a", s2t, cond);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo({ [16 x i32], i32 }* sret %sret.formal.0, i8* nest %nest.0, { [16 x i32], i32 }* byval %p0, i32 %p1) #0 {
     entry:
       %p1.addr = alloca i32
@@ -1482,7 +1482,7 @@ TEST(BackendExprTests, TestConditionalExpression3Amd64) {
       call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.2, i8* align 4 bitcast ({ [16 x i32], i32 }* @const.0 to i8*), i64 68, i1 false)
       br label %fallthrough.0
     }
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool broken = h.finish(StripDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
@@ -1527,7 +1527,7 @@ TEST(BackendExprTests, TestConditionalExpression3Arm64) {
       be->conditional_expression(func, s2t, cmp, vep0, bzero, loc);
   h.mkLocal("a", s2t, cond);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo({ [16 x i32], i32 }* sret %sret.formal.0, i8* nest %nest.0, { [16 x i32], i32 }* %p0, i32 %p1) #0 {
     entry:
       %p1.addr = alloca i32
@@ -1557,7 +1557,7 @@ TEST(BackendExprTests, TestConditionalExpression3Arm64) {
       call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.2, i8* align 4 bitcast ({ [16 x i32], i32 }* @const.0 to i8*), i64 68, i1 false)
       br label %fallthrough.0
     }
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool broken = h.finish(StripDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
@@ -1586,7 +1586,7 @@ TEST_P(BackendExprTests, TestCompoundExpression) {
   Bstatement *es = be->expression_statement(func, ce);
   h.addStmt(es);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define i64 @foo(i8* nest %nest.0, i32 %param1, i32 %param2, i64* %param3) #0 {
       entry:
         %param1.addr = alloca i32
@@ -1601,7 +1601,7 @@ TEST_P(BackendExprTests, TestCompoundExpression) {
         %x.ld.0 = load i64, i64* %x
         ret i64 0
       }
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool broken = h.finish(StripDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
@@ -1636,7 +1636,7 @@ TEST_P(BackendExprTests, TestCompoundExpression2) {
   Bstatement *st2 = be->assignment_statement(func, yvex, ce, loc);
   h.addStmt(st2);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define i64 @foo(i8* nest %nest.0, i32 %param1, i32 %param2, i64* %param3) #0 {
       entry:
       %tmp.0 = alloca { i64, i64 }
@@ -1663,7 +1663,7 @@ TEST_P(BackendExprTests, TestCompoundExpression2) {
       call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.1, i8* align 8 %cast.2, i64 16, i1 false)
       ret i64 0
     }
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool broken = h.finish(StripDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
@@ -1698,7 +1698,7 @@ TEST_P(BackendExprTests, TestLhsConditionalExpression) {
   Bexpression *dex = be->indirect_expression(bi32t, guard, false, loc);
   h.mkAssign(dex, mkInt32Const(be, 7));
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0, i32* %p0, i32* %p1) #0 {
     entry:
       %p0.addr = alloca i32*
@@ -1727,7 +1727,7 @@ TEST_P(BackendExprTests, TestLhsConditionalExpression) {
       store i32* %p0.ld.1, i32** %tmpv.0
       br label %fallthrough.0
     }
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool broken = h.finish(StripDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
@@ -1771,7 +1771,7 @@ TEST_P(BackendExprTests, TestUnaryExpression) {
   Bexpression *veq = be->var_expression(qv, loc);
   h.mkLocal("r", bf64t, be->unary_expression(OPERATOR_MINUS, veq, loc));
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     store i8 0, i8* %x
     %x.ld.0 = load i8, i8* %x
     %icmp.0 = icmp ne i8 %x.ld.0, 0
@@ -1790,7 +1790,7 @@ TEST_P(BackendExprTests, TestUnaryExpression) {
     %q.ld.0 = load double, double* %q
     %fsub.0 = fsub double -0.000000e+00, %q.ld.0
     store double %fsub.0, double* %r
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -1818,9 +1818,9 @@ TEST_P(BackendExprTests, TestCallArgConversions) {
   Bexpression *call1 = h.mkCallExpr(be, func, nil, nil, nil, nullptr);
   h.mkExprStmt(call1);
 
-  const char *exp = R"RAW_RESULT(
+  DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     call addrspace(0) void @foo(i8* nest undef, i8* null, i32* null, i64* null)
-  )RAW_RESULT";
+  )RAW_RESULT");
 
   // Note that this
   bool isOK = h.expectBlock(exp);
