@@ -228,8 +228,14 @@ void Linker::addSharedAndOrStaticFlags(llvm::opt::ArgStringList &cmdArgs)
 {
   llvm::opt::ArgList &args = toolchain().driver().args();
 
+  // Currently ld.gold will not automatically add this option when linking
+  // staticly on arm64, resulting in the binary crash. The issue
+  // (https://sourceware.org/bugzilla/show_bug.cgi?id=25903) has not been
+  // fixed yet, for older versions of gold, add this option no matter static
+  // or dynamic link mode.
+  cmdArgs.push_back("--eh-frame-hdr");
+
   if (!args.hasArg(gollvm::options::OPT_static)) {
-    cmdArgs.push_back("--eh-frame-hdr");
     if (!args.hasArg(gollvm::options::OPT_shared)) {
       // NB: no support for --dyld-prefix= option
       const std::string Loader = toolchain().getDynamicLinker(args);
@@ -332,18 +338,18 @@ bool Linker::constructCommand(Compilation &compilation,
   // will always look for "ld.ABC" on the path. With clang, however,
   // you can supply a full path (e.g. "-fuse-ld=/my/path/to/ld"). This
   // code is intended to be consistent with clang.
-  const char *variant = "gold";
+  const char *defaultLinker = "ld";
   const char *linker = nullptr;
-  llvm::opt::Arg *ldarg = args.getLastArg(gollvm::options::OPT_fuse_ld_EQ);
   const char *executable = nullptr;
+  llvm::opt::Arg *ldarg = args.getLastArg(gollvm::options::OPT_fuse_ld_EQ);
   if (ldarg != nullptr) {
     if (llvm::sys::path::is_absolute(ldarg->getValue()))
       linker = executable = args.MakeArgString(ldarg->getValue());
     else
-      variant = args.MakeArgString(ldarg->getValue());
+      linker = args.MakeArgString(llvm::StringRef("ld.") + ldarg->getValue());
   }
   if (linker == nullptr)
-    linker = args.MakeArgString(llvm::StringRef("ld.") + variant);
+    linker = args.MakeArgString(defaultLinker);
   if (executable == nullptr)
     executable = args.MakeArgString(toolchain().getProgramPath(linker));
   if (! executable) {
