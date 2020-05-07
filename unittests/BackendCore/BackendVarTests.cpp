@@ -163,7 +163,7 @@ TEST_P(BackendVarTests, MakeTemporaryVar) {
                                            false, loc, &inits);
   ASSERT_TRUE(tvar != nullptr);
   ASSERT_TRUE(inits != nullptr);
-  EXPECT_EQ(repr(inits), "store i64 64, i64* %tmpv.0");
+  EXPECT_EQ(repr(inits), "store i64 64, i64* %tmpv.0, align 8");
 
   h.addStmt(inits);
 
@@ -535,25 +535,25 @@ TEST_P(BackendVarTests, TestVarLifetimeInsertion) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 {
-      entry:
-      %x = alloca i32
-      %y = alloca { i32, i32 }
-      %0 = bitcast i32* %x to i8*
-      call void @llvm.lifetime.start.p0i8(i64 4, i8* %0)
-      %1 = bitcast { i32, i32 }* %y to i8*
-      call void @llvm.lifetime.start.p0i8(i64 8, i8* %1)
-      store i32 0, i32* %x
-      %cast.0 = bitcast { i32, i32 }* %y to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.0, i8* align 4 bitcast ({ i32, i32 }* @const.0 to i8*), i64 8, i1 false)
-      %field.0 = getelementptr inbounds { i32, i32 }, { i32, i32 }* %y, i32 0, i32 1
-      %y.field.ld.0 = load i32, i32* %field.0
-      store i32 %y.field.ld.0, i32* %x
-      %2 = bitcast i32* %x to i8*
-      call void @llvm.lifetime.end.p0i8(i64 4, i8* %2)
-      %3 = bitcast { i32, i32 }* %y to i8*
-      call void @llvm.lifetime.end.p0i8(i64 8, i8* %3)
-      ret void
-    }
+  entry:
+    %x = alloca i32
+    %y = alloca { i32, i32 }
+    %0 = bitcast i32* %x to i8*
+    call void @llvm.lifetime.start.p0i8(i64 4, i8* %0)
+    %1 = bitcast { i32, i32 }* %y to i8*
+    call void @llvm.lifetime.start.p0i8(i64 8, i8* %1)
+    store i32 0, i32* %x, align 4
+    %cast.0 = bitcast { i32, i32 }* %y to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.0, i8* align 4 bitcast ({ i32, i32 }* @const.0 to i8*), i64 8, i1 false)
+    %field.0 = getelementptr inbounds { i32, i32 }, { i32, i32 }* %y, i32 0, i32 1
+    %y.field.ld.0 = load i32, i32* %field.0
+    store i32 %y.field.ld.0, i32* %x, align 4
+    %2 = bitcast i32* %x to i8*
+    call void @llvm.lifetime.end.p0i8(i64 4, i8* %2)
+    %3 = bitcast { i32, i32 }* %y to i8*
+    call void @llvm.lifetime.end.p0i8(i64 8, i8* %3)
+    ret void
+  }
   )RAW_RESULT");
 
   bool isOK = h.expectValue(func->function(), exp);
