@@ -21,4 +21,7 @@
 // Compiler version. Same as library version currently.
 #define GOLLVM_COMPILERVERSION GOLLVM_LIBVERSION
 
+// Gollvm default linker
+#cmakedefine GOLLVM_DEFAULT_LINKER "@GOLLVM_DEFAULT_LINKER@"
+
 #endif // GOLLVM_CONFIG_H
