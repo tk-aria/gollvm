@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fa9fe130_cabacbcd",
+        "filename": "bridge/go-llvm-materialize.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1385,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-05-07T11:16:39Z",
+      "side": 1,
+      "message": "I think a better way to do this would be to check the target at runtime, as opposed to doing conditional compilation with #ifdef (this is more in the spirit of how LLVM handles these things).",
+      "revId": "189873d6b0351f0c1315472944ce139679143194",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
