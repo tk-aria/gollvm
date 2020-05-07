@@ -72,14 +72,14 @@ TEST_P(BackendPointerExprTests, TestAddrAndIndirection) {
   }
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    store i64 10, i64* %y
-    store i64* null, i64** %x
-    store i64* %y, i64** %x
+    store i64 10, i64* %y, align 8
+    store i64* null, i64** %x, align 8
+    store i64* %y, i64** %x, align 8
     %x.ld.0 = load i64*, i64** %x
     %.ld.0 = load i64, i64* %x.ld.0
-    store i64 %.ld.0, i64* %y
+    store i64 %.ld.0, i64* %y, align 8
     %x.ld.1 = load i64*, i64** %x
-    store i64 3, i64* %x.ld.1
+    store i64 3, i64* %x.ld.1, align 8
   )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
@@ -132,14 +132,14 @@ TEST_P(BackendPointerExprTests, CreateFunctionCodeExpression) {
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %cast.0 = bitcast { i64 }* %fdloc1 to i8*
     call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 bitcast ({ i64 }* @const.0 to i8*), i64 8, i1 false)
-    store { i64 }* %fdloc1, { i64 }** %fploc1
-    store { i64 (i8*, i32, i32, i64*)* }* null, { i64 (i8*, i32, i32, i64*)* }** %fploc2
+    store { i64 }* %fdloc1, { i64 }** %fploc1, align 8
+    store { i64 (i8*, i32, i32, i64*)* }* null, { i64 (i8*, i32, i32, i64*)* }** %fploc2, align 8
     %fploc1.ld.0 = load { i64 }*, { i64 }** %fploc1
     %cast.1 = bitcast { i64 }* %fploc1.ld.0 to { i64 (i8*, i32, i32, i64*)* }*
-    store { i64 (i8*, i32, i32, i64*)* }* %cast.1, { i64 (i8*, i32, i32, i64*)* }** %fploc2
+    store { i64 (i8*, i32, i32, i64*)* }* %cast.1, { i64 (i8*, i32, i32, i64*)* }** %fploc2, align 8
     %fploc2.ld.0 = load { i64 (i8*, i32, i32, i64*)* }*, { i64 (i8*, i32, i32, i64*)* }** %fploc2
     %cast.2 = bitcast { i64 (i8*, i32, i32, i64*)* }* %fploc2.ld.0 to { i64 }*
-    store { i64 }* %cast.2, { i64 }** %fploc1
+    store { i64 }* %cast.2, { i64 }** %fploc1, align 8
   )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
@@ -188,16 +188,16 @@ TEST_P(BackendPointerExprTests, CreateNilPointerExpression) {
   }
 
   DECLARE_EXPECTED_OUTPUT(exp2, R"RAW_RESULT(
-    store i8 0, i8* %b1
-    store i8* null, i8** %pb1
+    store i8 0, i8* %b1, align 1
+    store i8* null, i8** %pb1, align 8
     %pb1.ld.0 = load i8*, i8** %pb1
     %icmp.0 = icmp eq i8* %pb1.ld.0, null
     %zext.0 = zext i1 %icmp.0 to i8
-    store i8 %zext.0, i8* %b1
+    store i8 %zext.0, i8* %b1, align 1
     %pb1.ld.1 = load i8*, i8** %pb1
     %icmp.1 = icmp eq i8* null, %pb1.ld.1
     %zext.1 = zext i1 %icmp.1 to i8
-    store i8 %zext.1, i8* %b1
+    store i8 %zext.1, i8* %b1, align 1
   )RAW_RESULT");
 
   bool isOK2 = h.expectBlock(exp2);
@@ -226,7 +226,7 @@ TEST_P(BackendPointerExprTests, TestDerefNilPointer) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %deref.ld.0 = load i32, i32* null
-    store i32 %deref.ld.0, i32* %x
+    store i32 %deref.ld.0, i32* %x, align 4
     %cast.2 = bitcast { i32, i32 }* %y to i8*
     call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.2, i8* align 4 null, i64 8, i1 false)
   )RAW_RESULT");
@@ -321,27 +321,27 @@ TEST_P(BackendPointerExprTests, CircularPointerExpressions1) {
   }
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    store %CPT.0* null, %CPT.0** %cpv1
-    store %CPT.0* null, %CPT.0** %cpv2
+    store %CPT.0* null, %CPT.0** %cpv1, align 8
+    store %CPT.0* null, %CPT.0** %cpv2, align 8
     %cast.0 = bitcast %CPT.0** %cpv2 to %CPT.0*
-    store %CPT.0* %cast.0, %CPT.0** %cpv1
+    store %CPT.0* %cast.0, %CPT.0** %cpv1, align 8
     %cast.1 = bitcast %CPT.0** %cpv1 to %CPT.0*
-    store %CPT.0* %cast.1, %CPT.0** %cpv2
-    store i8 0, i8* %b1
-    store i8 0, i8* %b2
-    store i8 0, i8* %b3
+    store %CPT.0* %cast.1, %CPT.0** %cpv2, align 8
+    store i8 0, i8* %b1, align 1
+    store i8 0, i8* %b2, align 1
+    store i8 0, i8* %b3, align 1
     %cpv1.ld.0 = load %CPT.0*, %CPT.0** %cpv1
     %cast.2 = bitcast %CPT.0** %cpv2 to %CPT.0***
     %cpv2.ld.0 = load %CPT.0**, %CPT.0*** %cast.2
     %.ld.0 = load %CPT.0*, %CPT.0** %cpv2.ld.0
     %icmp.0 = icmp eq %CPT.0* %cpv1.ld.0, %.ld.0
     %zext.0 = zext i1 %icmp.0 to i8
-    store i8 %zext.0, i8* %b1
+    store i8 %zext.0, i8* %b1, align 1
     %cpv2.ld.1 = load %CPT.0*, %CPT.0** %cpv2
     %cast.3 = bitcast %CPT.0* %cpv2.ld.1 to %CPT.0**
     %icmp.1 = icmp eq %CPT.0** %cpv1, %cast.3
     %zext.1 = zext i1 %icmp.1 to i8
-    store i8 %zext.1, i8* %b2
+    store i8 %zext.1, i8* %b2, align 1
     %cpv1.ld.1 = load %CPT.0*, %CPT.0** %cpv1
     %cast.4 = bitcast %CPT.0** %cpv2 to %CPT.0***
     %cpv2.ld.2 = load %CPT.0**, %CPT.0*** %cast.4
@@ -352,7 +352,7 @@ TEST_P(BackendPointerExprTests, CircularPointerExpressions1) {
     %.ld.1 = load %CPT.0*, %CPT.0** %deref.ld.1
     %icmp.2 = icmp eq %CPT.0* %cpv1.ld.1, %.ld.1
     %zext.2 = zext i1 %icmp.2 to i8
-    store i8 %zext.2, i8* %b3
+    store i8 %zext.2, i8* %b3, align 1
   )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
@@ -422,18 +422,18 @@ TEST_P(BackendPointerExprTests, CircularPointerExpressions2) {
   }
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    store %CPT.0* null, %CPT.0** %x
-    store %CPT.0** null, %CPT.0*** %y
+    store %CPT.0* null, %CPT.0** %x, align 8
+    store %CPT.0** null, %CPT.0*** %y, align 8
     %cast.0 = bitcast %CPT.0*** %y to %CPT.0*
-    store %CPT.0* %cast.0, %CPT.0** %x
-    store %CPT.0** %x, %CPT.0*** %y
-    store i8 0, i8* %b1
+    store %CPT.0* %cast.0, %CPT.0** %x, align 8
+    store %CPT.0** %x, %CPT.0*** %y, align 8
+    store i8 0, i8* %b1, align 1
     %x.ld.0 = load %CPT.0*, %CPT.0** %x
     %y.ld.0 = load %CPT.0**, %CPT.0*** %y
     %.ld.0 = load %CPT.0*, %CPT.0** %y.ld.0
     %icmp.0 = icmp eq %CPT.0* %x.ld.0, %.ld.0
     %zext.0 = zext i1 %icmp.0 to i8
-    store i8 %zext.0, i8* %b1
+    store i8 %zext.0, i8* %b1, align 1
   )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
@@ -479,12 +479,12 @@ TEST_P(BackendPointerExprTests, CreatePointerOffsetExprs) {
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %param3.ld.0 = load i64*, i64** %param3.addr
     %ptroff.0 = getelementptr i64, i64* %param3.ld.0, i32 5
-    store i64 9, i64* %ptroff.0
+    store i64 9, i64* %ptroff.0, align 8
     %param3.ld.1 = load i64*, i64** %param3.addr
     %ptroff.1 = getelementptr i64, i64* %param3.ld.1, i32 7
     %.ptroff.ld.0 = load i64, i64* %ptroff.1
     %trunc.0 = trunc i64 %.ptroff.ld.0 to i32
-    store i32 %trunc.0, i32* %param1.addr
+    store i32 %trunc.0, i32* %param1.addr, align 4
   )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
@@ -516,8 +516,8 @@ TEST_P(BackendPointerExprTests, TestAddrDerefFold) {
   h.mkAssign(vexl, ad3);
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    store i64 0, i64* %x
-    store i64* %x, i64** %param3.addr
+    store i64 0, i64* %x, align 8
+    store i64* %x, i64** %param3.addr, align 8
   )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
@@ -569,9 +569,8 @@ TEST_P(BackendPointerExprTests, TestDerefPointerConstantLHS) {
   }
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    store i32 0, i32* inttoptr (i64 65793 to i32*)
-    store i64 2, i64* getelementptr inbounds ({ i64, i64 }, { i64, i64 }*
-      inttoptr (i64 34661 to { i64, i64 }*), i32 0, i32 1)
+    store i32 0, i32* inttoptr (i64 65793 to i32*), align 4
+    store i64 2, i64* getelementptr inbounds ({ i64, i64 }, { i64, i64 }* inttoptr (i64 34661 to { i64, i64 }*), i32 0, i32 1), align 8
   )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
@@ -623,8 +622,8 @@ TEST_P(BackendPointerExprTests, TestCircularFunctionTypes) {
   h.mkLocal("y", pbefty2);
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    store i64 (i8*, i64, i64, %CFT.0*, %CFT.1*)* null, i64 (i8*, i64, i64, %CFT.0*, %CFT.1*)** %x
-    store i64 (i8*, i64, i64, %CFT.1*, %CFT.0*)* null, i64 (i8*, i64, i64, %CFT.1*, %CFT.0*)** %y
+    store i64 (i8*, i64, i64, %CFT.0*, %CFT.1*)* null, i64 (i8*, i64, i64, %CFT.0*, %CFT.1*)** %x, align 8
+    store i64 (i8*, i64, i64, %CFT.1*, %CFT.0*)* null, i64 (i8*, i64, i64, %CFT.1*, %CFT.0*)** %y, align 8
 
   )RAW_RESULT");
 

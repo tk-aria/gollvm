@@ -48,7 +48,7 @@ TEST_P(BackendCallTests, TestSimpleCall) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %call.0 = call addrspace(0) i64 @foo(i8* nest undef, i32 3, i32 6, i64* null)
-    store i64 %call.0, i64* %x
+    store i64 %call.0, i64* %x, align 8
     %x.ld.0 = load i64, i64* %x
     ret i64 %x.ld.0
   )RAW_RESULT");
@@ -143,19 +143,19 @@ TEST_P(BackendCallTests, MultiReturnCall) {
 
   {
     DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-      %p0.ld.0 = load i8*, i8** %p0.addr
-      %field.0 = getelementptr inbounds { i8*, i32*, i64*, i64 }, { i8*, i32*, i64*, i64 }* %tmp.0, i32 0, i32 0
-      store i8* %p0.ld.0, i8** %field.0
-      %field.1 = getelementptr inbounds { i8*, i32*, i64*, i64 }, { i8*, i32*, i64*, i64 }* %tmp.0, i32 0, i32 1
-      store i32* null, i32** %field.1
-      %field.2 = getelementptr inbounds { i8*, i32*, i64*, i64 }, { i8*, i32*, i64*, i64 }* %tmp.0, i32 0, i32 2
-      store i64* null, i64** %field.2
-      %field.3 = getelementptr inbounds { i8*, i32*, i64*, i64 }, { i8*, i32*, i64*, i64 }* %tmp.0, i32 0, i32 3
-      store i64 101, i64* %field.3
-      %cast.2 = bitcast { i8*, i32*, i64*, i64 }* %sret.formal.0 to i8*
-      %cast.3 = bitcast { i8*, i32*, i64*, i64 }* %tmp.0 to i8*
-      call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.2, i8* align 8 %cast.3, i64 32, i1 false)
-      ret void
+    %p0.ld.0 = load i8*, i8** %p0.addr
+    %field.0 = getelementptr inbounds { i8*, i32*, i64*, i64 }, { i8*, i32*, i64*, i64 }* %tmp.0, i32 0, i32 0
+    store i8* %p0.ld.0, i8** %field.0, align 8
+    %field.1 = getelementptr inbounds { i8*, i32*, i64*, i64 }, { i8*, i32*, i64*, i64 }* %tmp.0, i32 0, i32 1
+    store i32* null, i32** %field.1, align 8
+    %field.2 = getelementptr inbounds { i8*, i32*, i64*, i64 }, { i8*, i32*, i64*, i64 }* %tmp.0, i32 0, i32 2
+    store i64* null, i64** %field.2, align 8
+    %field.3 = getelementptr inbounds { i8*, i32*, i64*, i64 }, { i8*, i32*, i64*, i64 }* %tmp.0, i32 0, i32 3
+    store i64 101, i64* %field.3, align 8
+    %cast.2 = bitcast { i8*, i32*, i64*, i64 }* %sret.formal.0 to i8*
+    %cast.3 = bitcast { i8*, i32*, i64*, i64 }* %tmp.0 to i8*
+    call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.2, i8* align 8 %cast.3, i64 32, i1 false)
+    ret void
     )RAW_RESULT");
 
     bool isOK = h.expectStmt(s2, exp);

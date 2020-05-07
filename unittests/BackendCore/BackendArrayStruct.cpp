@@ -81,17 +81,17 @@ TEST_P(BackendArrayStructTests, TestStructFieldExprs) {
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %cast.0 = bitcast { i8*, i32 }* %loc1 to i8*
     call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 bitcast ({ i8*, i32 }* @const.0 to i8*), i64 16, i1 false)
-    store { i8*, i32 }* %loc1, { i8*, i32 }** %loc2
-    store i32 0, i32* %x
+    store { i8*, i32 }* %loc1, { i8*, i32 }** %loc2, align 8
+    store i32 0, i32* %x, align 4
     %field.0 = getelementptr inbounds { i8*, i32 }, { i8*, i32 }* %loc1, i32 0, i32 1
     %loc1.field.ld.0 = load i32, i32* %field.0
-    store i32 %loc1.field.ld.0, i32* %x
-    store i8 0, i8* %b2
+    store i32 %loc1.field.ld.0, i32* %x, align 4
+    store i8 0, i8* %b2, align 1
     %field.1 = getelementptr inbounds { i8*, i32 }, { i8*, i32 }* %loc1, i32 0, i32 0
-    store i8* %b2, i8** %field.1
+    store i8* %b2, i8** %field.1, align 8
     %loc2.ld.0 = load { i8*, i32 }*, { i8*, i32 }** %loc2
     %field.2 = getelementptr inbounds { i8*, i32 }, { i8*, i32 }* %loc2.ld.0, i32 0, i32 1
-    store i32 2, i32* %field.2
+    store i32 2, i32* %field.2, align 4
   )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
@@ -146,25 +146,25 @@ TEST_P(BackendArrayStructTests, TestStructFieldExprs2) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 {
-    entry:
-      %tmp.0 = alloca { i8*, i32 }
-      %x = alloca i32
-      %y = alloca i32
-      %z = alloca i32
-      store i32 0, i32* %x
-      store i32 0, i32* %y
-      %y.ld.0 = load i32, i32* %y
-      %field.0 = getelementptr inbounds { i8*, i32 }, { i8*, i32 }* %tmp.0, i32 0, i32 0
-      store i8* null, i8** %field.0
-      %field.1 = getelementptr inbounds { i8*, i32 }, { i8*, i32 }* %tmp.0, i32 0, i32 1
-      store i32 %y.ld.0, i32* %field.1
-      %field.2 = getelementptr inbounds { i8*, i32 }, { i8*, i32 }* %tmp.0, i32 0, i32 1
-      %.field.ld.0 = load i32, i32* %field.2
-      store i32 %.field.ld.0, i32* %x
-      store i32 0, i32* %z
-      store i32 42, i32* %z
-      ret void
-    }
+  entry:
+    %tmp.0 = alloca { i8*, i32 }
+    %x = alloca i32
+    %y = alloca i32
+    %z = alloca i32
+    store i32 0, i32* %x, align 4
+    store i32 0, i32* %y, align 4
+    %y.ld.0 = load i32, i32* %y
+    %field.0 = getelementptr inbounds { i8*, i32 }, { i8*, i32 }* %tmp.0, i32 0, i32 0
+    store i8* null, i8** %field.0, align 8
+    %field.1 = getelementptr inbounds { i8*, i32 }, { i8*, i32 }* %tmp.0, i32 0, i32 1
+    store i32 %y.ld.0, i32* %field.1, align 4
+    %field.2 = getelementptr inbounds { i8*, i32 }, { i8*, i32 }* %tmp.0, i32 0, i32 1
+    %.field.ld.0 = load i32, i32* %field.2
+    store i32 %.field.ld.0, i32* %x, align 4
+    store i32 0, i32* %z, align 4
+    store i32 42, i32* %z, align 4
+    ret void
+  }
   )RAW_RESULT");
 
   bool broken = h.finish(StripDebugInfo);
@@ -232,35 +232,35 @@ TEST_P(BackendArrayStructTests, TestArrayIndexingExprs) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 {
-    entry:
-      %tmp.0 = alloca [4 x i64]
-      %x = alloca i64
-      %y = alloca i64
-      %z = alloca i64
-      %w = alloca i64
-      store i64 0, i64* %x
-      store i64 0, i64* %y
-      %y.ld.0 = load i64, i64* %y
-      %index.0 = getelementptr [4 x i64], [4 x i64]* %tmp.0, i32 0, i32 0
-      store i64 %y.ld.0, i64* %index.0
-      %index.1 = getelementptr [4 x i64], [4 x i64]* %tmp.0, i32 0, i32 1
-      store i64 3, i64* %index.1
-      %index.2 = getelementptr [4 x i64], [4 x i64]* %tmp.0, i32 0, i32 2
-      store i64 2, i64* %index.2
-      %index.3 = getelementptr [4 x i64], [4 x i64]* %tmp.0, i32 0, i32 3
-      store i64 1, i64* %index.3
-      %index.4 = getelementptr [4 x i64], [4 x i64]* %tmp.0, i32 0, i32 1
-      %.index.ld.0 = load i64, i64* %index.4
-      store i64 %.index.ld.0, i64* %x
-      store i64 0, i64* %z
-      store i64 3, i64* %z
-      store i64 0, i64* %w
-      %x.ld.0 = load i64, i64* %x
-      %index.5 = getelementptr [4 x i64], [4 x i64]* @const.0, i32 0, i64 %x.ld.0
-      %.index.ld.1 = load i64, i64* %index.5
-      store i64 %.index.ld.1, i64* %w
-      ret void
-    }
+  entry:
+    %tmp.0 = alloca [4 x i64]
+    %x = alloca i64
+    %y = alloca i64
+    %z = alloca i64
+    %w = alloca i64
+    store i64 0, i64* %x, align 8
+    store i64 0, i64* %y, align 8
+    %y.ld.0 = load i64, i64* %y
+    %index.0 = getelementptr [4 x i64], [4 x i64]* %tmp.0, i32 0, i32 0
+    store i64 %y.ld.0, i64* %index.0, align 8
+    %index.1 = getelementptr [4 x i64], [4 x i64]* %tmp.0, i32 0, i32 1
+    store i64 3, i64* %index.1, align 8
+    %index.2 = getelementptr [4 x i64], [4 x i64]* %tmp.0, i32 0, i32 2
+    store i64 2, i64* %index.2, align 8
+    %index.3 = getelementptr [4 x i64], [4 x i64]* %tmp.0, i32 0, i32 3
+    store i64 1, i64* %index.3, align 8
+    %index.4 = getelementptr [4 x i64], [4 x i64]* %tmp.0, i32 0, i32 1
+    %.index.ld.0 = load i64, i64* %index.4
+    store i64 %.index.ld.0, i64* %x, align 8
+    store i64 0, i64* %z, align 8
+    store i64 3, i64* %z, align 8
+    store i64 0, i64* %w, align 8
+    %x.ld.0 = load i64, i64* %x
+    %index.5 = getelementptr [4 x i64], [4 x i64]* @const.0, i32 0, i64 %x.ld.0
+    %.index.ld.1 = load i64, i64* %index.5
+    store i64 %.index.ld.1, i64* %w, align 8
+    ret void
+  }
   )RAW_RESULT");
 
   bool broken = h.finish(StripDebugInfo);
@@ -310,16 +310,16 @@ TEST_P(BackendArrayStructTests, CreateArrayConstructionExprs) {
     call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 bitcast ([4 x i64]* @const.0 to i8*), i64 32, i1 false)
     %cast.1 = bitcast [4 x i64]* %ab to i8*
     call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.1, i8* align 8 bitcast ([4 x i64]* @const.1 to i8*), i64 32, i1 false)
-    store i64 0, i64* %z
+    store i64 0, i64* %z, align 8
     %z.ld.0 = load i64, i64* %z
     %index.0 = getelementptr [4 x i64], [4 x i64]* %ac, i32 0, i32 0
-    store i64 0, i64* %index.0
+    store i64 0, i64* %index.0, align 8
     %index.1 = getelementptr [4 x i64], [4 x i64]* %ac, i32 0, i32 1
-    store i64 %z.ld.0, i64* %index.1
+    store i64 %z.ld.0, i64* %index.1, align 8
     %index.2 = getelementptr [4 x i64], [4 x i64]* %ac, i32 0, i32 2
-    store i64 0, i64* %index.2
+    store i64 0, i64* %index.2, align 8
     %index.3 = getelementptr [4 x i64], [4 x i64]* %ac, i32 0, i32 3
-    store i64 0, i64* %index.3
+    store i64 0, i64* %index.3, align 8
   )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
@@ -372,9 +372,9 @@ TEST_P(BackendArrayStructTests, CreateStructConstructionExprs) {
     %field.0 = getelementptr inbounds { i32*, i32 }, { i32*, i32 }* %loc1, i32 0, i32 1
     %loc1.field.ld.0 = load i32, i32* %field.0
     %field.1 = getelementptr inbounds { i32*, i32 }, { i32*, i32 }* %loc2, i32 0, i32 0
-    store i32* %param1.addr, i32** %field.1
+    store i32* %param1.addr, i32** %field.1, align 8
     %field.2 = getelementptr inbounds { i32*, i32 }, { i32*, i32 }* %loc2, i32 0, i32 1
-    store i32 %loc1.field.ld.0, i32* %field.2
+    store i32 %loc1.field.ld.0, i32* %field.2, align 4
   )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
@@ -426,15 +426,15 @@ TEST_P(BackendArrayStructTests, CreateNestedStructConstructionExprs) {
     %cast.0 = bitcast { { i32*, i32 }, float }* %loc1 to i8*
     call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 bitcast ({ { i32*, i32 }, float }* @const.0 to i8*), i64 24, i1 false)
     %field.0 = getelementptr inbounds { i32*, i32 }, { i32*, i32 }* %tmp.0, i32 0, i32 0
-    store i32* %param1.addr, i32** %field.0
+    store i32* %param1.addr, i32** %field.0, align 8
     %field.1 = getelementptr inbounds { i32*, i32 }, { i32*, i32 }* %tmp.0, i32 0, i32 1
-    store i32 3, i32* %field.1
+    store i32 3, i32* %field.1, align 4
     %field.2 = getelementptr inbounds { { i32*, i32 }, float }, { { i32*, i32 }, float }* %loc1, i32 0, i32 0
     %cast.1 = bitcast { i32*, i32 }* %field.2 to i8*
     %cast.2 = bitcast { i32*, i32 }* %tmp.0 to i8*
     call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.1, i8* align 8 %cast.2, i64 16, i1 false)
     %field.3 = getelementptr inbounds { { i32*, i32 }, float }, { { i32*, i32 }, float }* %loc1, i32 0, i32 1
-    store float 3.000000e+00, float* %field.3
+    store float 3.000000e+00, float* %field.3, align 4
   )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
@@ -475,9 +475,9 @@ TEST_P(BackendArrayStructTests, CreateStructConstructionExprs2) {
     %p0.ld.0 = load { i32*, i32 }*, { i32*, i32 }** %p0.addr
     %p1.ld.0 = load i32*, i32** %p1.addr
     %field.0 = getelementptr inbounds { i32*, i32 }, { i32*, i32 }* %p0.ld.0, i32 0, i32 0
-    store i32* %p1.ld.0, i32** %field.0
+    store i32* %p1.ld.0, i32** %field.0, align 8
     %field.1 = getelementptr inbounds { i32*, i32 }, { i32*, i32 }* %p0.ld.0, i32 0, i32 1
-    store i32 101, i32* %field.1
+    store i32 101, i32* %field.1, align 4
   )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
@@ -527,10 +527,10 @@ TEST_P(BackendArrayStructTests, CreateStructConstructionExprs3) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %x.ld.0 = load i32, i32* @x
-    store i32 %x.ld.0, i32* getelementptr inbounds ({ i32 }, { i32 }* @t, i32 0, i32 0)
+    store i32 %x.ld.0, i32* getelementptr inbounds ({ i32 }, { i32 }* @t, i32 0, i32 0), align 4
     %t.field.ld.0 = load i32, i32* getelementptr inbounds ({ i32 }, { i32 }* @t, i32 0, i32 0)
     %field.2 = getelementptr inbounds { i32 }, { i32 }* %t2, i32 0, i32 0
-    store i32 %t.field.ld.0, i32* %field.2
+    store i32 %t.field.ld.0, i32* %field.2, align 4
   )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
@@ -589,7 +589,7 @@ TEST_P(BackendArrayStructTests, CreateArrayIndexingExprs) {
     %aa.index.ld.1 = load i64, i64* %index.2
     %index.3 = getelementptr [4 x i64], [4 x i64]* %aa, i32 0, i64 %aa.index.ld.1
     %aa.index.ld.2 = load i64, i64* %index.3
-    store i64 %aa.index.ld.2, i64* %index.1
+    store i64 %aa.index.ld.2, i64* %index.1, align 8
   )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
@@ -649,15 +649,15 @@ TEST_P(BackendArrayStructTests, CreateComplexIndexingAndFieldExprs) {
     h.mkAssign(fx, bi64five);
 
     DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-      %cast.0 = bitcast [10 x { i8, [4 x { i64, i64 }*], i8 }*]* %t1 to i8*
-      call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 bitcast ([10 x { i8, [4 x { i64, i64 }*], i8 }*]* @const.0 to i8*), i64 80, i1 false)
-      %index.0 = getelementptr [10 x { i8, [4 x { i64, i64 }*], i8 }*], [10 x { i8, [4 x { i64, i64 }*], i8 }*]* %t1, i32 0, i32 7
-      %t1.index.ld.0 = load { i8, [4 x { i64, i64 }*], i8 }*, { i8, [4 x { i64, i64 }*], i8 }** %index.0
-      %field.0 = getelementptr inbounds { i8, [4 x { i64, i64 }*], i8 }, { i8, [4 x { i64, i64 }*], i8 }* %t1.index.ld.0, i32 0, i32 1
-      %index.1 = getelementptr [4 x { i64, i64 }*], [4 x { i64, i64 }*]* %field.0, i32 0, i32 3
-      %.field.index.ld.0 = load { i64, i64 }*, { i64, i64 }** %index.1
-      %field.1 = getelementptr inbounds { i64, i64 }, { i64, i64 }* %.field.index.ld.0, i32 0, i32 0
-      store i64 5, i64* %field.1
+    %cast.0 = bitcast [10 x { i8, [4 x { i64, i64 }*], i8 }*]* %t1 to i8*
+    call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 bitcast ([10 x { i8, [4 x { i64, i64 }*], i8 }*]* @const.0 to i8*), i64 80, i1 false)
+    %index.0 = getelementptr [10 x { i8, [4 x { i64, i64 }*], i8 }*], [10 x { i8, [4 x { i64, i64 }*], i8 }*]* %t1, i32 0, i32 7
+    %t1.index.ld.0 = load { i8, [4 x { i64, i64 }*], i8 }*, { i8, [4 x { i64, i64 }*], i8 }** %index.0
+    %field.0 = getelementptr inbounds { i8, [4 x { i64, i64 }*], i8 }, { i8, [4 x { i64, i64 }*], i8 }* %t1.index.ld.0, i32 0, i32 1
+    %index.1 = getelementptr [4 x { i64, i64 }*], [4 x { i64, i64 }*]* %field.0, i32 0, i32 3
+    %.field.index.ld.0 = load { i64, i64 }*, { i64, i64 }** %index.1
+    %field.1 = getelementptr inbounds { i64, i64 }, { i64, i64 }* %.field.index.ld.0, i32 0, i32 0
+    store i64 5, i64* %field.1, align 8
     )RAW_RESULT");
 
     bool isOK = h.expectBlock(exp);
@@ -680,14 +680,14 @@ TEST_P(BackendArrayStructTests, CreateComplexIndexingAndFieldExprs) {
     h.mkLocal("q", bi64t, fx);
 
     DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-      %index.2 = getelementptr [10 x { i8, [4 x { i64, i64 }*], i8 }*], [10 x { i8, [4 x { i64, i64 }*], i8 }*]* %t1, i32 0, i32 0
-      %t1.index.ld.1 = load { i8, [4 x { i64, i64 }*], i8 }*, { i8, [4 x { i64, i64 }*], i8 }** %index.2
-      %field.2 = getelementptr inbounds { i8, [4 x { i64, i64 }*], i8 }, { i8, [4 x { i64, i64 }*], i8 }* %t1.index.ld.1, i32 0, i32 1
-      %index.3 = getelementptr [4 x { i64, i64 }*], [4 x { i64, i64 }*]* %field.2, i32 0, i32 0
-      %.field.index.ld.1 = load { i64, i64 }*, { i64, i64 }** %index.3
-      %field.3 = getelementptr inbounds { i64, i64 }, { i64, i64 }* %.field.index.ld.1, i32 0, i32 1
-      %.field.ld.0 = load i64, i64* %field.3
-      store i64 %.field.ld.0, i64* %q
+    %index.2 = getelementptr [10 x { i8, [4 x { i64, i64 }*], i8 }*], [10 x { i8, [4 x { i64, i64 }*], i8 }*]* %t1, i32 0, i32 0
+    %t1.index.ld.1 = load { i8, [4 x { i64, i64 }*], i8 }*, { i8, [4 x { i64, i64 }*], i8 }** %index.2
+    %field.2 = getelementptr inbounds { i8, [4 x { i64, i64 }*], i8 }, { i8, [4 x { i64, i64 }*], i8 }* %t1.index.ld.1, i32 0, i32 1
+    %index.3 = getelementptr [4 x { i64, i64 }*], [4 x { i64, i64 }*]* %field.2, i32 0, i32 0
+    %.field.index.ld.1 = load { i64, i64 }*, { i64, i64 }** %index.3
+    %field.3 = getelementptr inbounds { i64, i64 }, { i64, i64 }* %.field.index.ld.1, i32 0, i32 1
+    %.field.ld.0 = load i64, i64* %field.3
+    store i64 %.field.ld.0, i64* %q, align 8
     )RAW_RESULT");
 
     bool isOK = h.expectBlock(exp);
@@ -790,8 +790,8 @@ TEST_P(BackendArrayStructTests, TestStructFieldAddressExpr) {
     %cast.0 = bitcast { i32 }* %t1 to i8*
     call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.0, i8* align 4 bitcast ({ i32 }* @const.0 to i8*), i64 4, i1 false)
     %field.0 = getelementptr inbounds { i32 }, { i32 }* %t1, i32 0, i32 0
-    store i32* %field.0, i32** %a1
-    store i32* getelementptr inbounds ({ i32 }, { i32 }* @t2, i32 0, i32 0), i32** %a2
+    store i32* %field.0, i32** %a1, align 8
+    store i32* getelementptr inbounds ({ i32 }, { i32 }* @t2, i32 0, i32 0), i32** %a2, align 8
   )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);

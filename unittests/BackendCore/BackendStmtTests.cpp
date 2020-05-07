@@ -40,7 +40,7 @@ TEST_P(BackendStmtTests, TestInitStmt) {
   Bstatement *is = be->init_statement(func, loc1, mkInt64Const(be, 10));
   ASSERT_TRUE(is != nullptr);
   h.addStmt(is);
-  EXPECT_EQ(repr(is), "store i64 10, i64* %loc1");
+  EXPECT_EQ(repr(is), "store i64 10, i64* %loc1, align 8");
 
   // error handling
   Bvariable *loc2 = be->local_variable(func, "loc2", bi64t, nullptr, true, loc);
@@ -80,11 +80,11 @@ TEST_P(BackendStmtTests, TestAssignmentStmt) {
   h.addStmt(as2);
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    store i64 0, i64* %loc1
-      store i64 123, i64* %loc1
-      store i64 0, i64* %loc2
-      %loc1.ld.0 = load i64, i64* %loc1
-      store i64 %loc1.ld.0, i64* %loc2
+    store i64 0, i64* %loc1, align 8
+    store i64 123, i64* %loc1, align 8
+    store i64 0, i64* %loc2, align 8
+    %loc1.ld.0 = load i64, i64* %loc1
+    store i64 %loc1.ld.0, i64* %loc2, align 8
   )RAW_RESULT");
   bool isOK = h.expectBlock(exp);
   EXPECT_TRUE(isOK && "Block does not have expected contents");
@@ -158,18 +158,18 @@ TEST_P(BackendStmtTests, TestReturnStmt2) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define i64 @foo(i8* nest %nest.0, i32 %param1, i32 %param2, i64* %param3) #0 {
-    entry:
-      %param1.addr = alloca i32
-      %param2.addr = alloca i32
-      %param3.addr = alloca i64*
-      %x = alloca i64
-      store i32 %param1, i32* %param1.addr
-      store i32 %param2, i32* %param2.addr
-      store i64* %param3, i64** %param3.addr
-      store i64 10, i64* %x
-      %x.ld.0 = load i64, i64* %x
-      ret i64 %x.ld.0
-    }
+  entry:
+    %param1.addr = alloca i32
+    %param2.addr = alloca i32
+    %param3.addr = alloca i64*
+    %x = alloca i64
+    store i32 %param1, i32* %param1.addr, align 4
+    store i32 %param2, i32* %param2.addr, align 4
+    store i64* %param3, i64** %param3.addr, align 8
+    store i64 10, i64* %x, align 8
+    %x.ld.0 = load i64, i64* %x
+    ret i64 %x.ld.0
+  }
   )RAW_RESULT");
 
   bool broken = h.finish(StripDebugInfo);
@@ -241,15 +241,16 @@ TEST_P(BackendStmtTests, TestLabelAddressExpression) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 {
-    entry:
-      %loc1 = alloca i8
-      store i8 0, i8* %loc1
-      call void @bar(i8* nest undef, i8* blockaddress(@foo, %label.0))
-      br label %label.0
-    label.0:                                          ; preds = %entry
-      store i8 0, i8* %loc1
-      ret void
-    }
+  entry:
+    %loc1 = alloca i8
+    store i8 0, i8* %loc1, align 1
+    call void @bar(i8* nest undef, i8* blockaddress(@foo, %label.0))
+    br label %label.0
+  
+  label.0:                                          ; preds = %entry
+    store i8 0, i8* %loc1, align 1
+    ret void
+  }
   )RAW_RESULT");
 
   bool isOK = h.expectValue(func->function(), exp);
@@ -311,34 +312,40 @@ TEST_P(BackendStmtTests, TestIfStmt) {
   // verify
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define i64 @foo(i8* nest %nest.0, i32 %param1, i32 %param2, i64* %param3) #0 {
-    entry:
-      %param1.addr = alloca i32
-      %param2.addr = alloca i32
-      %param3.addr = alloca i64*
-      %loc1 = alloca i64
-      %loc2 = alloca i64
-      store i32 %param1, i32* %param1.addr
-      store i32 %param2, i32* %param2.addr
-      store i64* %param3, i64** %param3.addr
-      store i64 0, i64* %loc1
-      store i64 0, i64* %loc2
-      br i1 true, label %then.0, label %else.0
-    then.0:                                           ; preds = %entry
-      br i1 true, label %then.1, label %else.1
-    fallthrough.0:                                    ; preds = %else.0, %fallthrough.1
-      ret i64 10101
-    else.0:                                           ; preds = %entry
-      store i64 456, i64* %loc2
-      br label %fallthrough.0
-    then.1:                                           ; preds = %then.0
-      store i64 123, i64* %loc1
-      br label %fallthrough.1
-    fallthrough.1:                                    ; preds = %else.1, %then.1
-      br label %fallthrough.0
-    else.1:                                           ; preds = %then.0
-      store i64 987, i64* %loc1
-      br label %fallthrough.1
-    }
+  entry:
+    %param1.addr = alloca i32
+    %param2.addr = alloca i32
+    %param3.addr = alloca i64*
+    %loc1 = alloca i64
+    %loc2 = alloca i64
+    store i32 %param1, i32* %param1.addr, align 4
+    store i32 %param2, i32* %param2.addr, align 4
+    store i64* %param3, i64** %param3.addr, align 8
+    store i64 0, i64* %loc1, align 8
+    store i64 0, i64* %loc2, align 8
+    br i1 true, label %then.0, label %else.0
+  
+  then.0:                                           ; preds = %entry
+    br i1 true, label %then.1, label %else.1
+  
+  fallthrough.0:                                    ; preds = %else.0, %fallthrough.1
+    ret i64 10101
+  
+  else.0:                                           ; preds = %entry
+    store i64 456, i64* %loc2, align 8
+    br label %fallthrough.0
+  
+  then.1:                                           ; preds = %then.0
+    store i64 123, i64* %loc1, align 8
+    br label %fallthrough.1
+  
+  fallthrough.1:                                    ; preds = %else.1, %then.1
+    br label %fallthrough.0
+  
+  else.1:                                           ; preds = %then.0
+    store i64 987, i64* %loc1, align 8
+    br label %fallthrough.1
+  }
   )RAW_RESULT");
 
   bool isOK = h.expectValue(func->function(), exp);
@@ -429,64 +436,64 @@ TEST_P(BackendStmtTests, TestSwitchStmt) {
   // verify
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define i64 @foo(i8* nest %nest.0, i32 %param1, i32 %param2, i64* %param3) #0 {
-    entry:
-      %param1.addr = alloca i32
-      %param2.addr = alloca i32
-      %param3.addr = alloca i64*
-      %loc1 = alloca i64
-      %tmpv.0 = alloca i64
-      store i32 %param1, i32* %param1.addr
-      store i32 %param2, i32* %param2.addr
-      store i64* %param3, i64** %param3.addr
-      store i64 0, i64* %loc1
-      %loc1.ld.4 = load i64, i64* %loc1
-      switch i64 %loc1.ld.4, label %default.0 [
-        i64 1, label %case.0
-        i64 2, label %case.0
-        i64 3, label %case.1
-        i64 4, label %case.1
-        i64 5, label %case.2
-      ]
-
-    case.0:                                           ; preds = %entry, %entry
-      %loc1.ld.0 = load i64, i64* %loc1
-      %div.0 = sdiv i64 %loc1.ld.0, 123
-      store i64 %div.0, i64* %loc1
-      br label %label.0
-
-    case.1:                                           ; preds = %entry, %entry
-      %loc1.ld.1 = load i64, i64* %loc1
-      %icmp.0 = icmp sle i64 %loc1.ld.1, 987
-      %zext.0 = zext i1 %icmp.0 to i8
-      %trunc.0 = trunc i8 %zext.0 to i1
-      br i1 %trunc.0, label %then.0, label %else.0
-
-    case.2:                                           ; preds = %entry, %fallthrough.0
-      br label %default.0
-
-    default.0:                                        ; preds = %entry, %case.2
-      store i64 456, i64* %loc1
-      br label %label.0
-
-    label.0:                                          ; preds = %default.0, %case.0
-      ret i64 10101
-
-    then.0:                                           ; preds = %case.1
-      %loc1.ld.3 = load i64, i64* %loc1
-      store i64 %loc1.ld.3, i64* %tmpv.0
-      br label %fallthrough.0
-
-    fallthrough.0:                                    ; preds = %else.0, %then.0
-      %tmpv.0.ld.0 = load i64, i64* %tmpv.0
-      store i64 %tmpv.0.ld.0, i64* %loc1
-      br label %case.2
-
-    else.0:                                           ; preds = %case.1
-      %loc1.ld.2 = load i64, i64* %loc1
-      %mul.0 = mul i64 987, %loc1.ld.2
-      store i64 %mul.0, i64* %tmpv.0
-      br label %fallthrough.0
-    }
+  entry:
+    %param1.addr = alloca i32
+    %param2.addr = alloca i32
+    %param3.addr = alloca i64*
+    %loc1 = alloca i64
+    %tmpv.0 = alloca i64
+    store i32 %param1, i32* %param1.addr, align 4
+    store i32 %param2, i32* %param2.addr, align 4
+    store i64* %param3, i64** %param3.addr, align 8
+    store i64 0, i64* %loc1, align 8
+    %loc1.ld.4 = load i64, i64* %loc1
+    switch i64 %loc1.ld.4, label %default.0 [
+      i64 1, label %case.0
+      i64 2, label %case.0
+      i64 3, label %case.1
+      i64 4, label %case.1
+      i64 5, label %case.2
+    ]
+  
+  case.0:                                           ; preds = %entry, %entry
+    %loc1.ld.0 = load i64, i64* %loc1
+    %div.0 = sdiv i64 %loc1.ld.0, 123
+    store i64 %div.0, i64* %loc1, align 8
+    br label %label.0
+  
+  case.1:                                           ; preds = %entry, %entry
+    %loc1.ld.1 = load i64, i64* %loc1
+    %icmp.0 = icmp sle i64 %loc1.ld.1, 987
+    %zext.0 = zext i1 %icmp.0 to i8
+    %trunc.0 = trunc i8 %zext.0 to i1
+    br i1 %trunc.0, label %then.0, label %else.0
+  
+  case.2:                                           ; preds = %entry, %fallthrough.0
+    br label %default.0
+  
+  default.0:                                        ; preds = %entry, %case.2
+    store i64 456, i64* %loc1, align 8
+    br label %label.0
+  
+  label.0:                                          ; preds = %default.0, %case.0
+    ret i64 10101
+  
+  then.0:                                           ; preds = %case.1
+    %loc1.ld.3 = load i64, i64* %loc1
+    store i64 %loc1.ld.3, i64* %tmpv.0, align 8
+    br label %fallthrough.0
+  
+  fallthrough.0:                                    ; preds = %else.0, %then.0
+    %tmpv.0.ld.0 = load i64, i64* %tmpv.0
+    store i64 %tmpv.0.ld.0, i64* %loc1, align 8
+    br label %case.2
+  
+  else.0:                                           ; preds = %case.1
+    %loc1.ld.2 = load i64, i64* %loc1
+    %mul.0 = mul i64 987, %loc1.ld.2
+    store i64 %mul.0, i64* %tmpv.0, align 8
+    br label %fallthrough.0
+  }
   )RAW_RESULT");
 
   bool isOK = h.expectValue(func->function(), exp);
@@ -578,27 +585,27 @@ TEST_P(BackendStmtTests, TestDeferStmt) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 personality i32 (i32, i32, i64, i8*, i8*)* @__gccgo_personality_v0 {
-    entry:
-      %x = alloca i8
-      store i8 0, i8* %x
-      br label %finish.0
-
-    pad.0:                                            ; preds = %finish.0
-      %ex.0 = landingpad { i8*, i32 }
-              catch i8* null
-      br label %catch.0
-
-    catch.0:                                          ; preds = %pad.0
-      call void @checkdefer(i8* nest undef, i8* %x)
-      br label %finish.0
-
-    finish.0:                                         ; preds = %catch.0, %entry
-      invoke void @deferreturn(i8* nest undef, i8* %x)
-              to label %cont.0 unwind label %pad.0
-
-    cont.0:                                           ; preds = %finish.0
-      ret void
-    }
+  entry:
+    %x = alloca i8
+    store i8 0, i8* %x, align 1
+    br label %finish.0
+  
+  pad.0:                                            ; preds = %finish.0
+    %ex.0 = landingpad { i8*, i32 }
+            catch i8* null
+    br label %catch.0
+  
+  catch.0:                                          ; preds = %pad.0
+    call void @checkdefer(i8* nest undef, i8* %x)
+    br label %finish.0
+  
+  finish.0:                                         ; preds = %catch.0, %entry
+    invoke void @deferreturn(i8* nest undef, i8* %x)
+            to label %cont.0 unwind label %pad.0
+  
+  cont.0:                                           ; preds = %finish.0
+    ret void
+  }
   )RAW_RESULT");
 
   bool isOK = h.expectValue(func->function(), exp);
@@ -691,93 +698,93 @@ TEST_P(BackendStmtTests, TestExceptionHandlingStmt) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @baz(i8* nest %nest.0) #0 personality i32 (i32, i32, i64, i8*, i8*)* @__gccgo_personality_v0 {
-    entry:
-      %ehtmp.0 = alloca { i8*, i32 }
-      %x = alloca i64
-      %y = alloca i8
-      %sret.actual.0 = alloca { i8, i8 }
-      %sret.actual.1 = alloca { i8, i8 }
-      %finvar.0 = alloca i8
-      store i64 0, i64* %x
-      store i8 0, i8* %y
-      %call.0 = invoke i64 @id(i8* nest undef, i64 99)
-              to label %cont.1 unwind label %pad.1
-
-    finok.0:                                          ; preds = %cont.4
-      store i8 1, i8* %finvar.0
-      br label %finally.0
-
-    finally.0:                                        ; preds = %catchpad.0, %finok.0
-      br label %finish.0
-
-    pad.0:                                            ; preds = %fallthrough.0, %finish.0
-      %ex.0 = landingpad { i8*, i32 }
-              catch i8* null
-      br label %catch.0
-
-    catch.0:                                          ; preds = %pad.0
-      call void @checkdefer(i8* nest undef, i8* %y)
-      br label %finish.0
-
-    finish.0:                                         ; preds = %catch.0, %finally.0
-      invoke void @deferreturn(i8* nest undef, i8* %y)
-              to label %cont.0 unwind label %pad.0
-
-    cont.0:                                           ; preds = %fallthrough.0, %finish.0
-      %fload.0 = load i8, i8* %finvar.0
-      %icmp.0 = icmp eq i8 %fload.0, 1
-      br i1 %icmp.0, label %finret.0, label %finres.0
-
-    pad.1:                                            ; preds = %then.0, %cont.1, %entry
-      %ex.1 = landingpad { i8*, i32 }
-              catch i8* null
-      br label %catch.1
-
-    catch.1:                                          ; preds = %pad.1
-      invoke void @plix(i8* nest undef)
-              to label %cont.4 unwind label %catchpad.0
-
-    catchpad.0:                                       ; preds = %catch.1
-      %ex2.0 = landingpad { i8*, i32 }
-              cleanup
-      store { i8*, i32 } %ex2.0, { i8*, i32 }* %ehtmp.0
-      store i8 0, i8* %finvar.0
-      br label %finally.0
-
-    cont.1:                                           ; preds = %entry
-      store i64 %call.0, i64* %x
-      invoke void @plark(i8* nest undef)
-              to label %cont.2 unwind label %pad.1
-
-    cont.2:                                           ; preds = %cont.1
-      br i1 false, label %then.0, label %else.0
-
-    then.0:                                           ; preds = %cont.2
-      %call.1 = invoke i16 @noret(i8* nest undef)
-              to label %cont.3 unwind label %pad.1
-
-    fallthrough.0:                                    ; preds = %else.0
-      store i64 123, i64* %x
-      store i8 1, i8* %finvar.0
-      invoke void @deferreturn(i8* nest undef, i8* %y)
-              to label %cont.0 unwind label %pad.0
-
-    else.0:                                           ; preds = %cont.2
-      br label %fallthrough.0
-
-    cont.3:                                           ; preds = %then.0
-      unreachable
-
-    cont.4:                                           ; preds = %catch.1
-      br label %finok.0
-
-    finres.0:                                         ; preds = %cont.0
-      %excv.0 = load { i8*, i32 }, { i8*, i32 }* %ehtmp.0
-      resume { i8*, i32 } %excv.0
-
-    finret.0:                                         ; preds = %cont.0
-      ret void
-    }
+  entry:
+    %ehtmp.0 = alloca { i8*, i32 }
+    %x = alloca i64
+    %y = alloca i8
+    %sret.actual.0 = alloca { i8, i8 }
+    %sret.actual.1 = alloca { i8, i8 }
+    %finvar.0 = alloca i8
+    store i64 0, i64* %x, align 8
+    store i8 0, i8* %y, align 1
+    %call.0 = invoke i64 @id(i8* nest undef, i64 99)
+            to label %cont.1 unwind label %pad.1
+  
+  finok.0:                                          ; preds = %cont.4
+    store i8 1, i8* %finvar.0, align 1
+    br label %finally.0
+  
+  finally.0:                                        ; preds = %catchpad.0, %finok.0
+    br label %finish.0
+  
+  pad.0:                                            ; preds = %fallthrough.0, %finish.0
+    %ex.0 = landingpad { i8*, i32 }
+            catch i8* null
+    br label %catch.0
+  
+  catch.0:                                          ; preds = %pad.0
+    call void @checkdefer(i8* nest undef, i8* %y)
+    br label %finish.0
+  
+  finish.0:                                         ; preds = %catch.0, %finally.0
+    invoke void @deferreturn(i8* nest undef, i8* %y)
+            to label %cont.0 unwind label %pad.0
+  
+  cont.0:                                           ; preds = %fallthrough.0, %finish.0
+    %fload.0 = load i8, i8* %finvar.0, align 1
+    %icmp.0 = icmp eq i8 %fload.0, 1
+    br i1 %icmp.0, label %finret.0, label %finres.0
+  
+  pad.1:                                            ; preds = %then.0, %cont.1, %entry
+    %ex.1 = landingpad { i8*, i32 }
+            catch i8* null
+    br label %catch.1
+  
+  catch.1:                                          ; preds = %pad.1
+    invoke void @plix(i8* nest undef)
+            to label %cont.4 unwind label %catchpad.0
+  
+  catchpad.0:                                       ; preds = %catch.1
+    %ex2.0 = landingpad { i8*, i32 }
+            cleanup
+    store { i8*, i32 } %ex2.0, { i8*, i32 }* %ehtmp.0, align 8
+    store i8 0, i8* %finvar.0, align 1
+    br label %finally.0
+  
+  cont.1:                                           ; preds = %entry
+    store i64 %call.0, i64* %x, align 8
+    invoke void @plark(i8* nest undef)
+            to label %cont.2 unwind label %pad.1
+  
+  cont.2:                                           ; preds = %cont.1
+    br i1 false, label %then.0, label %else.0
+  
+  then.0:                                           ; preds = %cont.2
+    %call.1 = invoke i16 @noret(i8* nest undef)
+            to label %cont.3 unwind label %pad.1
+  
+  fallthrough.0:                                    ; preds = %else.0
+    store i64 123, i64* %x, align 8
+    store i8 1, i8* %finvar.0, align 1
+    invoke void @deferreturn(i8* nest undef, i8* %y)
+            to label %cont.0 unwind label %pad.0
+  
+  else.0:                                           ; preds = %cont.2
+    br label %fallthrough.0
+  
+  cont.3:                                           ; preds = %then.0
+    unreachable
+  
+  cont.4:                                           ; preds = %catch.1
+    br label %finok.0
+  
+  finres.0:                                         ; preds = %cont.0
+    %excv.0 = load { i8*, i32 }, { i8*, i32 }* %ehtmp.0, align 8
+    resume { i8*, i32 } %excv.0
+  
+  finret.0:                                         ; preds = %cont.0
+    ret void
+  }
   )RAW_RESULT");
 
   bool isOK = h.expectValue(func->function(), exp);
@@ -880,89 +887,89 @@ TEST_P(BackendStmtTests, TestExceptionHandlingStmtWithReturns) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define i64 @baz(i8* nest %nest.0, i64 %p0) #0 personality i32 (i32, i32, i64, i8*, i8*)* @__gccgo_personality_v0 {
-    entry:
-      %ehtmp.0 = alloca { i8*, i32 }
-      %p0.addr = alloca i64
-      %ret = alloca i64
-      %x = alloca i8
-      %finvar.0 = alloca i8
-      store i64 %p0, i64* %p0.addr
-      store i64 0, i64* %ret
-      store i8 0, i8* %x
-      %call.0 = invoke i64 @splat(i8* nest undef, i64 99)
-              to label %cont.1 unwind label %pad.1
-
-    finok.0:                                          ; preds = %cont.2
-      store i8 1, i8* %finvar.0
-      br label %finally.0
-
-    finally.0:                                        ; preds = %catchpad.0, %finok.0
-      br label %finish.0
-
-    pad.0:                                            ; preds = %else.0, %then.0, %finish.0
-      %ex.0 = landingpad { i8*, i32 }
-              catch i8* null
-      br label %catch.0
-
-    catch.0:                                          ; preds = %pad.0
-      call void @checkdefer(i8* nest undef, i8* %x)
-      br label %finish.0
-
-    finish.0:                                         ; preds = %catch.0, %finally.0
-      invoke void @deferreturn(i8* nest undef, i8* %x)
-              to label %cont.0 unwind label %pad.0
-
-    cont.0:                                           ; preds = %else.0, %then.0, %finish.0
-      %fload.0 = load i8, i8* %finvar.0
-      %icmp.1 = icmp eq i8 %fload.0, 1
-      br i1 %icmp.1, label %finret.0, label %finres.0
-
-    pad.1:                                            ; preds = %entry
-      %ex.1 = landingpad { i8*, i32 }
-              catch i8* null
-      br label %catch.1
-
-    catch.1:                                          ; preds = %pad.1
-      %call.1 = invoke i64 @splat(i8* nest undef, i64 13)
-              to label %cont.2 unwind label %catchpad.0
-
-    catchpad.0:                                       ; preds = %catch.1
-      %ex2.0 = landingpad { i8*, i32 }
-              cleanup
-      store { i8*, i32 } %ex2.0, { i8*, i32 }* %ehtmp.0
-      store i8 0, i8* %finvar.0
-      br label %finally.0
-
-    cont.1:                                           ; preds = %entry
-      %icmp.0 = icmp eq i64 %call.0, 88
-      %zext.0 = zext i1 %icmp.0 to i8
-      %trunc.0 = trunc i8 %zext.0 to i1
-      br i1 %trunc.0, label %then.0, label %else.0
-
-    then.0:                                           ; preds = %cont.1
-      store i64 22, i64* %ret
-      store i8 1, i8* %finvar.0
-      invoke void @deferreturn(i8* nest undef, i8* %x)
-              to label %cont.0 unwind label %pad.0
-
-    else.0:                                           ; preds = %cont.1
-      %p0.ld.0 = load i64, i64* %p0.addr
-      store i64 %p0.ld.0, i64* %ret
-      store i8 1, i8* %finvar.0
-      invoke void @deferreturn(i8* nest undef, i8* %x)
-              to label %cont.0 unwind label %pad.0
-
-    cont.2:                                           ; preds = %catch.1
-      br label %finok.0
-
-    finres.0:                                         ; preds = %cont.0
-      %excv.0 = load { i8*, i32 }, { i8*, i32 }* %ehtmp.0
-      resume { i8*, i32 } %excv.0
-
-    finret.0:                                         ; preds = %cont.0
-      %ret.ld.1 = load i64, i64* %ret
-      ret i64 %ret.ld.1
-    }
+  entry:
+    %ehtmp.0 = alloca { i8*, i32 }
+    %p0.addr = alloca i64
+    %ret = alloca i64
+    %x = alloca i8
+    %finvar.0 = alloca i8
+    store i64 %p0, i64* %p0.addr, align 8
+    store i64 0, i64* %ret, align 8
+    store i8 0, i8* %x, align 1
+    %call.0 = invoke i64 @splat(i8* nest undef, i64 99)
+            to label %cont.1 unwind label %pad.1
+  
+  finok.0:                                          ; preds = %cont.2
+    store i8 1, i8* %finvar.0, align 1
+    br label %finally.0
+  
+  finally.0:                                        ; preds = %catchpad.0, %finok.0
+    br label %finish.0
+  
+  pad.0:                                            ; preds = %else.0, %then.0, %finish.0
+    %ex.0 = landingpad { i8*, i32 }
+            catch i8* null
+    br label %catch.0
+  
+  catch.0:                                          ; preds = %pad.0
+    call void @checkdefer(i8* nest undef, i8* %x)
+    br label %finish.0
+  
+  finish.0:                                         ; preds = %catch.0, %finally.0
+    invoke void @deferreturn(i8* nest undef, i8* %x)
+            to label %cont.0 unwind label %pad.0
+  
+  cont.0:                                           ; preds = %else.0, %then.0, %finish.0
+    %fload.0 = load i8, i8* %finvar.0, align 1
+    %icmp.1 = icmp eq i8 %fload.0, 1
+    br i1 %icmp.1, label %finret.0, label %finres.0
+  
+  pad.1:                                            ; preds = %entry
+    %ex.1 = landingpad { i8*, i32 }
+            catch i8* null
+    br label %catch.1
+  
+  catch.1:                                          ; preds = %pad.1
+    %call.1 = invoke i64 @splat(i8* nest undef, i64 13)
+            to label %cont.2 unwind label %catchpad.0
+  
+  catchpad.0:                                       ; preds = %catch.1
+    %ex2.0 = landingpad { i8*, i32 }
+            cleanup
+    store { i8*, i32 } %ex2.0, { i8*, i32 }* %ehtmp.0, align 8
+    store i8 0, i8* %finvar.0, align 1
+    br label %finally.0
+  
+  cont.1:                                           ; preds = %entry
+    %icmp.0 = icmp eq i64 %call.0, 88
+    %zext.0 = zext i1 %icmp.0 to i8
+    %trunc.0 = trunc i8 %zext.0 to i1
+    br i1 %trunc.0, label %then.0, label %else.0
+  
+  then.0:                                           ; preds = %cont.1
+    store i64 22, i64* %ret, align 8
+    store i8 1, i8* %finvar.0, align 1
+    invoke void @deferreturn(i8* nest undef, i8* %x)
+            to label %cont.0 unwind label %pad.0
+  
+  else.0:                                           ; preds = %cont.1
+    %p0.ld.0 = load i64, i64* %p0.addr
+    store i64 %p0.ld.0, i64* %ret, align 8
+    store i8 1, i8* %finvar.0, align 1
+    invoke void @deferreturn(i8* nest undef, i8* %x)
+            to label %cont.0 unwind label %pad.0
+  
+  cont.2:                                           ; preds = %catch.1
+    br label %finok.0
+  
+  finres.0:                                         ; preds = %cont.0
+    %excv.0 = load { i8*, i32 }, { i8*, i32 }* %ehtmp.0, align 8
+    resume { i8*, i32 } %excv.0
+  
+  finret.0:                                         ; preds = %cont.0
+    %ret.ld.1 = load i64, i64* %ret
+    ret i64 %ret.ld.1
+  }
   )RAW_RESULT");
 
   bool isOK = h.expectValue(func->function(), exp);
