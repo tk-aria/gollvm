@@ -537,19 +537,19 @@ TEST(BackendCABIOracleTests, RecursiveCall1Amd64) {
     %p4.ld.0 = load i8, i8* %p4.addr
     %cast.1 = bitcast { float, float, i16, i16, i16 }* %p0.addr to { <2 x float>, i48 }*
     %field0.0 = getelementptr inbounds { <2 x float>, i48 }, { <2 x float>, i48 }* %cast.1, i32 0, i32 0
-    %ld.1 = load <2 x float>, <2 x float>* %field0.0
+    %ld.1 = load <2 x float>, <2 x float>* %field0.0, align 8
     %field1.0 = getelementptr inbounds { <2 x float>, i48 }, { <2 x float>, i48 }* %cast.1, i32 0, i32 1
-    %ld.2 = load i48, i48* %field1.0
+    %ld.2 = load i48, i48* %field1.0, align 8
     %cast.2 = bitcast { double, float, float }* %p1.addr to { double, <2 x float> }*
     %field0.1 = getelementptr inbounds { double, <2 x float> }, { double, <2 x float> }* %cast.2, i32 0, i32 0
-    %ld.3 = load double, double* %field0.1
+    %ld.3 = load double, double* %field0.1, align 8
     %field1.1 = getelementptr inbounds { double, <2 x float> }, { double, <2 x float> }* %cast.2, i32 0, i32 1
-    %ld.4 = load <2 x float>, <2 x float>* %field1.1
+    %ld.4 = load <2 x float>, <2 x float>* %field1.1, align 8
     %call.0 = call addrspace(0) { double, <2 x float> } @foo(i8* nest undef, <2 x float> %ld.1, i48 %ld.2, double %ld.3, <2 x float> %ld.4, i8 zeroext %sub.0, i8 signext %p4.ld.0, { { float, float, i16, i16, i16 }, { double, float, float } }* byval %p5)
     %cast.3 = bitcast { double, float, float }* %sret.actual.0 to { double, <2 x float> }*
-    store { double, <2 x float> } %call.0, { double, <2 x float> }* %cast.3
+    store { double, <2 x float> } %call.0, { double, <2 x float> }* %cast.3, align 8
     %cast.4 = bitcast { double, float, float }* %sret.actual.0 to { double, <2 x float> }*
-    %ld.5 = load { double, <2 x float> }, { double, <2 x float> }* %cast.4
+    %ld.5 = load { double, <2 x float> }, { double, <2 x float> }* %cast.4, align 8
     ret { double, <2 x float> } %ld.5
   )RAW_RESULT");
 
@@ -656,22 +656,22 @@ TEST(BackendCABIOracleTests, RecursiveCall1Arm64) {
     %p4.ld.0 = load i8, i8* %p4.addr
     %cast.1 = bitcast { float, float, i16, i16, i16 }* %p0.addr to { i64, i48 }*
     %field0.0 = getelementptr inbounds { i64, i48 }, { i64, i48 }* %cast.1, i32 0, i32 0
-    %ld.1 = load i64, i64* %field0.0
+    %ld.1 = load i64, i64* %field0.0, align 8
     %field1.0 = getelementptr inbounds { i64, i48 }, { i64, i48 }* %cast.1, i32 0, i32 1
-    %ld.2 = load i48, i48* %field1.0
+    %ld.2 = load i48, i48* %field1.0, align 8
     %cast.2 = bitcast { double, float, float }* %p1.addr to { i64, i64 }*
     %field0.1 = getelementptr inbounds { i64, i64 }, { i64, i64 }* %cast.2, i32 0, i32 0
-    %ld.3 = load i64, i64* %field0.1
+    %ld.3 = load i64, i64* %field0.1, align 8
     %field1.1 = getelementptr inbounds { i64, i64 }, { i64, i64 }* %cast.2, i32 0, i32 1
-    %ld.4 = load i64, i64* %field1.1
+    %ld.4 = load i64, i64* %field1.1, align 8
     %cast.3 = bitcast { { float, float, i16, i16, i16 }, { double, float, float } }* %doCopy.addr.0 to i8*
     %cast.4 = bitcast { { float, float, i16, i16, i16 }, { double, float, float } }* %p5 to i8*
     call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.3, i8* align 8 %cast.4, i64 32, i1 false)
     %call.0 = call addrspace(0) { i64, i64 } @foo(i8* nest undef, i64 %ld.1, i48 %ld.2, i64 %ld.3, i64 %ld.4, i8 zeroext %sub.0, i8 signext %p4.ld.0, { { float, float, i16, i16, i16 }, { double, float, float } }* %doCopy.addr.0)
     %cast.5 = bitcast { double, float, float }* %sret.actual.0 to { i64, i64 }*
-    store { i64, i64 } %call.0, { i64, i64 }* %cast.5
+    store { i64, i64 } %call.0, { i64, i64 }* %cast.5, align 8
     %cast.6 = bitcast { double, float, float }* %sret.actual.0 to { i64, i64 }*
-    %ld.5 = load { i64, i64 }, { i64, i64 }* %cast.6
+    %ld.5 = load { i64, i64 }, { i64, i64 }* %cast.6, align 8
     ret { i64, i64 } %ld.5
   )RAW_RESULT");
 
@@ -717,7 +717,7 @@ TEST(BackendCABIOracleTests, PassAndReturnArraysAmd64) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %cast.0 = bitcast [2 x float]* %p0.addr to <2 x float>*
-    %ld.0 = load <2 x float>, <2 x float>* %cast.0
+    %ld.0 = load <2 x float>, <2 x float>* %cast.0, align 8
     call addrspace(0) void @foo([3 x double]* sret "go_sret" %sret.actual.0, i8* nest undef, <2 x float> %ld.0)
     %cast.1 = bitcast [3 x double]* %sret.formal.0 to i8*
     %cast.2 = bitcast [3 x double]* %sret.actual.0 to i8*
@@ -760,12 +760,12 @@ TEST(BackendCABIOracleTests, PassAndReturnArraysArm64) {
   h.mkReturn(rvals);
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    %ld.0 = load [2 x float], [2 x float]* %p0.addr
+    %ld.0 = load [2 x float], [2 x float]* %p0.addr, align 4
     %call.0 = call addrspace(0) { double, double, double } @foo(i8* nest undef, [2 x float] %ld.0)
     %cast.1 = bitcast [3 x double]* %sret.actual.0 to { double, double, double }*
-    store { double, double, double } %call.0, { double, double, double }* %cast.1
+    store { double, double, double } %call.0, { double, double, double }* %cast.1, align 8
     %cast.2 = bitcast [3 x double]* %sret.actual.0 to { double, double, double }*
-    %ld.1 = load { double, double, double }, { double, double, double }* %cast.2
+    %ld.1 = load { double, double, double }, { double, double, double }* %cast.2, align 8
     ret { double, double, double } %ld.1
   )RAW_RESULT");
 
@@ -896,25 +896,25 @@ TEST(BackendCABIOracleTests, PassAndReturnComplexAmd64) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %cast.0 = bitcast { float, float }* %p0.addr to <2 x float>*
-    %ld.0 = load <2 x float>, <2 x float>* %cast.0
+    %ld.0 = load <2 x float>, <2 x float>* %cast.0, align 8
     %field0.0 = getelementptr inbounds { double, double }, { double, double }* %p1.addr, i32 0, i32 0
-    %ld.1 = load double, double* %field0.0
+    %ld.1 = load double, double* %field0.0, align 8
     %field1.0 = getelementptr inbounds { double, double }, { double, double }* %p1.addr, i32 0, i32 1
-    %ld.2 = load double, double* %field1.0
+    %ld.2 = load double, double* %field1.0, align 8
     %call.0 = call addrspace(0) <2 x float> @foo(i8* nest undef, <2 x float> %ld.0, double %ld.1, double %ld.2)
     %cast.2 = bitcast { float, float }* %sret.actual.0 to <2 x float>*
-    store <2 x float> %call.0, <2 x float>* %cast.2
+    store <2 x float> %call.0, <2 x float>* %cast.2, align 8
     %cast.3 = bitcast { float, float }* %z to i8*
     %cast.4 = bitcast { float, float }* %sret.actual.0 to i8*
     call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.3, i8* align 4 %cast.4, i64 8, i1 false)
-    %ld.3 = load <2 x float>, <2 x float>* bitcast ({ float, float }* @const.0 to <2 x float>*)
-    %ld.4 = load double, double* getelementptr inbounds ({ double, double }, { double, double }* @const.1, i32 0, i32 0)
-    %ld.5 = load double, double* getelementptr inbounds ({ double, double }, { double, double }* @const.1, i32 0, i32 1)
+    %ld.3 = load <2 x float>, <2 x float>* bitcast ({ float, float }* @const.0 to <2 x float>*), align 8
+    %ld.4 = load double, double* getelementptr inbounds ({ double, double }, { double, double }* @const.1, i32 0, i32 0), align 8
+    %ld.5 = load double, double* getelementptr inbounds ({ double, double }, { double, double }* @const.1, i32 0, i32 1), align 8
     %call.1 = call addrspace(0) <2 x float> @foo(i8* nest undef, <2 x float> %ld.3, double %ld.4, double %ld.5)
     %cast.7 = bitcast { float, float }* %sret.actual.1 to <2 x float>*
-    store <2 x float> %call.1, <2 x float>* %cast.7
+    store <2 x float> %call.1, <2 x float>* %cast.7, align 8
     %cast.8 = bitcast { float, float }* %sret.actual.1 to <2 x float>*
-    %ld.6 = load <2 x float>, <2 x float>* %cast.8
+    %ld.6 = load <2 x float>, <2 x float>* %cast.8, align 8
     ret <2 x float> %ld.6
   )RAW_RESULT");
 
@@ -969,19 +969,19 @@ TEST(BackendCABIOracleTests, PassAndReturnComplexArm64) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %cast.0 = bitcast { float, float }* %p0.addr to [2 x float]*
-    %ld.0 = load [2 x float], [2 x float]* %cast.0
+    %ld.0 = load [2 x float], [2 x float]* %cast.0, align 4
     %cast.1 = bitcast { double, double }* %p1.addr to [2 x double]*
-    %ld.1 = load [2 x double], [2 x double]* %cast.1
+    %ld.1 = load [2 x double], [2 x double]* %cast.1, align 8
     %call.0 = call addrspace(0) { float, float } @foo(i8* nest undef, [2 x float] %ld.0, [2 x double] %ld.1)
-    store { float, float } %call.0, { float, float }* %sret.actual.0
+    store { float, float } %call.0, { float, float }* %sret.actual.0, align 4
     %cast.3 = bitcast { float, float }* %z to i8*
     %cast.4 = bitcast { float, float }* %sret.actual.0 to i8*
     call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.3, i8* align 4 %cast.4, i64 8, i1 false)
-    %ld.2 = load [2 x float], [2 x float]* bitcast ({ float, float }* @const.0 to [2 x float]*)
-    %ld.3 = load [2 x double], [2 x double]* bitcast ({ double, double }* @const.1 to [2 x double]*)
+    %ld.2 = load [2 x float], [2 x float]* bitcast ({ float, float }* @const.0 to [2 x float]*), align 4
+    %ld.3 = load [2 x double], [2 x double]* bitcast ({ double, double }* @const.1 to [2 x double]*), align 8
     %call.1 = call addrspace(0) { float, float } @foo(i8* nest undef, [2 x float] %ld.2, [2 x double] %ld.3)
-    store { float, float } %call.1, { float, float }* %sret.actual.1
-    %ld.4 = load { float, float }, { float, float }* %sret.actual.1
+    store { float, float } %call.1, { float, float }* %sret.actual.1, align 4
+    %ld.4 = load { float, float }, { float, float }* %sret.actual.1, align 4
     ret { float, float } %ld.4
   )RAW_RESULT");
 

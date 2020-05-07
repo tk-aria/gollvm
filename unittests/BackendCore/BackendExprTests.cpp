@@ -244,11 +244,10 @@ TEST_P(BackendExprTests, TestConversionExpressions) {
   h.mkAssign(fex, mkInt32Const(be, 22));
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    store i64 0, i64* %x
+    store i64 0, i64* %x, align 8
     %cast.0 = bitcast i64* %x to { i32, i32 }*
-    %field.0 = getelementptr inbounds { i32, i32 },
-        { i32, i32 }* %cast.0, i32 0, i32 1
-    store i32 22, i32* %field.0
+    %field.0 = getelementptr inbounds { i32, i32 }, { i32, i32 }* %cast.0, i32 0, i32 1
+    store i32 22, i32* %field.0, align 4
   )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
@@ -298,12 +297,12 @@ TEST_P(BackendExprTests, TestMoreConversionExpressions) {
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %param3.ld.0 = load i64*, i64** %param3.addr
     %cast.0 = bitcast i64* %param3.ld.0 to i32*
-    store i32 5, i32* %cast.0
-    store double 0.000000e+00, double* %p
+    store i32 5, i32* %cast.0, align 4
+    store double 0.000000e+00, double* %p, align 8
     %p.ld.0 = load double, double* %p
     %ftoui.0 = fptoui double %p.ld.0 to i64
     %itpcast.0 = inttoptr i64 %ftoui.0 to i32*
-    store i32 5, i32* %itpcast.0
+    store i32 5, i32* %itpcast.0, align 4
   )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
@@ -357,90 +356,90 @@ TEST_P(BackendExprTests, TestFloatConversionExpressions) {
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %p1.ld.0 = load double, double* %p1.addr
     %fptrunc.0 = fptrunc double %p1.ld.0 to float
-    store float %fptrunc.0, float* %p0.addr
+    store float %fptrunc.0, float* %p0.addr, align 4
     %p0.ld.0 = load float, float* %p0.addr
     %fpext.0 = fpext float %p0.ld.0 to double
-    store double %fpext.0, double* %p1.addr
+    store double %fpext.0, double* %p1.addr, align 8
     %p2.ld.0 = load i32, i32* %p2.addr
     %sitof.0 = sitofp i32 %p2.ld.0 to float
-    store float %sitof.0, float* %p0.addr
+    store float %sitof.0, float* %p0.addr, align 4
     %p0.ld.1 = load float, float* %p0.addr
     %ftosi.0 = fptosi float %p0.ld.1 to i32
-    store i32 %ftosi.0, i32* %p2.addr
+    store i32 %ftosi.0, i32* %p2.addr, align 4
     %p2.ld.1 = load i32, i32* %p2.addr
     %sitof.1 = sitofp i32 %p2.ld.1 to double
-    store double %sitof.1, double* %p1.addr
+    store double %sitof.1, double* %p1.addr, align 8
     %p1.ld.1 = load double, double* %p1.addr
     %ftosi.1 = fptosi double %p1.ld.1 to i32
-    store i32 %ftosi.1, i32* %p2.addr
+    store i32 %ftosi.1, i32* %p2.addr, align 4
     %p3.ld.0 = load i64, i64* %p3.addr
     %sitof.2 = sitofp i64 %p3.ld.0 to float
-    store float %sitof.2, float* %p0.addr
+    store float %sitof.2, float* %p0.addr, align 4
     %p0.ld.2 = load float, float* %p0.addr
     %ftosi.2 = fptosi float %p0.ld.2 to i64
-    store i64 %ftosi.2, i64* %p3.addr
+    store i64 %ftosi.2, i64* %p3.addr, align 8
     %p3.ld.1 = load i64, i64* %p3.addr
     %sitof.3 = sitofp i64 %p3.ld.1 to double
-    store double %sitof.3, double* %p1.addr
+    store double %sitof.3, double* %p1.addr, align 8
     %p1.ld.2 = load double, double* %p1.addr
     %ftosi.3 = fptosi double %p1.ld.2 to i64
-    store i64 %ftosi.3, i64* %p3.addr
+    store i64 %ftosi.3, i64* %p3.addr, align 8
     %p3.ld.2 = load i64, i64* %p3.addr
     %trunc.0 = trunc i64 %p3.ld.2 to i32
-    store i32 %trunc.0, i32* %p2.addr
+    store i32 %trunc.0, i32* %p2.addr, align 4
     %p2.ld.2 = load i32, i32* %p2.addr
     %sext.0 = sext i32 %p2.ld.2 to i64
-    store i64 %sext.0, i64* %p3.addr
+    store i64 %sext.0, i64* %p3.addr, align 8
     %p4.ld.0 = load i32, i32* %p4.addr
     %uitof.0 = uitofp i32 %p4.ld.0 to float
-    store float %uitof.0, float* %p0.addr
+    store float %uitof.0, float* %p0.addr, align 4
     %p0.ld.3 = load float, float* %p0.addr
     %ftoui.0 = fptoui float %p0.ld.3 to i32
-    store i32 %ftoui.0, i32* %p4.addr
+    store i32 %ftoui.0, i32* %p4.addr, align 4
     %p4.ld.1 = load i32, i32* %p4.addr
     %uitof.1 = uitofp i32 %p4.ld.1 to double
-    store double %uitof.1, double* %p1.addr
+    store double %uitof.1, double* %p1.addr, align 8
     %p1.ld.3 = load double, double* %p1.addr
     %ftoui.1 = fptoui double %p1.ld.3 to i32
-    store i32 %ftoui.1, i32* %p4.addr
+    store i32 %ftoui.1, i32* %p4.addr, align 4
     %p4.ld.2 = load i32, i32* %p4.addr
-    store i32 %p4.ld.2, i32* %p2.addr
+    store i32 %p4.ld.2, i32* %p2.addr, align 4
     %p2.ld.3 = load i32, i32* %p2.addr
-    store i32 %p2.ld.3, i32* %p4.addr
+    store i32 %p2.ld.3, i32* %p4.addr, align 4
     %p4.ld.3 = load i32, i32* %p4.addr
     %zext.0 = zext i32 %p4.ld.3 to i64
-    store i64 %zext.0, i64* %p3.addr
+    store i64 %zext.0, i64* %p3.addr, align 8
     %p3.ld.3 = load i64, i64* %p3.addr
     %trunc.1 = trunc i64 %p3.ld.3 to i32
-    store i32 %trunc.1, i32* %p4.addr
+    store i32 %trunc.1, i32* %p4.addr, align 4
     %p5.ld.0 = load i64, i64* %p5.addr
     %uitof.2 = uitofp i64 %p5.ld.0 to float
-    store float %uitof.2, float* %p0.addr
+    store float %uitof.2, float* %p0.addr, align 4
     %p0.ld.4 = load float, float* %p0.addr
     %ftoui.2 = fptoui float %p0.ld.4 to i64
-    store i64 %ftoui.2, i64* %p5.addr
+    store i64 %ftoui.2, i64* %p5.addr, align 8
     %p5.ld.1 = load i64, i64* %p5.addr
     %uitof.3 = uitofp i64 %p5.ld.1 to double
-    store double %uitof.3, double* %p1.addr
+    store double %uitof.3, double* %p1.addr, align 8
     %p1.ld.4 = load double, double* %p1.addr
     %ftoui.3 = fptoui double %p1.ld.4 to i64
-    store i64 %ftoui.3, i64* %p5.addr
+    store i64 %ftoui.3, i64* %p5.addr, align 8
     %p5.ld.2 = load i64, i64* %p5.addr
     %trunc.2 = trunc i64 %p5.ld.2 to i32
-    store i32 %trunc.2, i32* %p2.addr
+    store i32 %trunc.2, i32* %p2.addr, align 4
     %p2.ld.4 = load i32, i32* %p2.addr
     %sext.1 = sext i32 %p2.ld.4 to i64
-    store i64 %sext.1, i64* %p5.addr
+    store i64 %sext.1, i64* %p5.addr, align 8
     %p5.ld.3 = load i64, i64* %p5.addr
-    store i64 %p5.ld.3, i64* %p3.addr
+    store i64 %p5.ld.3, i64* %p3.addr, align 8
     %p3.ld.4 = load i64, i64* %p3.addr
-    store i64 %p3.ld.4, i64* %p5.addr
+    store i64 %p3.ld.4, i64* %p5.addr, align 8
     %p5.ld.4 = load i64, i64* %p5.addr
     %trunc.3 = trunc i64 %p5.ld.4 to i32
-    store i32 %trunc.3, i32* %p4.addr
+    store i32 %trunc.3, i32* %p4.addr, align 4
     %p4.ld.4 = load i32, i32* %p4.addr
     %zext.1 = zext i32 %p4.ld.4 to i64
-    store i64 %zext.1, i64* %p5.addr
+    store i64 %zext.1, i64* %p5.addr, align 8
   )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
@@ -495,63 +494,63 @@ TEST_P(BackendExprTests, TestComplexConversionExpression) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 {
-    entry:
-      %tmp.3 = alloca { double, double }
-      %tmp.2 = alloca { float, float }
-      %tmp.1 = alloca { float, float }
-      %tmp.0 = alloca { double, double }
-      %a = alloca { float, float }
-      %b = alloca { float, float }
-      %x = alloca { double, double }
-      %y = alloca { double, double }
-      %cast.0 = bitcast { float, float }* %a to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.0, i8* align 4 bitcast ({ float, float }* @const.0 to i8*), i64 8, i1 false)
-      %cast.1 = bitcast { float, float }* %b to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.1, i8* align 4 bitcast ({ float, float }* @const.0 to i8*), i64 8, i1 false)
-      %cast.2 = bitcast { double, double }* %x to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.2, i8* align 8 bitcast ({ double, double }* @const.1 to i8*), i64 16, i1 false)
-      %cast.3 = bitcast { double, double }* %y to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.3, i8* align 8 bitcast ({ double, double }* @const.1 to i8*), i64 16, i1 false)
-      %cast.4 = bitcast { double, double }* %tmp.0 to i8*
-      %cast.5 = bitcast { double, double }* %x to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.4, i8* align 8 %cast.5, i64 16, i1 false)
-      %field.0 = getelementptr inbounds { double, double }, { double, double }* %tmp.0, i32 0, i32 0
-      %.real.ld.0 = load double, double* %field.0
-      %fptrunc.0 = fptrunc double %.real.ld.0 to float
-      %field.1 = getelementptr inbounds { double, double }, { double, double }* %tmp.0, i32 0, i32 1
-      %.imag.ld.0 = load double, double* %field.1
-      %fptrunc.1 = fptrunc double %.imag.ld.0 to float
-      %field.2 = getelementptr inbounds { float, float }, { float, float }* %tmp.1, i32 0, i32 0
-      store float %fptrunc.0, float* %field.2
-      %field.3 = getelementptr inbounds { float, float }, { float, float }* %tmp.1, i32 0, i32 1
-      store float %fptrunc.1, float* %field.3
-      %cast.6 = bitcast { float, float }* %a to i8*
-      %cast.7 = bitcast { float, float }* %tmp.1 to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.6, i8* align 4 %cast.7, i64 8, i1 false)
-      %cast.8 = bitcast { float, float }* %tmp.2 to i8*
-      %cast.9 = bitcast { float, float }* %b to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.8, i8* align 4 %cast.9, i64 8, i1 false)
-      %field.4 = getelementptr inbounds { float, float }, { float, float }* %tmp.2, i32 0, i32 0
-      %.real.ld.1 = load float, float* %field.4
-      %fpext.0 = fpext float %.real.ld.1 to double
-      %field.5 = getelementptr inbounds { float, float }, { float, float }* %tmp.2, i32 0, i32 1
-      %.imag.ld.1 = load float, float* %field.5
-      %fpext.1 = fpext float %.imag.ld.1 to double
-      %field.6 = getelementptr inbounds { double, double }, { double, double }* %tmp.3, i32 0, i32 0
-      store double %fpext.0, double* %field.6
-      %field.7 = getelementptr inbounds { double, double }, { double, double }* %tmp.3, i32 0, i32 1
-      store double %fpext.1, double* %field.7
-      %cast.10 = bitcast { double, double }* %y to i8*
-      %cast.11 = bitcast { double, double }* %tmp.3 to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.10, i8* align 8 %cast.11, i64 16, i1 false)
-      %cast.12 = bitcast { float, float }* %a to i8*
-      %cast.13 = bitcast { float, float }* %b to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.12, i8* align 4 %cast.13, i64 8, i1 false)
-      %cast.14 = bitcast { double, double }* %x to i8*
-      %cast.15 = bitcast { double, double }* %y to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.14, i8* align 8 %cast.15, i64 16, i1 false)
-      ret void
-    }
+  entry:
+    %tmp.3 = alloca { double, double }
+    %tmp.2 = alloca { float, float }
+    %tmp.1 = alloca { float, float }
+    %tmp.0 = alloca { double, double }
+    %a = alloca { float, float }
+    %b = alloca { float, float }
+    %x = alloca { double, double }
+    %y = alloca { double, double }
+    %cast.0 = bitcast { float, float }* %a to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.0, i8* align 4 bitcast ({ float, float }* @const.0 to i8*), i64 8, i1 false)
+    %cast.1 = bitcast { float, float }* %b to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.1, i8* align 4 bitcast ({ float, float }* @const.0 to i8*), i64 8, i1 false)
+    %cast.2 = bitcast { double, double }* %x to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.2, i8* align 8 bitcast ({ double, double }* @const.1 to i8*), i64 16, i1 false)
+    %cast.3 = bitcast { double, double }* %y to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.3, i8* align 8 bitcast ({ double, double }* @const.1 to i8*), i64 16, i1 false)
+    %cast.4 = bitcast { double, double }* %tmp.0 to i8*
+    %cast.5 = bitcast { double, double }* %x to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.4, i8* align 8 %cast.5, i64 16, i1 false)
+    %field.0 = getelementptr inbounds { double, double }, { double, double }* %tmp.0, i32 0, i32 0
+    %.real.ld.0 = load double, double* %field.0
+    %fptrunc.0 = fptrunc double %.real.ld.0 to float
+    %field.1 = getelementptr inbounds { double, double }, { double, double }* %tmp.0, i32 0, i32 1
+    %.imag.ld.0 = load double, double* %field.1
+    %fptrunc.1 = fptrunc double %.imag.ld.0 to float
+    %field.2 = getelementptr inbounds { float, float }, { float, float }* %tmp.1, i32 0, i32 0
+    store float %fptrunc.0, float* %field.2, align 4
+    %field.3 = getelementptr inbounds { float, float }, { float, float }* %tmp.1, i32 0, i32 1
+    store float %fptrunc.1, float* %field.3, align 4
+    %cast.6 = bitcast { float, float }* %a to i8*
+    %cast.7 = bitcast { float, float }* %tmp.1 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.6, i8* align 4 %cast.7, i64 8, i1 false)
+    %cast.8 = bitcast { float, float }* %tmp.2 to i8*
+    %cast.9 = bitcast { float, float }* %b to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.8, i8* align 4 %cast.9, i64 8, i1 false)
+    %field.4 = getelementptr inbounds { float, float }, { float, float }* %tmp.2, i32 0, i32 0
+    %.real.ld.1 = load float, float* %field.4
+    %fpext.0 = fpext float %.real.ld.1 to double
+    %field.5 = getelementptr inbounds { float, float }, { float, float }* %tmp.2, i32 0, i32 1
+    %.imag.ld.1 = load float, float* %field.5
+    %fpext.1 = fpext float %.imag.ld.1 to double
+    %field.6 = getelementptr inbounds { double, double }, { double, double }* %tmp.3, i32 0, i32 0
+    store double %fpext.0, double* %field.6, align 8
+    %field.7 = getelementptr inbounds { double, double }, { double, double }* %tmp.3, i32 0, i32 1
+    store double %fpext.1, double* %field.7, align 8
+    %cast.10 = bitcast { double, double }* %y to i8*
+    %cast.11 = bitcast { double, double }* %tmp.3 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.10, i8* align 8 %cast.11, i64 16, i1 false)
+    %cast.12 = bitcast { float, float }* %a to i8*
+    %cast.13 = bitcast { float, float }* %b to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.12, i8* align 4 %cast.13, i64 8, i1 false)
+    %cast.14 = bitcast { double, double }* %x to i8*
+    %cast.15 = bitcast { double, double }* %y to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.14, i8* align 8 %cast.15, i64 16, i1 false)
+    ret void
+  }
   )RAW_RESULT");
 
   bool broken = h.finish(StripDebugInfo);
@@ -631,9 +630,9 @@ TEST_P(BackendExprTests, TestCompareOps) {
   }
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    store i64 0, i64* %x
-    store i64 0, i64* %y
-    store double 0.000000e+00, double* %z
+    store i64 0, i64* %x, align 8
+    store i64 0, i64* %y, align 8
+    store double 0.000000e+00, double* %z, align 8
     %x.ld.0 = load i64, i64* %x
     %icmp.0 = icmp eq i64 9, %x.ld.0
     %zext.0 = zext i1 %icmp.0 to i8
@@ -728,8 +727,8 @@ TEST_P(BackendExprTests, TestArithOps) {
   }
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    store i64 0, i64* %x
-    store double 0.000000e+00, double* %y
+    store i64 0, i64* %x, align 8
+    store double 0.000000e+00, double* %y, align 8
     %x.ld.0 = load i64, i64* %x
     %add.0 = add i64 9, %x.ld.0
     %x.ld.1 = load i64, i64* %x
@@ -770,16 +769,16 @@ TEST_P(BackendExprTests, TestMoreArith) {
   h.mkAssign(vex, ypzpw);
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    store i64 0, i64* %x
-    store i64 9, i64* %y
-    store i64 10, i64* %z
-    store i64 11, i64* %w
+    store i64 0, i64* %x, align 8
+    store i64 9, i64* %y, align 8
+    store i64 10, i64* %z, align 8
+    store i64 11, i64* %w, align 8
     %y.ld.0 = load i64, i64* %y
     %z.ld.0 = load i64, i64* %z
     %add.0 = add i64 %y.ld.0, %z.ld.0
     %w.ld.0 = load i64, i64* %w
     %add.1 = add i64 %add.0, %w.ld.0
-    store i64 %add.1, i64* %x
+    store i64 %add.1, i64* %x, align 8
   )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
@@ -826,12 +825,12 @@ TEST_P(BackendExprTests, TestLogicalOps) {
   }
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    store i64 0, i64* %x
-    store i64 0, i64* %y
-    store i8 0, i8* %z
-    store i64 0, i64* %x2
-    store i64 0, i64* %y2
-    store i8 0, i8* %z2
+    store i64 0, i64* %x, align 8
+    store i64 0, i64* %y, align 8
+    store i8 0, i8* %z, align 1
+    store i64 0, i64* %x2, align 8
+    store i64 0, i64* %y2, align 8
+    store i8 0, i8* %z2, align 1
     %x.ld.0 = load i64, i64* %x
     %x2.ld.0 = load i64, i64* %x2
     %iand.0 = and i64 %x.ld.0, %x2.ld.0
@@ -932,9 +931,9 @@ TEST_P(BackendExprTests, TestMulDiv) {
   }
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    store i16 0, i16* %x
-    store i16 0, i16* %y
-    store double 0.000000e+00, double* %z
+    store i16 0, i16* %x, align 2
+    store i16 0, i16* %y, align 2
+    store double 0.000000e+00, double* %z, align 8
     %x.ld.0 = load i16, i16* %x
     %mul.0 = mul i16 -17, %x.ld.0
     %x.ld.1 = load i16, i16* %x
@@ -1012,10 +1011,10 @@ TEST_P(BackendExprTests, TestShift) {
   }
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    store i64 0, i64* %x
-    store i64 0, i64* %y
-    store i64 0, i64* %s
-    store i32 0, i32* %z
+    store i64 0, i64* %x, align 8
+    store i64 0, i64* %y, align 8
+    store i64 0, i64* %s, align 8
+    store i32 0, i32* %z, align 4
     %x.ld.0 = load i64, i64* %x
     %s.ld.0 = load i64, i64* %s
     %shl.0 = shl i64 %x.ld.0, %s.ld.0
@@ -1076,154 +1075,154 @@ TEST_P(BackendExprTests, TestComplexOps) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 {
-    entry:
-      %tmp.12 = alloca { double, double }
-      %tmp.11 = alloca { double, double }
-      %tmp.10 = alloca { double, double }
-      %tmp.9 = alloca { double, double }
-      %tmp.8 = alloca { double, double }
-      %tmp.7 = alloca { double, double }
-      %tmp.6 = alloca { double, double }
-      %tmp.5 = alloca { double, double }
-      %tmp.4 = alloca { double, double }
-      %tmp.3 = alloca { double, double }
-      %tmp.2 = alloca { double, double }
-      %tmp.1 = alloca { double, double }
-      %tmp.0 = alloca { double, double }
-      %x = alloca { double, double }
-      %y = alloca { double, double }
-      %z = alloca { double, double }
-      %b = alloca i8
-      %cast.0 = bitcast { double, double }* %x to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 bitcast ({ double, double }* @const.0 to i8*), i64 16, i1 false)
-      %cast.1 = bitcast { double, double }* %y to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.1, i8* align 8 bitcast ({ double, double }* @const.0 to i8*), i64 16, i1 false)
-      %cast.2 = bitcast { double, double }* %z to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.2, i8* align 8 bitcast ({ double, double }* @const.0 to i8*), i64 16, i1 false)
-      store i8 0, i8* %b
-      %cast.3 = bitcast { double, double }* %tmp.0 to i8*
-      %cast.4 = bitcast { double, double }* %x to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.3, i8* align 8 %cast.4, i64 16, i1 false)
-      %cast.5 = bitcast { double, double }* %tmp.1 to i8*
-      %cast.6 = bitcast { double, double }* %y to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.5, i8* align 8 %cast.6, i64 16, i1 false)
-      %field.0 = getelementptr inbounds { double, double }, { double, double }* %tmp.0, i32 0, i32 0
-      %.real.ld.0 = load double, double* %field.0
-      %field.1 = getelementptr inbounds { double, double }, { double, double }* %tmp.1, i32 0, i32 0
-      %.real.ld.1 = load double, double* %field.1
-      %fadd.0 = fadd double %.real.ld.0, %.real.ld.1
-      %field.2 = getelementptr inbounds { double, double }, { double, double }* %tmp.0, i32 0, i32 1
-      %.imag.ld.0 = load double, double* %field.2
-      %field.3 = getelementptr inbounds { double, double }, { double, double }* %tmp.1, i32 0, i32 1
-      %.imag.ld.1 = load double, double* %field.3
-      %fadd.1 = fadd double %.imag.ld.0, %.imag.ld.1
-      %field.4 = getelementptr inbounds { double, double }, { double, double }* %tmp.2, i32 0, i32 0
-      store double %fadd.0, double* %field.4
-      %field.5 = getelementptr inbounds { double, double }, { double, double }* %tmp.2, i32 0, i32 1
-      store double %fadd.1, double* %field.5
-      %cast.7 = bitcast { double, double }* %z to i8*
-      %cast.8 = bitcast { double, double }* %tmp.2 to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.7, i8* align 8 %cast.8, i64 16, i1 false)
-      %cast.9 = bitcast { double, double }* %tmp.3 to i8*
-      %cast.10 = bitcast { double, double }* %x to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.9, i8* align 8 %cast.10, i64 16, i1 false)
-      %cast.11 = bitcast { double, double }* %tmp.4 to i8*
-      %cast.12 = bitcast { double, double }* %y to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.11, i8* align 8 %cast.12, i64 16, i1 false)
-      %field.6 = getelementptr inbounds { double, double }, { double, double }* %tmp.3, i32 0, i32 0
-      %.real.ld.2 = load double, double* %field.6
-      %field.7 = getelementptr inbounds { double, double }, { double, double }* %tmp.4, i32 0, i32 0
-      %.real.ld.3 = load double, double* %field.7
-      %fsub.0 = fsub double %.real.ld.2, %.real.ld.3
-      %field.8 = getelementptr inbounds { double, double }, { double, double }* %tmp.3, i32 0, i32 1
-      %.imag.ld.2 = load double, double* %field.8
-      %field.9 = getelementptr inbounds { double, double }, { double, double }* %tmp.4, i32 0, i32 1
-      %.imag.ld.3 = load double, double* %field.9
-      %fsub.1 = fsub double %.imag.ld.2, %.imag.ld.3
-      %field.10 = getelementptr inbounds { double, double }, { double, double }* %tmp.5, i32 0, i32 0
-      store double %fsub.0, double* %field.10
-      %field.11 = getelementptr inbounds { double, double }, { double, double }* %tmp.5, i32 0, i32 1
-      store double %fsub.1, double* %field.11
-      %cast.13 = bitcast { double, double }* %z to i8*
-      %cast.14 = bitcast { double, double }* %tmp.5 to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.13, i8* align 8 %cast.14, i64 16, i1 false)
-      %cast.15 = bitcast { double, double }* %tmp.6 to i8*
-      %cast.16 = bitcast { double, double }* %x to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.15, i8* align 8 %cast.16, i64 16, i1 false)
-      %cast.17 = bitcast { double, double }* %tmp.7 to i8*
-      %cast.18 = bitcast { double, double }* %y to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.17, i8* align 8 %cast.18, i64 16, i1 false)
-      %field.12 = getelementptr inbounds { double, double }, { double, double }* %tmp.6, i32 0, i32 0
-      %.real.ld.4 = load double, double* %field.12
-      %field.13 = getelementptr inbounds { double, double }, { double, double }* %tmp.7, i32 0, i32 0
-      %.real.ld.5 = load double, double* %field.13
-      %fmul.0 = fmul double %.real.ld.4, %.real.ld.5
-      %field.14 = getelementptr inbounds { double, double }, { double, double }* %tmp.6, i32 0, i32 1
-      %.imag.ld.4 = load double, double* %field.14
-      %field.15 = getelementptr inbounds { double, double }, { double, double }* %tmp.7, i32 0, i32 1
-      %.imag.ld.5 = load double, double* %field.15
-      %fmul.1 = fmul double %.imag.ld.4, %.imag.ld.5
-      %fsub.2 = fsub double %fmul.0, %fmul.1
-      %field.16 = getelementptr inbounds { double, double }, { double, double }* %tmp.6, i32 0, i32 0
-      %.field.ld.0 = load double, double* %field.16
-      %field.17 = getelementptr inbounds { double, double }, { double, double }* %tmp.7, i32 0, i32 1
-      %.field.ld.1 = load double, double* %field.17
-      %fmul.2 = fmul double %.field.ld.0, %.field.ld.1
-      %field.18 = getelementptr inbounds { double, double }, { double, double }* %tmp.6, i32 0, i32 1
-      %.field.ld.2 = load double, double* %field.18
-      %field.19 = getelementptr inbounds { double, double }, { double, double }* %tmp.7, i32 0, i32 0
-      %.field.ld.3 = load double, double* %field.19
-      %fmul.3 = fmul double %.field.ld.2, %.field.ld.3
-      %fadd.2 = fadd double %fmul.2, %fmul.3
-      %field.20 = getelementptr inbounds { double, double }, { double, double }* %tmp.8, i32 0, i32 0
-      store double %fsub.2, double* %field.20
-      %field.21 = getelementptr inbounds { double, double }, { double, double }* %tmp.8, i32 0, i32 1
-      store double %fadd.2, double* %field.21
-      %cast.19 = bitcast { double, double }* %z to i8*
-      %cast.20 = bitcast { double, double }* %tmp.8 to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.19, i8* align 8 %cast.20, i64 16, i1 false)
-      %cast.21 = bitcast { double, double }* %tmp.9 to i8*
-      %cast.22 = bitcast { double, double }* %x to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.21, i8* align 8 %cast.22, i64 16, i1 false)
-      %cast.23 = bitcast { double, double }* %tmp.10 to i8*
-      %cast.24 = bitcast { double, double }* %y to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.23, i8* align 8 %cast.24, i64 16, i1 false)
-      %field.22 = getelementptr inbounds { double, double }, { double, double }* %tmp.9, i32 0, i32 0
-      %.real.ld.6 = load double, double* %field.22
-      %field.23 = getelementptr inbounds { double, double }, { double, double }* %tmp.10, i32 0, i32 0
-      %.real.ld.7 = load double, double* %field.23
-      %fcmp.0 = fcmp oeq double %.real.ld.6, %.real.ld.7
-      %zext.0 = zext i1 %fcmp.0 to i8
-      %field.24 = getelementptr inbounds { double, double }, { double, double }* %tmp.9, i32 0, i32 1
-      %.imag.ld.6 = load double, double* %field.24
-      %field.25 = getelementptr inbounds { double, double }, { double, double }* %tmp.10, i32 0, i32 1
-      %.imag.ld.7 = load double, double* %field.25
-      %fcmp.1 = fcmp oeq double %.imag.ld.6, %.imag.ld.7
-      %zext.1 = zext i1 %fcmp.1 to i8
-      %iand.0 = and i8 %zext.0, %zext.1
-      store i8 %iand.0, i8* %b
-      %cast.25 = bitcast { double, double }* %tmp.11 to i8*
-      %cast.26 = bitcast { double, double }* %x to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.25, i8* align 8 %cast.26, i64 16, i1 false)
-      %cast.27 = bitcast { double, double }* %tmp.12 to i8*
-      %cast.28 = bitcast { double, double }* %y to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.27, i8* align 8 %cast.28, i64 16, i1 false)
-      %field.26 = getelementptr inbounds { double, double }, { double, double }* %tmp.11, i32 0, i32 0
-      %.real.ld.8 = load double, double* %field.26
-      %field.27 = getelementptr inbounds { double, double }, { double, double }* %tmp.12, i32 0, i32 0
-      %.real.ld.9 = load double, double* %field.27
-      %fcmp.2 = fcmp une double %.real.ld.8, %.real.ld.9
-      %zext.2 = zext i1 %fcmp.2 to i8
-      %field.28 = getelementptr inbounds { double, double }, { double, double }* %tmp.11, i32 0, i32 1
-      %.imag.ld.8 = load double, double* %field.28
-      %field.29 = getelementptr inbounds { double, double }, { double, double }* %tmp.12, i32 0, i32 1
-      %.imag.ld.9 = load double, double* %field.29
-      %fcmp.3 = fcmp une double %.imag.ld.8, %.imag.ld.9
-      %zext.3 = zext i1 %fcmp.3 to i8
-      %ior.0 = or i8 %zext.2, %zext.3
-      store i8 %ior.0, i8* %b
-      ret void
-    }
+  entry:
+    %tmp.12 = alloca { double, double }
+    %tmp.11 = alloca { double, double }
+    %tmp.10 = alloca { double, double }
+    %tmp.9 = alloca { double, double }
+    %tmp.8 = alloca { double, double }
+    %tmp.7 = alloca { double, double }
+    %tmp.6 = alloca { double, double }
+    %tmp.5 = alloca { double, double }
+    %tmp.4 = alloca { double, double }
+    %tmp.3 = alloca { double, double }
+    %tmp.2 = alloca { double, double }
+    %tmp.1 = alloca { double, double }
+    %tmp.0 = alloca { double, double }
+    %x = alloca { double, double }
+    %y = alloca { double, double }
+    %z = alloca { double, double }
+    %b = alloca i8
+    %cast.0 = bitcast { double, double }* %x to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 bitcast ({ double, double }* @const.0 to i8*), i64 16, i1 false)
+    %cast.1 = bitcast { double, double }* %y to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.1, i8* align 8 bitcast ({ double, double }* @const.0 to i8*), i64 16, i1 false)
+    %cast.2 = bitcast { double, double }* %z to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.2, i8* align 8 bitcast ({ double, double }* @const.0 to i8*), i64 16, i1 false)
+    store i8 0, i8* %b, align 1
+    %cast.3 = bitcast { double, double }* %tmp.0 to i8*
+    %cast.4 = bitcast { double, double }* %x to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.3, i8* align 8 %cast.4, i64 16, i1 false)
+    %cast.5 = bitcast { double, double }* %tmp.1 to i8*
+    %cast.6 = bitcast { double, double }* %y to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.5, i8* align 8 %cast.6, i64 16, i1 false)
+    %field.0 = getelementptr inbounds { double, double }, { double, double }* %tmp.0, i32 0, i32 0
+    %.real.ld.0 = load double, double* %field.0
+    %field.1 = getelementptr inbounds { double, double }, { double, double }* %tmp.1, i32 0, i32 0
+    %.real.ld.1 = load double, double* %field.1
+    %fadd.0 = fadd double %.real.ld.0, %.real.ld.1
+    %field.2 = getelementptr inbounds { double, double }, { double, double }* %tmp.0, i32 0, i32 1
+    %.imag.ld.0 = load double, double* %field.2
+    %field.3 = getelementptr inbounds { double, double }, { double, double }* %tmp.1, i32 0, i32 1
+    %.imag.ld.1 = load double, double* %field.3
+    %fadd.1 = fadd double %.imag.ld.0, %.imag.ld.1
+    %field.4 = getelementptr inbounds { double, double }, { double, double }* %tmp.2, i32 0, i32 0
+    store double %fadd.0, double* %field.4, align 8
+    %field.5 = getelementptr inbounds { double, double }, { double, double }* %tmp.2, i32 0, i32 1
+    store double %fadd.1, double* %field.5, align 8
+    %cast.7 = bitcast { double, double }* %z to i8*
+    %cast.8 = bitcast { double, double }* %tmp.2 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.7, i8* align 8 %cast.8, i64 16, i1 false)
+    %cast.9 = bitcast { double, double }* %tmp.3 to i8*
+    %cast.10 = bitcast { double, double }* %x to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.9, i8* align 8 %cast.10, i64 16, i1 false)
+    %cast.11 = bitcast { double, double }* %tmp.4 to i8*
+    %cast.12 = bitcast { double, double }* %y to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.11, i8* align 8 %cast.12, i64 16, i1 false)
+    %field.6 = getelementptr inbounds { double, double }, { double, double }* %tmp.3, i32 0, i32 0
+    %.real.ld.2 = load double, double* %field.6
+    %field.7 = getelementptr inbounds { double, double }, { double, double }* %tmp.4, i32 0, i32 0
+    %.real.ld.3 = load double, double* %field.7
+    %fsub.0 = fsub double %.real.ld.2, %.real.ld.3
+    %field.8 = getelementptr inbounds { double, double }, { double, double }* %tmp.3, i32 0, i32 1
+    %.imag.ld.2 = load double, double* %field.8
+    %field.9 = getelementptr inbounds { double, double }, { double, double }* %tmp.4, i32 0, i32 1
+    %.imag.ld.3 = load double, double* %field.9
+    %fsub.1 = fsub double %.imag.ld.2, %.imag.ld.3
+    %field.10 = getelementptr inbounds { double, double }, { double, double }* %tmp.5, i32 0, i32 0
+    store double %fsub.0, double* %field.10, align 8
+    %field.11 = getelementptr inbounds { double, double }, { double, double }* %tmp.5, i32 0, i32 1
+    store double %fsub.1, double* %field.11, align 8
+    %cast.13 = bitcast { double, double }* %z to i8*
+    %cast.14 = bitcast { double, double }* %tmp.5 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.13, i8* align 8 %cast.14, i64 16, i1 false)
+    %cast.15 = bitcast { double, double }* %tmp.6 to i8*
+    %cast.16 = bitcast { double, double }* %x to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.15, i8* align 8 %cast.16, i64 16, i1 false)
+    %cast.17 = bitcast { double, double }* %tmp.7 to i8*
+    %cast.18 = bitcast { double, double }* %y to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.17, i8* align 8 %cast.18, i64 16, i1 false)
+    %field.12 = getelementptr inbounds { double, double }, { double, double }* %tmp.6, i32 0, i32 0
+    %.real.ld.4 = load double, double* %field.12
+    %field.13 = getelementptr inbounds { double, double }, { double, double }* %tmp.7, i32 0, i32 0
+    %.real.ld.5 = load double, double* %field.13
+    %fmul.0 = fmul double %.real.ld.4, %.real.ld.5
+    %field.14 = getelementptr inbounds { double, double }, { double, double }* %tmp.6, i32 0, i32 1
+    %.imag.ld.4 = load double, double* %field.14
+    %field.15 = getelementptr inbounds { double, double }, { double, double }* %tmp.7, i32 0, i32 1
+    %.imag.ld.5 = load double, double* %field.15
+    %fmul.1 = fmul double %.imag.ld.4, %.imag.ld.5
+    %fsub.2 = fsub double %fmul.0, %fmul.1
+    %field.16 = getelementptr inbounds { double, double }, { double, double }* %tmp.6, i32 0, i32 0
+    %.field.ld.0 = load double, double* %field.16
+    %field.17 = getelementptr inbounds { double, double }, { double, double }* %tmp.7, i32 0, i32 1
+    %.field.ld.1 = load double, double* %field.17
+    %fmul.2 = fmul double %.field.ld.0, %.field.ld.1
+    %field.18 = getelementptr inbounds { double, double }, { double, double }* %tmp.6, i32 0, i32 1
+    %.field.ld.2 = load double, double* %field.18
+    %field.19 = getelementptr inbounds { double, double }, { double, double }* %tmp.7, i32 0, i32 0
+    %.field.ld.3 = load double, double* %field.19
+    %fmul.3 = fmul double %.field.ld.2, %.field.ld.3
+    %fadd.2 = fadd double %fmul.2, %fmul.3
+    %field.20 = getelementptr inbounds { double, double }, { double, double }* %tmp.8, i32 0, i32 0
+    store double %fsub.2, double* %field.20, align 8
+    %field.21 = getelementptr inbounds { double, double }, { double, double }* %tmp.8, i32 0, i32 1
+    store double %fadd.2, double* %field.21, align 8
+    %cast.19 = bitcast { double, double }* %z to i8*
+    %cast.20 = bitcast { double, double }* %tmp.8 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.19, i8* align 8 %cast.20, i64 16, i1 false)
+    %cast.21 = bitcast { double, double }* %tmp.9 to i8*
+    %cast.22 = bitcast { double, double }* %x to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.21, i8* align 8 %cast.22, i64 16, i1 false)
+    %cast.23 = bitcast { double, double }* %tmp.10 to i8*
+    %cast.24 = bitcast { double, double }* %y to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.23, i8* align 8 %cast.24, i64 16, i1 false)
+    %field.22 = getelementptr inbounds { double, double }, { double, double }* %tmp.9, i32 0, i32 0
+    %.real.ld.6 = load double, double* %field.22
+    %field.23 = getelementptr inbounds { double, double }, { double, double }* %tmp.10, i32 0, i32 0
+    %.real.ld.7 = load double, double* %field.23
+    %fcmp.0 = fcmp oeq double %.real.ld.6, %.real.ld.7
+    %zext.0 = zext i1 %fcmp.0 to i8
+    %field.24 = getelementptr inbounds { double, double }, { double, double }* %tmp.9, i32 0, i32 1
+    %.imag.ld.6 = load double, double* %field.24
+    %field.25 = getelementptr inbounds { double, double }, { double, double }* %tmp.10, i32 0, i32 1
+    %.imag.ld.7 = load double, double* %field.25
+    %fcmp.1 = fcmp oeq double %.imag.ld.6, %.imag.ld.7
+    %zext.1 = zext i1 %fcmp.1 to i8
+    %iand.0 = and i8 %zext.0, %zext.1
+    store i8 %iand.0, i8* %b, align 1
+    %cast.25 = bitcast { double, double }* %tmp.11 to i8*
+    %cast.26 = bitcast { double, double }* %x to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.25, i8* align 8 %cast.26, i64 16, i1 false)
+    %cast.27 = bitcast { double, double }* %tmp.12 to i8*
+    %cast.28 = bitcast { double, double }* %y to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.27, i8* align 8 %cast.28, i64 16, i1 false)
+    %field.26 = getelementptr inbounds { double, double }, { double, double }* %tmp.11, i32 0, i32 0
+    %.real.ld.8 = load double, double* %field.26
+    %field.27 = getelementptr inbounds { double, double }, { double, double }* %tmp.12, i32 0, i32 0
+    %.real.ld.9 = load double, double* %field.27
+    %fcmp.2 = fcmp une double %.real.ld.8, %.real.ld.9
+    %zext.2 = zext i1 %fcmp.2 to i8
+    %field.28 = getelementptr inbounds { double, double }, { double, double }* %tmp.11, i32 0, i32 1
+    %.imag.ld.8 = load double, double* %field.28
+    %field.29 = getelementptr inbounds { double, double }, { double, double }* %tmp.12, i32 0, i32 1
+    %.imag.ld.9 = load double, double* %field.29
+    %fcmp.3 = fcmp une double %.imag.ld.8, %.imag.ld.9
+    %zext.3 = zext i1 %fcmp.3 to i8
+    %ior.0 = or i8 %zext.2, %zext.3
+    store i8 %ior.0, i8* %b, align 1
+    ret void
+  }
   )RAW_RESULT");
 
   bool broken = h.finish(StripDebugInfo);
@@ -1267,22 +1266,22 @@ TEST_P(BackendExprTests, TestComplexExpressions) {
   h.mkAssign(xvex3, compex);
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    store double 0.000000e+00, double* %a
-    store double 0.000000e+00, double* %b
+    store double 0.000000e+00, double* %a, align 8
+    store double 0.000000e+00, double* %b, align 8
     %cast.0 = bitcast { double, double }* %x to i8*
     call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 bitcast ({ double, double }* @const.0 to i8*), i64 16, i1 false)
     %field.0 = getelementptr inbounds { double, double }, { double, double }* %x, i32 0, i32 0
     %x.real.ld.0 = load double, double* %field.0
-    store double %x.real.ld.0, double* %a
+    store double %x.real.ld.0, double* %a, align 8
     %field.1 = getelementptr inbounds { double, double }, { double, double }* %x, i32 0, i32 1
     %x.imag.ld.0 = load double, double* %field.1
-    store double %x.imag.ld.0, double* %b
+    store double %x.imag.ld.0, double* %b, align 8
     %b.ld.0 = load double, double* %b
     %a.ld.0 = load double, double* %a
     %field.2 = getelementptr inbounds { double, double }, { double, double }* %x, i32 0, i32 0
-    store double %b.ld.0, double* %field.2
+    store double %b.ld.0, double* %field.2, align 8
     %field.3 = getelementptr inbounds { double, double }, { double, double }* %x, i32 0, i32 1
-    store double %a.ld.0, double* %field.3
+    store double %a.ld.0, double* %field.3, align 8
   )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
@@ -1344,29 +1343,29 @@ TEST_P(BackendExprTests, TestConditionalExpression1) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 {
-    entry:
-      %a = alloca i64
-      %b = alloca i64
-      store i64 0, i64* %a
-      store i64 0, i64* %b
-      %a.ld.0 = load i64, i64* %a
-      %b.ld.0 = load i64, i64* %b
-      %icmp.0 = icmp slt i64 %a.ld.0, %b.ld.0
-      %zext.0 = zext i1 %icmp.0 to i8
-      %trunc.0 = trunc i8 %zext.0 to i1
-      br i1 %trunc.0, label %then.0, label %else.0
-
-    then.0:                                           ; preds = %entry
-      call void @foo(i8* nest undef)
-      br label %fallthrough.0
-
-    fallthrough.0:                                    ; preds = %else.0, %then.0
-      ret void
-
-    else.0:                                           ; preds = %entry
-      call void @foo(i8* nest undef)
-      br label %fallthrough.0
-    }
+  entry:
+    %a = alloca i64
+    %b = alloca i64
+    store i64 0, i64* %a, align 8
+    store i64 0, i64* %b, align 8
+    %a.ld.0 = load i64, i64* %a
+    %b.ld.0 = load i64, i64* %b
+    %icmp.0 = icmp slt i64 %a.ld.0, %b.ld.0
+    %zext.0 = zext i1 %icmp.0 to i8
+    %trunc.0 = trunc i8 %zext.0 to i1
+    br i1 %trunc.0, label %then.0, label %else.0
+  
+  then.0:                                           ; preds = %entry
+    call void @foo(i8* nest undef)
+    br label %fallthrough.0
+  
+  fallthrough.0:                                    ; preds = %else.0, %then.0
+    ret void
+  
+  else.0:                                           ; preds = %entry
+    call void @foo(i8* nest undef)
+    br label %fallthrough.0
+  }
   )RAW_RESULT");
 
   bool broken = h.finish(StripDebugInfo);
@@ -1401,22 +1400,25 @@ TEST_P(BackendExprTests, TestConditionalExpression2) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 {
-    entry:
-      %a = alloca i64
-      %tmpv.0 = alloca i64
-      store i64 0, i64* %a
-      br i1 true, label %then.0, label %else.0
-    then.0:                                           ; preds = %entry
-      call void @foo(i8* nest undef)
-      br label %fallthrough.0
-    fallthrough.0:                                    ; preds = %else.0, %then.0
-      %tmpv.0.ld.0 = load i64, i64* %tmpv.0
-      ret void
-    else.0:                                           ; preds = %entry
-      %a.ld.0 = load i64, i64* %a
-      store i64 %a.ld.0, i64* %tmpv.0
-      br label %fallthrough.0
-    }
+  entry:
+    %a = alloca i64
+    %tmpv.0 = alloca i64
+    store i64 0, i64* %a, align 8
+    br i1 true, label %then.0, label %else.0
+  
+  then.0:                                           ; preds = %entry
+    call void @foo(i8* nest undef)
+    br label %fallthrough.0
+  
+  fallthrough.0:                                    ; preds = %else.0, %then.0
+    %tmpv.0.ld.0 = load i64, i64* %tmpv.0
+    ret void
+  
+  else.0:                                           ; preds = %entry
+    %a.ld.0 = load i64, i64* %a
+    store i64 %a.ld.0, i64* %tmpv.0, align 8
+    br label %fallthrough.0
+  }
   )RAW_RESULT");
 
   bool broken = h.finish(StripDebugInfo);
@@ -1454,34 +1456,34 @@ TEST(BackendExprTests, TestConditionalExpression3Amd64) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo({ [16 x i32], i32 }* sret %sret.formal.0, i8* nest %nest.0, { [16 x i32], i32 }* byval %p0, i32 %p1) #0 {
-    entry:
-      %p1.addr = alloca i32
-      %a = alloca { [16 x i32], i32 }
-      %tmpv.0 = alloca { [16 x i32], i32 }
-      store i32 %p1, i32* %p1.addr
-      %p1.ld.0 = load i32, i32* %p1.addr
-      %icmp.0 = icmp slt i32 %p1.ld.0, 7
-      %zext.0 = zext i1 %icmp.0 to i8
-      %trunc.0 = trunc i8 %zext.0 to i1
-      br i1 %trunc.0, label %then.0, label %else.0
-
-    then.0:                                           ; preds = %entry
-      %cast.0 = bitcast { [16 x i32], i32 }* %tmpv.0 to i8*
-      %cast.1 = bitcast { [16 x i32], i32 }* %p0 to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.0, i8* align 4 %cast.1, i64 68, i1 false)
-      br label %fallthrough.0
-
-    fallthrough.0:                                    ; preds = %else.0, %then.0
-      %cast.3 = bitcast { [16 x i32], i32 }* %a to i8*
-      %cast.4 = bitcast { [16 x i32], i32 }* %tmpv.0 to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.3, i8* align 4 %cast.4, i64 68, i1 false)
-      ret void
-
-    else.0:                                           ; preds = %entry
-      %cast.2 = bitcast { [16 x i32], i32 }* %tmpv.0 to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.2, i8* align 4 bitcast ({ [16 x i32], i32 }* @const.0 to i8*), i64 68, i1 false)
-      br label %fallthrough.0
-    }
+  entry:
+    %p1.addr = alloca i32
+    %a = alloca { [16 x i32], i32 }
+    %tmpv.0 = alloca { [16 x i32], i32 }
+    store i32 %p1, i32* %p1.addr, align 4
+    %p1.ld.0 = load i32, i32* %p1.addr
+    %icmp.0 = icmp slt i32 %p1.ld.0, 7
+    %zext.0 = zext i1 %icmp.0 to i8
+    %trunc.0 = trunc i8 %zext.0 to i1
+    br i1 %trunc.0, label %then.0, label %else.0
+  
+  then.0:                                           ; preds = %entry
+    %cast.0 = bitcast { [16 x i32], i32 }* %tmpv.0 to i8*
+    %cast.1 = bitcast { [16 x i32], i32 }* %p0 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.0, i8* align 4 %cast.1, i64 68, i1 false)
+    br label %fallthrough.0
+  
+  fallthrough.0:                                    ; preds = %else.0, %then.0
+    %cast.3 = bitcast { [16 x i32], i32 }* %a to i8*
+    %cast.4 = bitcast { [16 x i32], i32 }* %tmpv.0 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.3, i8* align 4 %cast.4, i64 68, i1 false)
+    ret void
+  
+  else.0:                                           ; preds = %entry
+    %cast.2 = bitcast { [16 x i32], i32 }* %tmpv.0 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.2, i8* align 4 bitcast ({ [16 x i32], i32 }* @const.0 to i8*), i64 68, i1 false)
+    br label %fallthrough.0
+  }
   )RAW_RESULT");
 
   bool broken = h.finish(StripDebugInfo);
@@ -1529,34 +1531,34 @@ TEST(BackendExprTests, TestConditionalExpression3Arm64) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo({ [16 x i32], i32 }* sret %sret.formal.0, i8* nest %nest.0, { [16 x i32], i32 }* %p0, i32 %p1) #0 {
-    entry:
-      %p1.addr = alloca i32
-      %a = alloca { [16 x i32], i32 }
-      %tmpv.0 = alloca { [16 x i32], i32 }
-      store i32 %p1, i32* %p1.addr
-      %p1.ld.0 = load i32, i32* %p1.addr
-      %icmp.0 = icmp slt i32 %p1.ld.0, 7
-      %zext.0 = zext i1 %icmp.0 to i8
-      %trunc.0 = trunc i8 %zext.0 to i1
-      br i1 %trunc.0, label %then.0, label %else.0
-
-    then.0:                                           ; preds = %entry
-      %cast.0 = bitcast { [16 x i32], i32 }* %tmpv.0 to i8*
-      %cast.1 = bitcast { [16 x i32], i32 }* %p0 to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.0, i8* align 4 %cast.1, i64 68, i1 false)
-      br label %fallthrough.0
-
-    fallthrough.0:                                    ; preds = %else.0, %then.0
-      %cast.3 = bitcast { [16 x i32], i32 }* %a to i8*
-      %cast.4 = bitcast { [16 x i32], i32 }* %tmpv.0 to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.3, i8* align 4 %cast.4, i64 68, i1 false)
-      ret void
-
-    else.0:                                           ; preds = %entry
-      %cast.2 = bitcast { [16 x i32], i32 }* %tmpv.0 to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.2, i8* align 4 bitcast ({ [16 x i32], i32 }* @const.0 to i8*), i64 68, i1 false)
-      br label %fallthrough.0
-    }
+  entry:
+    %p1.addr = alloca i32
+    %a = alloca { [16 x i32], i32 }
+    %tmpv.0 = alloca { [16 x i32], i32 }
+    store i32 %p1, i32* %p1.addr, align 4
+    %p1.ld.0 = load i32, i32* %p1.addr
+    %icmp.0 = icmp slt i32 %p1.ld.0, 7
+    %zext.0 = zext i1 %icmp.0 to i8
+    %trunc.0 = trunc i8 %zext.0 to i1
+    br i1 %trunc.0, label %then.0, label %else.0
+  
+  then.0:                                           ; preds = %entry
+    %cast.0 = bitcast { [16 x i32], i32 }* %tmpv.0 to i8*
+    %cast.1 = bitcast { [16 x i32], i32 }* %p0 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.0, i8* align 4 %cast.1, i64 68, i1 false)
+    br label %fallthrough.0
+  
+  fallthrough.0:                                    ; preds = %else.0, %then.0
+    %cast.3 = bitcast { [16 x i32], i32 }* %a to i8*
+    %cast.4 = bitcast { [16 x i32], i32 }* %tmpv.0 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.3, i8* align 4 %cast.4, i64 68, i1 false)
+    ret void
+  
+  else.0:                                           ; preds = %entry
+    %cast.2 = bitcast { [16 x i32], i32 }* %tmpv.0 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.2, i8* align 4 bitcast ({ [16 x i32], i32 }* @const.0 to i8*), i64 68, i1 false)
+    br label %fallthrough.0
+  }
   )RAW_RESULT");
 
   bool broken = h.finish(StripDebugInfo);
@@ -1588,19 +1590,19 @@ TEST_P(BackendExprTests, TestCompoundExpression) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define i64 @foo(i8* nest %nest.0, i32 %param1, i32 %param2, i64* %param3) #0 {
-      entry:
-        %param1.addr = alloca i32
-        %param2.addr = alloca i32
-        %param3.addr = alloca i64*
-        %x = alloca i64
-        store i32 %param1, i32* %param1.addr
-        store i32 %param2, i32* %param2.addr
-        store i64* %param3, i64** %param3.addr
-        store i64 0, i64* %x
-        store i64 5, i64* %x
-        %x.ld.0 = load i64, i64* %x
-        ret i64 0
-      }
+  entry:
+    %param1.addr = alloca i32
+    %param2.addr = alloca i32
+    %param3.addr = alloca i64*
+    %x = alloca i64
+    store i32 %param1, i32* %param1.addr, align 4
+    store i32 %param2, i32* %param2.addr, align 4
+    store i64* %param3, i64** %param3.addr, align 8
+    store i64 0, i64* %x, align 8
+    store i64 5, i64* %x, align 8
+    %x.ld.0 = load i64, i64* %x
+    ret i64 0
+  }
   )RAW_RESULT");
 
   bool broken = h.finish(StripDebugInfo);
@@ -1638,31 +1640,31 @@ TEST_P(BackendExprTests, TestCompoundExpression2) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define i64 @foo(i8* nest %nest.0, i32 %param1, i32 %param2, i64* %param3) #0 {
-      entry:
-      %tmp.0 = alloca { i64, i64 }
-      %param1.addr = alloca i32
-      %param2.addr = alloca i32
-      %param3.addr = alloca i64*
-      %x = alloca i64
-      %y = alloca { i64, i64 }
-      store i32 %param1, i32* %param1.addr
-      store i32 %param2, i32* %param2.addr
-      store i64* %param3, i64** %param3.addr
-      store i64 0, i64* %x
-      %cast.0 = bitcast { i64, i64 }* %y to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 bitcast ({ i64, i64 }* @const.0 to i8*), i64 16, i1 false)
-      store i64 5, i64* %x
-      %x.ld.0 = load i64, i64* %x
-      %x.ld.1 = load i64, i64* %x
-      %field.0 = getelementptr inbounds { i64, i64 }, { i64, i64 }* %tmp.0, i32 0, i32 0
-      store i64 %x.ld.0, i64* %field.0
-      %field.1 = getelementptr inbounds { i64, i64 }, { i64, i64 }* %tmp.0, i32 0, i32 1
-      store i64 %x.ld.1, i64* %field.1
-      %cast.1 = bitcast { i64, i64 }* %y to i8*
-      %cast.2 = bitcast { i64, i64 }* %tmp.0 to i8*
-      call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.1, i8* align 8 %cast.2, i64 16, i1 false)
-      ret i64 0
-    }
+  entry:
+    %tmp.0 = alloca { i64, i64 }
+    %param1.addr = alloca i32
+    %param2.addr = alloca i32
+    %param3.addr = alloca i64*
+    %x = alloca i64
+    %y = alloca { i64, i64 }
+    store i32 %param1, i32* %param1.addr, align 4
+    store i32 %param2, i32* %param2.addr, align 4
+    store i64* %param3, i64** %param3.addr, align 8
+    store i64 0, i64* %x, align 8
+    %cast.0 = bitcast { i64, i64 }* %y to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.0, i8* align 8 bitcast ({ i64, i64 }* @const.0 to i8*), i64 16, i1 false)
+    store i64 5, i64* %x, align 8
+    %x.ld.0 = load i64, i64* %x
+    %x.ld.1 = load i64, i64* %x
+    %field.0 = getelementptr inbounds { i64, i64 }, { i64, i64 }* %tmp.0, i32 0, i32 0
+    store i64 %x.ld.0, i64* %field.0, align 8
+    %field.1 = getelementptr inbounds { i64, i64 }, { i64, i64 }* %tmp.0, i32 0, i32 1
+    store i64 %x.ld.1, i64* %field.1, align 8
+    %cast.1 = bitcast { i64, i64 }* %y to i8*
+    %cast.2 = bitcast { i64, i64 }* %tmp.0 to i8*
+    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.1, i8* align 8 %cast.2, i64 16, i1 false)
+    ret i64 0
+  }
   )RAW_RESULT");
 
   bool broken = h.finish(StripDebugInfo);
@@ -1700,33 +1702,33 @@ TEST_P(BackendExprTests, TestLhsConditionalExpression) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0, i32* %p0, i32* %p1) #0 {
-    entry:
-      %p0.addr = alloca i32*
-      %p1.addr = alloca i32*
-      %tmpv.0 = alloca i32*
-      store i32* %p0, i32** %p0.addr
-      store i32* %p1, i32** %p1.addr
-      %p0.ld.0 = load i32*, i32** %p0.addr
-      %icmp.0 = icmp eq i32* %p0.ld.0, null
-      %zext.0 = zext i1 %icmp.0 to i8
-      %trunc.0 = trunc i8 %zext.0 to i1
-      br i1 %trunc.0, label %then.0, label %else.0
-
-    then.0:                                           ; preds = %entry
-      %p1.ld.0 = load i32*, i32** %p1.addr
-      store i32* %p1.ld.0, i32** %tmpv.0
-      br label %fallthrough.0
-
-    fallthrough.0:                                ; preds = %else.0, %then.0
-      %tmpv.0.ld.0 = load i32*, i32** %tmpv.0
-      store i32 7, i32* %tmpv.0.ld.0
-      ret void
-
-    else.0:                                           ; preds = %entry
-      %p0.ld.1 = load i32*, i32** %p0.addr
-      store i32* %p0.ld.1, i32** %tmpv.0
-      br label %fallthrough.0
-    }
+  entry:
+    %p0.addr = alloca i32*
+    %p1.addr = alloca i32*
+    %tmpv.0 = alloca i32*
+    store i32* %p0, i32** %p0.addr, align 8
+    store i32* %p1, i32** %p1.addr, align 8
+    %p0.ld.0 = load i32*, i32** %p0.addr
+    %icmp.0 = icmp eq i32* %p0.ld.0, null
+    %zext.0 = zext i1 %icmp.0 to i8
+    %trunc.0 = trunc i8 %zext.0 to i1
+    br i1 %trunc.0, label %then.0, label %else.0
+  
+  then.0:                                           ; preds = %entry
+    %p1.ld.0 = load i32*, i32** %p1.addr
+    store i32* %p1.ld.0, i32** %tmpv.0, align 8
+    br label %fallthrough.0
+  
+  fallthrough.0:                                    ; preds = %else.0, %then.0
+    %tmpv.0.ld.0 = load i32*, i32** %tmpv.0
+    store i32 7, i32* %tmpv.0.ld.0, align 4
+    ret void
+  
+  else.0:                                           ; preds = %entry
+    %p0.ld.1 = load i32*, i32** %p0.addr
+    store i32* %p0.ld.1, i32** %tmpv.0, align 8
+    br label %fallthrough.0
+  }
   )RAW_RESULT");
 
   bool broken = h.finish(StripDebugInfo);
@@ -1772,24 +1774,24 @@ TEST_P(BackendExprTests, TestUnaryExpression) {
   h.mkLocal("r", bf64t, be->unary_expression(OPERATOR_MINUS, veq, loc));
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    store i8 0, i8* %x
+    store i8 0, i8* %x, align 1
     %x.ld.0 = load i8, i8* %x
     %icmp.0 = icmp ne i8 %x.ld.0, 0
     %xor.0 = xor i1 %icmp.0, true
     %zext.0 = zext i1 %xor.0 to i8
-    store i8 %zext.0, i8* %y
-    store i32 0, i32* %a
+    store i8 %zext.0, i8* %y, align 1
+    store i32 0, i32* %a, align 4
     %a.ld.0 = load i32, i32* %a
     %sub.0 = sub i32 0, %a.ld.0
-    store i32 %sub.0, i32* %b
-    store i64 0, i64* %z
+    store i32 %sub.0, i32* %b, align 4
+    store i64 0, i64* %z, align 8
     %z.ld.0 = load i64, i64* %z
     %xor.1 = xor i64 %z.ld.0, -1
-    store i64 %xor.1, i64* %w
-    store double 0.000000e+00, double* %q
+    store i64 %xor.1, i64* %w, align 8
+    store double 0.000000e+00, double* %q, align 8
     %q.ld.0 = load double, double* %q
     %fsub.0 = fsub double -0.000000e+00, %q.ld.0
-    store double %fsub.0, double* %r
+    store double %fsub.0, double* %r, align 8
   )RAW_RESULT");
 
   bool isOK = h.expectBlock(exp);
