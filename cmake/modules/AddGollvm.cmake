@@ -21,6 +21,12 @@ set(GOLLVM_LIBVERSION "${libversion}")
 set(GOLLVM_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}")
 set(GOLLVM_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/${libsubdir}")
 
+# Check to see whether the build compiler supports -fcf-protection=branch
+set(OLD_CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS}")
+set(CMAKE_REQUIRED_FLAGS "-fcf-protection=branch")
+check_c_source_compiles("#include<stdio.h>\nint main(){printf(\"hello\");\nreturn 0;}" C_SUPPORTS_CF_PROTECTION_BRANCH)
+set(CMAKE_REQUIRED_FLAGS "${OLD_CMAKE_REQUIRED_FLAGS}")
+
 # We need to check if '-fsplit-stack' is supported with 'USING_SPLIT_STACK'
 # at compile time. So define this macro in GollvmConfig.h if it's supported.
 if(GOLLVM_USE_SPLIT_STACK)
@@ -31,8 +37,25 @@ if(GOLLVM_USE_SPLIT_STACK)
   # splitting. So here we do this test with ld.gold linker.
   # FIXME: update here once one day there is a linker that supports '-fsplit-stack'
   # on arm64.
-  SET(CMAKE_REQUIRED_FLAGS "-fuse-ld=gold -fsplit-stack")
-  check_c_source_compiles("#include<stdio.h>\nint main(){printf(\"hello\");\nreturn 0;}" C_SUPPORTS_SPLIT_STACK)
+  set(C_SUPPORTS_SPLIT_STACK 0)
+  set(CMAKE_REQUIRED_FLAGS "-fuse-ld=gold -fsplit-stack")
+  check_c_source_compiles("#include<stdio.h>\nint main(){printf(\"hello\");\nreturn 0;}" SPLIT_STACK_FUNCTIONAL)
+  if(NOT SPLIT_STACK_FUNCTIONAL)
+    if(C_SUPPORTS_CF_PROTECTION_BRANCH)
+      # Try again with -fcf-protection=none, since that option
+      # can cause unpleasant interactions with gold (see
+      # https://sourceware.org/bugzilla/show_bug.cgi?id=25921 for details).
+      message(STATUS "trying -fcf-protection=none workaround")
+      SET(CMAKE_REQUIRED_FLAGS "-fuse-ld=gold -fsplit-stack -fcf-protection=none")
+      check_c_source_compiles("#include<stdio.h>\nint main(){printf(\"hello\");\nreturn 0;}" SPLIT_STACK_WORKAROUND)
+      if(SPLIT_STACK_WORKAROUND)
+        message(STATUS "applying -fcf-protection=none workaround")
+        set(C_SUPPORTS_SPLIT_STACK 1)
+      endif()
+    endif()
+  else()
+    set(C_SUPPORTS_SPLIT_STACK 1)
+  endif()
   if(NOT C_SUPPORTS_SPLIT_STACK)
     message(SEND_ERROR "C compiler does not support -fsplit-stack")
   else()
