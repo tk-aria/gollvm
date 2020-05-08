@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "481e35ca_396ee70a",
+        "filename": "driver/GnuTools.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 236,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-05-08T12:05:33Z",
+      "side": 1,
+      "message": "The comment seems to say that adding this option is a workaround for the bug in question, but reading the text of the bug, I don\u0027t see anything about this workaround.  Maybe you could add the workaround to the bug?",
+      "range": {
+        "startLine": 236,
+        "startChar": 1,
+        "endLine": 236,
+        "endChar": 38
+      },
+      "revId": "758bb43881c3f2340bc2208c6d8a33372369195c",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ba6224a8_baf46083",
+        "filename": "driver/GnuTools.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 341,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-05-08T12:05:33Z",
+      "side": 1,
+      "message": "This switches the default across the board (e.g. including for linux/amd64), which I don\u0027t think is what we want -- it would be better to avoid gold on platforms where it doesn\u0027t work, but use it on platforms where it does.",
+      "revId": "758bb43881c3f2340bc2208c6d8a33372369195c",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
