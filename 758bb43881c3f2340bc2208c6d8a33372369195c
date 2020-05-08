@@ -2,6 +2,29 @@
   "comments": [
     {
       "key": {
+        "uuid": "70f10e9d_6970fec7",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2020-05-08T15:21:47Z",
+      "side": 1,
+      "message": "I\u0027m not sure this is true. I think only gold supports split stacks. Instead of changing the default, I think it may be better to make it configureable at cmake time.",
+      "range": {
+        "startLine": 11,
+        "startChar": 40,
+        "endLine": 11,
+        "endChar": 66
+      },
+      "revId": "758bb43881c3f2340bc2208c6d8a33372369195c",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "481e35ca_396ee70a",
         "filename": "driver/GnuTools.cpp",
         "patchSetId": 1
