@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "dfdbe50d_2f0d206d",
+        "filename": "unittests/BackendCore/BackendCABIOracleTests.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 540,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-05-08T17:12:54Z",
+      "side": 1,
+      "message": "In think in this case it\u0027s a vector, which the LLVM machinery is aligning by 8. See\nhttps://github.com/llvm/llvm-project/blob/8dfe819bcd231486db3058e2538fff0f569e3c1a/llvm/lib/IR/DataLayout.cpp#L557\nas compared with line 763 below, where you have a size-2 array of float. \nAt least that\u0027s my understanding.",
+      "parentUuid": "c4da3b7d_3cc646c0",
+      "revId": "7ebf7be3a61eec1da7ac85184ed29097e2eea7b7",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "259a3be3_4354649f",
         "filename": "unittests/BackendCore/BackendCABIOracleTests.cpp",
         "patchSetId": 1
@@ -33,6 +51,24 @@
       "revId": "7ebf7be3a61eec1da7ac85184ed29097e2eea7b7",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6798b1bd_d512281a",
+        "filename": "unittests/BackendCore/BackendCABIOracleTests.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 542,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-05-08T17:12:54Z",
+      "side": 1,
+      "message": "Yah, it does seem weird.",
+      "parentUuid": "259a3be3_4354649f",
+      "revId": "7ebf7be3a61eec1da7ac85184ed29097e2eea7b7",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
