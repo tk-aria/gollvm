@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c4da3b7d_3cc646c0",
+        "filename": "unittests/BackendCore/BackendCABIOracleTests.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 540,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2020-05-08T17:00:06Z",
+      "side": 1,
+      "message": "Not sure why this is align 8 whereas some other places below where we load/store two floats with align 4. (I guess this is fine.)",
+      "revId": "7ebf7be3a61eec1da7ac85184ed29097e2eea7b7",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "259a3be3_4354649f",
+        "filename": "unittests/BackendCore/BackendCABIOracleTests.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 542,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2020-05-08T17:00:06Z",
+      "side": 1,
+      "message": "We load an i48 with align 8? Didn\u0027t realize we do that... (This is fine.)",
+      "revId": "7ebf7be3a61eec1da7ac85184ed29097e2eea7b7",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
