@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "957f4f30_b87d96f1",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 24534
+      },
+      "writtenOn": "2020-05-09T02:58:32Z",
+      "side": 1,
+      "message": "Yes, you are right. Although everything seems to be fine at the moment, this document https://gcc.gnu.org/wiki/SplitStacks says that full split stack support requires the gold linker. Making it configurable is a good idea, thanks.",
+      "parentUuid": "70f10e9d_6970fec7",
+      "range": {
+        "startLine": 11,
+        "startChar": 40,
+        "endLine": 11,
+        "endChar": 66
+      },
+      "revId": "758bb43881c3f2340bc2208c6d8a33372369195c",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "481e35ca_396ee70a",
         "filename": "driver/GnuTools.cpp",
         "patchSetId": 1
@@ -48,6 +72,30 @@
     },
     {
       "key": {
+        "uuid": "104a3aad_3c9c1dca",
+        "filename": "driver/GnuTools.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 236,
+      "author": {
+        "id": 24534
+      },
+      "writtenOn": "2020-05-09T02:58:32Z",
+      "side": 1,
+      "message": "In fact there is an older issue ticket related to this bug,https://bugs.chromium.org/p/chromium/issues/detail?id\u003d437106, the workaround was raised there. I do n’t know why the problem has not been fixed on arm64, so my colleague reported it again. I don\u0027t work on binutils, so I won\u0027t fix it. Thanks.",
+      "parentUuid": "481e35ca_396ee70a",
+      "range": {
+        "startLine": 236,
+        "startChar": 1,
+        "endLine": 236,
+        "endChar": 38
+      },
+      "revId": "758bb43881c3f2340bc2208c6d8a33372369195c",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "ba6224a8_baf46083",
         "filename": "driver/GnuTools.cpp",
         "patchSetId": 1
@@ -59,6 +107,24 @@
       "writtenOn": "2020-05-08T12:05:33Z",
       "side": 1,
       "message": "This switches the default across the board (e.g. including for linux/amd64), which I don\u0027t think is what we want -- it would be better to avoid gold on platforms where it doesn\u0027t work, but use it on platforms where it does.",
+      "revId": "758bb43881c3f2340bc2208c6d8a33372369195c",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cc1167b0_808dd2ec",
+        "filename": "driver/GnuTools.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 341,
+      "author": {
+        "id": 24534
+      },
+      "writtenOn": "2020-05-09T02:58:32Z",
+      "side": 1,
+      "message": "Sorry I didn\u0027t noticed that ld doesn\u0027t fully support -fsplit-stack, I did some split-stack tests for ld linker, also I built gollvm with ld on linux/amd64, everything seems ok. But since gold has better support for -fsplit-stack, I also think we should use gold on linux/amd64 by default. Cherry ’s suggestion is good, We can add a cmake option to configure the default linker. What do you think of this?",
+      "parentUuid": "ba6224a8_baf46083",
       "revId": "758bb43881c3f2340bc2208c6d8a33372369195c",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
