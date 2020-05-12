@@ -16,6 +16,24 @@
       "revId": "9c85b34f56b87b6e86dda95fbeb0826f856950f1",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3528bf2c_7d7d5b2a",
+        "filename": "driver/GnuTools.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 344,
+      "author": {
+        "id": 24534
+      },
+      "writtenOn": "2020-05-12T09:11:55Z",
+      "side": 1,
+      "message": "If we didn\u0027t specify -DLLVM_USE_LINKER\u003d\"XXX\" in cmake command line, then GOLLVM_DEFAULT_LINKER is not defined, \"gold\" will be the default. I wonder if I understand your question.",
+      "parentUuid": "47b3fd77_02cb15fb",
+      "revId": "9c85b34f56b87b6e86dda95fbeb0826f856950f1",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
