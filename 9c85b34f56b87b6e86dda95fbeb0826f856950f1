@@ -34,6 +34,24 @@
       "revId": "9c85b34f56b87b6e86dda95fbeb0826f856950f1",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b16bb155_9eb07ff7",
+        "filename": "driver/GnuTools.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 344,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-05-12T14:12:15Z",
+      "side": 1,
+      "message": "I tested the patch with and without  -DLLVM_USE_LINKER\u003d\"XXX\" and it is doing the right thing. The assignment in the *.cmake file is unconditional, but if LLVM_USE_LINKER is not set we won\u0027t get the preprocessors symbol.",
+      "parentUuid": "3528bf2c_7d7d5b2a",
+      "revId": "9c85b34f56b87b6e86dda95fbeb0826f856950f1",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
