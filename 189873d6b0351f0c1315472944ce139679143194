@@ -34,6 +34,24 @@
       "revId": "189873d6b0351f0c1315472944ce139679143194",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3058ff3d_f5f698ad",
+        "filename": "bridge/go-llvm-materialize.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1385,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-05-13T11:46:41Z",
+      "side": 1,
+      "message": "Sorry, I wasn\u0027t clear about my intent.\n\nWhat I had in mind was using a C++ \"if\" statement as opposed to #ifdef, so that if gollvm targets N different architectures, we can have a single llvm-goc binary as opposed to N target-specific binaries. That single binary would then emit code for the correct arch based on the target setting.\n\nSo makeGetgArm64 would always be compiled in, but down below in makeGetg, the code would look something like\n\n  if (be-\u003egetTargetTriple().getArch() \u003d\u003d llvm::Triple::aarch64) {\n    return makeGetgArm64(resType, builder, be);\n  } else {\n    return builder-\u003eCreateLoad(g);\n  }\n\ninstead of using the #ifdef equivalent. Doing this may require some plumbing work to pass the target triple into the bridge (probably pass target triple into Llvm_backend() constructor).",
+      "parentUuid": "8727aee5_49518f79",
+      "revId": "189873d6b0351f0c1315472944ce139679143194",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
