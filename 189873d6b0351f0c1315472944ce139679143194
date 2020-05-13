@@ -16,6 +16,24 @@
       "revId": "189873d6b0351f0c1315472944ce139679143194",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8727aee5_49518f79",
+        "filename": "bridge/go-llvm-materialize.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1385,
+      "author": {
+        "id": 24534
+      },
+      "writtenOn": "2020-05-13T01:48:07Z",
+      "side": 1,
+      "message": "You mean defining getg implementation of different architectures with #ifdef at the definition of getg function? That may not work, because getg is an external symbol in go files. Even if we remove the noinline attribute of getg and add the volatile attribute to the inline assembly, without makeGetg function, getg won\u0027t be inlined. And if we just turn the getg function call into a load of g in the makeGetg function, the global cse will still work on arm64. So we turn the getg function call to inline assembly node here.\n\nBut we can check the target here, done.",
+      "parentUuid": "fa9fe130_cabacbcd",
+      "revId": "189873d6b0351f0c1315472944ce139679143194",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
