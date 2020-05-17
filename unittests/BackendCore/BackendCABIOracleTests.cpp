@@ -532,9 +532,9 @@ TEST(BackendCABIOracleTests, RecursiveCall1Amd64) {
   Bstatement *rst2 = h.mkReturn(rvals2, FcnTestHarness::NoAppend);
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    %p3.ld.0 = load i8, i8* %p3.addr
+    %p3.ld.0 = load i8, i8* %p3.addr, align 1
     %sub.0 = sub i8 %p3.ld.0, 1
-    %p4.ld.0 = load i8, i8* %p4.addr
+    %p4.ld.0 = load i8, i8* %p4.addr, align 1
     %cast.1 = bitcast { float, float, i16, i16, i16 }* %p0.addr to { <2 x float>, i48 }*
     %field0.0 = getelementptr inbounds { <2 x float>, i48 }, { <2 x float>, i48 }* %cast.1, i32 0, i32 0
     %ld.1 = load <2 x float>, <2 x float>* %field0.0, align 8
@@ -651,9 +651,9 @@ TEST(BackendCABIOracleTests, RecursiveCall1Arm64) {
   Bstatement *rst2 = h.mkReturn(rvals2, FcnTestHarness::NoAppend);
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    %p3.ld.0 = load i8, i8* %p3.addr
+    %p3.ld.0 = load i8, i8* %p3.addr, align 1
     %sub.0 = sub i8 %p3.ld.0, 1
-    %p4.ld.0 = load i8, i8* %p4.addr
+    %p4.ld.0 = load i8, i8* %p4.addr, align 1
     %cast.1 = bitcast { float, float, i16, i16, i16 }* %p0.addr to { i64, i48 }*
     %field0.0 = getelementptr inbounds { i64, i48 }, { i64, i48 }* %cast.1, i32 0, i32 0
     %ld.1 = load i64, i64* %field0.0, align 8

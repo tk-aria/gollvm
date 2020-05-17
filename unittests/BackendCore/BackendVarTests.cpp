@@ -65,8 +65,8 @@ TEST_P(BackendVarTests, MakeLocalVar) {
   Bexpression *ve2 = be->var_expression(loc1, Location());
   ASSERT_TRUE(ve2 != nullptr);
   Bstatement *es = h.mkExprStmt(ve2);
-  EXPECT_EQ(repr(ve2->value()), "%loc1 = alloca i64");
-  EXPECT_EQ(repr(es), "%loc1.ld.0 = load i64, i64* %loc1");
+  EXPECT_EQ(repr(ve2->value()), "%loc1 = alloca i64, align 8");
+  EXPECT_EQ(repr(es), "%loc1.ld.0 = load i64, i64* %loc1, align 8");
 
   // Make sure error detection is working
   Bvariable *loce = be->local_variable(func1, "", be->error_type(), nullptr,
@@ -536,8 +536,8 @@ TEST_P(BackendVarTests, TestVarLifetimeInsertion) {
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 {
   entry:
-    %x = alloca i32
-    %y = alloca { i32, i32 }
+    %x = alloca i32, align 4
+    %y = alloca { i32, i32 }, align 8
     %0 = bitcast i32* %x to i8*
     call void @llvm.lifetime.start.p0i8(i64 4, i8* %0)
     %1 = bitcast { i32, i32 }* %y to i8*
@@ -546,7 +546,7 @@ TEST_P(BackendVarTests, TestVarLifetimeInsertion) {
     %cast.0 = bitcast { i32, i32 }* %y to i8*
     call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 %cast.0, i8* align 4 bitcast ({ i32, i32 }* @const.0 to i8*), i64 8, i1 false)
     %field.0 = getelementptr inbounds { i32, i32 }, { i32, i32 }* %y, i32 0, i32 1
-    %y.field.ld.0 = load i32, i32* %field.0
+    %y.field.ld.0 = load i32, i32* %field.0, align 4
     store i32 %y.field.ld.0, i32* %x, align 4
     %2 = bitcast i32* %x to i8*
     call void @llvm.lifetime.end.p0i8(i64 4, i8* %2)
@@ -682,11 +682,11 @@ TEST_P(BackendVarTests, ZeroSizedGlobals) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 {
-    entry:
-      %localemptys2f = alloca { {}, {} }
-      %localemptyintar = alloca [0 x i32]
-      ret void
-    }
+  entry:
+    %localemptys2f = alloca { {}, {} }, align 8
+    %localemptyintar = alloca [0 x i32], align 4
+    ret void
+  }
   )RAW_RESULT");
   bool isOK = h.expectValue(func->function(), exp);
   EXPECT_TRUE(isOK && "Value does not have expected contents");

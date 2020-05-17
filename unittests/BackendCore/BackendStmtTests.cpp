@@ -83,7 +83,7 @@ TEST_P(BackendStmtTests, TestAssignmentStmt) {
     store i64 0, i64* %loc1, align 8
     store i64 123, i64* %loc1, align 8
     store i64 0, i64* %loc2, align 8
-    %loc1.ld.0 = load i64, i64* %loc1
+    %loc1.ld.0 = load i64, i64* %loc1, align 8
     store i64 %loc1.ld.0, i64* %loc2, align 8
   )RAW_RESULT");
   bool isOK = h.expectBlock(exp);
@@ -116,7 +116,7 @@ TEST_P(BackendStmtTests, TestReturnStmt) {
   Bstatement *ret = h.mkReturn(ve1);
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    %loc1.ld.0 = load i64, i64* %loc1
+    %loc1.ld.0 = load i64, i64* %loc1, align 8
     ret i64 %loc1.ld.0
   )RAW_RESULT");
   std::string reason;
@@ -159,15 +159,15 @@ TEST_P(BackendStmtTests, TestReturnStmt2) {
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define i64 @foo(i8* nest %nest.0, i32 %param1, i32 %param2, i64* %param3) #0 {
   entry:
-    %param1.addr = alloca i32
-    %param2.addr = alloca i32
-    %param3.addr = alloca i64*
-    %x = alloca i64
+    %param1.addr = alloca i32, align 4
+    %param2.addr = alloca i32, align 4
+    %param3.addr = alloca i64*, align 8
+    %x = alloca i64, align 8
     store i32 %param1, i32* %param1.addr, align 4
     store i32 %param2, i32* %param2.addr, align 4
     store i64* %param3, i64** %param3.addr, align 8
     store i64 10, i64* %x, align 8
-    %x.ld.0 = load i64, i64* %x
+    %x.ld.0 = load i64, i64* %x, align 8
     ret i64 %x.ld.0
   }
   )RAW_RESULT");
@@ -242,7 +242,7 @@ TEST_P(BackendStmtTests, TestLabelAddressExpression) {
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 {
   entry:
-    %loc1 = alloca i8
+    %loc1 = alloca i8, align 1
     store i8 0, i8* %loc1, align 1
     call void @bar(i8* nest undef, i8* blockaddress(@foo, %label.0))
     br label %label.0
@@ -313,11 +313,11 @@ TEST_P(BackendStmtTests, TestIfStmt) {
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define i64 @foo(i8* nest %nest.0, i32 %param1, i32 %param2, i64* %param3) #0 {
   entry:
-    %param1.addr = alloca i32
-    %param2.addr = alloca i32
-    %param3.addr = alloca i64*
-    %loc1 = alloca i64
-    %loc2 = alloca i64
+    %param1.addr = alloca i32, align 4
+    %param2.addr = alloca i32, align 4
+    %param3.addr = alloca i64*, align 8
+    %loc1 = alloca i64, align 8
+    %loc2 = alloca i64, align 8
     store i32 %param1, i32* %param1.addr, align 4
     store i32 %param2, i32* %param2.addr, align 4
     store i64* %param3, i64** %param3.addr, align 8
@@ -437,16 +437,16 @@ TEST_P(BackendStmtTests, TestSwitchStmt) {
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define i64 @foo(i8* nest %nest.0, i32 %param1, i32 %param2, i64* %param3) #0 {
   entry:
-    %param1.addr = alloca i32
-    %param2.addr = alloca i32
-    %param3.addr = alloca i64*
-    %loc1 = alloca i64
-    %tmpv.0 = alloca i64
+    %param1.addr = alloca i32, align 4
+    %param2.addr = alloca i32, align 4
+    %param3.addr = alloca i64*, align 8
+    %loc1 = alloca i64, align 8
+    %tmpv.0 = alloca i64, align 8
     store i32 %param1, i32* %param1.addr, align 4
     store i32 %param2, i32* %param2.addr, align 4
     store i64* %param3, i64** %param3.addr, align 8
     store i64 0, i64* %loc1, align 8
-    %loc1.ld.4 = load i64, i64* %loc1
+    %loc1.ld.4 = load i64, i64* %loc1, align 8
     switch i64 %loc1.ld.4, label %default.0 [
       i64 1, label %case.0
       i64 2, label %case.0
@@ -456,13 +456,13 @@ TEST_P(BackendStmtTests, TestSwitchStmt) {
     ]
   
   case.0:                                           ; preds = %entry, %entry
-    %loc1.ld.0 = load i64, i64* %loc1
+    %loc1.ld.0 = load i64, i64* %loc1, align 8
     %div.0 = sdiv i64 %loc1.ld.0, 123
     store i64 %div.0, i64* %loc1, align 8
     br label %label.0
   
   case.1:                                           ; preds = %entry, %entry
-    %loc1.ld.1 = load i64, i64* %loc1
+    %loc1.ld.1 = load i64, i64* %loc1, align 8
     %icmp.0 = icmp sle i64 %loc1.ld.1, 987
     %zext.0 = zext i1 %icmp.0 to i8
     %trunc.0 = trunc i8 %zext.0 to i1
@@ -479,17 +479,17 @@ TEST_P(BackendStmtTests, TestSwitchStmt) {
     ret i64 10101
   
   then.0:                                           ; preds = %case.1
-    %loc1.ld.3 = load i64, i64* %loc1
+    %loc1.ld.3 = load i64, i64* %loc1, align 8
     store i64 %loc1.ld.3, i64* %tmpv.0, align 8
     br label %fallthrough.0
   
   fallthrough.0:                                    ; preds = %else.0, %then.0
-    %tmpv.0.ld.0 = load i64, i64* %tmpv.0
+    %tmpv.0.ld.0 = load i64, i64* %tmpv.0, align 8
     store i64 %tmpv.0.ld.0, i64* %loc1, align 8
     br label %case.2
   
   else.0:                                           ; preds = %case.1
-    %loc1.ld.2 = load i64, i64* %loc1
+    %loc1.ld.2 = load i64, i64* %loc1, align 8
     %mul.0 = mul i64 987, %loc1.ld.2
     store i64 %mul.0, i64* %tmpv.0, align 8
     br label %fallthrough.0
@@ -586,7 +586,7 @@ TEST_P(BackendStmtTests, TestDeferStmt) {
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 personality i32 (i32, i32, i64, i8*, i8*)* @__gccgo_personality_v0 {
   entry:
-    %x = alloca i8
+    %x = alloca i8, align 1
     store i8 0, i8* %x, align 1
     br label %finish.0
   
@@ -699,12 +699,12 @@ TEST_P(BackendStmtTests, TestExceptionHandlingStmt) {
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @baz(i8* nest %nest.0) #0 personality i32 (i32, i32, i64, i8*, i8*)* @__gccgo_personality_v0 {
   entry:
-    %ehtmp.0 = alloca { i8*, i32 }
-    %x = alloca i64
-    %y = alloca i8
-    %sret.actual.0 = alloca { i8, i8 }
-    %sret.actual.1 = alloca { i8, i8 }
-    %finvar.0 = alloca i8
+    %ehtmp.0 = alloca { i8*, i32 }, align 8
+    %x = alloca i64, align 8
+    %y = alloca i8, align 1
+    %sret.actual.0 = alloca { i8, i8 }, align 8
+    %sret.actual.1 = alloca { i8, i8 }, align 8
+    %finvar.0 = alloca i8, align 1
     store i64 0, i64* %x, align 8
     store i8 0, i8* %y, align 1
     %call.0 = invoke i64 @id(i8* nest undef, i64 99)
@@ -888,11 +888,11 @@ TEST_P(BackendStmtTests, TestExceptionHandlingStmtWithReturns) {
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define i64 @baz(i8* nest %nest.0, i64 %p0) #0 personality i32 (i32, i32, i64, i8*, i8*)* @__gccgo_personality_v0 {
   entry:
-    %ehtmp.0 = alloca { i8*, i32 }
-    %p0.addr = alloca i64
-    %ret = alloca i64
-    %x = alloca i8
-    %finvar.0 = alloca i8
+    %ehtmp.0 = alloca { i8*, i32 }, align 8
+    %p0.addr = alloca i64, align 8
+    %ret = alloca i64, align 8
+    %x = alloca i8, align 1
+    %finvar.0 = alloca i8, align 1
     store i64 %p0, i64* %p0.addr, align 8
     store i64 0, i64* %ret, align 8
     store i8 0, i8* %x, align 1
@@ -953,7 +953,7 @@ TEST_P(BackendStmtTests, TestExceptionHandlingStmtWithReturns) {
             to label %cont.0 unwind label %pad.0
   
   else.0:                                           ; preds = %cont.1
-    %p0.ld.0 = load i64, i64* %p0.addr
+    %p0.ld.0 = load i64, i64* %p0.addr, align 8
     store i64 %p0.ld.0, i64* %ret, align 8
     store i8 1, i8* %finvar.0, align 1
     invoke void @deferreturn(i8* nest undef, i8* %x)
@@ -967,7 +967,7 @@ TEST_P(BackendStmtTests, TestExceptionHandlingStmtWithReturns) {
     resume { i8*, i32 } %excv.0
   
   finret.0:                                         ; preds = %cont.0
-    %ret.ld.1 = load i64, i64* %ret
+    %ret.ld.1 = load i64, i64* %ret, align 8
     ret i64 %ret.ld.1
   }
   )RAW_RESULT");

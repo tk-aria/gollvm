@@ -299,7 +299,7 @@ TEST_P(BackendFcnTests, TestIntrinsicCall) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     store i64 0, i64* %x, align 8
-    %x.ld.0 = load i64, i64* %x
+    %x.ld.0 = load i64, i64* %x, align 8
     %call.0 = call addrspace(0) i64 @llvm.cttz.i64(i64 %x.ld.0, i1 true)
   )RAW_RESULT");
 

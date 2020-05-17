@@ -613,7 +613,12 @@ Bexpression *Llvm_backend::genLoad(Bexpression *expr,
     ldname += ".ld";
     ldname = namegen(ldname);
     llvm::Type *vt = spaceVal->getType()->getPointerElementType();
-    llvm::Instruction *loadInst = new llvm::LoadInst(vt, spaceVal, ldname);
+    llvm::Instruction *insBefore = nullptr;
+    llvm::Align ldAlign = datalayout_->getABITypeAlign(vt);
+    bool isVolatile = false;
+    llvm::Instruction *loadInst = new llvm::LoadInst(vt, spaceVal, ldname,
+                                                     isVolatile, ldAlign,
+                                                     insBefore);
     rval = nbuilder_.mkDeref(loadResultType, loadInst, space, loc);
     rval->appendInstruction(loadInst);
   } else {
@@ -1018,7 +1023,8 @@ Bexpression *Llvm_backend::resolveCompositeInit(Bexpression *expr,
   Bvariable *tvar = nullptr;
   if (!storage) {
     std::string tname(namegen("tmp"));
-    tvar = nbuilder_.mkTempVar(expr->btype(), expr->location(), tname);
+    tvar = nbuilder_.mkTempVar(expr->btype(), typeManager(),
+                               expr->location(), tname);
     assert(tvar != errorVariable_.get());
     storage = tvar->value();
     setPending = true;
@@ -1057,7 +1063,8 @@ std::pair<Bvariable*, Bstatement*>
 Llvm_backend::makeTempVar(Bexpression *expr, Location location) {
   assert(expr);
   std::string tname(namegen("tmp"));
-  Bvariable *var = nbuilder_.mkTempVar(expr->btype(), location, tname);
+  Bvariable *var = nbuilder_.mkTempVar(expr->btype(),  typeManager(),
+                                       location, tname);
   assert(var != errorVariable_.get());
   Bfunction *dummyFcn = errorFunction_.get();
   Bstatement *init = makeInitStatement(dummyFcn, var, expr);
@@ -3588,7 +3595,11 @@ llvm::Value *GenBlocks::populateCatchPadBlock(llvm::BasicBlock *catchpadbb,
 
   // Create temporary into which caught result will be stored
   std::string tag(be_->namegen("ehtmp"));
-  llvm::Instruction *ai = new llvm::AllocaInst(eht, 0, tag);
+  llvm::Instruction *insBefore = nullptr;
+  llvm::Align aaAlign = be_->datalayout().getPrefTypeAlign(eht);
+  llvm::Value *aaSize = nullptr;
+  llvm::Instruction *ai = new llvm::AllocaInst(eht, 0, aaSize, aaAlign,
+                                               tag, insBefore);
   temporariesDiscovered_.insert(ai);
   newTemporaries_.push_back(ai);
 

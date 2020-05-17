@@ -20,6 +20,7 @@
 #include "go-system.h"
 
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Function.h"
@@ -514,15 +515,17 @@ Bexpression *BnodeBuilder::mkVar(Bvariable *var, llvm::Value *val, Location loc)
 }
 
 Bvariable *BnodeBuilder::mkTempVar(Btype *varType,
+                                   TypeManager *tm,
                                    Location loc,
                                    const std::string &name)
 {
   assert(varType);
   llvm::Type *typ = varType->type();
-  llvm::Instruction *inst = new llvm::AllocaInst(typ, 0);
-  if (! name.empty())
-    inst->setName(name);
-
+  llvm::Instruction *insBefore = nullptr;
+  llvm::Align aaAlign = tm->datalayout()->getPrefTypeAlign(typ);
+  llvm::Value *aaSize = nullptr;
+  llvm::Instruction *inst = new llvm::AllocaInst(typ, 0, aaSize, aaAlign,
+                                                 name, insBefore);
   Bvariable *tvar = new Bvariable(varType, loc, name, LocalVar, true, inst);
   tempvars_[inst] = tvar;
   tvar->markAsTemporary();

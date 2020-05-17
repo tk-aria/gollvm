@@ -35,6 +35,7 @@ class Binstructions;
 class SwitchDescriptor;
 class IntegrityVisitor;
 class Llvm_backend;
+class TypeManager;
 
 // Use when deleting a Bnode subtree. Controls whether to delete just
 // the Bnode objects, just the LLVM instructions they contain, or both.
@@ -333,7 +334,8 @@ class BnodeBuilder {
   // have this interface here, since IR construction methods will
   // always have access to a BnodeBuilder but may not have the current
   // function we're processing.
-  Bvariable *mkTempVar(Btype *varType, Location loc, const std::string &name);
+  Bvariable *mkTempVar(Btype *varType, TypeManager *tm,
+                       Location loc, const std::string &name);
 
   // This helper looks up the specified variable (as identified by its
   // alloca) to see if it is an unparented temp created during IR
