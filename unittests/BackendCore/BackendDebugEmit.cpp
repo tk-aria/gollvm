@@ -44,7 +44,7 @@ TEST_P(BackendDebugEmit, TestSimpleDecl) {
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 {
   entry:
-    %x = alloca i32
+    %x = alloca i32, align 4
     store i32 0, i32* %x, align 4
     call void @llvm.dbg.declare(metadata i32* %x, metadata !5, metadata !DIExpression()), !dbg !12
     ret void
@@ -212,10 +212,10 @@ TEST_P(BackendDebugEmit, TestDeadLocalVar) {
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 !dbg !5 {
-    entry:
-      %x = alloca i32
-      ret void, !dbg !10
-    }
+  entry:
+    %x = alloca i32, align 4
+    ret void, !dbg !10
+  }
   )RAW_RESULT");
 
   bool broken = h.finish(PreserveDebugInfo);

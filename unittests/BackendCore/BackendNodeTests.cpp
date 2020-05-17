@@ -163,12 +163,12 @@ TEST_P(BackendNodeTests, CloneSubtree) {
   EXPECT_NE(add, matclone);
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    %x.ld.0 = load i32, i32* %x
-    %z.ld.0 = load i16, i16* %z
+    %x.ld.0 = load i32, i32* %x, align 4
+    %z.ld.0 = load i16, i16* %z, align 2
     %sext.0 = sext i16 %z.ld.0 to i32
     %add.0 = add i32 %x.ld.0, %sext.0
-    %y.ld.0 = load i32*, i32** %y
-    %.ld.0 = load i32, i32* %y.ld.0
+    %y.ld.0 = load i32*, i32** %y, align 8
+    %.ld.0 = load i32, i32* %y.ld.0, align 4
     %add.1 = add i32 %add.0, %.ld.0
   )RAW_RESULT");
 
@@ -207,12 +207,12 @@ TEST_P(BackendNodeTests, FixSharing) {
   DECLARE_EXPECTED_OUTPUT(exp2, R"RAW_RESULT(
     %field.0 = getelementptr inbounds { { i32*, i32 }, { i32*, i32 } }, { { i32*, i32 }, { i32*, i32 } }* %x, i32 0, i32 0
     %field.1 = getelementptr inbounds { i32*, i32 }, { i32*, i32 }* %field.0, i32 0, i32 0
-    %x.field.field.ld.0 = load i32*, i32** %field.1
-    %.ld.0 = load i32, i32* %x.field.field.ld.0
+    %x.field.field.ld.0 = load i32*, i32** %field.1, align 8
+    %.ld.0 = load i32, i32* %x.field.field.ld.0, align 4
     %field.2 = getelementptr inbounds { { i32*, i32 }, { i32*, i32 } }, { { i32*, i32 }, { i32*, i32 } }* %x, i32 0, i32 0
     %field.3 = getelementptr inbounds { i32*, i32 }, { i32*, i32 }* %field.2, i32 0, i32 0
-    %.field.field.ld.0 = load i32*, i32** %field.3
-    %.ld.1 = load i32, i32* %.field.field.ld.0
+    %.field.field.ld.0 = load i32*, i32** %field.3, align 8
+    %.ld.1 = load i32, i32* %.field.field.ld.0, align 4
     %add.0 = add i32 %.ld.0, %.ld.1
   )RAW_RESULT");
 

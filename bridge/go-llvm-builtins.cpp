@@ -419,7 +419,7 @@ static llvm::Value *atomicLoadMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
       llvmOrder(llvm::cast<llvm::ConstantInt>(args[1])->getZExtValue()) :
       llvm::AtomicOrdering::SequentiallyConsistent;
   load->setAtomic(o);
-  load->setAlignment(llvm::MaybeAlign(sz));
+  load->setAlignment(llvm::Align(sz));
   return load;
 }
 
@@ -449,7 +449,7 @@ static llvm::Value *atomicStoreMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
       llvmOrder(llvm::cast<llvm::ConstantInt>(args[2])->getZExtValue()) :
       llvm::AtomicOrdering::SequentiallyConsistent;
   store->setAtomic(o);
-  store->setAlignment(llvm::MaybeAlign(sz));
+  store->setAlignment(llvm::Align(sz));
   return store;
 }
 

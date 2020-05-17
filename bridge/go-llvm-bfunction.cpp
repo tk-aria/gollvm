@@ -77,7 +77,12 @@ std::string Bfunction::namegen(const std::string &tag)
 llvm::Instruction *Bfunction::addAlloca(llvm::Type *typ,
                                         const std::string &name)
 {
-  llvm::Instruction *inst = new llvm::AllocaInst(typ, 0);
+  llvm::Instruction *insBefore = nullptr;
+  TypeManager *tm = abiOracle_->tm();
+  llvm::Align aaAlign = tm->datalayout()->getPrefTypeAlign(typ);
+  llvm::Value *aaSize = nullptr;
+  llvm::Instruction *inst = new llvm::AllocaInst(typ, 0, aaSize, aaAlign,
+                                                 name, insBefore);
   if (! name.empty())
     inst->setName(name);
   allocas_.push_back(inst);
@@ -290,7 +295,13 @@ llvm::Instruction *
 Bfunction::createLabelAddressPlaceholder(Btype *btype)
 {
   std::string name(namegen("labeladdrplaceholder"));
-  llvm::Instruction *inst = new llvm::AllocaInst(btype->type(), 0);
+  TypeManager *tm = abiOracle_->tm();
+  llvm::Type *lltype = btype->type();
+  llvm::Instruction *insBefore = nullptr;
+  llvm::Align aaAlign = tm->datalayout()->getPrefTypeAlign(lltype);
+  llvm::Value *aaSize = nullptr;
+  llvm::Instruction *inst = new llvm::AllocaInst(lltype, 0, aaSize, aaAlign,
+                                                 name, insBefore);
   labelAddressPlaceholders_.insert(inst);
   return inst;
 }
