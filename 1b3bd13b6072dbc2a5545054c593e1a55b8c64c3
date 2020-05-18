@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ef99336a_75fcfb19",
+        "filename": "bridge/go-llvm-materialize.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1446,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2020-05-18T15:32:49Z",
+      "side": 1,
+      "message": "Could we check the target triple instead?",
+      "revId": "1b3bd13b6072dbc2a5545054c593e1a55b8c64c3",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6454b425_a9aed9ef",
+        "filename": "driver/CompileGo.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 953,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2020-05-18T15:32:49Z",
+      "side": 1,
+      "message": "I think it is better to test x86_64 instead.",
+      "range": {
+        "startLine": 952,
+        "startChar": 0,
+        "endLine": 953,
+        "endChar": 47
+      },
+      "revId": "1b3bd13b6072dbc2a5545054c593e1a55b8c64c3",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "dcb403cf_ebb05b8c",
+        "filename": "unittests/BackendCore/BackendCallTests.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 286,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2020-05-18T15:32:49Z",
+      "side": 1,
+      "message": "In my experience, \u003cbadref\u003e typically indicates some sort of problem. I wonder if there is the case here.",
+      "range": {
+        "startLine": 286,
+        "startChar": 4,
+        "endLine": 286,
+        "endChar": 12
+      },
+      "revId": "1b3bd13b6072dbc2a5545054c593e1a55b8c64c3",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
