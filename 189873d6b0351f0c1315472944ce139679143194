@@ -52,6 +52,24 @@
       "revId": "189873d6b0351f0c1315472944ce139679143194",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "536aca1e_2a0f6c65",
+        "filename": "bridge/go-llvm-materialize.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1385,
+      "author": {
+        "id": 24534
+      },
+      "writtenOn": "2020-05-18T10:25:00Z",
+      "side": 1,
+      "message": "Thanks for your explanation, I think the latest patch set is basically like this, the difference is that I use calling convention rather than the arch as the judgment condition, what do you think of this?",
+      "parentUuid": "3058ff3d_f5f698ad",
+      "revId": "189873d6b0351f0c1315472944ce139679143194",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
