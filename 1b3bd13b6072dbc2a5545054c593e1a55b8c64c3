@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "b402deb1_b4cced5d",
+        "filename": "bridge/go-llvm-materialize.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1446,
+      "author": {
+        "id": 24534
+      },
+      "writtenOn": "2020-05-22T02:48:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ef99336a_75fcfb19",
+      "revId": "1b3bd13b6072dbc2a5545054c593e1a55b8c64c3",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "6454b425_a9aed9ef",
         "filename": "driver/CompileGo.cpp",
         "patchSetId": 2
@@ -42,6 +60,30 @@
     },
     {
       "key": {
+        "uuid": "fc3d22d9_bed270da",
+        "filename": "driver/CompileGo.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 953,
+      "author": {
+        "id": 24534
+      },
+      "writtenOn": "2020-05-22T02:48:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6454b425_a9aed9ef",
+      "range": {
+        "startLine": 952,
+        "startChar": 0,
+        "endLine": 953,
+        "endChar": 47
+      },
+      "revId": "1b3bd13b6072dbc2a5545054c593e1a55b8c64c3",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "dcb403cf_ebb05b8c",
         "filename": "unittests/BackendCore/BackendCallTests.cpp",
         "patchSetId": 2
@@ -53,6 +95,30 @@
       "writtenOn": "2020-05-18T15:32:49Z",
       "side": 1,
       "message": "In my experience, \u003cbadref\u003e typically indicates some sort of problem. I wonder if there is the case here.",
+      "range": {
+        "startLine": 286,
+        "startChar": 4,
+        "endLine": 286,
+        "endChar": 12
+      },
+      "revId": "1b3bd13b6072dbc2a5545054c593e1a55b8c64c3",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "55989ffa_261e27f6",
+        "filename": "unittests/BackendCore/BackendCallTests.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 286,
+      "author": {
+        "id": 24534
+      },
+      "writtenOn": "2020-05-22T02:48:17Z",
+      "side": 1,
+      "message": "I guess it\u0027s because we assign the return value of type *g to an variable of type *int64, I run this test on amd64, it\u0027s \u003cbadref\u003e as well.\nI checked the actual IR result of getg in runtime, it\u0027s as follow:\n\n%0 \u003d call %145 asm sideeffect \"adrp $0, :gottprel:runtime.g\\0Aldr  $0, [$0, #:gottprel_lo12:runtime.g]\\0Amrs  $1, tpidr_el0\\0Aldr  $0, [$1, $0]\\0A\", \"\u003dr,\u003dr\"() #9, !dbg !32715\n\nOn amd64, it\u0027s:\n %0 \u003d load %.runtime.g.0*, %.runtime.g.0** @runtime.g, align 8, !dbg !2033\n\nSo I think the implementation should be correct. Maybe we should find a better way to improve this unit test. But I have not found a good way at present.",
+      "parentUuid": "dcb403cf_ebb05b8c",
       "range": {
         "startLine": 286,
         "startChar": 4,
