@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5a2bb925_584b27f9",
+        "filename": "bridge/go-llvm-bfunction.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 24534
+      },
+      "writtenOn": "2020-05-25T10:09:35Z",
+      "side": 1,
+      "message": "Should we use getABITypeAlign here ?",
+      "range": {
+        "startLine": 82,
+        "startChar": 42,
+        "endLine": 82,
+        "endChar": 58
+      },
+      "revId": "0edc44a02852dd0d56cac35163a45634b497d6cd",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b30999a9_5fb5daa5",
+        "filename": "bridge/go-llvm-bnode.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 525,
+      "author": {
+        "id": 24534
+      },
+      "writtenOn": "2020-05-25T10:09:35Z",
+      "side": 1,
+      "message": "getABITypeAlign ?",
+      "range": {
+        "startLine": 525,
+        "startChar": 42,
+        "endLine": 525,
+        "endChar": 58
+      },
+      "revId": "0edc44a02852dd0d56cac35163a45634b497d6cd",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "52fcb96f_e6f23954",
+        "filename": "unittests/BackendCore/BackendExprTests.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1462,
+      "author": {
+        "id": 24534
+      },
+      "writtenOn": "2020-05-25T10:09:35Z",
+      "side": 1,
+      "message": "Should this be 4 ?",
+      "range": {
+        "startLine": 1461,
+        "startChar": 37,
+        "endLine": 1462,
+        "endChar": 49
+      },
+      "revId": "0edc44a02852dd0d56cac35163a45634b497d6cd",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
