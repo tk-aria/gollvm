@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2b613104_737f85b5",
+        "filename": "bridge/go-llvm.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 24534
+      },
+      "writtenOn": "2020-05-25T10:22:37Z",
+      "side": 1,
+      "message": "This seems to be the default datalayout on linux/arm64, but it will cause some unit tests to fail. \nexpect:\n %x \u003d alloca i8, align 1\nactual:\n %x \u003d alloca i8, align 4\n\nBecause we used getPrefTypeAlign when generating alloc IR, should we change the value here or replace getPrefTypeAlign with getABITypeAlign ?",
+      "range": {
+        "startLine": 93,
+        "startChar": 34,
+        "endLine": 93,
+        "endChar": 87
+      },
+      "revId": "3a88df4a3128152bc792154c0d1bd96ab31d0936",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
