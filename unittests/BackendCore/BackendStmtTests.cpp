@@ -702,8 +702,8 @@ TEST_P(BackendStmtTests, TestExceptionHandlingStmt) {
     %ehtmp.0 = alloca { i8*, i32 }, align 8
     %x = alloca i64, align 8
     %y = alloca i8, align 1
-    %sret.actual.0 = alloca { i8, i8 }, align 8
-    %sret.actual.1 = alloca { i8, i8 }, align 8
+    %sret.actual.0 = alloca { i8, i8 }, align 1
+    %sret.actual.1 = alloca { i8, i8 }, align 1
     %finvar.0 = alloca i8, align 1
     store i64 0, i64* %x, align 8
     store i8 0, i8* %y, align 1

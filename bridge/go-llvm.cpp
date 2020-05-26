@@ -3596,7 +3596,7 @@ llvm::Value *GenBlocks::populateCatchPadBlock(llvm::BasicBlock *catchpadbb,
   // Create temporary into which caught result will be stored
   std::string tag(be_->namegen("ehtmp"));
   llvm::Instruction *insBefore = nullptr;
-  llvm::Align aaAlign = be_->datalayout().getPrefTypeAlign(eht);
+  llvm::Align aaAlign = be_->datalayout().getABITypeAlign(eht);
   llvm::Value *aaSize = nullptr;
   llvm::Instruction *ai = new llvm::AllocaInst(eht, 0, aaSize, aaAlign,
                                                tag, insBefore);

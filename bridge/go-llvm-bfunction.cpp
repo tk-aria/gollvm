@@ -79,7 +79,7 @@ llvm::Instruction *Bfunction::addAlloca(llvm::Type *typ,
 {
   llvm::Instruction *insBefore = nullptr;
   TypeManager *tm = abiOracle_->tm();
-  llvm::Align aaAlign = tm->datalayout()->getPrefTypeAlign(typ);
+  llvm::Align aaAlign = tm->datalayout()->getABITypeAlign(typ);
   llvm::Value *aaSize = nullptr;
   llvm::Instruction *inst = new llvm::AllocaInst(typ, 0, aaSize, aaAlign,
                                                  name, insBefore);
@@ -298,7 +298,7 @@ Bfunction::createLabelAddressPlaceholder(Btype *btype)
   TypeManager *tm = abiOracle_->tm();
   llvm::Type *lltype = btype->type();
   llvm::Instruction *insBefore = nullptr;
-  llvm::Align aaAlign = tm->datalayout()->getPrefTypeAlign(lltype);
+  llvm::Align aaAlign = tm->datalayout()->getABITypeAlign(lltype);
   llvm::Value *aaSize = nullptr;
   llvm::Instruction *inst = new llvm::AllocaInst(lltype, 0, aaSize, aaAlign,
                                                  name, insBefore);

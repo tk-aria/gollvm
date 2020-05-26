@@ -496,11 +496,11 @@ TEST_P(BackendExprTests, TestComplexConversionExpression) {
     define void @foo(i8* nest %nest.0) #0 {
   entry:
     %tmp.3 = alloca { double, double }, align 8
-    %tmp.2 = alloca { float, float }, align 8
-    %tmp.1 = alloca { float, float }, align 8
+    %tmp.2 = alloca { float, float }, align 4
+    %tmp.1 = alloca { float, float }, align 4
     %tmp.0 = alloca { double, double }, align 8
-    %a = alloca { float, float }, align 8
-    %b = alloca { float, float }, align 8
+    %a = alloca { float, float }, align 4
+    %b = alloca { float, float }, align 4
     %x = alloca { double, double }, align 8
     %y = alloca { double, double }, align 8
     %cast.0 = bitcast { float, float }* %a to i8*
@@ -1458,8 +1458,8 @@ TEST(BackendExprTests, TestConditionalExpression3Amd64) {
     define void @foo({ [16 x i32], i32 }* sret %sret.formal.0, i8* nest %nest.0, { [16 x i32], i32 }* byval %p0, i32 %p1) #0 {
   entry:
     %p1.addr = alloca i32, align 4
-    %a = alloca { [16 x i32], i32 }, align 8
-    %tmpv.0 = alloca { [16 x i32], i32 }, align 8
+    %a = alloca { [16 x i32], i32 }, align 4
+    %tmpv.0 = alloca { [16 x i32], i32 }, align 4
     store i32 %p1, i32* %p1.addr, align 4
     %p1.ld.0 = load i32, i32* %p1.addr, align 4
     %icmp.0 = icmp slt i32 %p1.ld.0, 7
@@ -1533,8 +1533,8 @@ TEST(BackendExprTests, TestConditionalExpression3Arm64) {
     define void @foo({ [16 x i32], i32 }* sret %sret.formal.0, i8* nest %nest.0, { [16 x i32], i32 }* %p0, i32 %p1) #0 {
   entry:
     %p1.addr = alloca i32, align 4
-    %a = alloca { [16 x i32], i32 }, align 8
-    %tmpv.0 = alloca { [16 x i32], i32 }, align 8
+    %a = alloca { [16 x i32], i32 }, align 4
+    %tmpv.0 = alloca { [16 x i32], i32 }, align 4
     store i32 %p1, i32* %p1.addr, align 4
     %p1.ld.0 = load i32, i32* %p1.addr, align 4
     %icmp.0 = icmp slt i32 %p1.ld.0, 7

@@ -1848,7 +1848,7 @@ llvm::DIType *TypeManager::buildStructDIType(BStructType *bst,
   // Now create struct type itself.  Q: should this be
   // getTypeAllocSize here instead of getTypeSizeInBits?
   uint64_t sizeInBits = datalayout_->getTypeSizeInBits(bst->type());
-  uint32_t alignInBits = datalayout_->getPrefTypeAlignment(bst->type());
+  uint32_t alignInBits = datalayout_->getABITypeAlignment(bst->type());
   llvm::DIType *derivedFrom = nullptr;
   llvm::DICompositeType *dist =
       dibuilder.createStructType(scope, typToString(bst),
@@ -1976,7 +1976,7 @@ llvm::DIType *TypeManager::buildDIType(Btype *typ, DIBuildHelper &helper)
       uint64_t arElems = bat->nelSize();
       uint64_t arSize = datalayout_->getTypeSizeInBits(bat->type());
       uint64_t arAlign =
-          datalayout_->getPrefTypeAlignment(bat->elemType()->type());
+          datalayout_->getABITypeAlignment(bat->elemType()->type());
       llvm::SmallVector<llvm::Metadata *, 1> subscripts;
       subscripts.push_back(dibuilder.getOrCreateSubrange(0, arElems));
       llvm::DINodeArray subsAr = dibuilder.getOrCreateArray(subscripts);
