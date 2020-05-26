@@ -537,7 +537,7 @@ TEST_P(BackendVarTests, TestVarLifetimeInsertion) {
     define void @foo(i8* nest %nest.0) #0 {
   entry:
     %x = alloca i32, align 4
-    %y = alloca { i32, i32 }, align 8
+    %y = alloca { i32, i32 }, align 4
     %0 = bitcast i32* %x to i8*
     call void @llvm.lifetime.start.p0i8(i64 4, i8* %0)
     %1 = bitcast { i32, i32 }* %y to i8*
@@ -683,7 +683,7 @@ TEST_P(BackendVarTests, ZeroSizedGlobals) {
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0) #0 {
   entry:
-    %localemptys2f = alloca { {}, {} }, align 8
+    %localemptys2f = alloca { {}, {} }, align 1
     %localemptyintar = alloca [0 x i32], align 4
     ret void
   }

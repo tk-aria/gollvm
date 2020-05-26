@@ -522,7 +522,7 @@ Bvariable *BnodeBuilder::mkTempVar(Btype *varType,
   assert(varType);
   llvm::Type *typ = varType->type();
   llvm::Instruction *insBefore = nullptr;
-  llvm::Align aaAlign = tm->datalayout()->getPrefTypeAlign(typ);
+  llvm::Align aaAlign = tm->datalayout()->getABITypeAlign(typ);
   llvm::Value *aaSize = nullptr;
   llvm::Instruction *inst = new llvm::AllocaInst(typ, 0, aaSize, aaAlign,
                                                  name, insBefore);
