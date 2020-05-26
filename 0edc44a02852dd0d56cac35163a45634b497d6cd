@@ -49,6 +49,30 @@
     },
     {
       "key": {
+        "uuid": "2c72a825_83e18e64",
+        "filename": "bridge/go-llvm-bfunction.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 24534
+      },
+      "writtenOn": "2020-05-26T12:15:23Z",
+      "side": 1,
+      "message": "Yeah, otherwise, on arm64, \"%x \u003d alloca i8, align 1\" becomes \"%x \u003d alloca i8, align 4\"",
+      "parentUuid": "dc9e3ffc_5dded9b8",
+      "range": {
+        "startLine": 82,
+        "startChar": 42,
+        "endLine": 82,
+        "endChar": 58
+      },
+      "revId": "0edc44a02852dd0d56cac35163a45634b497d6cd",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "b30999a9_5fb5daa5",
         "filename": "bridge/go-llvm-bnode.cpp",
         "patchSetId": 2
@@ -131,6 +155,30 @@
       "side": 1,
       "message": "\"a\" is a local variable, not a parameter.  If the LLVM datalayout code in question thinks it should be aligned by 8 and not 4 for performance reasons, that\u0027s fine. Having the larger alignment might make it possible to use a different instruction sequence when expanding a memcpy, for example.",
       "parentUuid": "52fcb96f_e6f23954",
+      "range": {
+        "startLine": 1461,
+        "startChar": 37,
+        "endLine": 1462,
+        "endChar": 49
+      },
+      "revId": "0edc44a02852dd0d56cac35163a45634b497d6cd",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ce3b2c53_2568e034",
+        "filename": "unittests/BackendCore/BackendExprTests.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1462,
+      "author": {
+        "id": 24534
+      },
+      "writtenOn": "2020-05-26T12:15:23Z",
+      "side": 1,
+      "message": "I don\u0027t know how llvm uses alignment for performance optimization. But simply looking at this data structure, I feel that the alignment value should be 4. Of course, if llvm sets it as 8 from the perspective of performance optimization, it is also ok. I wrote a patch, replacing all or part of getPrefTypeAlign in this patch with getABITypeAlign, which will affect some IR alignment values, including this one. I am not sure where to use getPrefTypeAlign and where to use getABITypeAlign.",
+      "parentUuid": "d9115069_c3162283",
       "range": {
         "startLine": 1461,
         "startChar": 37,
