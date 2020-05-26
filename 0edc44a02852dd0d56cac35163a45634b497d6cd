@@ -188,6 +188,30 @@
       "revId": "0edc44a02852dd0d56cac35163a45634b497d6cd",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0ef2a8d2_114d6032",
+        "filename": "unittests/BackendCore/BackendExprTests.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1462,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-05-26T13:46:44Z",
+      "side": 1,
+      "message": "I spent some time looking at some of the equivalent parts of clang. It looks as though clang is still using getABITypeAlign for most temporaries (there are only a few places with getPrefTypeAlign).  I think the conservative thing is probably to do the same for gollvm. I will send a CL...",
+      "parentUuid": "ce3b2c53_2568e034",
+      "range": {
+        "startLine": 1461,
+        "startChar": 37,
+        "endLine": 1462,
+        "endChar": 49
+      },
+      "revId": "0edc44a02852dd0d56cac35163a45634b497d6cd",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
