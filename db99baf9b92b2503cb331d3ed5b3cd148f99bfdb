@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ab015366_f177ba0b",
+        "filename": "unittests/BackendCore/BackendCABIOracleTests.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 259,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2020-05-28T16:39:11Z",
+      "side": 1,
+      "message": "Can we pass a valid triple here instead of setting it from calling convention?",
+      "range": {
+        "startLine": 259,
+        "startChar": 47,
+        "endLine": 259,
+        "endChar": 61
+      },
+      "revId": "db99baf9b92b2503cb331d3ed5b3cd148f99bfdb",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
