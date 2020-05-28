@@ -152,6 +152,30 @@
       "revId": "1b3bd13b6072dbc2a5545054c593e1a55b8c64c3",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "78893705_3a4e57ac",
+        "filename": "unittests/BackendCore/BackendCallTests.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 286,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-05-28T16:50:33Z",
+      "side": 1,
+      "message": "I looked a little at this. \n\nI think the issue is that the value is anonymous -- if you name it the problem goes away. I think the problem is that the IR printer\u0027s slot mapper can\u0027t discover the value since it operates on a function basis. Patch:\n\ndiff --git a/bridge/go-llvm-materialize.cpp b/bridge/go-llvm-materialize.cpp\nindex d8f0546..63fec77 100644\n--- a/bridge/go-llvm-materialize.cpp\n+++ b/bridge/go-llvm-materialize.cpp\n@@ -1405,7 +1405,8 @@ static llvm::Value *makeGetgArm64(Btype *resType,\n         llvm::FunctionType::get(resType-\u003etype(), llvm::ArrayRef\u003cllvm::Type*\u003e{}, false);\n     llvm::Value *callee \u003d llvm::InlineAsm::get(fnType, llvm::StringRef(asmStr),\n                                                llvm::StringRef(constr), true);\n-    return builder-\u003eCreateCall(fnType, callee);\n+    std::string callname(be-\u003enamegen(\"asmcall\"));\n+    return builder-\u003eCreateCall(fnType, callee, {}, callname);\n   } else {\n     // Static link.\n     asmStr +\u003d \"adrp $0, :gottprel:runtime.g\\n\";\n@@ -1422,7 +1423,8 @@ static llvm::Value *makeGetgArm64(Btype *resType,\n         llvm::FunctionType::get(fnResType, llvm::ArrayRef\u003cllvm::Type*\u003e{}, false);\n     llvm::Value *callee \u003d llvm::InlineAsm::get(fnType, llvm::StringRef(asmStr),\n                                                llvm::StringRef(constr), true);\n-    llvm::Instruction *calI \u003d builder-\u003eCreateCall(fnType, callee);\n+    std::string callname(be-\u003enamegen(\"asmcall\"));\n+    llvm::Instruction *calI \u003d builder-\u003eCreateCall(fnType, callee, {}, callname);\n     return builder-\u003eCreateExtractValue(calI, {0});\n   }\n }",
+      "parentUuid": "11f3b57f_ec673d3c",
+      "range": {
+        "startLine": 286,
+        "startChar": 4,
+        "endLine": 286,
+        "endChar": 12
+      },
+      "revId": "1b3bd13b6072dbc2a5545054c593e1a55b8c64c3",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
