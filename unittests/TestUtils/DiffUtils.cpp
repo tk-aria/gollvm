@@ -8,10 +8,36 @@
 
 #include "DiffUtils.h"
 
+#include <assert.h>
 #include <iostream>
 #include <sstream>
 
 namespace goBackendUnitTests {
+
+DECLARE_EXPECTED_OUTPUT(baseline, R"RAW_RESULT(
+    abc
+    def
+    xyz
+)RAW_RESULT");
+
+// macroLineAtStart returns TRUE if the line number reported by the
+// compiler for __LINE__ in a macro instantiation points to the start
+// of the DECLARE_EXPECTED_OUTPUT macro use, as opposed to the end.
+//
+// Fun fact: there is some disagreement among C++ compilers about what
+// the line is. Some compilers decided that __LINE__ for the macro
+// above is the starting line (16) and some decide that it's the
+// ending line (20). Which one will matter for the machinery that does
+// test remastering.
+static bool macroLineAtStart() {
+  if (baseline.line == 16) {
+    return true;
+  } else if (baseline.line == 20) {
+    return false;
+  } else {
+    assert(false && "macroLineAtStart broken -- source edited?");
+  }
+}
 
 std::string trimsp(const std::string &s) {
   size_t firstsp = s.find_first_not_of(" \n");
@@ -143,6 +169,7 @@ void complainOnNequal(const std::string &reason,
   const std::string &expected = ed.content;
   std::cerr << "expected dump:\n" << expected << "\n";
   std::cerr << "actual dump:\n" << actual << "\n";
+  unsigned mls = macroLineAtStart() ? 1 : 0;
   if (emitDump) {
     static unsigned filecount;
     static FILE *outfp; // script
@@ -155,7 +182,7 @@ void complainOnNequal(const std::string &reason,
         outfp = fopen("/tmp/remaster-inputs.txt", "w");
         fprintf(stderr, "... emitting remaster inputs to file '/tmp/remaster-inputs.txt'\n");
       }
-      fprintf(outfp, "%s %d %s %s\n", ed.file, ed.line,
+      fprintf(outfp, "%d %s %d %s %s\n", mls, ed.file, ed.line,
               dumpfilename("expected", filecount).c_str(),
               dumpfilename("actual", filecount).c_str());
       fflush(outfp);
