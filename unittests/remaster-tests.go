@@ -55,6 +55,7 @@ type Change struct {
 	expected string
 	actual   string
 	line     int
+	mls      bool // macro line at start (vs end)
 }
 
 type FileChanges struct {
@@ -71,18 +72,31 @@ func readInput(inf *os.File) map[string]FileChanges {
 		line := scanner.Text()
 		verb(3, "=-= line is %s", line)
 		tokens := strings.Split(line, " ")
-		if len(tokens) != 4 {
+		if len(tokens) != 5 {
 			panic(fmt.Sprintf("malformed line %d in input file: %s", lno, line))
 		}
-		srcfile := tokens[0]
-		spot, err := strconv.ParseInt(tokens[1], 10, 64)
+		macroLineAtStart, errm := strconv.ParseInt(tokens[0], 10, 64)
+		if errm != nil {
+			panic(fmt.Sprintf("malformed srcline in input line %d: %s", lno, line))
+		}
+		mls := false
+		if macroLineAtStart == 1 {
+			mls = true
+		}
+		srcfile := tokens[1]
+		spot, err := strconv.ParseInt(tokens[2], 10, 64)
 		if err != nil {
 			panic(fmt.Sprintf("malformed srcline in input line %d: %s", lno, line))
 		}
-		exp := tokens[2]
-		act := tokens[3]
+		exp := tokens[3]
+		act := tokens[4]
 		fc := fm[srcfile]
-		newchange := Change{expected: exp, actual: act, line: int(spot)}
+		newchange := Change{
+			expected: exp,
+			actual:   act,
+			line:     int(spot),
+			mls:      mls,
+		}
 		fc.changes = append(fc.changes, newchange)
 		fm[srcfile] = fc
 	}
@@ -173,7 +187,12 @@ func applyChange(srcfile string, change Change, delta int) int {
 	}
 
 	// Add content before the result.
-	startres := change.line + delta
+	var startres int
+	if change.mls {
+		startres = change.line + delta
+	} else {
+		startres = change.line + delta - len(ca) - 1
+	}
 	verb(2, "startres = %d", startres)
 	newlines = append(newlines, srclines[0:startres]...)
 
