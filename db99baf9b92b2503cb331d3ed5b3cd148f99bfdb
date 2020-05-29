@@ -46,6 +46,30 @@
       "revId": "db99baf9b92b2503cb331d3ed5b3cd148f99bfdb",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "613d3810_6d4ec447",
+        "filename": "unittests/BackendCore/BackendCABIOracleTests.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 259,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-05-29T12:08:04Z",
+      "side": 1,
+      "message": "Long term I think it would be good to move to a model in which clients pass in a valid triple, as opposed to not passing a valid triple and then having the constructor compute it.\n\nCode like https://go.googlesource.com/gollvm/+/0edc44a02852dd0d56cac35163a45634b497d6cd/bridge/go-llvm.cpp#81 (which I wrote) should probably be moved out of the constructor and put into the unit testing harness.\n\nIt\u0027s not a big deal, though, we can do that sort of cleanup in a later CL.",
+      "parentUuid": "deaa8dcd_ff00cb74",
+      "range": {
+        "startLine": 259,
+        "startChar": 47,
+        "endLine": 259,
+        "endChar": 61
+      },
+      "revId": "db99baf9b92b2503cb331d3ed5b3cd148f99bfdb",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
