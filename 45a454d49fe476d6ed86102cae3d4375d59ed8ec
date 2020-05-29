@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c2f5348c_3942fc3c",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2020-05-29T18:23:57Z",
+      "side": 1,
+      "message": "Interesting... Surely it can\u0027t be line 11 or 12? Haha.",
+      "revId": "45a454d49fe476d6ed86102cae3d4375d59ed8ec",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
