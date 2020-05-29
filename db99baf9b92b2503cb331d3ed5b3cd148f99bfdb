@@ -22,6 +22,30 @@
       "revId": "db99baf9b92b2503cb331d3ed5b3cd148f99bfdb",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "deaa8dcd_ff00cb74",
+        "filename": "unittests/BackendCore/BackendCABIOracleTests.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 259,
+      "author": {
+        "id": 24534
+      },
+      "writtenOn": "2020-05-29T03:19:33Z",
+      "side": 1,
+      "message": "Since some tests are shared by multiple architectures, we don\u0027t know what triple should be used here, so we reset it according to calling convention.\nIn fact, a more fundamental issue is involved here is what do we use to distinguish between different backends. Currently we are using the calling convention, but target triple or a combination of them is also an option. If we can determine which scheme to use, we will be more aware of what we should choose to determine the backend in the future. Of course, maybe this question already has an answer in other projects, such as clang, I don’t know.\n+ @Than, any suggestions?",
+      "parentUuid": "ab015366_f177ba0b",
+      "range": {
+        "startLine": 259,
+        "startChar": 47,
+        "endLine": 259,
+        "endChar": 61
+      },
+      "revId": "db99baf9b92b2503cb331d3ed5b3cd148f99bfdb",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
