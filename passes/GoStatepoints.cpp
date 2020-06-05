@@ -308,7 +308,7 @@ struct PartiallyConstructedSafepointRecord {
 
   /// The *new* gc.statepoint instruction itself.  This produces the token
   /// that normal path gc.relocates and the gc.result are tied to.
-  Instruction *StatepointToken;
+  GCStatepointInst *StatepointToken;
 
   /// Instruction to which exceptional gc relocates are attached
   /// Makes it easier to iterate through them during relocationViaAlloca.
@@ -1481,7 +1481,7 @@ makeStatepointExplicitImpl(CallBase *Call, /* to replace */
   }
 
   // Create the statepoint given all the arguments
-  Instruction *Token = nullptr;
+  GCStatepointInst *Token = nullptr;
   if (isa<CallInst>(Call)) {
     // We should have converted all statepoints to invoke.
     assert(false && "statepoint is not an invoke");
@@ -1511,7 +1511,7 @@ makeStatepointExplicitImpl(CallBase *Call, /* to replace */
     Invoke->setAttributes(
         legalizeCallAttributes(Invoke->getContext(), ToReplace->getAttributes()));
 
-    Token = Invoke;
+    Token = cast<GCStatepointInst>(Invoke);
 
     // Generate gc relocates in exceptional path
     BasicBlock *UnwindBlock = ToReplace->getUnwindDest();
@@ -1926,9 +1926,8 @@ static bool insertParsePoints(Function &F, DominatorTree &DT,
     // That Value* no longer exists and we need to use the new gc_result.
     // Thankfully, the live set is embedded in the statepoint (and updated), so
     // we just grab that.
-    Statepoint Statepoint(Info.StatepointToken);
-    Live.insert(Live.end(), Statepoint.gc_args_begin(),
-                Statepoint.gc_args_end());
+    Live.insert(Live.end(), Info.StatepointToken->gc_args_begin(),
+                Info.StatepointToken->gc_args_end());
 #ifndef NDEBUG
     // Do some basic sanity checks on our liveness results before performing
     // relocation.  Relocation can and will turn mistakes in liveness results
@@ -1936,7 +1935,7 @@ static bool insertParsePoints(Function &F, DominatorTree &DT,
     // TODO: It would be nice to test consistency as well
     assert(DT.isReachableFromEntry(Info.StatepointToken->getParent()) &&
            "statepoint must be reachable or liveness is meaningless");
-    for (Value *V : Statepoint.gc_args()) {
+    for (Value *V : Info.StatepointToken->gc_args()) {
       if (!isa<Instruction>(V))
         // Non-instruction values trivial dominate all possible uses
         continue;
@@ -2116,7 +2115,7 @@ bool GoStatepoints::runOnFunction(Function &F, DominatorTree &DT,
 
   auto NeedsRewrite = [&TLI](Instruction &I) {
     if (const auto *Call = dyn_cast<CallBase>(&I))
-      return !callsGCLeafFunction(Call, TLI) && !isStatepoint(Call);
+      return !callsGCLeafFunction(Call, TLI) && !isa<GCStatepointInst>(Call);
     return false;
   };
 
