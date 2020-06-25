@@ -20,7 +20,9 @@ endif()
 set(GOLLVM_LIBVERSION "${libversion}")
 set(GOLLVM_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}")
 set(GOLLVM_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/${libsubdir}")
-set(GOLLVM_DEFAULT_LINKER "${LLVM_USE_LINKER}")
+if(GOLLVM_DEFAULT_LINKER)
+message(STATUS "GOLLVM_DEFAULT_LINKER set to ${GOLLVM_DEFAULT_LINKER}")
+endif()
 
 # Check to see whether the build compiler supports -fcf-protection=branch
 set(OLD_CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS}")

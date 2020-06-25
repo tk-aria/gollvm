@@ -13,6 +13,7 @@ source tree, then within the LLVM tree you check out additional git repos.
  * [Building gollvm](#building)
  * [Work area setup](#workarea)
  * [Invoking cmake and ninja](#cmakeninja)
+ * [Selecting a linker](#cmakelinker)
  * [Installing gollvm](#installing)
  * [Using an installed copy of gollvm](#using)
  * [Information for gollvm developers](#developers)
@@ -80,11 +81,16 @@ Create a build directory (separate from the source tree) and run 'cmake' within 
 %
 ```
 
-This will build the various tools and libraries needed for Gollvm. To select a specific C/C++ compiler for the build, you can use the "-DCMAKE_C_COMPILER" and "-DCMAKE_CXX_COMPILER" options to select your desired C/C++ compiler when invoking cmake (details [here](https://gitlab.kitware.com/cmake/community/wikis/FAQ#how-do-i-use-a-different-compiler)).
+This will build the various tools and libraries needed for Gollvm. To select a specific C/C++ compiler for the build, you can use the "-DCMAKE_C_COMPILER" and "-DCMAKE_CXX_COMPILER" options to select your desired C/C++ compiler when invoking cmake (details [here](https://gitlab.kitware.com/cmake/community/wikis/FAQ#how-do-i-use-a-different-compiler)). Use the "-DLLVM_USE_LINKER=<xxx>" cmake variable to control which linker is selected to link the Gollvm compiler and tools. 
+
+## Selecting a default linker <a name="cmakelinker"></a>
+
+If the gold linker is available on the system being used to run gollvm, it is recommended that Gollvm be set at build time to use the Gold by default for linking. This can be accomplished by passing "-DGOLLVM_DEFAULT_LINKER=gold" when running cmake. Note that this default can still be overridden on the command line using the "-fuse-ld" option.
 
 ## Installing gollvm <a name="installing"></a>
 
-A gollvm installation will contain 'llvm-goc' (the compiler driver), the libgo standard Go libraries, and the standard Go tools ("go", "vet", "cgo", etc).
+A gollvm installation will contain 'llvm-goc' (the compiler driver), the libgo
+standard Go libraries, and the standard Go tools ("go", "vet", "cgo", etc).
 
 The installation directory for gollvm needs to be specified when invoking cmake prior to the build:
 

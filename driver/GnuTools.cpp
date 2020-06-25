@@ -342,7 +342,7 @@ bool Linker::constructCommand(Compilation &compilation,
 #ifdef GOLLVM_DEFAULT_LINKER
   const char *variant = GOLLVM_DEFAULT_LINKER;
 #else
-  const char *variant = "gold";
+  const char *variant = "";
 #endif
   const char *linker = nullptr;
   llvm::opt::Arg *ldarg = args.getLastArg(gollvm::options::OPT_fuse_ld_EQ);
@@ -353,8 +353,13 @@ bool Linker::constructCommand(Compilation &compilation,
     else
       variant = args.MakeArgString(ldarg->getValue());
   }
-  if (linker == nullptr)
-    linker = args.MakeArgString(llvm::StringRef("ld.") + variant);
+  if (linker == nullptr) {
+    if (strlen(variant) != 0) {
+      linker = args.MakeArgString(llvm::StringRef("ld.") + variant);
+    } else {
+      linker = args.MakeArgString(llvm::StringRef("ld"));
+    }
+  }
   if (executable == nullptr)
     executable = args.MakeArgString(toolchain().getProgramPath(linker));
   if (! executable) {
