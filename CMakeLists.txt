@@ -16,6 +16,7 @@ include(LLVMExternalProjectUtils)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 set(GOLLVM_USE_SPLIT_STACK ON CACHE BOOL "use split stack by default")
+set(GOLLVM_DEFAULT_LINKER gold CACHE STRING "default linker for Go links")
 
 include(CmakeUtils)
 include(AddGollvm)
