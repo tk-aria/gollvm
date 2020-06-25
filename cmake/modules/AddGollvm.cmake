@@ -20,7 +20,8 @@ endif()
 set(GOLLVM_LIBVERSION "${libversion}")
 set(GOLLVM_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}")
 set(GOLLVM_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/${libsubdir}")
-set(GOLLVM_DEFAULT_LINKER "${LLVM_USE_LINKER}")
+
+message(STATUS "default linker set to \"${GOLLVM_DEFAULT_LINKER}\"")
 
 # Check to see whether the build compiler supports -fcf-protection=branch
 set(OLD_CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS}")
@@ -39,7 +40,11 @@ if(GOLLVM_USE_SPLIT_STACK)
   # FIXME: update here once one day there is a linker that supports '-fsplit-stack'
   # on arm64.
   set(C_SUPPORTS_SPLIT_STACK 0)
-  set(CMAKE_REQUIRED_FLAGS "-fuse-ld=gold -fsplit-stack")
+  set(LVARIANT "")
+  if(GOLLVM_DEFAULT_LINKER)
+  set(LVARIANT "-fuse-ld=${GOLLVM_DEFAULT_LINKER}")
+  endif()
+  set(CMAKE_REQUIRED_FLAGS "${LVARIANT} -fsplit-stack")
   check_c_source_compiles("#include<stdio.h>\nint main(){printf(\"hello\");\nreturn 0;}" SPLIT_STACK_FUNCTIONAL)
   if(NOT SPLIT_STACK_FUNCTIONAL)
     if(C_SUPPORTS_CF_PROTECTION_BRANCH)
@@ -47,7 +52,7 @@ if(GOLLVM_USE_SPLIT_STACK)
       # can cause unpleasant interactions with gold (see
       # https://sourceware.org/bugzilla/show_bug.cgi?id=25921 for details).
       message(STATUS "trying -fcf-protection=none workaround")
-      SET(CMAKE_REQUIRED_FLAGS "-fuse-ld=gold -fsplit-stack -fcf-protection=none")
+      SET(CMAKE_REQUIRED_FLAGS "${LVARIANT} -fsplit-stack -fcf-protection=none")
       check_c_source_compiles("#include<stdio.h>\nint main(){printf(\"hello\");\nreturn 0;}" SPLIT_STACK_WORKAROUND)
       if(SPLIT_STACK_WORKAROUND)
         message(STATUS "applying -fcf-protection=none workaround")
