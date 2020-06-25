@@ -1,4 +1,5 @@
 
+
 # Gollvm
 
 Gollvm is an LLVM-based Go compiler. It incorporates "gofrontend" (a Go language front end written in C++ and shared with GCCGO), a bridge component (which translates from gofrontend IR to LLVM IR), and a driver that sends the resulting IR through the LLVM back end.
@@ -80,7 +81,9 @@ Create a build directory (separate from the source tree) and run 'cmake' within 
 %
 ```
 
-This will build the various tools and libraries needed for Gollvm. To select a specific C/C++ compiler for the build, you can use the "-DCMAKE_C_COMPILER" and "-DCMAKE_CXX_COMPILER" options to select your desired C/C++ compiler when invoking cmake (details [here](https://gitlab.kitware.com/cmake/community/wikis/FAQ#how-do-i-use-a-different-compiler)).
+This will build the various tools and libraries needed for Gollvm. To select a specific C/C++ compiler for the build, you can use the "-DCMAKE_C_COMPILER" and "-DCMAKE_CXX_COMPILER" options to select your desired C/C++ compiler when invoking cmake (details [here](https://gitlab.kitware.com/cmake/community/wikis/FAQ#how-do-i-use-a-different-compiler)). Use the "-DLLVM_USE_LINKER=<variant>" cmake variable to control which linker is selected to link the Gollvm compile, and tools (where variant is one of "bfd", "gold", "lld", etc).
+
+The Gollvm compiler driver defaults to using the gold linker when linking Go programs.  If some other linker is desired, this can be accomplished by passing "-DGOLLVM_DEFAULT_LINKER=<variant>" when running cmake. Note that this default can still be overridden on the command line using the "-fuse-ld" option.
 
 ## Installing gollvm <a name="installing"></a>
 
