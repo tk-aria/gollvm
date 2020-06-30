@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0a727b41_9ac710cd",
+        "filename": "cmake/modules/AddGollvm.cmake",
+        "patchSetId": 2
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2020-06-30T21:16:30Z",
+      "side": 1,
+      "message": "Should we set this when the check pass, i.e. inside the if branch below?",
+      "revId": "675a4d888ff0eff99106408b56dd5710d6968ad6",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
