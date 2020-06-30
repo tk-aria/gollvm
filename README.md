@@ -66,7 +66,7 @@ To set up a work area for Gollvm, check out a copy of LLVM, the overlay the goll
 
 ## Building gollvm with cmake and ninja <a name="cmakeninja"></a>
 
-You'll need to have an up-to-date copy of cmake on your system (3.6 or later vintage) to build Gollvm, as well as a C/C++ compiler (V5.0 or later for Clang, or V6.0 or later of GCC).
+You'll need to have an up-to-date copy of cmake on your system (3.6 or later vintage) to build Gollvm, as well as a C/C++ compiler (V5.0 or later for Clang, or V6.0 or later of GCC), and a working copy of 'm4'.
 
 Create a build directory (separate from the source tree) and run 'cmake' within the build area to set up for the build. Assuming that 'workarea' is the directory created as above:
 
