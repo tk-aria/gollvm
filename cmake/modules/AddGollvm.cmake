@@ -52,7 +52,8 @@ if(GOLLVM_USE_SPLIT_STACK)
       # can cause unpleasant interactions with gold (see
       # https://sourceware.org/bugzilla/show_bug.cgi?id=25921 for details).
       message(STATUS "trying -fcf-protection=none workaround")
-      SET(CMAKE_REQUIRED_FLAGS "${LVARIANT} -fsplit-stack -fcf-protection=none")
+      set(CMAKE_REQUIRED_FLAGS "${LVARIANT} -fsplit-stack -fcf-protection=none")
+      set(CFPROTECTION_WORKAROUND "-fcf-protection=none")
       check_c_source_compiles("#include<stdio.h>\nint main(){printf(\"hello\");\nreturn 0;}" SPLIT_STACK_WORKAROUND)
       if(SPLIT_STACK_WORKAROUND)
         message(STATUS "applying -fcf-protection=none workaround")
