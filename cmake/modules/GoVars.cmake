@@ -31,9 +31,19 @@ else()
   message(SEND_ERROR "Arch ${llarch} not yet supported")
 endif()
 
-# FIXME: write code to insure that this is set and that the shell
-# in question behaves properly.
+# We need a working shell. 
 set(shell $ENV{SHELL})
+if(shell STREQUAL "")
+set(shell "/bin/bash")
+endif()
+execute_process(COMMAND "${shell}" "-c" "echo foo" OUTPUT_VARIABLE echofoo)
+if(echofoo STREQUAL "")
+message(FATAL_ERROR "fatal: shell ${shell} missing or not functional")
+endif()
+string(STRIP "${echofoo}" stripechofoo)
+if(NOT stripechofoo STREQUAL "foo")
+message(FATAL_ERROR "fatal: shell ${shell} missing or not functional")
+endif()
 
 # FIXME: write cmake to discover awk, test to make sure it works
 set(awk "/usr/bin/awk")
