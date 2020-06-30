@@ -66,7 +66,7 @@ function(setup_libbacktrace)
 
   set(libbacktraceflags "-g")
   if(GOLLVM_USE_SPLIT_STACK)
-    string(APPEND libbacktraceflags " -fsplit-stack")
+    string(APPEND libbacktraceflags " -fsplit-stack ${CFPROTECTION_WORKAROUND}")
   endif()
   string(APPEND libbacktraceflags " ${GOLLVM_EXTRA_CFLAGS}")
 
