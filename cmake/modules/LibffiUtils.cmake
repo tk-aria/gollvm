@@ -83,7 +83,7 @@ function(setup_libffi libffi_srcroot)
 
   set(libffiflags "-g")
   if(GOLLVM_USE_SPLIT_STACK)
-    string(APPEND libffiflags " -fsplit-stack")
+    string(APPEND libffiflags " -fsplit-stack ${CFPROTECTION_WORKAROUND}")
   endif()
   string(APPEND libffiflags " ${GOLLVM_EXTRA_CFLAGS}")
 
