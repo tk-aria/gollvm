@@ -85,6 +85,8 @@ This will build the various tools and libraries needed for Gollvm. To select a s
 
 The Gollvm compiler driver defaults to using the gold linker when linking Go programs.  If some other linker is desired, this can be accomplished by passing "-DGOLLVM_DEFAULT_LINKER=<variant>" when running cmake. Note that this default can still be overridden on the command line using the "-fuse-ld" option.
 
+Gollvm's cmake rules expect a valid value for the SHELL environment variable; if not set, a default shell of /bin/bash will be used.
+
 ## Installing gollvm <a name="installing"></a>
 
 A gollvm installation will contain 'llvm-goc' (the compiler driver), the libgo standard Go libraries, and the standard Go tools ("go", "vet", "cgo", etc).
