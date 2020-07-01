@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "65331bc4_351ae80e",
+        "filename": "bridge/go-llvm.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2758,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2020-07-01T17:40:43Z",
+      "side": 1,
+      "message": "I guess this is not a problem as long as the module verifier is happy. It might leak a small amount of memory? The optimizer may clean that up.",
+      "revId": "ab0ab3ddbc76fef3eddac15950ecc498bf1d769a",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
