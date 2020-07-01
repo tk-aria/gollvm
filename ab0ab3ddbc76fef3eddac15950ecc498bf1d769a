@@ -16,6 +16,24 @@
       "revId": "ab0ab3ddbc76fef3eddac15950ecc498bf1d769a",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9a8c6b08_e1c4845b",
+        "filename": "bridge/go-llvm.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2758,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-07-01T18:08:33Z",
+      "side": 1,
+      "message": "Module verifier is happy. I think this sort of clash doesn\u0027t tend to come up all that often, mostly compiling the runtime package.",
+      "parentUuid": "65331bc4_351ae80e",
+      "revId": "ab0ab3ddbc76fef3eddac15950ecc498bf1d769a",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
