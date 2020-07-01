@@ -2752,7 +2752,10 @@ Bfunction *Llvm_backend::function(Btype *fntype, const std::string &name,
       llvm::Constant *newDeclVal = llvm::cast<llvm::Constant>(
           module_->getOrInsertFunction(fn, declFnTyp).getCallee());
       declFnVal->replaceAllUsesWith(newDeclVal);
-      declFnVal->deleteValue();
+      // NB: previously we had a call to declFnVal->deleteValue() here, but this
+      // appears to no longer be supported, and declFnVal->destroyConstant()
+      // results in an assert. For now leave the old constant around, just
+      // remove references to it.
       for (auto it = fcnDeclMap_.begin(); it != fcnDeclMap_.end(); it++) {
         if (it->first.second.compare(fns) == 0) {
           Bfunction *found = it->second;
