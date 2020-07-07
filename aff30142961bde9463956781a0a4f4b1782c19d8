@@ -22,6 +22,30 @@
       "revId": "aff30142961bde9463956781a0a4f4b1782c19d8",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e7186082_a353e1c3",
+        "filename": "bridge/go-llvm.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2758,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-07-07T12:18:36Z",
+      "side": 1,
+      "message": "Looks like I missed that one. I\u0027ll send an update CL. Thanks.",
+      "parentUuid": "a8b8e9a4_0c5ff4b7",
+      "range": {
+        "startLine": 2757,
+        "startChar": 31,
+        "endLine": 2758,
+        "endChar": 33
+      },
+      "revId": "aff30142961bde9463956781a0a4f4b1782c19d8",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
     }
   ]
 }
