@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a8b8e9a4_0c5ff4b7",
+        "filename": "bridge/go-llvm.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2758,
+      "author": {
+        "id": 24534
+      },
+      "writtenOn": "2020-07-07T03:42:48Z",
+      "side": 1,
+      "message": "The following unit test is currently failing. Is this a known unhandled issue?\n[ RUN      ] UnitTest/BackendVarTests.GlobalVarsWithSameName/X8664SysV\nconstants should be destroyed with destroyConstant",
+      "range": {
+        "startLine": 2757,
+        "startChar": 31,
+        "endLine": 2758,
+        "endChar": 33
+      },
+      "revId": "aff30142961bde9463956781a0a4f4b1782c19d8",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
