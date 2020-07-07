@@ -2192,7 +2192,10 @@ Llvm_backend::makeModuleVar(Btype *btype,
         llvm::cast<llvm::PointerType>(old->getType())->getElementType();
     llvm::Constant *newDecl = module_->getOrInsertGlobal(gname, declTyp);
     old->replaceAllUsesWith(newDecl);
-    old->deleteValue();
+    // NB: previously we had a call to old->deleteValue() here, but this
+    // appears to no longer be supported, and old->destroyConstant()
+    // results in an assert. For now leave the old constant around, just
+    // remove references to it.
     Bvariable *declbv = valueVarMap_[old];
     declbv->setValue(newDecl);
     valueVarMap_.erase(old);
