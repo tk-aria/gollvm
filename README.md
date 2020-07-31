@@ -74,7 +74,7 @@ Create a build directory (separate from the source tree) and run 'cmake' within 
 % cd workarea
 % mkdir build-debug
 % cd build-debug
-% cmake -DCMAKE_BUILD_TYPE=Debug -DLLVM_USE_LINKER=gold -G Ninja ../llvm-project/llvm
+% cmake -DCMAKE_BUILD_TYPE=Debug -DGOLLVM_DEFAULT_LINKER=gold -G Ninja ../llvm-project/llvm
 ...
 % ninja gollvm
 ...
@@ -83,7 +83,11 @@ Create a build directory (separate from the source tree) and run 'cmake' within 
 
 This will build the various tools and libraries needed for Gollvm. To select a specific C/C++ compiler for the build, you can use the "-DCMAKE_C_COMPILER" and "-DCMAKE_CXX_COMPILER" options to select your desired C/C++ compiler when invoking cmake (details [here](https://gitlab.kitware.com/cmake/community/wikis/FAQ#how-do-i-use-a-different-compiler)). Use the "-DLLVM_USE_LINKER=<variant>" cmake variable to control which linker is selected to link the Gollvm compiler and tools (where variant is one of "bfd", "gold", "lld", etc).
 
-The Gollvm compiler driver defaults to using the gold linker when linking Go programs.  If some other linker is desired, this can be accomplished by passing "-DGOLLVM_DEFAULT_LINKER=<variant>" when running cmake. Note that this default can still be overridden on the command line using the "-fuse-ld" option.
+The Gollvm compiler driver defaults to using the gold linker when linking Go programs.  If some other linker is desired, this can be accomplished like this
+
+% cmake -DCMAKE_BUILD_TYPE=Debug -DGOLLVM_DEFAULT_LINKER=lld -G Ninja ../llvm-project/llvm
+
+ when running cmake.
 
 Gollvm's cmake rules expect a valid value for the SHELL environment variable; if not set, a default shell of /bin/bash will be used.
 
