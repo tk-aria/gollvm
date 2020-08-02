@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "97546371_2f0b2769",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2020-08-02T21:14:24Z",
+      "side": 1,
+      "message": "This paragraph (but not the topic line) should be proper sentences, with capital letters and punctuation.  Thanks.",
+      "revId": "45e5df16cfc0e46b85905af8dce7b90f15e8921e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6d80fd48_9458eb3a",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2020-08-02T21:14:24Z",
+      "side": 1,
+      "message": "This is in a different repo, so write this as\n\nFixes golang/go#40258",
+      "revId": "45e5df16cfc0e46b85905af8dce7b90f15e8921e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
