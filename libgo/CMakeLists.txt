@@ -446,7 +446,7 @@ list(APPEND runtimecfiles
 
 if (NOT ${goarch} STREQUAL "arm64")
   list(APPEND runtimecfiles
-    "go/golang.org/x/sys/cpu/cpu_gccgo.c")
+    "go/golang.org/x/sys/cpu/cpu_gccgo_x86.c")
 endif()
 
 # Linux-specific C files.
