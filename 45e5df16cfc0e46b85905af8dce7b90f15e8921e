@@ -33,6 +33,40 @@
       "revId": "45e5df16cfc0e46b85905af8dce7b90f15e8921e",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e011c1b0_e1608f0b",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2020-08-03T15:45:41Z",
+      "side": 1,
+      "message": "Remove this line. Thanks.",
+      "revId": "45e5df16cfc0e46b85905af8dce7b90f15e8921e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f89bba6b_6eae084b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2020-08-03T15:45:41Z",
+      "side": 1,
+      "message": "The change LGTM and it does fix the build. Please address Ian\u0027s comments. Then we can submit. Thanks.",
+      "revId": "45e5df16cfc0e46b85905af8dce7b90f15e8921e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
