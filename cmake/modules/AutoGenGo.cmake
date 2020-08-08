@@ -434,7 +434,11 @@ function(generate_go_from_script outpath script goos goarch workdir)
   get_filename_component(outfile "${outpath}" NAME)
   get_filename_component(outdir "${outpath}" DIRECTORY)
   set(tmpfile "${outdir}/tmp-${outfile}")
-  set(shell $ENV{SHELL})
+  if(DEFINED ENV{SHELL})
+    set(shell $ENV{SHELL})
+  else()
+    set(shell "/bin/bash")
+  endif()
 
   # Create a rule that runs the script into a temporary file.
   if( NOT ARG_CAPTURE )
