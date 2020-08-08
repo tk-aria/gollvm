@@ -32,9 +32,10 @@ else()
 endif()
 
 # We need a working shell. 
-set(shell $ENV{SHELL})
-if(shell STREQUAL "")
-set(shell "/bin/bash")
+if(DEFINED ENV{SHELL})
+  set(shell $ENV{SHELL})
+else()
+  set(shell "/bin/bash")
 endif()
 execute_process(COMMAND "${shell}" "-c" "echo foo" OUTPUT_VARIABLE echofoo)
 if(echofoo STREQUAL "")
