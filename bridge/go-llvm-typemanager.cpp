@@ -71,7 +71,7 @@ TypeManager::TypeManager(llvm::LLVMContext &context,
   llvmFloatType_ = llvm::Type::getFloatTy(context_);
   llvmDoubleType_ = llvm::Type::getDoubleTy(context_);
   llvmLongDoubleType_ = llvm::Type::getFP128Ty(context_);
-  llvmTwoFloatVecType_ = llvm::VectorType::get(llvmFloatType_, 2);
+  llvmTwoFloatVecType_ = llvm::FixedVectorType::get(llvmFloatType_, 2);
 
   // Predefined C string type
   stringType_ = pointerType(integerType(true, 8));
