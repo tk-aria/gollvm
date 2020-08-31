@@ -665,6 +665,7 @@ bool CompileGoImpl::initBridge()
   // Populate 'args' struct with various bits of information needed by
   // the front end, then pass it to the front end via go_create_gogo().
   struct go_create_gogo_args args;
+  memset(&args, 0, sizeof(args));
   unsigned bpi = target_->getPointerSize(0) * 8;
   args.int_type_size = bpi;
   args.pointer_size = bpi;
