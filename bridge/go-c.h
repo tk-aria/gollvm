@@ -37,6 +37,7 @@ struct go_create_gogo_args
   const char* debug_escape_hash;
   int64_t nil_check_size_threshold;
   bool debug_optimization;
+  bool need_eqtype;
 };
 
 // These are defined in gofrontend and called from the bridge.
