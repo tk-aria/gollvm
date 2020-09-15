@@ -40,6 +40,7 @@ class Action {
   enum Type {
     A_InputFile,
     A_ReadStdin,
+    A_CompileAndAssemble,
     A_Compile,
     A_Assemble,
     A_Link
@@ -64,6 +65,9 @@ class Action {
 
   // debugging
   void dump();
+
+  // unit testing
+  std::string toString();
 
  private:
   Type type_;

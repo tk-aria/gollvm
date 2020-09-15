@@ -65,6 +65,7 @@ Tool *ToolChain::getTool(Action *act)
   assert(act != nullptr);
   switch(act->type()) {
     case Action::A_Compile:
+    case Action::A_CompileAndAssemble:
       return getCompiler();
     case Action::A_Assemble:
       return getAssembler();

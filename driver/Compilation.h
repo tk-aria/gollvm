@@ -55,9 +55,9 @@ class Compilation {
   // on action plus command line flags).
   Artifact* createOutputFileArtifact(Action *act);
 
-  // Temporary (for this patch only): create a dummy artifact for the
-  // specified file.
-  Artifact* createDummyAsmOutArtifact(const std::string &fileName);
+  // Create a dummy artifact to hold the output of the specified
+  // action. For unit testing.
+  Artifact* createFakeFileArtifact(Action *act);
 
   // Toolchain, driver
   ToolChain &toolchain() { return toolchain_; }

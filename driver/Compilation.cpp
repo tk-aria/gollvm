@@ -20,6 +20,8 @@
 #include "Command.h"
 #include "Driver.h"
 
+#include <sstream>
+
 namespace gollvm {
 namespace driver {
 
@@ -68,6 +70,17 @@ std::string Compilation::firstFileBase()
 Artifact *Compilation::newArgArtifact(llvm::opt::Arg *arg)
 {
   ownedArtifacts_.push_back(std::unique_ptr<Artifact>(new Artifact(arg)));
+  return ownedArtifacts_.back().get();
+}
+
+Artifact *Compilation::createFakeFileArtifact(Action *act)
+{
+  std::stringstream s;
+  s << "/tmp/out." << act->getName() << "." << paths_.size();
+  std::string path(s.str());
+  paths_.push_back(std::string(path));
+  const char *fn = paths_.back().c_str();
+  ownedArtifacts_.push_back(std::unique_ptr<Artifact>(new Artifact(fn)));
   return ownedArtifacts_.back().get();
 }
 
