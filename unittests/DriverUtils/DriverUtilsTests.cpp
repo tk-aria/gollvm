@@ -223,7 +223,7 @@ bool expectToString(T &cand, const ExpectedDump &ed)
   std::string actual(cand.toString());
   bool equal = difftokens(ed.content, actual, reason);
   if (! equal)
-    complainOnNequal(reason, ed, actual, false, false);
+    complainOnNequal(reason, ed, actual);
   return equal;
 }
 

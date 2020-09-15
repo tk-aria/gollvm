@@ -161,21 +161,29 @@ void emitStringToDumpFile(const char *tag,
 
 void complainOnNequal(const std::string &reason,
                       const ExpectedDump &ed,
-                      const std::string &actual,
-                      bool emitDump,
-                      bool emitRemaster)
+                      const std::string &actual)
 {
+  bool emitDumpFilesOnDiff = false;
+  bool emitRemasterScript = false;
+
+  if (getenv("GOLLVM_UNITTESTS_BACKENDCORE_EMITDUMPFILES") != nullptr)
+    emitDumpFilesOnDiff = true;
+  if (getenv("GOLLVM_UNITTESTS_BACKENDCORE_EMITDUMPFILES") != nullptr) {
+    emitRemasterScript = true;
+    emitDumpFilesOnDiff = true;
+  }
+
   std::cerr << reason << "\n";
   const std::string &expected = ed.content;
   std::cerr << "expected dump:\n" << expected << "\n";
   std::cerr << "actual dump:\n" << actual << "\n";
   unsigned mls = macroLineAtStart() ? 1 : 0;
-  if (emitDump) {
+  if (emitDumpFilesOnDiff) {
     static unsigned filecount;
     static FILE *outfp; // script
     emitStringToDumpFile("expected", filecount, expected);
     emitStringToDumpFile("actual", filecount, actual);
-    if (emitRemaster) {
+    if (emitRemasterScript) {
       // HACK: no explicit close for this file. Assume that it will
       // be closed when the unit test finishes running.
       if (outfp == nullptr) {
