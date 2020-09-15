@@ -26,4 +26,5 @@ include_directories(${BRIDGE_SOURCE_DIR})
 include_directories(${GOFRONTEND_SOURCE_DIR})
 
 add_subdirectory(DriverUtils)
+add_subdirectory(Driver)
 add_subdirectory(BackendCore)
