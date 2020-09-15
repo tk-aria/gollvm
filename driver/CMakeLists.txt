@@ -35,6 +35,7 @@ add_llvm_library(LLVMDriverUtils
   GccUtils.cpp
   GnuTools.cpp
   GollvmOptions.cpp
+  IntegAssembler.cpp
   LinuxToolChain.cpp
   ReadStdin.cpp
   Tool.cpp

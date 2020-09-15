@@ -58,6 +58,9 @@ class Driver {
   // Build actions for compilation. Returns false if error.
   bool buildActions(Compilation &compilation);
 
+  // Emit actions as string, for unit testing.
+  std::string dumpActions(Compilation &compilation);
+
   // Process the action list. This means:
   // - execute any non-dependent actions that don't require the
   //   invocation of an external tool, and
@@ -105,6 +108,7 @@ class Driver {
   llvm::PIELevel::Level getPieLevel();
   bool picIsPIE();
   bool isPIE();
+  bool useIntegratedAssembler();
   bool usingSplitStack() const { return usingSplitStack_; }
   template<typename IT>
   llvm::Optional<IT> getLastArgAsInteger(gollvm::options::ID id,
@@ -119,6 +123,11 @@ class Driver {
                           ActionList &result,
                           Compilation &compilation);
   static void emitVersion();
+
+  // Get/set unit testing mode. In unit testing mode we don't
+  // check for the existence of input files.
+  void setUnitTesting() { unitTesting_ = true; }
+  bool unitTesting() const { return unitTesting_; }
 
  private:
   llvm::Triple triple_;
@@ -135,6 +144,7 @@ class Driver {
   std::unordered_map<Action *, Artifact*> artmap_;
   std::vector<std::string> prefixes_;
   bool usingSplitStack_;
+  bool unitTesting_;
 
   bool processAction(Action *act, Compilation &compilation, bool lastAct);
   ArtifactList collectInputArtifacts(Action *act, InternalTool *it);
