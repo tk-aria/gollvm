@@ -15,6 +15,8 @@
 
 #include "llvm/Support/raw_ostream.h"
 
+#include <sstream>
+
 namespace gollvm {
 namespace driver {
 
@@ -23,6 +25,7 @@ const char *Action::getName() const
   switch (type_) {
     case A_ReadStdin: return "readstdin";
     case A_InputFile: return "inputfile";
+    case A_CompileAndAssemble: return "compile+assemble";
     case A_Compile: return "compile";
     case A_Assemble: return "assemble";
     case A_Link: return "link";
@@ -51,16 +54,23 @@ const char *Action::resultFileSuffix() const
   return nullptr;
 }
 
-void Action::dump()
+std::string Action::toString()
 {
-  llvm::errs() << "Action " << getName() << " inputs:\n";
+  std::stringstream s;
+  s << "Action " << getName() << std::endl << "  inputs:\n";
   for (auto inp : inputs()) {
-    llvm::errs() << "  " << ((void*) inp) << " " << inp->getName() << " ";
+    s << "    " << inp->getName() << " ";
     InputAction *ia = inp->castToInputAction();
     if (ia)
-      llvm::errs() << ia->input()->toString();
-    llvm::errs() << "\n";
+      s << ia->input()->toString();
+    s << "\n";
   }
+  return s.str();
+}
+
+void Action::dump()
+{
+  llvm::errs() << toString();
 }
 
 } // end namespace driver

@@ -15,6 +15,8 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
 
+#include <sstream>
+
 #include "Action.h"
 #include "Compilation.h"
 #include "Driver.h"
@@ -34,7 +36,8 @@ Driver::Driver(opt::InputArgList &args,
     : args_(args),
       opts_(optTable),
       progname_(argv0),
-      usingSplitStack_(using_splitstack)
+      usingSplitStack_(using_splitstack),
+      unitTesting_(false)
 {
   if (const opt::Arg *arg = args.getLastArg(gollvm::options::OPT_sysroot_EQ))
     sysroot_ = arg->getValue();
@@ -148,6 +151,27 @@ std::string Driver::getProgramPath(llvm::StringRef name,
   }
 
   return name.str();
+}
+
+// Returns TRUE if we should use the integrated assembler.
+bool Driver::useIntegratedAssembler()
+{
+  opt::Arg *arg = args_.getLastArg(gollvm::options::OPT_fintegrated_as,
+                                   gollvm::options::OPT_fno_integrated_as);
+
+  // If option is specified, then go with that.
+  if (arg != nullptr)
+    return arg->getOption().matches(options::OPT_fintegrated_as);
+
+  // If -Xassembler or -Wa,... used, then don't use the integrated
+  // assembler, since the driver doesn't support the full complement
+  // of assembler options (this can be removed if/when we do).
+  auto waComArg = args_.getLastArg(gollvm::options::OPT_Wa_COMMA);
+  auto xAsmArg = args_.getLastArg(gollvm::options::OPT_Xassembler);
+  if (waComArg != nullptr || xAsmArg != nullptr)
+    return false;
+
+  return true;
 }
 
 // FIXME: some  platforms have PIE enabled by default; we don't
@@ -349,10 +373,12 @@ ToolChain *Driver::setup()
         std::string fn(arg->getValue());
 
         // Check for existence of input file.
-        if (!sys::fs::exists(fn)) {
-          errs() << progname_ << ": error: input file '"
-                 << fn << "' does not exist\n";
-          return nullptr;
+        if (!unitTesting()) {
+          if (!sys::fs::exists(fn)) {
+            errs() << progname_ << ": error: input file '"
+                   << fn << "' does not exist\n";
+            return nullptr;
+          }
         }
       }
       inputseen = true;
@@ -442,6 +468,7 @@ bool Driver::buildActions(Compilation &compilation)
 
   bool OPT_c = args_.hasArg(gollvm::options::OPT_c);
   bool OPT_S = args_.hasArg(gollvm::options::OPT_S);
+  bool integAs = useIntegratedAssembler();
 
   // For -c/-S compiles, a mix of Go and assembly currently not allowed.
   if ((OPT_c || OPT_S) && !gofiles.empty() && !asmfiles.empty()) {
@@ -457,14 +484,20 @@ bool Driver::buildActions(Compilation &compilation)
     ActionList inacts;
     appendInputActions(gofiles, inacts, compilation);
 
+    bool needAsm = (!OPT_S && !args_.hasArg(gollvm::options::OPT_emit_llvm));
+    Action::Type atyp = (needAsm && integAs ?
+                         Action::A_CompileAndAssemble :
+                         Action::A_Compile);
+
     // Create action
-    Action *gocompact =
-        new Action(Action::A_Compile, inacts);
+    Action *gocompact = new Action(atyp, inacts);
     compilation.recordAction(gocompact);
     compilation.addAction(gocompact);
+    if (atyp == Action::A_CompileAndAssemble && !OPT_c)
+      linkerInputActions.push_back(gocompact);
 
-    // Schedule assemble action now if no -S.
-    if (!OPT_S && !args_.hasArg(gollvm::options::OPT_emit_llvm)) {
+    // Schedule assemble action now if needed.
+    if (needAsm && atyp == Action::A_Compile) {
       // Create action
       Action *asmact =
           new Action(Action::A_Assemble, gocompact);
@@ -515,6 +548,20 @@ bool Driver::buildActions(Compilation &compilation)
   return true;
 }
 
+std::string Driver::dumpActions(Compilation &compilation)
+{
+  std::stringstream s;
+  for (Action *action : compilation.actions()) {
+    s << action->toString();
+    auto it = artmap_.find(action);
+    if (it != artmap_.end()) {
+      Artifact *oa = it->second;
+      s << "  output:\n" << "    " << oa->toString() << "\n";
+    }
+  }
+  return s.str();
+}
+
 ArtifactList Driver::collectInputArtifacts(Action *act, InternalTool *it)
 {
   ArtifactList result;
@@ -540,14 +587,18 @@ bool Driver::processAction(Action *act, Compilation &compilation, bool lastAct)
   // Select the result file for this action.
   Artifact *result = nullptr;
   if (!lastAct) {
-    auto tfa = compilation.createTemporaryFileArtifact(act);
-    if (!tfa)
-      return false;
-    result = *tfa;
-    artmap_[act] = result;
+    if (unitTesting()) {
+      result = compilation.createFakeFileArtifact(act);
+    } else {
+      auto tfa = compilation.createTemporaryFileArtifact(act);
+      if (!tfa)
+        return false;
+      result = *tfa;
+    }
   } else {
     result = compilation.createOutputFileArtifact(act);
   }
+  artmap_[act] = result;
 
   // Select tool to process the action.
   Tool *tool = compilation.toolchain().getTool(act);
@@ -559,8 +610,10 @@ bool Driver::processAction(Action *act, Compilation &compilation, bool lastAct)
 
   // If internal tool, perform now.
   if (it != nullptr) {
-    if (! it->performAction(compilation, *act, actionInputs, *result))
-      return false;
+    if (!unitTesting()) {
+      if (! it->performAction(compilation, *act, actionInputs, *result))
+        return false;
+    }
     return true;
   }
 

@@ -132,11 +132,11 @@ class CompileGoImpl {
   void setCConv();
 
   // The routines below return TRUE for success, FALSE for failure/error/
-  bool setup();
+  bool setup(const Action &jobAction);
   bool initBridge();
   bool invokeFrontEnd();
   bool invokeBridge();
-  bool invokeBackEnd();
+  bool invokeBackEnd(const Action &jobAction);
   bool resolveInputOutput(const Action &jobAction,
                           const ArtifactList &inputArtifacts,
                           const Artifact &output);
@@ -180,7 +180,7 @@ bool CompileGoImpl::performAction(Compilation &compilation,
     return false;
 
   // Setup
-  if (!setup())
+  if (!setup(jobAction))
     return false;
 
   // Set up the bridge
@@ -192,7 +192,7 @@ bool CompileGoImpl::performAction(Compilation &compilation,
     return false;
 
   // Invoke back end
-  if (!invokeBackEnd())
+  if (!invokeBackEnd(jobAction))
     return false;
 
   return true;
@@ -280,7 +280,7 @@ generateOptimizationRemarkRegex(opt::ArgList &args, opt::Arg *rpassArg)
   return pattern;
 }
 
-bool CompileGoImpl::setup()
+bool CompileGoImpl::setup(const Action &jobAction)
 {
   // Set triple.
   triple_ = driver_.triple();
@@ -410,8 +410,10 @@ bool CompileGoImpl::setup()
 
   TargetOptions Options;
 
-  // FIXME: turn off integrated assembler for now.
-  Options.DisableIntegratedAS = true;
+  auto jat = jobAction.type();
+  assert(jat == Action::A_CompileAndAssemble ||
+         jat == Action::A_Compile);
+  Options.DisableIntegratedAS = !(jat == Action::A_CompileAndAssemble);
 
   // FIXME: this hard-wires on the equivalent of -ffunction-sections
   // and -fdata-sections, since there doesn't seem to be a high-level
@@ -872,7 +874,7 @@ void CompileGoImpl::createPasses(legacy::PassManager &MPM,
   pmb.populateModulePassManager(MPM);
 }
 
-bool CompileGoImpl::invokeBackEnd()
+bool CompileGoImpl::invokeBackEnd(const Action &jobAction)
 {
   tlii_.reset(new TargetLibraryInfoImpl(triple_));
 
@@ -899,7 +901,8 @@ bool CompileGoImpl::invokeBackEnd()
 
   legacy::PassManager codeGenPasses;
   bool noverify = args_.hasArg(gollvm::options::OPT_noverify);
-  CodeGenFileType ft = CGFT_AssemblyFile;
+  CodeGenFileType ft = (jobAction.type() == Action::A_CompileAndAssemble ?
+                        CGFT_ObjectFile : CGFT_AssemblyFile);
 
   // Add passes to emit bitcode or LLVM IR as appropriate. Here we mimic
   // clang behavior, which is to emit bitcode when "-emit-llvm" is specified
