@@ -90,7 +90,7 @@ class RemarkCtl {
 
 class CompileGoImpl {
  public:
-  CompileGoImpl(ToolChain &tc, const std::string &executablePath);
+  CompileGoImpl(CompileGo &cg, ToolChain &tc, const std::string &executablePath);
 
   // Perform compilation.
   bool performAction(Compilation &compilation,
@@ -99,6 +99,7 @@ class CompileGoImpl {
                      const Artifact &output);
 
  private:
+  CompileGo &cg_;
   Triple triple_;
   const ToolChain &toolchain_;
   Driver &driver_;
@@ -130,10 +131,6 @@ class CompileGoImpl {
   void setupGoSearchPath();
   void setCConv();
 
-  // This routine emits output for -### and/or -v, then returns TRUE
-  // of the compilation should be stubbed out (-###) or FALSE otherwise.
-  bool preamble(const Artifact &output);
-
   // The routines below return TRUE for success, FALSE for failure/error/
   bool setup();
   bool initBridge();
@@ -144,16 +141,15 @@ class CompileGoImpl {
                           const ArtifactList &inputArtifacts,
                           const Artifact &output);
 
-  // Helpers for -### output
-  void dumpArg(opt::Arg &arg, bool doquote);
-  void quoteDump(const std::string &str, bool doquote);
-
   // Misc
   bool enableVectorization(bool slp);
 };
 
-CompileGoImpl::CompileGoImpl(ToolChain &tc, const std::string &executablePath)
-    : triple_(tc.driver().triple()),
+CompileGoImpl::CompileGoImpl(CompileGo &cg,
+                             ToolChain &tc,
+                             const std::string &executablePath)
+    : cg_(cg),
+      triple_(tc.driver().triple()),
       toolchain_(tc),
       driver_(tc.driver()),
       cconv_(CallingConv::MaxID),
@@ -176,7 +172,7 @@ bool CompileGoImpl::performAction(Compilation &compilation,
                                   const ArtifactList &inputArtifacts,
                                   const Artifact &output)
 {
-  if (preamble(output))
+  if (cg_.emitMinusVOrHashHashHash(triple_, output, jobAction))
     return true;
 
   // Resolve input/output files.
@@ -242,66 +238,6 @@ class BEDiagnosticHandler : public DiagnosticHandler {
  private:
   RemarkCtl &r_;
 };
-
-void CompileGoImpl::quoteDump(const std::string &str, bool doquote)
-{
-  Regex qureg("^[-_/A-Za-z0-9_\\.]+$");
-  errs() << " ";
-  if (doquote)
-    doquote = !qureg.match(str);
-  errs() << (doquote ? "\"" : "") << str << (doquote ? "\"" : "");
-}
-
-void CompileGoImpl::dumpArg(opt::Arg &arg, bool doquote)
-{
-  if (arg.getOption().getKind() != opt::Option::InputClass)
-    quoteDump(arg.getSpelling().str(), doquote);
-  for (auto &val : arg.getValues())
-    quoteDump(val, doquote);
-}
-
-bool CompileGoImpl::preamble(const Artifact &output)
-{
-  // If -v is in effect, print something to show the effect of the
-  // compilation. This is in some sense a fiction, because the top
-  // level driver is not invoking an external tool to perform the
-  // compile, but there is an expectation with compilers that if you
-  // take the "-v" output and then execute each command shown by hand,
-  // you'll get the same effect as the original command that produced
-  // the "-v" output.
-  bool hashHashHash = args_.hasArg(gollvm::options::OPT__HASH_HASH_HASH);
-  if (args_.hasArg(gollvm::options::OPT_v) || hashHashHash) {
-    errs() << "Target: " << triple_.str() << "\n";
-    errs() << " " << executablePath_;
-    if (!args_.hasArg(gollvm::options::OPT_S) &&
-        !args_.hasArg(gollvm::options::OPT_emit_llvm))
-      errs() << " " << "-S";
-    for (auto arg : args_) {
-      // Special case for -L. Here even if the user said "-L /x"
-      // we render it as -L/x so as to be compatible with existing
-      // code in the imported that expects the former and not the latter.
-      if (arg->getOption().matches(gollvm::options::OPT_L))
-        errs() << " -L" << arg->getValue();
-      if (arg->getOption().getGroup().isValid() &&
-          (arg->getOption().getGroup().getID() ==
-           gollvm::options::OPT_Link_Group))
-        continue;
-      if (arg->getOption().matches(gollvm::options::OPT_v) ||
-          arg->getOption().matches(gollvm::options::OPT_c) ||
-          arg->getOption().matches(gollvm::options::OPT_o) ||
-          arg->getOption().matches(gollvm::options::OPT__HASH_HASH_HASH) ||
-          arg->getOption().matches(gollvm::options::OPT_save_temps))
-        continue;
-      dumpArg(*arg, hashHashHash);
-    }
-
-    errs() << " " << "-L" << driver_.installedLibDir() << " " << "-o";
-    quoteDump(output.file(), hashHashHash);
-    errs() << "\n";
-  }
-
-  return hashHashHash;
-}
 
 bool CompileGoImpl::resolveInputOutput(const Action &jobAction,
                                        const ArtifactList &inputArtifacts,
@@ -1040,8 +976,8 @@ run:
 //......................................................................
 
 CompileGo::CompileGo(ToolChain &tc, const std::string &executablePath)
-    : InternalTool("gocompiler", tc),
-      impl_(new CompileGoImpl(tc, executablePath))
+    : InternalTool("gocompiler", tc, executablePath),
+      impl_(new CompileGoImpl(*this, tc, executablePath))
 {
 }
 
