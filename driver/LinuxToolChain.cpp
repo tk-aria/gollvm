@@ -16,6 +16,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 #include "CompileGo.h"
+#include "IntegAssembler.h"
 #include "Driver.h"
 #include "GnuTools.h"
 #include "Tool.h"
@@ -97,7 +98,10 @@ Tool *Linux::buildCompiler()
 
 Tool *Linux::buildAssembler()
 {
-  return new gnutools::Assembler(*this);
+  if (driver().useIntegratedAssembler())
+    return new IntegAssembler(*this, driver().executablePath());
+  else
+    return new gnutools::Assembler(*this);
 }
 
 Tool *Linux::buildLinker()
