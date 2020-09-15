@@ -394,8 +394,6 @@ FcnTestHarness::FcnTestHarness(llvm::CallingConv::ID cconv, const char *fcnName)
     , lineNum_(1)
     , finished_(false)
     , returnAdded_(false)
-    , emitDumpFilesOnDiff_(false)
-    , findOrphanBBs_(true)
 {
   // establish initial file so as to make verifier happy
   be_->linemap()->start_file("unit_testing.go", 1);
@@ -406,14 +404,6 @@ FcnTestHarness::FcnTestHarness(llvm::CallingConv::ID cconv, const char *fcnName)
     func_ = mkFunci32o64(be(), fcnName);
     entryBlock_ = be()->block(func_, nullptr, emptyVarList_, loc_, loc_);
     curBlock_ = be()->block(func_, nullptr, emptyVarList_, loc_, loc_);
-  }
-
-  // debugging
-  if (getenv("GOLLVM_UNITTESTS_BACKENDCORE_EMITDUMPFILES"))
-    emitDumpFilesOnDiff_ = true;
-  if (getenv("GOLLVM_UNITTESTS_EMIT_REMASTER_SCRIPT")) {
-    emitRemasterScript_ = true;
-    emitDumpFilesOnDiff_ = true;
   }
 }
 
@@ -582,7 +572,7 @@ bool FcnTestHarness::expectStmt(Bstatement *st, const ExpectedDump &ed)
   std::string actual(repr(st));
   bool equal = difftokens(expected, actual, reason);
   if (! equal)
-    complainOnNequal(reason, ed, actual, emitDumpFilesOnDiff_, emitRemasterScript_);
+    complainOnNequal(reason, ed, actual);
   return equal;
 }
 
@@ -593,7 +583,7 @@ bool FcnTestHarness::expectValue(llvm::Value *val, const ExpectedDump &ed)
   std::string actual(repr(val));
   bool equal = difftokens(expected, actual, reason);
   if (! equal)
-    complainOnNequal(reason, ed, actual, emitDumpFilesOnDiff_, emitRemasterScript_);
+    complainOnNequal(reason, ed, actual);
   return equal;
 }
 
@@ -604,7 +594,7 @@ bool FcnTestHarness::expectBlock(const ExpectedDump &ed)
   std::string actual(repr(curBlock_));
   bool equal = difftokens(expected, actual, reason);
   if (! equal)
-    complainOnNequal(reason, ed, actual, emitDumpFilesOnDiff_, emitRemasterScript_);
+    complainOnNequal(reason, ed, actual);
   return equal;
 }
 
@@ -633,7 +623,7 @@ bool FcnTestHarness::expectRepr(Bnode *node, const ExpectedDump &ed)
   std::string actual(repr(node));
   bool equal = difftokens(expected, actual, reason);
   if (! equal)
-    complainOnNequal(reason, ed, actual, emitDumpFilesOnDiff_, emitRemasterScript_);
+    complainOnNequal(reason, ed, actual);
   return equal;
 }
 

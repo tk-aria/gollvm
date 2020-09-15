@@ -53,13 +53,11 @@ bool containstokens(const std::string &text, const std::string &pat);
 unsigned countinstances(const std::string &text, const std::string &pat);
 
 // Issue an error message to std:cerr to report the fact that the expected dump
-// in 'ed' does not match the actual dump in 'actual'; emit actual/expected
-// debug dump files if 'emitDump' is true; emit script to perform output
-// remastering if 'emitRemasterScript' is true.
+// in 'ed' does not match the actual dump in 'actual'. Depending on environment
+// variable settings, may also emit dump files and/or remaster script.
 void complainOnNequal(const std::string &reason,
                       const ExpectedDump &ed,
-                      const std::string &actual,
-                      bool emitDump, bool emitRemasterScript);
+                      const std::string &actual);
 
 }
 
