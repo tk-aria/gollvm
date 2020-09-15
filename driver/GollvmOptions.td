@@ -145,6 +145,13 @@ def O_flag : Flag<["-"], "O">, Alias<O>, AliasArgs<["2"]>,
 def S : Flag<["-"], "S">, Flags<[DriverOption]>, Group<Action_Group>,
   HelpText<"Only run compilation step">;
 
+def fintegrated_as : Flag<["-"], "fintegrated-as">,
+                     Group<Action_Group>, HelpText<"Enable the integrated assembler">;
+
+def fno_integrated_as : Flag<["-"], "fno-integrated-as">,
+                        Group<Action_Group>,
+                        HelpText<"Disable the integrated assembler">;
+
 def c : Flag<["-"], "c">, Flags<[DriverOption]>, Group<Action_Group>,
   HelpText<"Only run compile and assemble steps">;
 
