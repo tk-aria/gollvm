@@ -14,6 +14,7 @@
 #define GOLLVM_DRIVER_TOOL_H
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Triple.h"
 #include "Artifact.h"
 
 namespace gollvm {
@@ -58,7 +59,9 @@ class Tool {
 
 class InternalTool : public Tool {
  public:
-  InternalTool(const char *name, ToolChain &tc);
+  InternalTool(const char *name,
+               ToolChain &tc,
+               const std::string &executablePath);
   virtual ~InternalTool();
 
   // Given a specific action, perform the action now (as opposed to
@@ -68,7 +71,22 @@ class InternalTool : public Tool {
                              const Action &jobAction,
                              const ArtifactList &inputArtifacts,
                              const Artifact &output) = 0;
+
+  // Helper to emit output for "-v" or "-###" command line option when supplied
+  // to an internal tool. Return value is TRUE if if the compilation should be
+  // stubbed out (-###) or FALSE otherwise.
+  bool emitMinusVOrHashHashHash(const llvm::Triple &triple,
+                                const Artifact &output,
+                                const Action &jobAction);
+
+  // Executable path, if applicable.
+  std::string executablePath() const {
+    return executablePath_;
+  }
+
  private:
+  ToolChain &tc_;
+  std::string executablePath_;
 };
 
 // An "external" tool -- carries out the steps needs to perform

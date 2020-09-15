@@ -24,7 +24,7 @@ namespace driver {
 
 
 ReadStdin::ReadStdin(ToolChain &tc, bool mustBeEmpty)
-    : InternalTool("stdinreader", tc),
+    : InternalTool("stdinreader", tc, ""),
       mustBeEmpty_(mustBeEmpty)
 {
 }
