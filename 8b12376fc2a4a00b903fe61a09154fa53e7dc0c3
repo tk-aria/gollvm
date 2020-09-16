@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "cf7b6dbc_c2c66b43",
+        "filename": "unittests/TestUtils/DiffUtils.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2020-09-16T15:07:00Z",
+      "side": 1,
+      "message": "Maybe also remove this from the environment variable name?",
+      "range": {
+        "startLine": 169,
+        "startChar": 31,
+        "endLine": 169,
+        "endChar": 42
+      },
+      "revId": "8b12376fc2a4a00b903fe61a09154fa53e7dc0c3",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5611e030_e9d8263d",
+        "filename": "unittests/TestUtils/DiffUtils.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 171,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2020-09-16T15:07:00Z",
+      "side": 1,
+      "message": "GOLLVM_UNITTESTS_EMIT_REMASTER_SCRIPT ?",
+      "range": {
+        "startLine": 171,
+        "startChar": 14,
+        "endLine": 171,
+        "endChar": 56
+      },
+      "revId": "8b12376fc2a4a00b903fe61a09154fa53e7dc0c3",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
