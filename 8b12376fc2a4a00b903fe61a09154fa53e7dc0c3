@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "0c221ee5_4eb7a417",
+        "filename": "unittests/TestUtils/DiffUtils.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-09-16T15:46:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cf7b6dbc_c2c66b43",
+      "range": {
+        "startLine": 169,
+        "startChar": 31,
+        "endLine": 169,
+        "endChar": 42
+      },
+      "revId": "8b12376fc2a4a00b903fe61a09154fa53e7dc0c3",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5611e030_e9d8263d",
         "filename": "unittests/TestUtils/DiffUtils.cpp",
         "patchSetId": 1
@@ -45,6 +69,30 @@
       "revId": "8b12376fc2a4a00b903fe61a09154fa53e7dc0c3",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "89570ebe_681a37e9",
+        "filename": "unittests/TestUtils/DiffUtils.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 171,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-09-16T15:46:44Z",
+      "side": 1,
+      "message": "Thanks, fixed. Cut and past considered harmful, to paraphrase Dijkstra.",
+      "parentUuid": "5611e030_e9d8263d",
+      "range": {
+        "startLine": 171,
+        "startChar": 14,
+        "endLine": 171,
+        "endChar": 56
+      },
+      "revId": "8b12376fc2a4a00b903fe61a09154fa53e7dc0c3",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
