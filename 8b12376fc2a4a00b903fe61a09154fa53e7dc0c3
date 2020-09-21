@@ -2,6 +2,23 @@
   "comments": [
     {
       "key": {
+        "uuid": "f7816a5e_a132c958",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-09-21T16:26:55Z",
+      "side": 1,
+      "message": "Thanks for the review--",
+      "revId": "8b12376fc2a4a00b903fe61a09154fa53e7dc0c3",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "cf7b6dbc_c2c66b43",
         "filename": "unittests/TestUtils/DiffUtils.cpp",
         "patchSetId": 1
