@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "84282b19_1b14108d",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2020-09-25T16:15:51Z",
+      "side": 1,
+      "message": "Instead of failing, maybe fall back to external assembler if we see a -Wa,XXX ?",
+      "revId": "ad44b70558b624f230b049b74349d02d9a1e0e20",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "390fd79a_7d798189",
+        "filename": "driver/Driver.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 485,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2020-09-25T16:15:51Z",
+      "side": 1,
+      "message": "Maybe also check OPT_c?",
+      "revId": "ad44b70558b624f230b049b74349d02d9a1e0e20",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d66c0646_2d1e23ac",
+        "filename": "driver/IntegAssembler.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 222,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2020-09-25T16:15:51Z",
+      "side": 1,
+      "message": "Maybe error out for other strings?",
+      "revId": "ad44b70558b624f230b049b74349d02d9a1e0e20",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9c45fd06_2a8cd8d0",
+        "filename": "driver/IntegAssembler.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2020-09-25T16:15:51Z",
+      "side": 1,
+      "message": "Why comment this out? It doesn\u0027t work?",
+      "revId": "ad44b70558b624f230b049b74349d02d9a1e0e20",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9ed52632_97a8e623",
+        "filename": "driver/IntegAssembler.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 288,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2020-09-25T16:15:51Z",
+      "side": 1,
+      "message": "Yeah, we probably want to get this right. I think various things complain for executable stacks.",
+      "revId": "ad44b70558b624f230b049b74349d02d9a1e0e20",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7b0d29cb_38a3e55f",
+        "filename": "unittests/Driver/CMakeLists.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2020-09-25T16:15:51Z",
+      "side": 1,
+      "message": "Nit: this line contains spaces, and there are too many blank lines.",
+      "revId": "ad44b70558b624f230b049b74349d02d9a1e0e20",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": true
+    }
+  ]
+}
