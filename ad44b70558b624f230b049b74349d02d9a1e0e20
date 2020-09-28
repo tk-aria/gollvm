@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "469603e9_5c907279",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-09-28T14:30:23Z",
+      "side": 1,
+      "message": "Interesting thought.  I\u0027ll add support for that.",
+      "parentUuid": "84282b19_1b14108d",
+      "revId": "ad44b70558b624f230b049b74349d02d9a1e0e20",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "390fd79a_7d798189",
         "filename": "driver/Driver.cpp",
         "patchSetId": 2
@@ -33,6 +51,24 @@
       "revId": "ad44b70558b624f230b049b74349d02d9a1e0e20",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1280332b_326ff11b",
+        "filename": "driver/Driver.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 485,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-09-28T14:30:23Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "390fd79a_7d798189",
+      "revId": "ad44b70558b624f230b049b74349d02d9a1e0e20",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     },
     {
       "key": {
@@ -53,6 +89,24 @@
     },
     {
       "key": {
+        "uuid": "6f719b01_059512ac",
+        "filename": "driver/IntegAssembler.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 222,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-09-28T14:30:23Z",
+      "side": 1,
+      "message": "Done. Clang interestingly just swallows bad options, but I\u0027ve changed it to error in this case.",
+      "parentUuid": "d66c0646_2d1e23ac",
+      "revId": "ad44b70558b624f230b049b74349d02d9a1e0e20",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "9c45fd06_2a8cd8d0",
         "filename": "driver/IntegAssembler.cpp",
         "patchSetId": 2
@@ -67,6 +121,24 @@
       "revId": "ad44b70558b624f230b049b74349d02d9a1e0e20",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0ca31c99_aba49c40",
+        "filename": "driver/IntegAssembler.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-09-28T14:30:23Z",
+      "side": 1,
+      "message": "Removed. That\u0027s a leftover from a follow-on patch to enable DWARF5 (which doesn\u0027t quite work just yet, has test failures). For now just leave as default setting.",
+      "parentUuid": "9c45fd06_2a8cd8d0",
+      "revId": "ad44b70558b624f230b049b74349d02d9a1e0e20",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     },
     {
       "key": {
@@ -87,6 +159,24 @@
     },
     {
       "key": {
+        "uuid": "401fdc33_73fed779",
+        "filename": "driver/IntegAssembler.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 288,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-09-28T14:30:23Z",
+      "side": 1,
+      "message": "I spent a little while looking into this.\n\nGCC accepts both -Wa,--noexecstack and -Wa,--execstack and passes them along to the assembler. Default is --noexecstack if you don\u0027t ask for either one (at least on linux).\n\nClang accepts both -Wa,--noexecstack but interestingly not -Wa,--execstack if the integrated assembler is on (which is on by default). If you build with \"clang -fno-integrated-as\" then it will pass the options along to the assembler (similar to gcc).\n\nI\u0027ll update things so that noexecstack is the default.",
+      "parentUuid": "9ed52632_97a8e623",
+      "revId": "ad44b70558b624f230b049b74349d02d9a1e0e20",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "7b0d29cb_38a3e55f",
         "filename": "unittests/Driver/CMakeLists.txt",
         "patchSetId": 2
@@ -101,6 +191,24 @@
       "revId": "ad44b70558b624f230b049b74349d02d9a1e0e20",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f32be67c_08ce4443",
+        "filename": "unittests/Driver/CMakeLists.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-09-28T14:30:23Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7b0d29cb_38a3e55f",
+      "revId": "ad44b70558b624f230b049b74349d02d9a1e0e20",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705",
+      "unresolved": false
     }
   ]
 }
