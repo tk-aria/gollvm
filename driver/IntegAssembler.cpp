@@ -181,19 +181,8 @@ bool IntegAssemblerImpl::invokeAssembler()
       TheTarget->createMCAsmInfo(*MRI, Trip, MCOptions));
   assert(MAI && "Unable to create target asm info!");
 
-  // FIXME: at this point what we need to do is collect up any assembler
-  // arguments specified with -Wa,XXX and turn them into the correct
-  // back end setup options. For now, just assert if we see -Wa.
-  auto waComArg = args_.getLastArg(gollvm::options::OPT_Wa_COMMA);
-  auto xAsmArg = args_.getLastArg(gollvm::options::OPT_Xassembler);
-  if (waComArg != nullptr || xAsmArg != nullptr) {
-    errs() << progname_ << ": internal error: option '"
-           <<  (waComArg != nullptr ? waComArg->getAsString(args_) :
-                xAsmArg->getAsString(args_))
-           << "' not yet implemented in integrated assembler\n";
-    assert(false);
-    return false;
-  }
+  // Note: -Xassembler and -Wa, options should already have been
+  // examined at this point.
 
   // FIXME: no support yet for -march (bring over from CompileGo.cpp)
   opt::Arg *cpuarg = args_.getLastArg(gollvm::options::OPT_march_EQ);
@@ -208,23 +197,8 @@ bool IntegAssemblerImpl::invokeAssembler()
   // Support for compressed debug.
   llvm::DebugCompressionType CompressDebugSections =
       llvm::DebugCompressionType::None;
-  llvm::opt::Arg *gzarg = args_.getLastArg(gollvm::options::OPT_gz,
-                                           gollvm::options::OPT_gz_EQ);
-  if (gzarg != nullptr) {
-    if (gzarg->getOption().matches(gollvm::options::OPT_gz)) {
-      CompressDebugSections = llvm::DebugCompressionType::GNU;
-    } else {
-      std::string ga(gzarg->getValue());
-      if (ga == "zlib") {
-        CompressDebugSections = llvm::DebugCompressionType::Z;
-      } else if (ga == "zlib-gnu") {
-        CompressDebugSections = llvm::DebugCompressionType::GNU;
-      } else if (ga != "none") {
-        errs() << progname_ << ": error: Invalid -Wa,--compress-debug-sections"
-               << " argument '" << ga << "'\n";
-      }
-    }
-  }
+  if (!driver_.determineDebugCompressionType(&CompressDebugSections))
+    return false;
 
   // Ensure MCAsmInfo initialization occurs before any use, otherwise sections
   // may be created with a combination of default and explicit settings.

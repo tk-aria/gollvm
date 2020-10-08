@@ -414,6 +414,10 @@ bool CompileGoImpl::setup(const Action &jobAction)
   assert(jat == Action::A_CompileAndAssemble ||
          jat == Action::A_Compile);
   Options.DisableIntegratedAS = !(jat == Action::A_CompileAndAssemble);
+  llvm::DebugCompressionType dct = llvm::DebugCompressionType::None;
+  if (!driver_.determineDebugCompressionType(&dct))
+    return false;
+  Options.CompressDebugSections = dct;
 
   // FIXME: this hard-wires on the equivalent of -ffunction-sections
   // and -fdata-sections, since there doesn't seem to be a high-level

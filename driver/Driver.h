@@ -109,6 +109,8 @@ class Driver {
   bool picIsPIE();
   bool isPIE();
   bool useIntegratedAssembler();
+  bool supportedAsmOptions();
+  bool determineDebugCompressionType(llvm::DebugCompressionType *dct);
   bool usingSplitStack() const { return usingSplitStack_; }
   template<typename IT>
   llvm::Optional<IT> getLastArgAsInteger(gollvm::options::ID id,
@@ -148,6 +150,9 @@ class Driver {
 
   bool processAction(Action *act, Compilation &compilation, bool lastAct);
   ArtifactList collectInputArtifacts(Action *act, InternalTool *it);
+  llvm::DebugCompressionType *gzArgToDCT(llvm::StringRef ga,
+                                         llvm::DebugCompressionType *dct,
+                                         const char *which);
 };
 
 template<typename IT>

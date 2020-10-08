@@ -163,14 +163,101 @@ bool Driver::useIntegratedAssembler()
   if (arg != nullptr)
     return arg->getOption().matches(options::OPT_fintegrated_as);
 
-  // If -Xassembler or -Wa,... used, then don't use the integrated
-  // assembler, since the driver doesn't support the full complement
-  // of assembler options (this can be removed if/when we do).
-  auto waComArg = args_.getLastArg(gollvm::options::OPT_Wa_COMMA);
-  auto xAsmArg = args_.getLastArg(gollvm::options::OPT_Xassembler);
-  if (waComArg != nullptr || xAsmArg != nullptr)
+  // If -Xassembler or -Wa,... is used with an unsupported asm option then don't
+  // use the integrated assembler, since the driver doesn't support the full
+  // complement of assembler options (this can be removed if/when a more
+  // complete set is implemented).
+  if (!supportedAsmOptions())
     return false;
 
+  return true;
+}
+
+// Returns TRUE if the assembler options given on the command line fall into the
+// subset that we support, FALSE otherwise. At the moment the driver handles a
+// very limited set of -Wa,... options, mainly --compress-debug-sections.
+bool Driver::supportedAsmOptions()
+{
+  for (const opt::Arg *arg : args_.filtered(gollvm::options::OPT_Wa_COMMA,
+                                            gollvm::options::OPT_Xassembler)) {
+    auto value = llvm::StringRef(arg->getValue());
+    if (value == "-nocompress-debug-sections" ||
+        value == "--nocompress-debug-sections") {
+      continue;
+    }
+    if (value.startswith("-compress-debug-sections") ||
+        value.startswith("--compress-debug-sections")) {
+      continue;
+    }
+    // Unrecognized -Wa,... option
+    return false;
+  }
+  return true;
+}
+
+// Convert a "-gz=" argument to llvm::DebugCompressionType. Returns
+// its second argument if ok, nullptr if a bad argument is given (and
+// issues an error in this case).
+llvm::DebugCompressionType *Driver::gzArgToDCT(llvm::StringRef ga,
+                                               llvm::DebugCompressionType *dct,
+                                               const char *which)
+{
+  if (ga == "zlib") {
+    *dct = llvm::DebugCompressionType::Z;
+    return dct;
+  } else if (ga == "zlib-gnu") {
+    *dct = llvm::DebugCompressionType::GNU;
+    return dct;
+  } else if (ga == "none") {
+    *dct = llvm::DebugCompressionType::None;
+    return dct;
+  } else {
+    errs() << progname_ << ": error: Invalid " << which
+           << " argument '" << ga << "'\n";
+    return nullptr;
+  }
+}
+
+// This method sifts through the command line from left to right and picks out
+// arguments related to debug info compression (-gz,
+// -Wa,--compress-debug-sections, etc), with the rightmost setting taking
+// precedence. If an invalid argument is suplied to '-gz=' or related, we return
+// FALSE; otherwise return TRUE with a possibly updated value stored to "*dct".
+bool Driver::determineDebugCompressionType(llvm::DebugCompressionType *dct)
+{
+  for (const opt::Arg *arg : args_.filtered(gollvm::options::OPT_gz,
+                                            gollvm::options::OPT_gz_EQ,
+                                            gollvm::options::OPT_Wa_COMMA,
+                                            gollvm::options::OPT_Xassembler)) {
+    if (arg->getOption().matches(gollvm::options::OPT_gz)) {
+      *dct = llvm::DebugCompressionType::GNU;
+    } else if (arg->getOption().matches(gollvm::options::OPT_gz_EQ)) {
+      auto value = llvm::StringRef(arg->getValue());
+     if (gzArgToDCT(value, dct, "-gz=") == nullptr)
+        return false;
+    } else if (arg->getOption().matches(gollvm::options::OPT_Wa_COMMA) ||
+               arg->getOption().matches(gollvm::options::OPT_Xassembler)) {
+      auto value = llvm::StringRef(arg->getValue());
+      if (value == "-nocompress-debug-sections" ||
+          value == "--nocompress-debug-sections") {
+        *dct = llvm::DebugCompressionType::None;
+      } else if (value.startswith("-compress-debug-sections") ||
+                 value.startswith("--compress-debug-sections")) {
+        const char *wh =
+            (arg->getOption().matches(gollvm::options::OPT_Xassembler) ?
+             "-Xassembler" : "-Wa,");
+        value.consume_front("--compress-debug-sections");
+        value.consume_front("-compress-debug-sections");
+        auto arg = value;
+        if (value.startswith("="))
+          arg.consume_front("=");
+        else
+          arg = "zlib";
+        if (gzArgToDCT(arg, dct, wh) == nullptr)
+          return false;
+      }
+    }
+  }
   return true;
 }
 
