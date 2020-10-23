@@ -16,6 +16,24 @@
       "message": "There is also assembly file in libgo. Do we also need to do this?\n",
       "revId": "e55423c078f70494305375700d9d2645bec9714a",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fb86faa1_baa95aff",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-10-23T20:57:19Z",
+      "side": 1,
+      "message": "The assembly in libgo (go-context.S) doesn\u0027t seem to trigger the problem (I tested with cmake V19). I think it\u0027s just this particular set of asm files that have the problem (due to the line I\u0027m changing).",
+      "parentUuid": "a919d847_c7dd3df2",
+      "revId": "e55423c078f70494305375700d9d2645bec9714a",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
     }
   ]
 }
