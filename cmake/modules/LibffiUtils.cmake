@@ -56,7 +56,7 @@ function(setup_libffi libffi_srcroot)
     list(APPEND asm_srcs "${libffi_srcroot}/src/x86/unix64.S")
     list(APPEND asm_srcs "${libffi_srcroot}/src/x86/win64.S")
   endif()
-  set_source_files_properties(${asm_srcs} PROPERTIES LANGUAGE C)
+  set_source_files_properties(${asm_srcs} PROPERTIES LANGUAGE ASM)
 
   # Set target based on arch.
   if(HAVE_64BIT AND ${llarch} STREQUAL "aarch64")
