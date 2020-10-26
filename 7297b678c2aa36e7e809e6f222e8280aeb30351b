@@ -16,6 +16,23 @@
       "message": "Than,\ngo ahead/clean up (where required).\nThanks",
       "revId": "7297b678c2aa36e7e809e6f222e8280aeb30351b",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "820c45f0_2fd92863",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-10-26T23:34:31Z",
+      "side": 1,
+      "message": "LGMT. Thanks for sending this patch.",
+      "revId": "7297b678c2aa36e7e809e6f222e8280aeb30351b",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
     }
   ]
 }
