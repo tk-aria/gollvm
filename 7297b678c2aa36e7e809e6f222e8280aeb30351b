@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e5095c74_7f291569",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 34068
+      },
+      "writtenOn": "2020-10-26T20:16:52Z",
+      "side": 1,
+      "message": "Than,\ngo ahead/clean up (where required).\nThanks",
+      "revId": "7297b678c2aa36e7e809e6f222e8280aeb30351b",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    }
+  ]
+}

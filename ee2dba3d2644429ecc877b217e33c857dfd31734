@@ -16,6 +16,24 @@
       "message": "LGTM, thanks. As Ian mentioned, the commit message needs to be fixed up.",
       "revId": "ee2dba3d2644429ecc877b217e33c857dfd31734",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a871d444_cd150449",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 34068
+      },
+      "writtenOn": "2020-10-26T20:16:52Z",
+      "side": 1,
+      "message": "I am reading https://github.com/golang/go/wiki/CommitMessage and don\u0027t really understand what I am missing.\nIs the context being OK?\nIs that is some markup issue?",
+      "parentUuid": "d4168278_d47a1fdf",
+      "revId": "ee2dba3d2644429ecc877b217e33c857dfd31734",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
     }
   ]
 }
