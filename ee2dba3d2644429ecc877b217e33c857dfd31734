@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d4168278_d47a1fdf",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-10-26T12:10:31Z",
+      "side": 1,
+      "message": "LGTM, thanks. As Ian mentioned, the commit message needs to be fixed up.",
+      "revId": "ee2dba3d2644429ecc877b217e33c857dfd31734",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    }
+  ]
+}
