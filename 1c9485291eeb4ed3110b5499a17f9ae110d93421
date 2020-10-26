@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6758d651_100786be",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-10-26T18:21:51Z",
+      "side": 1,
+      "message": "The headline we typically use for gollvm changes is \"gollm: \u003cchange\u003e\", so as to make it clear in Gerrit that this isn\u0027t a change to the main Go repo. So this would be better as\n\ngollvm: update cmake recipes/versions for gmp, mpfr, mpc\n\nor something to this effect.",
+      "range": {
+        "startLine": 7,
+        "startChar": 0,
+        "endLine": 7,
+        "endChar": 62
+      },
+      "revId": "1c9485291eeb4ed3110b5499a17f9ae110d93421",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ac982de0_13293169",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-10-26T18:21:51Z",
+      "side": 1,
+      "message": "This is already listed above on line 15, no need for a duplicate.",
+      "range": {
+        "startLine": 19,
+        "startChar": 0,
+        "endLine": 19,
+        "endChar": 52
+      },
+      "revId": "1c9485291eeb4ed3110b5499a17f9ae110d93421",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    }
+  ]
+}
