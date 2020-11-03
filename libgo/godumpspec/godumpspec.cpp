@@ -1101,10 +1101,13 @@ bool GoDumpHelper::generateType(const DWARFDie &die, TypeNameDisp disp)
     case dwarf::DW_TAG_volatile_type: {
       // Throw away these qualifiers.
       DWARFDie qtyp = die.getAttributeValueAsReferencedDie(dwarf::DW_AT_type);
-      assert(qtyp.isValid());
-      rval = generateType(qtyp);
-      setTypeAlign(die, typeAlign(qtyp));
-      setTypeSize(die, typeSize(qtyp));
+      if (!qtyp.isValid()) {
+        rval = false;
+      } else {
+        rval = generateType(qtyp);
+        setTypeAlign(die, typeAlign(qtyp));
+        setTypeSize(die, typeSize(qtyp));
+      }
       break;
     }
     default:
