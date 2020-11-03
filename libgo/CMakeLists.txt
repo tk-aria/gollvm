@@ -100,7 +100,7 @@ set(runtime_matchargs "--tag=libffi")
 
 # Certain packages need extra Go source files. The convention here is
 # that <pkg>_extra_go_files holds the additional sources for <pkg>.
-set(runtime_extra_go_files "runtime_sysinfo.go" "sigtab.go")
+set(runtime_extra_go_files "runtime_linknames.go" "runtime_sysinfo.go" "sigtab.go")
 set(cmd_internal_objabi_extra_go_files "objabi.go")
 set(internal_goroot_extra_go_files "zstdpkglist.go")
 set(internal_cpu_extra_go_files "cpugen.go")
@@ -108,7 +108,9 @@ set(golang_org_x_sys_cpu_extra_go_files "gcpugen.go")
 set(cmd_go_internal_cfg_extra_go_files "zdefaultcc.go")
 set(runtime_internal_sys_extra_go_files "version.go")
 set(go_types_extra_go_files "gccgosizes.go")
-set(syscall_extra_go_files "libcalls.go" "sysinfo.go" "syscall_arch.go")
+set(syscall_extra_go_files "libcalls.go" "sysinfo.go" "syscall_arch.go" "syscall_linknames.go")
+set(os_extra_go_files "os_linknames.go")
+set(os_user_extra_go_files "os_user_linknames.go")
 if(${goos} STREQUAL "linux")
   list(APPEND syscall_extra_go_files "epoll.go")
 endif()
@@ -334,6 +336,33 @@ set(gcpugendotgo "${libgo_binroot}/gcpugen.go")
 set(gcpugentmp "${libgo_binroot}/gcpugen.go.tmp")
 mkgcpugen(${goarch} ${gcpugentmp} ${libgo_scriptroot})
 copy_if_different(${gcpugentmp} ${gcpugendotgo})
+
+# Generate *_linknames.go files for various packages. For the syscall
+# package, generate syscall_linknames.go by examining libcalls.go; for
+# { runtime, os, os/user } packages, examine the package source files.
+set(lnpkgs "runtime" "os" "os/user" "syscall")
+set(lnawkfile "${libgo_scriptroot}/mklinknames.awk")
+set(mklinknamessh "${CMAKE_CURRENT_SOURCE_DIR}/mklinknames.sh")
+foreach( pack ${lnpkgs})
+  string(REPLACE "/" "_" ptarget2 "${pack}")
+  string(REPLACE "." "_" ptarget "${ptarget2}")
+  set(pkgofiles "${libgo_binroot}/${ptarget}.lnbasefiles")
+  set(deps "")
+  if(${pack} STREQUAL "syscall")
+    set(deps "${libcallsdotgo}")
+  else()
+    collect_package_inputs(${pack})
+    string(REPLACE ";" " " deps "${basepacksrcs}")
+  endif()
+  file(WRITE "${pkgofiles}" "${deps}\n")
+  set(pklinknamestmp "${libgo_binroot}/tmp-${ptarget}_linknames.go")
+  set(pklinknamesdotgo "${libgo_binroot}/${ptarget}_linknames.go")
+  get_filename_component(pkbase "${pack}" NAME)
+  generate_go_from_script(${pklinknamesdotgo} ${mklinknamessh} ${goos} ${goarch}
+                          ${libgo_binroot} DEP ${awkfile} ${pkgofiles}
+			  ${libcallsdotgo} SCRIPTARGS ${awk} ${lnawkfile}
+			  ${pkgofiles} ${pklinknamestmp} ${pkbase})
+endforeach()
 
 #........................................................................
 
