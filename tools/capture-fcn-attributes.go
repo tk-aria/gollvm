@@ -44,9 +44,11 @@
 //
 // % go build capture-fcn-attributes.go
 // % export PATH=<llvm bin dir>:$PATH
+// To generate attributes for specified targets
 // % ./capture-fcn-attributes -o HeaderFile.h -triples x86_64-unknown-linux-gnu
-// To generate attributes for multiple targets
-// % ./capture-fcn-attributes -o HeaderFile.h -triples triple{,triple}+
+// % ./capture-fcn-attributes -o HeaderFile.h -triples x86_64-unknown-linux-gnu,aarch64-unknown-linux-gnu
+// To generate attributes for all supported targets
+// % ./capture-fcn-attributes -o HeaderFile.h
 // %
 
 package main
@@ -81,6 +83,11 @@ void Add512(vstuff *v) {
   }
 }
 `
+
+var supportedTriples []string = []string{
+	"x86_64-unknown-linux-gnu",
+	"aarch64-unknown-linux-gnu",
+}
 
 var (
 	noclflag      = flag.Bool("noclean", false, "Don't clean temp dir")
@@ -123,6 +130,11 @@ type result struct {
 	attrs     string
 	supported bool
 	def       bool
+}
+
+type tripleResults struct {
+	results []result
+	triples []string
 }
 
 func tb(x bool) int {
@@ -261,7 +273,7 @@ func emitClangCmdLine(tdir string, cpu string, clargs []string) {
 	}
 }
 
-func enumerateAttributes(triple string, tdir string, cpus []string, bw *bufio.Writer, tf string, idx int) {
+func enumerateAttributes(triple string, tdir string, cpus []string, tf string) []result {
 
 	verb(1, "enumerating attributes for %d cpus", len(cpus))
 
@@ -269,16 +281,12 @@ func enumerateAttributes(triple string, tdir string, cpus []string, bw *bufio.Wr
 	ecpus := append([]string{""}, cpus...)
 
 	// Process the various CPUs in parallel
-	sema := make(chan struct{}, runtime.NumCPU()) // limit concurrency
-	rchan := make(chan result, runtime.NumCPU())
+	rchan := make(chan result, runtime.NumCPU()) // limit concurrency
+	defer close(rchan)
 	for _, cpu := range ecpus {
 		verb(1, "enumerate for cpu %s", cpu)
 
 		go func(cpu string) {
-			sema <- struct{}{}
-			defer func() {
-				<-sema
-			}()
 
 			// Invoke clang with proper arguments
 			lloutfile := filepath.Join(tdir, fmt.Sprintf("%s.ll", cpu))
@@ -309,10 +317,9 @@ func enumerateAttributes(triple string, tdir string, cpus []string, bw *bufio.Wr
 				// Sift through the output for attr set.
 				acpu, attrs := parseClangOutFile(lloutfile)
 				adef := false
-				if cpu == "" {
+				if cpu == "" || cpu == "generic" && acpu == "generic" {
 					adef = true
 				}
-
 				// Send results on to the consume.
 				rchan <- result{cpu: acpu, attrs: attrs, supported: true, def: adef}
 			}
@@ -335,21 +342,12 @@ func enumerateAttributes(triple string, tdir string, cpus []string, bw *bufio.Wr
 		results = append(results, r)
 	}
 
-	// Sort, then write to output
-	fmt.Fprintf(bw, "// triple: %s\n", triple)
-	fmt.Fprintf(bw, "static const CpuAttrs attrs%d[] = {\n", idx)
-	bw.WriteString("  // first entry is default cpu\n")
+	// Sort
 	sort.Sort(ByCpu(results))
-	for i := 0; i < len(results); i++ {
-		r := results[i]
-		fmt.Fprintf(bw, "  { \"%s\", \"%s\" },\n", r.cpu, r.attrs)
-	}
-	bw.WriteString("  { \"\", \"\" } // sentinel\n")
-	bw.WriteString("};\n\n")
+	return results
 }
 
 // Runs llc to determine default triple value.
-
 func collectDefaultTriple() string {
 	// Run llc to collect default triple
 	llcargs := []string{"--version"}
@@ -396,7 +394,7 @@ func genCPUs(triple string) []string {
 	verb(3, "llc output is: %s\n", string(output))
 
 	// Parse the output
-	resultcpus := []string{""}
+	resultcpus := []string{}
 	rw := regexp.MustCompile(`^\s*$`)
 	r1 := regexp.MustCompile(`^Available (\S+) for this target:\s*$`)
 	r2 := regexp.MustCompile(`^\s*(\S+)\s+\-\s\S.*$`)
@@ -473,13 +471,27 @@ func prolog(bw *bufio.Writer) {
 	bw.WriteString(pream2)
 }
 
-func epilog(bw *bufio.Writer, triples []string) {
+func epilog(bw *bufio.Writer, triplesResults []tripleResults) {
 	bw.WriteString("const TripleCpus triples[] = {\n")
-	for k, t := range triples {
-		bw.WriteString(fmt.Sprintf("  { \"%s\", &attrs%d[0] },\n", t, k))
+	for k, tr := range triplesResults {
+		for _, trip := range tr.triples {
+			bw.WriteString(fmt.Sprintf("  { \"%s\", &attrs%d[0] },\n", trip, k))
+		}
 	}
 	bw.WriteString("  { \"\", nullptr } // sentinel\n")
 	bw.WriteString("};\n")
+}
+
+func Equal(a, b []result) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := 0; i < len(a); i++ {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func perform() {
@@ -514,21 +526,49 @@ func perform() {
 	}
 
 	defaultTriple = collectDefaultTriple()
-	triples := strings.Split(*triplesflag, ",")
-	if len(triples) == 0 {
-		triples = append(triples, defaultTriple)
+	triplesSpecified := strings.Split(*triplesflag, ",")
+	triples := []string{}
+	if len(*triplesflag) == 0 {
+		triples = append(triples, supportedTriples...)
+	} else {
+		triples = append(triples, triplesSpecified...)
 	}
 	bw := bufio.NewWriter(outfile)
 	prolog(bw)
-	for k, trip := range triples {
-
+	resultsList := []tripleResults{}
+	for _, trip := range triples {
 		// CPU selection (either from option or via clang/llc)
 		cpus := genCPUs(trip)
-
 		// Enumerate attributes for the specified CPUs
-		enumerateAttributes(trip, dir, cpus, bw, tf, k)
+		results := enumerateAttributes(trip, dir, cpus, tf)
+		exist := false
+		for i := 0; i < len(resultsList); i++ {
+			rl := &resultsList[i]
+			if Equal(results, rl.results) {
+				exist = true
+				rl.triples = append(rl.triples, trip)
+			}
+		}
+		if !exist {
+			resultsList = append(resultsList, tripleResults{results, []string{trip}})
+		}
 	}
-	epilog(bw, triples)
+	for k, res := range resultsList {
+		fmt.Fprintf(bw, "// triple:")
+		for _, trip := range res.triples {
+			fmt.Fprintf(bw, " %s,", trip)
+		}
+		fmt.Fprintf(bw, "\n")
+		fmt.Fprintf(bw, "static const CpuAttrs attrs%d[] = {\n", k)
+		bw.WriteString("  // first entry is default cpu\n")
+		for i := 0; i < len(res.results); i++ {
+			r := res.results[i]
+			fmt.Fprintf(bw, "  { \"%s\", \"%s\"},\n", r.cpu, r.attrs)
+		}
+		bw.WriteString("  { \"\", \"\" } // sentinel\n")
+		bw.WriteString("};\n\n")
+	}
+	epilog(bw, resultsList)
 	if err := bw.Flush(); err != nil {
 		fatal("error writing output: %v", err)
 	}
