@@ -45,7 +45,8 @@ const char *Action::resultFileSuffix() const
     }
     case A_InputFile: return "i";
     case A_Compile: return "s";
-    case A_Assemble: return "o";
+    case A_Assemble:
+    case A_CompileAndAssemble: return "o";
     case A_Link: return "e";
     default:
       assert(false);
