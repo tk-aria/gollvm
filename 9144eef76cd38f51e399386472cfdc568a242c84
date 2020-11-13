@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "86010867_dd96c13a",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-11-13T13:38:42Z",
+      "side": 1,
+      "message": "This is a bit confusing-- the update to capture-fcn-attributes.go isn\u0027t related to cross compilation (only the driver change). Maybe you can update the comment, or split the CL into two.",
+      "range": {
+        "startLine": 7,
+        "startChar": 0,
+        "endLine": 7,
+        "endChar": 62
+      },
+      "revId": "9144eef76cd38f51e399386472cfdc568a242c84",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f1f94111_2eb9bc5d",
+        "filename": "tools/capture-fcn-attributes.go",
+        "patchSetId": 1
+      },
+      "lineNbr": 547,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-11-13T13:38:42Z",
+      "side": 1,
+      "message": "Why is this needed?\n\nI pulled this patch, built and ran the program, and at least in my repo, Equal never returns true.",
+      "revId": "9144eef76cd38f51e399386472cfdc568a242c84",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    }
+  ]
+}
