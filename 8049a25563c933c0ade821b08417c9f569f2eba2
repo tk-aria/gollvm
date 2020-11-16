@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7f612bdd_b53db02d",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2020-11-16T03:53:49Z",
+      "side": 1,
+      "message": "Write this as\n\nFor golang/go#42440\n\n(which is a simple format that GitHub recognizes).",
+      "revId": "8049a25563c933c0ade821b08417c9f569f2eba2",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    }
+  ]
+}
