@@ -4,9 +4,12 @@ function(setup_libbacktrace)
 
   set(BACKTRACE_SUPPORTED 1)
 
-  # Libbacktrace needs to be told ELF-32 or ELF-64.
+  # Libbacktrace needs to be told ELF-32 or ELF-64.	
   if( ${goarch} STREQUAL "amd64")
     set(BACKTRACE_ELF_SIZE 64)
+    set(HAVE_GETIPINFO 1)
+  elseif( ${goarch} STREQUAL "386")
+    set(BACKTRACE_ELF_SIZE 32)
     set(HAVE_GETIPINFO 1)
   elseif( ${goarch} STREQUAL "arm64")
     set(BACKTRACE_ELF_SIZE 64)
