@@ -51,6 +51,17 @@ function(mkversion goos goarch outfile bindir srcroot scriptroot)
     set(pcquantum "1")
     set(int64align "8")
     set(minframesize 0)
+elseif( ${goarch} STREQUAL "386")
+    # Simply picking up one typical setting
+    # Align with current sets in gofrontend/libgo/goarch.sh
+    set(archfamily "I386")
+    set(bigendian "false")
+    set(cachelinesize "64")
+    set(physpagesize "4096")
+    set(pcquantum "1")
+    set(int64align "4")
+    set(minframesize 4)
+    set(ptrsize 4)
   elseif( ${goarch} STREQUAL "arm64")
     # Simply picking up one typical setting
     # Align with current sets in gofrontend/libgo/goarch.sh
