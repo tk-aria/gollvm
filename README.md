@@ -346,3 +346,5 @@ Gollvm does not support the Go race detector; please use the main Go compiler fo
 ## I am seeing "undefined symbol: `__get_cpuid_count`" from my gollvm install <a name="getcpuidcount_undefined">
 
 The Gollvm build procedure requires an up-to-date C/C++ compiler; there is code in the gollvm runtime (libgo) that refers to functions defined in `<cpuid.h>`, however some older versions of clang (prior to 5.0) don't provide definitions for all the needed functions. If you encounter this problem, rerun `cmake` to configure your build to use a more recent version of Clang (or use GCC), as described above.
+
+asdasd
