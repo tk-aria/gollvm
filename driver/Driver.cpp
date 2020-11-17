@@ -412,10 +412,15 @@ ToolChain *Driver::setup()
     emitVersion();
 
   // Set triple.
+  // TODO: add cross compiling support.
+  llvm::Triple defaultTargetTriple = Triple(sys::getDefaultTargetTriple());
+  triple_ = defaultTargetTriple;
   if (const opt::Arg *arg = args_.getLastArg(gollvm::options::OPT_target_EQ))
     triple_ = Triple(Triple::normalize(arg->getValue()));
-  else
-    triple_ = Triple(sys::getDefaultTargetTriple());
+  if (triple_ != defaultTargetTriple) {
+    errs() << progname_ << ": error: gollvm doesn't support cross compiling yet\n";
+    return nullptr;
+  }
 
   // Honor -dumpmachine
   if (args_.hasArg(gollvm::options::OPT_dumpmachine)) {
