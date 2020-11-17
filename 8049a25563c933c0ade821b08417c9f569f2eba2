@@ -16,6 +16,46 @@
       "message": "Write this as\n\nFor golang/go#42440\n\n(which is a simple format that GitHub recognizes).",
       "revId": "8049a25563c933c0ade821b08417c9f569f2eba2",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "eb1b9256_1918395a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-11-17T14:26:42Z",
+      "side": 1,
+      "message": "This looks ok so far, but just keep in mind that this will be the easy part. The hard part will be updating the CABI code in the bridge.\n",
+      "revId": "8049a25563c933c0ade821b08417c9f569f2eba2",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c9276a1b_dac977f1",
+        "filename": "cmake/modules/AutoGenGo.cmake",
+        "patchSetId": 2
+      },
+      "lineNbr": 63,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-11-17T14:26:42Z",
+      "side": 1,
+      "message": "I think this should be 0:\n\n$ bash libgo/goarch.sh 386 minframesize\n0\n$",
+      "range": {
+        "startLine": 63,
+        "startChar": 21,
+        "endLine": 63,
+        "endChar": 22
+      },
+      "revId": "8049a25563c933c0ade821b08417c9f569f2eba2",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
     }
   ]
 }
