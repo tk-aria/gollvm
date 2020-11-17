@@ -359,7 +359,7 @@ foreach( pack ${lnpkgs})
   set(pklinknamesdotgo "${libgo_binroot}/${ptarget}_linknames.go")
   get_filename_component(pkbase "${pack}" NAME)
   generate_go_from_script(${pklinknamesdotgo} ${mklinknamessh} ${goos} ${goarch}
-                          ${libgo_binroot} DEP ${awkfile} ${pkgofiles}
+                          ${libgo_binroot} DEP ${awkfile} ${pkgofiles} ${gensysinfodotgo}
 			  ${libcallsdotgo} SCRIPTARGS ${awk} ${lnawkfile}
 			  ${pkgofiles} ${pklinknamestmp} ${pkbase})
 endforeach()
