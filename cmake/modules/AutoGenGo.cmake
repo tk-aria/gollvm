@@ -505,7 +505,7 @@ function(mkgensysinfo tmpfile outfile macrofile objfile godumpspec sysinfoc)
   # implement this functionality.
   add_custom_command(
     OUTPUT ${objfile}
-    COMMAND ${ccomp} "-g3" "-c" "-fno-eliminate-unused-debug-types"
+    COMMAND ${ccomp} "-g2" "-c" "-fno-eliminate-unused-debug-types"
             ${sysinfoc} -o ${objfile} ${cflags}
     DEPENDS ${sysinfoc} ${ARG_DEPS}
     COMMENT "Building sysinfo.o "
