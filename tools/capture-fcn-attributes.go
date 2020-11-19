@@ -273,9 +273,75 @@ func emitClangCmdLine(tdir string, cpu string, clargs []string) {
 	}
 }
 
+// enumerateAttributesForCPU invokes clang to capture the attribute
+// set for a given CPU within a given target, sending the results to
+// the specified channel.
+func enumerateAttributesForCPU(triple string, tdir string, cpu string, tf string, rchan chan result) {
+
+	//
+	// Confusingly, for some targets "-mcpu=XXX" is required (use of
+	// -march=XXX will be rejected), whereas for other targets if you
+	// use -mcpu=XXX instead of -march=XXX the compile will succeed,
+	// but you'll get a warning message of the form "warning: argument
+	// unused during compilation: '-mcpu=XXX'". To work around this,
+	// try first -mcpu and then fall back on -march if the warning
+	// is generated for -mcpu.
+	//
+	attempts := []string{"cpu", "arch"}
+	lloutfile := filepath.Join(tdir, fmt.Sprintf("%s.ll", cpu))
+	for _, cpuarch := range attempts {
+		clargs := []string{"-emit-llvm", "-S", "-o", lloutfile,
+			"-O3", "-Xclang", "-disable-llvm-passes", tf}
+		if triple != "" {
+			clargs = append(clargs, fmt.Sprintf("--target=%s", triple))
+		}
+		if cpu != "" {
+			clargs = append(clargs, fmt.Sprintf("-m%s=%s", cpuarch, cpu))
+		}
+		emitClangCmdLine(tdir, cpu, clargs)
+		cmd := exec.Command("clang", clargs...)
+		output, cerr := cmd.CombinedOutput()
+		if cerr != nil {
+			if *verbflag > 0 || triple == "" {
+				warn("clang run failed: %s", output)
+			}
+			if triple == "" {
+				fatal("err = %v", cerr)
+			}
+
+			// Note the 'supported:false' (indicating that this CPU
+			// value is not viable).
+			rchan <- result{cpu: cpu, attrs: strings.Join(clargs, " "), supported: false, def: false}
+			return
+		} else {
+			// Look for "argument unused" warning.
+			warning := "argument unused during compilation: '-mcpu="
+			if strings.Contains(string(output), warning) {
+				// Move on to try -march
+				continue
+			}
+			// Sift through the output for attr set.
+			acpu, attrs := parseClangOutFile(lloutfile)
+			adef := false
+			if cpu == "" || cpu == "generic" && acpu == "generic" {
+				adef = true
+			}
+			// Send results on to the consumer.
+			rchan <- result{cpu: acpu, attrs: attrs, supported: true, def: adef}
+			return
+		}
+	}
+}
+
 func enumerateAttributes(triple string, tdir string, cpus []string, tf string) []result {
 
 	verb(1, "enumerating attributes for %d cpus", len(cpus))
+
+	tripleTmp := filepath.Join(tdir, triple)
+	mkdirErr := os.Mkdir(tripleTmp, 0755)
+	if mkdirErr != nil {
+		fatal("unable to make tmp dir: %v", mkdirErr)
+	}
 
 	// First entry in the list needs to be the default CPU
 	ecpus := append([]string{""}, cpus...)
@@ -285,45 +351,7 @@ func enumerateAttributes(triple string, tdir string, cpus []string, tf string) [
 	defer close(rchan)
 	for _, cpu := range ecpus {
 		verb(1, "enumerate for cpu %s", cpu)
-
-		go func(cpu string) {
-
-			// Invoke clang with proper arguments
-			lloutfile := filepath.Join(tdir, fmt.Sprintf("%s.ll", cpu))
-			clargs := []string{"-emit-llvm", "-S", "-o", lloutfile,
-				"-O3", "-Xclang", "-disable-llvm-passes", tf}
-			cpuarch := "arch"
-			if triple != "" {
-				clargs = append(clargs, fmt.Sprintf("--target=%s", triple))
-			}
-			if triple != defaultTriple {
-				cpuarch = "cpu"
-			}
-			if cpu != "" {
-				clargs = append(clargs, fmt.Sprintf("-m%s=%s", cpuarch, cpu))
-			}
-			emitClangCmdLine(tdir, cpu, clargs)
-			cmd := exec.Command("clang", clargs...)
-			output, cerr := cmd.CombinedOutput()
-			if cerr != nil {
-				if triple == "" {
-					warn("clang run failed: %s", output)
-					fatal("err = %v", cerr)
-				}
-				// Note the 'supported:false' (indicating that this CPU
-				// value is not viable).
-				rchan <- result{cpu: cpu, attrs: strings.Join(clargs, " "), supported: false, def: false}
-			} else {
-				// Sift through the output for attr set.
-				acpu, attrs := parseClangOutFile(lloutfile)
-				adef := false
-				if cpu == "" || cpu == "generic" && acpu == "generic" {
-					adef = true
-				}
-				// Send results on to the consume.
-				rchan <- result{cpu: acpu, attrs: attrs, supported: true, def: adef}
-			}
-		}(cpu)
+		go enumerateAttributesForCPU(triple, tripleTmp, cpu, tf, rchan)
 	}
 
 	// Read raw results.
@@ -464,7 +492,12 @@ func prolog(bw *bufio.Writer) {
 		warn("clang run failed: %s", output)
 		fatal("err = %v", cerr)
 	}
-	sl := strings.Split(string(output), "\n")
+	// clang --version includes full output from git remote -v, which
+	// can include github access token (we definitely don't want to
+	// share that); strip it out if we see something like that.
+	m := regexp.MustCompile(`://(\S+:\S+)@`)
+	trimmed := m.ReplaceAllString(string(output), "://")
+	sl := strings.Split(trimmed, "\n")
 	bw.WriteString("//  ")
 	bw.WriteString(sl[0])
 	bw.WriteString("\n//\n")
@@ -557,7 +590,7 @@ func perform() {
 		fmt.Fprintf(bw, "// triple:")
 		for i := 0; i < len(res.triples); i++ {
 			trip := res.triples[i]
-			if i != len(res.triples) - 1 {
+			if i != len(res.triples)-1 {
 				fmt.Fprintf(bw, " %s,", trip)
 			} else {
 				fmt.Fprintf(bw, " %s", trip)
