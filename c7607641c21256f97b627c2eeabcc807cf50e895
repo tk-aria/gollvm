@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ee96c1ff_c500d498",
+        "filename": "driver/ArchCpusAttrs.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-11-19T21:14:33Z",
+      "side": 1,
+      "message": "This is not the right away to go about this. As you can see from the first line in the file, this is auto-generated code. Better to update the list of triples in capture-fcn-attributes.go  and rerun the generator command. \n\nI have another change that I need to check into capture-fcn-attributes.go, but after that you should be able to make your change there.",
+      "revId": "c7607641c21256f97b627c2eeabcc807cf50e895",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    }
+  ]
+}
