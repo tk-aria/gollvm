@@ -16,7 +16,10 @@ typedef struct {
   const char *triple;
   const CpuAttrs *cpuattrs;
 } TripleCpus;
-
+// tripple: i686-pc-linux-gnu
+static const CpuAttrs attrs2[] = {
+{"yonah", "+sse2,+mmx,+cx8,+fxsr,+sse,+cmov,+sse3"}
+};
 // triple: x86_64-unknown-linux-gnu
 static const CpuAttrs attrs0[] = {
   // first entry is default cpu
@@ -123,6 +126,7 @@ static const CpuAttrs attrs1[] = {
 
 const TripleCpus triples[] = {
   { "x86_64-unknown-linux-gnu", &attrs0[0] },
+  { "i686-pc-linux-gnu", &attrs2[0] },
   { "aarch64-unknown-linux-gnu", &attrs1[0] },
   { "", nullptr } // sentinel
 };
