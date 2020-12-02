@@ -106,7 +106,9 @@ void Bfunction::lazyAbiSetup()
   if (abiOracle_->returnInfo().disp() == ParmIndirect) {
     std::string sretname(namegen("sret.formal"));
     arguments_[argIdx]->setName(sretname);
-    arguments_[argIdx]->addAttr(llvm::Attribute::StructRet);
+    llvm::AttrBuilder SRETAttrs;
+    SRETAttrs.addStructRetAttr(fcnType_->resultType()->type());
+    arguments_[argIdx]->addAttrs(SRETAttrs);
     rtnValueMem_ = arguments_[argIdx];
     argIdx += 1;
   }
