@@ -1455,7 +1455,7 @@ TEST(BackendExprTests, TestConditionalExpression3Amd64) {
   h.mkLocal("a", s2t, cond);
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    define void @foo({ [16 x i32], i32 }* sret %sret.formal.0, i8* nest %nest.0, { [16 x i32], i32 }* byval %p0, i32 %p1) #0 {
+    define void @foo({ [16 x i32], i32 }* sret({ [16 x i32], i32 }) %sret.formal.0, i8* nest %nest.0, { [16 x i32], i32 }* byval({ [16 x i32], i32 }) %p0, i32 %p1) #0 {
   entry:
     %p1.addr = alloca i32, align 4
     %a = alloca { [16 x i32], i32 }, align 4
@@ -1530,7 +1530,7 @@ TEST(BackendExprTests, TestConditionalExpression3Arm64) {
   h.mkLocal("a", s2t, cond);
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    define void @foo({ [16 x i32], i32 }* sret %sret.formal.0, i8* nest %nest.0, { [16 x i32], i32 }* %p0, i32 %p1) #0 {
+    define void @foo({ [16 x i32], i32 }* sret({ [16 x i32], i32 }) %sret.formal.0, i8* nest %nest.0, { [16 x i32], i32 }* %p0, i32 %p1) #0 {
   entry:
     %p1.addr = alloca i32, align 4
     %a = alloca { [16 x i32], i32 }, align 4
