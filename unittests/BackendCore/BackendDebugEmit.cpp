@@ -76,12 +76,11 @@ TEST(BackendDebugEmit, TestSimpleDecl2Amd64) {
   EXPECT_FALSE(broken && "Module failed to verify.");
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    define void @foo(i8* nest %nest.0, { i64, i64, i64 }* byval %p0) #0 {
-    entry:
-      call void @llvm.dbg.declare(metadata { i64, i64, i64 }* %p0, metadata !5,
-                                  metadata !DIExpression()), !dbg !18
-      ret void
-    }
+    define void @foo(i8* nest %nest.0, { i64, i64, i64 }* byval({ i64, i64, i64 }) %p0) #0 {
+  entry:
+    call void @llvm.dbg.declare(metadata { i64, i64, i64 }* %p0, metadata !5, metadata !DIExpression()), !dbg !18
+    ret void
+  }
   )RAW_RESULT");
 
   bool isOK = h.expectValue(func->function(), exp);
