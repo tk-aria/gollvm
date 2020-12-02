@@ -168,7 +168,7 @@ void complainOnNequal(const std::string &reason,
 
   if (getenv("GOLLVM_UNITTESTS_BACKENDCORE_EMITDUMPFILES") != nullptr)
     emitDumpFilesOnDiff = true;
-  if (getenv("GOLLVM_UNITTESTS_BACKENDCORE_EMITDUMPFILES") != nullptr) {
+  if (getenv("GOLLVM_UNITTESTS_EMIT_REMASTER_SCRIPT") != nullptr) {
     emitRemasterScript = true;
     emitDumpFilesOnDiff = true;
   }
