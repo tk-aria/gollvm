@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e791422a_ff28f2ab",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2020-12-02T17:36:50Z",
+      "side": 1,
+      "message": "Do we also need to do this for \"byval\" attribute?",
+      "revId": "a39edef0fb9b83fdc294aad18d3e87c78cb66c31",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    }
+  ]
+}
