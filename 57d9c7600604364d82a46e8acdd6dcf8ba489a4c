@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3e5f3409_bad11af5",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2020-12-02T21:45:54Z",
+      "side": 1,
+      "message": "32-bit x86 is not a supported target for gollvm yet. If you want to add that support, that\u0027s great. But it would be more helpful to send CLs when the port is (almost) complete, instead of adding pieces here and there. Thanks.\n",
+      "revId": "57d9c7600604364d82a46e8acdd6dcf8ba489a4c",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    }
+  ]
+}
