@@ -16,6 +16,24 @@
       "message": "Do we also need to do this for \"byval\" attribute?",
       "revId": "a39edef0fb9b83fdc294aad18d3e87c78cb66c31",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9db264d4_2f930a01",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-12-02T17:45:00Z",
+      "side": 1,
+      "message": "Mmm. Yeah, I think that\u0027s probably a good idea, I\u0027ll add that to the patch. We don\u0027t seem to have problems (now) without it, but would be good to be consistent with clang going forward.",
+      "parentUuid": "e791422a_ff28f2ab",
+      "revId": "a39edef0fb9b83fdc294aad18d3e87c78cb66c31",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
     }
   ]
 }
