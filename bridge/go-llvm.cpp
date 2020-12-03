@@ -1589,6 +1589,26 @@ Bexpression *Llvm_backend::makeComplexBinaryExpr(Operator op, Bexpression *left,
     val = complex_expression(valr, vali, location);
     break;
   }
+  case OPERATOR_DIV: {
+    // (a+ib) / (c+id) = ((ac+bd)/(cc+dd)) + i((bc-ad)/(cc+dd))
+    Bexpression *valr, *vali;
+    { Bexpression *ac = binary_expression(OPERATOR_MULT, lr, rr, location);
+      Bexpression *bd = binary_expression(OPERATOR_MULT, li, ri, location);
+      Bexpression *cc = binary_expression(OPERATOR_MULT, rr, rr, location);
+      Bexpression *dd = binary_expression(OPERATOR_MULT, ri, ri, location);
+      Bexpression *acpbd = binary_expression(OPERATOR_PLUS, ac, bd, location);
+      Bexpression *ccpdd = binary_expression(OPERATOR_PLUS, cc, dd, location);
+      valr = binary_expression(OPERATOR_DIV, acpbd, ccpdd, location); }
+    { Bexpression *ad = binary_expression(OPERATOR_MULT, lr, ri, location);
+      Bexpression *bc = binary_expression(OPERATOR_MULT, li, rr, location);
+      Bexpression *cc = binary_expression(OPERATOR_MULT, rr, rr, location);
+      Bexpression *dd = binary_expression(OPERATOR_MULT, ri, ri, location);
+      Bexpression *ccpdd = binary_expression(OPERATOR_PLUS, cc, dd, location);
+      Bexpression *bcmad = binary_expression(OPERATOR_MINUS, bc, ad, location);
+      vali = binary_expression(OPERATOR_DIV, bcmad, ccpdd, location); }
+    val = complex_expression(valr, vali, location);
+    break;
+  }
   case OPERATOR_EQEQ:
   case OPERATOR_NOTEQ: {
     Bexpression *cmpr = binary_expression(op, lr, rr, location);
