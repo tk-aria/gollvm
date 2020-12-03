@@ -434,7 +434,6 @@ set(runtimecfiles
   "runtime/go-assert.c"
   "runtime/go-caller.c"
   "runtime/go-callers.c"
-  "runtime/go-cdiv.c"
   "runtime/go-cgo.c"
   "runtime/go-construct-map.c"
   "runtime/go-ffi.c"
