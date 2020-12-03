@@ -34,6 +34,24 @@
       "parentUuid": "a04814a5_bcc6baa7",
       "revId": "85baf79c777678dc02d9fcc2b78d636a9f492c2e",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9dd8c301_20c10662",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-12-03T18:48:00Z",
+      "side": 1,
+      "message": "Yup, looks like a change there is needed. I must have bungled my testing somehow... I\u0027ll send a CL.",
+      "parentUuid": "cd0cca35_cf2ee1b1",
+      "revId": "85baf79c777678dc02d9fcc2b78d636a9f492c2e",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
     }
   ]
 }
