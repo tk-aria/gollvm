@@ -16,6 +16,24 @@
       "message": "32-bit x86 is not a supported target for gollvm yet. If you want to add that support, that\u0027s great. But it would be more helpful to send CLs when the port is (almost) complete, instead of adding pieces here and there. Thanks.\n",
       "revId": "57d9c7600604364d82a46e8acdd6dcf8ba489a4c",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "13daa312_0ccfecd8",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2020-12-03T13:01:22Z",
+      "side": 1,
+      "message": "Cherry has a point. In particular, we don\u0027t want to put things into a state where  i686-pc-linux-gnu is acccepted by the driver, but the bridge support for i686-pc-linux-gnu is not fully functional.",
+      "parentUuid": "3e5f3409_bad11af5",
+      "revId": "57d9c7600604364d82a46e8acdd6dcf8ba489a4c",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
     }
   ]
 }
