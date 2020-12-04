@@ -40,7 +40,7 @@ set(EXTCC "CC=${CMAKE_C_COMPILER}" "CXX=${CMAKE_CXX_COMPILER}")
 set(gollvm_binroot "${CMAKE_CURRENT_BINARY_DIR}")
 
 externalproject_add(libgmp
-  URL URL https://gmplib.org/download/gmp/gmp-6.2.0.tar.bz2
+  URL URL https://gmplib.org/download/gmp/gmp-6.2.0.tar.bz2 https://mirrors.kernel.org/gnu/gmp/gmp-6.2.0.tar.bz2
   URL_MD5 c24161e0dd44cae78cd5f67193492a21
   DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/external-downloads
   BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/gmp-build
@@ -54,7 +54,7 @@ externalproject_add(libgmp
 
 externalproject_add(libmpfr
   DEPENDS libgmp
-  URL https://www.mpfr.org/mpfr-current/mpfr-4.1.0.tar.bz2
+  URL https://www.mpfr.org/mpfr-current/mpfr-4.1.0.tar.bz2 mpfr-current/mpfr-4.1.0.tar.bz2
   URL_MD5 44b892bc5a45bafb4294d134e13aad1d
   DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/external-downloads
   BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/mpfr
@@ -68,7 +68,7 @@ externalproject_add(libmpfr
 
 externalproject_add(libmpc
   DEPENDS libgmp libmpfr
-  URL https://ftp.gnu.org/gnu/mpc/mpc-1.2.0.tar.gz
+  URL https://ftp.gnu.org/gnu/mpc/mpc-1.2.0.tar.gz https://mirrors.kernel.org/gnu/mpc/mpc-1.2.0.tar.gz
   URL_MD5 2f1ce56ac775f2be090863f364931a03
   DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/external-downloads
   BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/mpc
