@@ -411,6 +411,10 @@ def fgo_c_header_EQ : Joined<["-"], "fgo-c-header=">,
   Group<f_Group>,
   HelpText<"The C header file to write.">;
 
+def fgo_embedcfg_EQ : Joined<["-"], "fgo-embedcfg=">,
+  Group<f_Group>,
+  HelpText<"List of embedded files via go:embed.">;
+
 // Needed for compatibility with gccgo
 
 def xassembler_with_cpp : Flag<["-"], "xassembler-with-cpp">,
