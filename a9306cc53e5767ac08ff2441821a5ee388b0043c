@@ -16,6 +16,24 @@
       "message": "The update to Go1.16beta1 also added zos to this list, though it\u0027s hard to see how it matters.",
       "revId": "a9306cc53e5767ac08ff2441821a5ee388b0043c",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "eeacdea4_4d615e19",
+        "filename": "cmake/modules/GoVars.cmake",
+        "patchSetId": 1
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2021-01-07T12:54:46Z",
+      "side": 1,
+      "message": "Thanks, I missed that. I\u0027ll add it in just for completeness.",
+      "parentUuid": "9436b217_4450ad9f",
+      "revId": "a9306cc53e5767ac08ff2441821a5ee388b0043c",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
     }
   ]
 }
