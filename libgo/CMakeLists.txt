@@ -464,6 +464,7 @@ set(runtimecfiles
 list(APPEND runtimecfiles
   "go/internal/bytealg/bytealg.c"
   "go/log/syslog/syslog_c.c"
+  "go/os/dir_gccgo_c.c"
   "go/reflect/makefunc_ffi_c.c"
   "go/runtime/internal/atomic/atomic.c"
   "go/internal/cpu/cpu_gccgo.c"
