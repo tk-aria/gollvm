@@ -14,6 +14,7 @@ set(LLVM_LINK_COMPONENTS
 
 add_llvm_library(LLVMCppGoFrontEnd
   ${GOFRONTEND_SOURCE_DIR}/ast-dump.cc
+  ${GOFRONTEND_SOURCE_DIR}/embed.cc
   ${GOFRONTEND_SOURCE_DIR}/escape.cc
   ${GOFRONTEND_SOURCE_DIR}/export.cc
   ${GOFRONTEND_SOURCE_DIR}/expressions.cc
