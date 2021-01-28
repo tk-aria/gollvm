@@ -609,23 +609,6 @@ execute_process(COMMAND ${CMAKE_COMMAND}
 #
 # Check target generation.
 #
-set(extra_check_libs_cmd_go_internal_cache "${libgo_binroot}/libgotool.a")
-set(extra_check_libs_cmd_go_internal_generate "${libgo_binroot}/libgotool.a")
-set(extra_check_libs_cmd_go_internal_get "${libgo_binroot}/libgotool.a")
-set(extra_check_libs_cmd_go_internal_load "${libgo_binroot}/libgotool.a")
-set(extra_check_libs_cmd_go_internal_lockedfile "${libgo_binroot}/libgotool.a")
-set(extra_check_libs_cmd_go_internal_imports "${libgo_binroot}/libgotool.a")
-set(extra_check_libs_cmd_go_internal_modconv "${libgo_binroot}/libgotool.a")
-set(extra_check_libs_cmd_go_internal_modfetch "${libgo_binroot}/libgotool.a")
-set(extra_check_libs_cmd_go_internal_modfetch_codehost "${libgo_binroot}/libgotool.a")
-set(extra_check_libs_cmd_go_internal_modfile "${libgo_binroot}/libgotool.a")
-set(extra_check_libs_cmd_go_internal_modload "${libgo_binroot}/libgotool.a")
-set(extra_check_libs_cmd_go_internal_module "${libgo_binroot}/libgotool.a")
-set(extra_check_libs_cmd_go_internal_mvs "${libgo_binroot}/libgotool.a")
-set(extra_check_libs_cmd_go_internal_search "${libgo_binroot}/libgotool.a")
-set(extra_check_libs_cmd_go_internal_web2 "${libgo_binroot}/libgotool.a")
-set(extra_check_libs_cmd_go_internal_work "${libgo_binroot}/libgotool.a")
-set(extra_check_libs_cmd_vet_internal_cfg "${libgo_binroot}/libgotool.a")
 
 set(checktargets)
 
@@ -638,7 +621,11 @@ foreach( pack ${checkpackages})
   # This will set 'packsrcs' and 'packopts'
   collect_package_inputs(${pack})
 
-  set(extralibs "${extra_check_libs_${ptarget}}")
+  set(extralibs "")
+  string(FIND "${ptarget}" "cmd_" out)
+  if("${out}" EQUAL 0)
+    set(extralibs "${libgo_binroot}/libgotool.a")
+  endif()
 
   # In some cases we want a different set of flags for the check
   # target, notable the runtime package (where the main build uses
