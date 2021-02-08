@@ -1318,34 +1318,56 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
 
 void Llvm_backend::genCallAttributes(GenCallState &state, llvm::CallInst *call)
 {
+  const llvm::AttributeList &callAttrList = call->getAttributes();
+  llvm::AttrBuilder retAttrs(callAttrList, llvm::AttributeList::ReturnIndex);
+  const std::vector<Btype *> &paramTypes = state.calleeFcnType->paramTypes();
+  size_t na = state.oracle.getFunctionTypeForABI()->getNumParams();
+  llvm::SmallVector<llvm::AttributeSet, 4> argAttrs(na);
+
   // Sret attribute if needed
   const CABIParamInfo &returnInfo = state.oracle.returnInfo();
   if (returnInfo.disp() == ParmIndirect) {
-    call->addAttribute(1, llvm::Attribute::StructRet);
-    call->addAttribute(1, llvm::Attribute::get(call->getContext(), "go_sret"));
+    llvm::AttrBuilder ab;
+    ab.addAttribute(llvm::Attribute::StructRet);
+    ab.addAttribute(llvm::Attribute::get(call->getContext(), "go_sret"));
+    argAttrs[1] = llvm::AttributeSet::get(context_, ab);
   }
 
   // Nest attribute if needed
   const CABIParamInfo &chainInfo = state.oracle.chainInfo();
-  if (chainInfo.disp() != ParmIgnore)
-    call->addAttribute(chainInfo.sigOffset()+1, llvm::Attribute::Nest);
+  if (chainInfo.disp() != ParmIgnore) {
+    llvm::AttrBuilder ab;
+    ab.addAttribute(llvm::Attribute::Nest);
+    argAttrs[chainInfo.sigOffset()] =
+        llvm::AttributeSet::get(context_, ab);
+  }
 
   // Remainder of param attributes
-  const std::vector<Btype *> &paramTypes = state.calleeFcnType->paramTypes();
   for (unsigned idx = 0; idx < paramTypes.size(); ++idx) {
     const CABIParamInfo &paramInfo = state.oracle.paramInfo(idx);
     if (paramInfo.disp() == ParmIgnore)
       continue;
     assert(paramInfo.attr() != AttrNest);
     assert(paramInfo.attr() != AttrStructReturn);
-    unsigned off = paramInfo.sigOffset() + 1;
-    if (paramInfo.attr() == AttrByVal)
-      call->addAttribute(off, llvm::Attribute::ByVal);
-    else if (paramInfo.attr() == AttrZext)
-      call->addAttribute(off, llvm::Attribute::ZExt);
-    else if (paramInfo.attr() == AttrSext)
-      call->addAttribute(off, llvm::Attribute::SExt);
+    if (paramInfo.attr() != AttrNone) {
+      unsigned off = paramInfo.sigOffset();
+      llvm::AttrBuilder ab;
+      if (paramInfo.attr() == AttrByVal) {
+        ab.addByValAttr(paramTypes[idx]->type());
+      } else if (paramInfo.attr() == AttrZext) {
+        ab.addAttribute(llvm::Attribute::ZExt);
+      } else if (paramInfo.attr() == AttrSext) {
+        ab.addAttribute(llvm::Attribute::SExt);
+      }
+      argAttrs[off] = llvm::AttributeSet::get(context_, ab);
+    }
   }
+
+  call->setAttributes(
+      llvm::AttributeList::get(context_,
+                               callAttrList.getFnAttributes(),
+                               llvm::AttributeSet::get(context_, retAttrs),
+                               argAttrs));
 }
 
 void Llvm_backend::genCallEpilog(GenCallState &state,
