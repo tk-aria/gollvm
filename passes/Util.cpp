@@ -67,9 +67,8 @@ getPtrBitmapForTypeHelper(Type *T, const DataLayout &DL, uint64_t BaseOffset, Bi
     }
     break;
   }
-  case Type::FixedVectorTyID:
-  case Type::ScalableVectorTyID: {
-    auto *VT = llvm::cast<llvm::VectorType>(T);
+    case Type::FixedVectorTyID: {
+    auto *VT = llvm::cast<llvm::FixedVectorType>(T);
     Type *ET = T->getScalarType();
     for (unsigned i = 0, n = VT->getNumElements(); i < n; ++i) {
       Value *ivals[2] = { ConstantInt::get(Int32Ty, 0),
@@ -93,6 +92,8 @@ getPtrBitmapForTypeHelper(Type *T, const DataLayout &DL, uint64_t BaseOffset, Bi
     }
     break;
   }
+  case Type::ScalableVectorTyID:
+    assert(false && "not expecting ScalableVectorTyID");
   default:
     break;
   }
