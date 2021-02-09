@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ac9b76c7_501ac6ad",
+        "filename": "unittests/BackendCore/BackendCABIOracleTests.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 721,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2021-02-09T15:11:36Z",
+      "side": 0,
+      "message": "Do we still have the sret attribute set? I think we still need that?",
+      "range": {
+        "startLine": 721,
+        "startChar": 46,
+        "endLine": 721,
+        "endChar": 50
+      },
+      "revId": "6b4233fdd646c9c86afc1b2e8be4f15385e4eee4",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    }
+  ]
+}
