@@ -1330,7 +1330,7 @@ void Llvm_backend::genCallAttributes(GenCallState &state, llvm::CallInst *call)
     llvm::AttrBuilder ab;
     ab.addAttribute(llvm::Attribute::StructRet);
     ab.addAttribute(llvm::Attribute::get(call->getContext(), "go_sret"));
-    argAttrs[1] = llvm::AttributeSet::get(context_, ab);
+    argAttrs[0] = llvm::AttributeSet::get(context_, ab);
   }
 
   // Nest attribute if needed

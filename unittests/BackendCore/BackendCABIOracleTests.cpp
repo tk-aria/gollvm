@@ -545,7 +545,7 @@ TEST(BackendCABIOracleTests, RecursiveCall1Amd64) {
     %ld.3 = load double, double* %field0.1, align 8
     %field1.1 = getelementptr inbounds { double, <2 x float> }, { double, <2 x float> }* %cast.2, i32 0, i32 1
     %ld.4 = load <2 x float>, <2 x float>* %field1.1, align 8
-    %call.0 = call addrspace(0) { double, <2 x float> } @foo(i8* nest undef, <2 x float> %ld.1, i48 %ld.2, double %ld.3, <2 x float> %ld.4, i8 zeroext %sub.0, i8 signext %p4.ld.0, { { float, float, i16, i16, i16 }, { double, float, float } }* byval %p5)
+    %call.0 = call addrspace(0) { double, <2 x float> } @foo(i8* nest undef, <2 x float> %ld.1, i48 %ld.2, double %ld.3, <2 x float> %ld.4, i8 zeroext %sub.0, i8 signext %p4.ld.0, { { float, float, i16, i16, i16 }, { double, float, float } }* byval({ { float, float, i16, i16, i16 }, { double, float, float } }) %p5)
     %cast.3 = bitcast { double, float, float }* %sret.actual.0 to { double, <2 x float> }*
     store { double, <2 x float> } %call.0, { double, <2 x float> }* %cast.3, align 8
     %cast.4 = bitcast { double, float, float }* %sret.actual.0 to { double, <2 x float> }*
