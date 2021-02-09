@@ -545,7 +545,7 @@ TEST(BackendCABIOracleTests, RecursiveCall1Amd64) {
     %ld.3 = load double, double* %field0.1, align 8
     %field1.1 = getelementptr inbounds { double, <2 x float> }, { double, <2 x float> }* %cast.2, i32 0, i32 1
     %ld.4 = load <2 x float>, <2 x float>* %field1.1, align 8
-    %call.0 = call addrspace(0) { double, <2 x float> } @foo(i8* nest undef, <2 x float> %ld.1, i48 %ld.2, double %ld.3, <2 x float> %ld.4, i8 zeroext %sub.0, i8 signext %p4.ld.0, { { float, float, i16, i16, i16 }, { double, float, float } }* byval %p5)
+    %call.0 = call addrspace(0) { double, <2 x float> } @foo(i8* nest undef, <2 x float> %ld.1, i48 %ld.2, double %ld.3, <2 x float> %ld.4, i8 zeroext %sub.0, i8 signext %p4.ld.0, { { float, float, i16, i16, i16 }, { double, float, float } }* byval({ { float, float, i16, i16, i16 }, { double, float, float } }) %p5)
     %cast.3 = bitcast { double, float, float }* %sret.actual.0 to { double, <2 x float> }*
     store { double, <2 x float> } %call.0, { double, <2 x float> }* %cast.3, align 8
     %cast.4 = bitcast { double, float, float }* %sret.actual.0 to { double, <2 x float> }*
@@ -718,7 +718,7 @@ TEST(BackendCABIOracleTests, PassAndReturnArraysAmd64) {
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     %cast.0 = bitcast [2 x float]* %p0.addr to <2 x float>*
     %ld.0 = load <2 x float>, <2 x float>* %cast.0, align 8
-    call addrspace(0) void @foo([3 x double]* sret "go_sret" %sret.actual.0, i8* nest undef, <2 x float> %ld.0)
+    call addrspace(0) void @foo([3 x double]* %sret.actual.0, i8* nest undef, <2 x float> %ld.0)
     %cast.1 = bitcast [3 x double]* %sret.formal.0 to i8*
     %cast.2 = bitcast [3 x double]* %sret.actual.0 to i8*
     call addrspace(0) void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %cast.1, i8* align 8 %cast.2, i64 24, i1 false)
