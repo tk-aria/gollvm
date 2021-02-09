@@ -772,20 +772,39 @@ bool GoDumpHelper::generateUnionType(const DWARFDie &die)
   return rval;
 }
 
+// isBitField returns TRUE if a given member or field is a bitfield.
+//
+// Notes:
+// - some compilers emit DW_AT_bit_size for bitfields and others use the more
+//   recent DW_AT_data_bit_size; we need to handle both.
+// - older versions of GCC emit DW_AT_byte_size for all fields; newer
+//   versions leave this out (presumably assuming that the size can be
+//   derived from the underlying type). Use the byte size attribute if
+//   present, otherwise fall back on the type ref.
 bool GoDumpHelper::isBitField(const DWARFDie &die)
 {
   auto bitSize = die.find(dwarf::DW_AT_bit_size);
   if (!bitSize)
     return false;
+  uint64_t tsz = 0;
   auto byteSize = die.find(dwarf::DW_AT_byte_size);
-  auto bitOffset = die.find(dwarf::DW_AT_bit_offset);
-  assert(bitSize && bitOffset);
-  auto byval = byteSize->getAsUnsignedConstant();
+  if (!byteSize) {
+    tsz = typeOfSize(die);
+  } else {
+    auto byval = byteSize->getAsUnsignedConstant();
+    assert(byval);
+    tsz = *byval;
+  }
+  auto bitOffset = die.find(dwarf::DW_AT_data_bit_offset);
+  if (!bitOffset) {
+    bitOffset = die.find(dwarf::DW_AT_bit_offset);
+  }
+  assert(bitOffset);
   auto bsval = bitSize->getAsUnsignedConstant();
   auto boval = bitOffset->getAsUnsignedConstant();
-  assert(byval && bsval && boval);
+  assert(bsval && boval);
   if (*boval % *bsval == 0 &&
-      *bsval % *byval == 0 &&
+      *bsval % tsz == 0 &&
       (*bsval == 8 || *bsval == 16 || *bsval == 32 || *bsval == 64))
     return false;
   return true;
