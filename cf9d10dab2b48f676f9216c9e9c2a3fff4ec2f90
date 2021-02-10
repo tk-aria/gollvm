@@ -22,6 +22,30 @@
       },
       "revId": "cf9d10dab2b48f676f9216c9e9c2a3fff4ec2f90",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "20ed7da6_48e14296",
+        "filename": "libgo/godumpspec/godumpspec.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 779,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2021-02-10T02:28:37Z",
+      "side": 1,
+      "message": "Thanks -- looks like the comment is mangled. Should refer to DW_AT_data_bit_offset/DW_AT_bit_offset, not DW_AT_data_bit_size/DW_AT_bit_size. I\u0027ll fix it up.",
+      "parentUuid": "95b0ea1a_0397b9f9",
+      "range": {
+        "startLine": 779,
+        "startChar": 12,
+        "endLine": 779,
+        "endChar": 31
+      },
+      "revId": "cf9d10dab2b48f676f9216c9e9c2a3fff4ec2f90",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
     }
   ]
 }
