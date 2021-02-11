@@ -16,6 +16,24 @@
       "message": "Friendly ping...",
       "revId": "f09c3932ea4a627237a0e57a3dcb747b545d03ba",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e17b1dc9_90c43d84",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2021-02-11T15:08:11Z",
+      "side": 1,
+      "message": "Apparently I didn\u0027t realize when you pushed a new PS...",
+      "parentUuid": "5426b8f2_fa4c126d",
+      "revId": "f09c3932ea4a627237a0e57a3dcb747b545d03ba",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
     }
   ]
 }
