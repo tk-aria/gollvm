@@ -408,6 +408,8 @@ void GoDumpHelper::visitType(const DWARFDie &die)
   curDieOffset_ = invalidOffset;
 
   if (emit_ && cname != nullptr) {
+    if (emittedTypeNames_.find(cname) != emittedTypeNames_.end())
+      return;
     if (! ok)
       os() << "// ";
     else
