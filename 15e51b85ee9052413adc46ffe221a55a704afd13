@@ -22,6 +22,47 @@
       },
       "revId": "15e51b85ee9052413adc46ffe221a55a704afd13",
       "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dfb109ec_642904ec",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2021-02-13T18:42:55Z",
+      "side": 1,
+      "message": "Yeah good question.  For the bug in question, one definition is in\n\n/usr/local/lib/clang/13.0.0/include/stdarg.h\n\nand the second is in\n\n/usr/include/stdio.h",
+      "parentUuid": "507e4014_1c63f89f",
+      "range": {
+        "startLine": 16,
+        "startChar": 0,
+        "endLine": 16,
+        "endChar": 28
+      },
+      "revId": "15e51b85ee9052413adc46ffe221a55a704afd13",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5c6f4e1e_5cbb4974",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2021-02-13T18:42:55Z",
+      "side": 1,
+      "message": "Thanks for the review.",
+      "revId": "15e51b85ee9052413adc46ffe221a55a704afd13",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
     }
   ]
 }
