@@ -478,7 +478,7 @@ static llvm::Value *atomicRMWMaker(llvm::AtomicRMWInst::BinOp op,
       llvm::isa<llvm::ConstantInt>(args[2]) ?
       llvmOrder(llvm::cast<llvm::ConstantInt>(args[2])->getZExtValue()) :
       llvm::AtomicOrdering::SequentiallyConsistent;
-  return builder->CreateAtomicRMW(op, args[0], args[1], o);
+  return builder->CreateAtomicRMW(op, args[0], args[1], llvm::MaybeAlign(), o);
 }
 
 static llvm::Value *atomicXchgMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
@@ -538,7 +538,7 @@ static llvm::Value *atomicCasMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
       llvm::isa<llvm::ConstantInt>(args[3]) &&
       !llvm::cast<llvm::ConstantInt>(args[3])->isZero();
   llvm::AtomicCmpXchgInst *cas =
-      builder->CreateAtomicCmpXchg(args[0], old, args[2], o, o2);
+      builder->CreateAtomicCmpXchg(args[0], old, args[2], llvm::MaybeAlign(), o, o2);
   cas->setWeak(weak);
   // LLVM cmpxchg instruction returns { valType, i1 }. Extract the second
   // value, and cast to Go bool type (i8).
