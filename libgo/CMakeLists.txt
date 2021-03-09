@@ -441,6 +441,7 @@ set(runtimecfiles
   "runtime/go-matherr.c"
   "runtime/go-memclr.c"
   "runtime/go-memequal.c"
+  "runtime/go-memmove.c"
   "runtime/go-nanotime.c"
   "runtime/go-now.c"
   "runtime/go-nosys.c"
