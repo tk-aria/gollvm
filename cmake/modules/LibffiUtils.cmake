@@ -43,6 +43,7 @@ function(setup_libffi libffi_srcroot)
   # Pick up correct sources based on arch.
   set(c_srcs
     "${libffi_srcroot}/src/closures.c"
+    "${libffi_srcroot}/src/tramp.c"
     "${libffi_srcroot}/src/prep_cif.c"
     "${libffi_srcroot}/src/types.c"
     "${libffi_srcroot}/src/raw_api.c"
