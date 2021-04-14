@@ -360,7 +360,7 @@ GoNilChecks::areMemoryOpsAliased(const MachineInstr &MI,
       llvm::AliasResult AAResult = AA->alias(
           MemoryLocation::getAfter(MMO1->getValue(), MMO1->getAAInfo()),
           MemoryLocation::getAfter(MMO2->getValue(), MMO2->getAAInfo()));
-      if (AAResult != NoAlias)
+      if (AAResult != llvm::AliasResult::NoAlias)
         return AR_MayAlias;
     }
   }
