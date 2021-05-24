@@ -257,37 +257,37 @@ public:
 
   Bvariable *global_variable(const std::string &var_name,
                              const std::string &asm_name, Btype *btype,
-                             bool is_external, bool is_hidden,
-                             bool in_unique_section, Location location);
+                             unsigned int flags, Location location);
 
   void global_variable_set_init(Bvariable *, Bexpression *);
 
   Bvariable *local_variable(Bfunction *, const std::string &, Btype *,
-                            Bvariable *, bool, Location);
+                            Bvariable *, unsigned int flags, Location);
 
-  Bvariable *parameter_variable(Bfunction *, const std::string &, Btype *, bool,
-                                Location);
+  Bvariable *parameter_variable(Bfunction *, const std::string &, Btype *,
+                                unsigned int flags, Location);
 
   Bvariable *static_chain_variable(Bfunction *, const std::string &, Btype *,
-                                   Location);
+                                   unsigned int flags, Location);
 
   Bvariable *temporary_variable(Bfunction *, Bblock *, Btype *, Bexpression *,
-                                bool, Location, Bstatement **);
+                                unsigned int flags, Location, Bstatement **);
 
   Bvariable *implicit_variable(const std::string &, const std::string &,
-                               Btype *, bool, bool, bool, int64_t);
+                               Btype *, unsigned int flags, int64_t);
 
   void implicit_variable_set_init(Bvariable *, const std::string &, Btype *,
-                                  bool, bool, bool, Bexpression *);
+                                  unsigned int flags, Bexpression *);
 
   Bvariable *implicit_variable_reference(const std::string &,
                                          const std::string &, Btype *);
 
-  Bvariable *immutable_struct(const std::string &, const std::string &, bool,
-                              bool, Btype *, Location);
+  Bvariable *immutable_struct(const std::string &, const std::string &,
+                              unsigned int flags, Btype *, Location);
 
-  void immutable_struct_set_init(Bvariable *, const std::string &, bool, bool,
-                                 Btype *, Location, Bexpression *);
+  void immutable_struct_set_init(Bvariable *, const std::string &,
+                                 unsigned int flags, Btype *, Location,
+                                 Bexpression *);
 
   Bvariable *immutable_struct_reference(const std::string &,
                                         const std::string &, Btype *, Location);
