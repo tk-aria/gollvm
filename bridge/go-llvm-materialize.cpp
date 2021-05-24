@@ -1460,10 +1460,10 @@ static llvm::Value *makeGetg(Btype *resType,
 {
   llvm::GlobalValue* g = be->module().getGlobalVariable("runtime.g");
   if (!g) {
-    bool is_external = true, is_hidden = false, in_unique_section = false;
+    unsigned int flags = Backend::variable_is_external;
     Location location; // dummy
-    Bvariable* bv = be->global_variable("runtime.g", "runtime.g", resType, is_external,
-                                        is_hidden, in_unique_section, location);
+    Bvariable* bv = be->global_variable("runtime.g", "runtime.g", resType,
+                                        flags, location);
     g = llvm::cast<llvm::GlobalValue>(bv->value());
     g->setThreadLocal(true);
   }
