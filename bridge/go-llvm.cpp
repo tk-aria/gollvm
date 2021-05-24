@@ -2230,19 +2230,19 @@ Llvm_backend::makeModuleVar(Btype *btype,
 Bvariable *Llvm_backend::global_variable(const std::string &var_name,
                                          const std::string &asm_name,
                                          Btype *btype,
-                                         bool is_external,
-                                         bool is_hidden,
-                                         bool in_unique_section,
+                                         unsigned int flags,
                                          Location location)
 {
+  bool is_hidden = ((flags & Backend::variable_is_hidden) != 0);
   llvm::GlobalValue::LinkageTypes linkage =
       ( is_hidden ? llvm::GlobalValue::InternalLinkage :
                     llvm::GlobalValue::ExternalLinkage);
-
   ModVarSec inUniqSec =
-      (in_unique_section ? MV_UniqueSection : MV_DefaultSection);
+      ((flags & Backend::variable_in_unique_section) != 0?
+       MV_UniqueSection : MV_DefaultSection);
   ModVarExtInit extInit =
-      (is_external ? MV_ExternallyInitialized : MV_NotExternallyInitialized);
+      ((flags & Backend::variable_is_external) != 0 ?
+       MV_ExternallyInitialized : MV_NotExternallyInitialized);
   Bvariable *gvar =
       makeModuleVar(btype, var_name, asm_name, location,
                     MV_NonConstant, inUniqSec, MV_NotInComdat,
@@ -2286,12 +2286,13 @@ Bvariable *Llvm_backend::local_variable(Bfunction *function,
                                         const std::string &name,
                                         Btype *btype,
                                         Bvariable *decl_var,
-                                        bool is_address_taken,
+                                        unsigned int flags,
                                         Location location)
 {
   assert(function);
   if (btype == errorType() || function == errorFunction_.get())
     return errorVariable_.get();
+  bool is_address_taken = ((flags & Backend::variable_address_is_taken) != 0);
   return function->localVariable(name, btype, decl_var,
                                  is_address_taken, location);
 }
@@ -2300,10 +2301,11 @@ Bvariable *Llvm_backend::local_variable(Bfunction *function,
 
 Bvariable *Llvm_backend::parameter_variable(Bfunction *function,
                                             const std::string &name,
-                                            Btype *btype, bool is_address_taken,
+                                            Btype *btype, unsigned int flags,
                                             Location location)
 {
   assert(function);
+  bool is_address_taken = ((flags & Backend::variable_address_is_taken) != 0);
   if (btype == errorType() || function == errorFunction_.get())
     return errorVariable_.get();
   return function->parameterVariable(name, btype,
@@ -2315,6 +2317,7 @@ Bvariable *Llvm_backend::parameter_variable(Bfunction *function,
 Bvariable *Llvm_backend::static_chain_variable(Bfunction *function,
                                                const std::string &name,
                                                Btype *btype,
+                                               unsigned int flags,
                                                Location location)
 {
   if (function == errorFunction_.get() || btype == errorType())
@@ -2328,13 +2331,14 @@ Bvariable *Llvm_backend::temporary_variable(Bfunction *function,
                                             Bblock *bblock,
                                             Btype *btype,
                                             Bexpression *binit,
-                                            bool is_address_taken,
+                                            unsigned int flags,
                                             Location location,
                                             Bstatement **pstatement)
 {
   if (binit == errorExpression())
     return errorVariable_.get();
   std::string tname(namegen("tmpv"));
+  bool is_address_taken = ((flags & Backend::variable_address_is_taken) != 0);
   Bvariable *tvar = local_variable(function, tname, btype, nullptr,
                                    is_address_taken, location);
   if (tvar == errorVariable_.get()) {
@@ -2357,9 +2361,7 @@ Bvariable *Llvm_backend::temporary_variable(Bfunction *function,
 Bvariable *Llvm_backend::implicit_variable(const std::string &name,
                                            const std::string &asm_name,
                                            Btype *btype,
-                                           bool is_hidden,
-                                           bool is_constant,
-                                           bool is_common,
+                                            unsigned int flags,
                                            int64_t ialignment)
 {
   if (btype == errorType())
@@ -2369,6 +2371,9 @@ Bvariable *Llvm_backend::implicit_variable(const std::string &name,
   assert(ialignment >= 0);
   assert(ialignment < 1<<30);
   unsigned alignment = static_cast<unsigned>(ialignment);
+  bool is_hidden = ((flags & Backend::variable_is_hidden) != 0);
+  bool is_constant = ((flags & Backend::variable_is_constant) != 0);
+  bool is_common = ((flags & Backend::variable_is_common) != 0);
 
   // Common + hidden makes no sense
   assert(!(is_hidden && is_common));
@@ -2397,7 +2402,7 @@ Bvariable *Llvm_backend::implicit_variable(const std::string &name,
 void Llvm_backend::implicit_variable_set_init(Bvariable *var,
                                               const std::string &,
                                               Btype *type,
-                                              bool, bool, bool is_common,
+                                              unsigned int flags,
                                               Bexpression *init)
 {
   if (init != nullptr && init == errorExpression())
@@ -2415,23 +2420,24 @@ Bvariable *Llvm_backend::implicit_variable_reference(const std::string &name,
                                                      const std::string &asmname,
                                                      Btype *btype)
 {
-  bool is_external = true, is_hidden = false, in_unique_section = false;
+  unsigned int flags = Backend::variable_is_external;
   Location location; // dummy
-  return global_variable(name, asmname, btype, is_external, is_hidden,
-                         in_unique_section, location);
+  return global_variable(name, asmname, btype, flags, location);
 }
 
 // Create a named immutable initialized data structure.
 
 Bvariable *Llvm_backend::immutable_struct(const std::string &name,
                                           const std::string &asm_name,
-                                          bool is_hidden,
-                                          bool is_common,
+                                          unsigned int flags,
                                           Btype *btype,
                                           Location location)
 {
   if (btype == errorType())
     return errorVariable_.get();
+
+  bool is_hidden = ((flags & Backend::variable_is_hidden) != 0);
+  bool is_common = ((flags & Backend::variable_is_common) != 0);
 
   // Common + hidden makes no sense
   assert(!(is_hidden && is_common));
@@ -2456,8 +2462,7 @@ Bvariable *Llvm_backend::immutable_struct(const std::string &name,
 
 void Llvm_backend::immutable_struct_set_init(Bvariable *var,
                                              const std::string &,
-                                             bool is_hidden,
-                                             bool is_common,
+                                             unsigned int flags,
                                              Btype *,
                                              Location,
                                              Bexpression *initializer)
