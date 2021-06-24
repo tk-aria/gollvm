@@ -57,6 +57,7 @@
 #include "llvm/Support/Program.h"
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/raw_ostream.h"
@@ -204,15 +205,24 @@ bool IntegAssemblerImpl::invokeAssembler()
   // may be created with a combination of default and explicit settings.
   MAI->setCompressDebugSections(CompressDebugSections);
 
-  // FIXME: This is not pretty. MCContext has a ptr to MCObjectFileInfo and
-  // MCObjectFileInfo needs a MCContext reference in order to initialize itself.
-  std::unique_ptr<MCObjectFileInfo> MOFI(new MCObjectFileInfo());
+  // Build up the feature string from the target feature list.
+  std::string FS;
+  std::string CPU;
+  std::unique_ptr<MCStreamer> Str;
+  std::unique_ptr<MCInstrInfo> MCII(TheTarget->createMCInstrInfo());
+  std::unique_ptr<MCSubtargetInfo> STI(
+      TheTarget->createMCSubtargetInfo(Trip, CPU, FS));
 
-  MCContext Ctx(MAI.get(), MRI.get(), MOFI.get(), &SrcMgr, &MCOptions);
+  MCContext Ctx(triple_, MAI.get(), MRI.get(), STI.get(), &SrcMgr, &MCOptions);
 
   bool PIC = (driver_.getPicLevel() != PICLevel::NotPIC);
-  MOFI->InitMCObjectFileInfo(triple_, PIC, Ctx);
   Ctx.setGenDwarfForAssembly(true);
+
+  // FIXME: This is not pretty. MCContext has a ptr to MCObjectFileInfo and
+  // MCObjectFileInfo needs a MCContext reference in order to initialize itself.
+  std::unique_ptr<MCObjectFileInfo> MOFI(
+      TheTarget->createMCObjectFileInfo(Ctx, PIC));
+  Ctx.setObjectFileInfo(MOFI.get());
 
   // Use current dir (llvm-goc does not yet support -fdebug-compilation-dir)
   SmallString<128> CWD;
@@ -230,14 +240,6 @@ bool IntegAssemblerImpl::invokeAssembler()
   Ctx.setMainFileName(BaseName);
   // FIXME: incorporate version here?
   Ctx.setDwarfDebugProducer("llvm-goc");
-
-  // Build up the feature string from the target feature list.
-  std::string FS;
-  std::string CPU;
-  std::unique_ptr<MCStreamer> Str;
-  std::unique_ptr<MCInstrInfo> MCII(TheTarget->createMCInstrInfo());
-  std::unique_ptr<MCSubtargetInfo> STI(
-      TheTarget->createMCSubtargetInfo(Trip, CPU, FS));
 
   raw_pwrite_stream *Out = objout_.get();
   std::unique_ptr<buffer_ostream> BOS;
