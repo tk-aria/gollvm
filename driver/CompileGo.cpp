@@ -251,7 +251,7 @@ bool CompileGoImpl::resolveInputOutput(const Action &jobAction,
 
   // Open output file.
   std::error_code EC;
-  sys::fs::OpenFlags OpenFlags = sys::fs::F_Text;
+  sys::fs::OpenFlags OpenFlags = sys::fs::OF_Text;
   auto FDOut = std::make_unique<ToolOutputFile>(asmOutFileName_, EC,
                                                 OpenFlags);
   if (EC) {
