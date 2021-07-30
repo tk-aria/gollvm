@@ -230,13 +230,10 @@ TEST_P(BackendDebugEmit, TestGlobalVarDebugEmit) {
   Llvm_backend *be = h.be();
   Location loc = h.loc();
 
+  unsigned int barflags = Backend::variable_is_external;
   Btype *bi32t = be->integer_type(false, 32);
   Bvariable *g1 =
-      be->global_variable("_bar", "bar", bi32t,
-                          true,         /* is_external */
-                          false,        /* is_hidden */
-                          false,        /* unique_section */
-                          loc);
+      be->global_variable("_bar", "bar", bi32t, barflags, loc);
   be->global_variable_set_init(g1, mkInt32Const(be, 101));
 
   bool broken = h.finish(PreserveDebugInfo);

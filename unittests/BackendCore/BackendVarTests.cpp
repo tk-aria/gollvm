@@ -116,11 +116,9 @@ TEST_P(BackendVarTests, MakeGlobalVar) {
   std::unique_ptr<Backend> be(go_get_backend(C, cc));
 
   Btype *bi32t = be->integer_type(false, 32);
+  unsigned int g1flags = 0;
   Bvariable *g1 =
-      be->global_variable("varname", "asmname", bi32t, false, /* is_external */
-                          false,                              /* is_hidden */
-                          false, /* unique_section */
-                          Location());
+      be->global_variable("varname", "asmname", bi32t, g1flags, Location());
   ASSERT_TRUE(g1 != nullptr);
   Value *g1val = g1->value();
   ASSERT_TRUE(g1val != nullptr);
@@ -136,11 +134,9 @@ TEST_P(BackendVarTests, MakeGlobalVar) {
   EXPECT_EQ(ve1->value(), g1->value());
 
   // error case
+  unsigned int anonflags = 0;
   Bvariable *gerr =
-      be->global_variable("", "", be->error_type(), false, /* is_external */
-                          false,                           /* is_hidden */
-                          false,                           /* unique_section */
-                          Location());
+      be->global_variable("", "", be->error_type(), anonflags, Location());
   EXPECT_TRUE(gerr == be->error_variable());
 }
 
@@ -188,8 +184,10 @@ TEST_P(BackendVarTests, MakeImmutableStruct) {
     for (auto common : is_common) {
       if (hidden && common)
         continue;
+      unsigned int flags = (hidden ? Backend::variable_is_hidden : 0) |
+                           (common ? Backend::variable_is_common : 0);
       Bvariable *ims =
-          be->immutable_struct("name", "asmname", hidden, common, bst, loc);
+          be->immutable_struct("name", "asmname", flags, bst, loc);
       ASSERT_TRUE(ims != nullptr);
       Value *ival = ims->value();
       ASSERT_TRUE(ival != nullptr);
@@ -203,8 +201,9 @@ TEST_P(BackendVarTests, MakeImmutableStruct) {
   }
 
   // error case
+  unsigned int emptyflags = 0;
   Bvariable *gerr =
-      be->immutable_struct("", "", false, false, be->error_type(), Location());
+      be->immutable_struct("", "", emptyflags, be->error_type(), Location());
   EXPECT_TRUE(gerr == be->error_variable());
 
   bool broken = h.finish(PreserveDebugInfo);
@@ -229,9 +228,11 @@ TEST_P(BackendVarTests, MakeImplicitVariable) {
       for (auto iscon : is_constant) {
         if (hidden && common)
           continue;
+      unsigned int flags = (hidden ? Backend::variable_is_hidden : 0) |
+                           (common ? Backend::variable_is_common : 0) |
+                           (iscon ? Backend::variable_is_constant : 0);
         Bvariable *ims =
-            be->implicit_variable("name", "asmname", bst, hidden, iscon,
-                                  common, 8);
+            be->implicit_variable("name", "asmname", bst, flags, 8);
         ASSERT_TRUE(ims != nullptr);
         Value *ival = ims->value();
         ASSERT_TRUE(ival != nullptr);
@@ -246,8 +247,9 @@ TEST_P(BackendVarTests, MakeImplicitVariable) {
   }
 
   // error case
+  unsigned emptyflags = 0;
   Bvariable *gerr =
-      be->implicit_variable("", "", be->error_type(), false, false, false, 0);
+      be->implicit_variable("", "", be->error_type(), emptyflags, 0);
   EXPECT_TRUE(gerr == be->error_variable());
 }
 
@@ -287,16 +289,16 @@ TEST_P(BackendVarTests, ImmutableStructSetInit) {
   Btype *pbt = be->pointer_type(bt);
   Btype *uintptrt = be->integer_type(true, be->type_size(pbt)*8);
   Btype *desct = mkBackendStruct(be, uintptrt, "x", nullptr);
-  Bvariable *ims = be->immutable_struct("desc", "desc",
-                                        true, false, desct, loc);
+  unsigned int descflags = Backend::variable_is_hidden;
+  Bvariable *ims = be->immutable_struct("desc", "desc", descflags, desct, loc);
   Bexpression *fp = be->function_code_expression(func, loc);
   Bexpression *confp = be->convert_expression(uintptrt, fp, loc);
 
   std::vector<Bexpression *> vals;
   vals.push_back(confp);
   Bexpression *scon = be->constructor_expression(desct, vals, loc);
-  be->immutable_struct_set_init(ims, "", false, false,
-                                desct, loc, scon);
+  unsigned int emptyflags = 0;
+  be->immutable_struct_set_init(ims, "", emptyflags, desct, loc, scon);
 
   {
     DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
@@ -308,9 +310,9 @@ TEST_P(BackendVarTests, ImmutableStructSetInit) {
     EXPECT_TRUE(isOK && "Value does not have expected contents");
   }
 
-  Bvariable *ims2 = be->immutable_struct("xyz", "abc",
-                                         false, true, desct, loc);
-  be->immutable_struct_set_init(ims2, "", false, true,
+  unsigned int xyzflags = Backend::variable_is_common;
+  Bvariable *ims2 = be->immutable_struct("xyz", "abc", xyzflags, desct, loc);
+  be->immutable_struct_set_init(ims2, "", xyzflags,
                                 desct, loc, be->zero_expression(desct));
 
   {
@@ -323,9 +325,9 @@ TEST_P(BackendVarTests, ImmutableStructSetInit) {
   }
 
   // check that these don't crash
-  be->immutable_struct_set_init(be->error_variable(), "", false, false,
+  be->immutable_struct_set_init(be->error_variable(), "", emptyflags,
                                 desct, loc, scon);
-  be->immutable_struct_set_init(ims, "", false, false,
+  be->immutable_struct_set_init(ims, "", emptyflags,
                                 desct, loc, be->error_expression());
 
   bool broken = h.finish(PreserveDebugInfo);
@@ -343,11 +345,9 @@ TEST_P(BackendVarTests, MakeImmutableStructReferenceWithSameName) {
 
   // Create an immutable_struct and an immutable_struct_reference
   // with same name. They should refer to the same global variable.
-
-  bool hidden = false;
-  bool common = false;
+  unsigned int emptyflags = 0;
   Bvariable *ims =
-      be->immutable_struct("name", "asmname", hidden, common, bst, loc);
+      be->immutable_struct("name", "asmname", emptyflags, bst, loc);
   ASSERT_TRUE(ims != nullptr);
 
   Bvariable *imsr = be->immutable_struct_reference("name", "asmname", bst, loc);
@@ -370,19 +370,14 @@ TEST_P(BackendVarTests, ImplicitVariableSetInit) {
   Btype *bst = mkTwoFieldStruct(be, bi32t, bi32t);
 
   // Case 1: non-common, concrete init value.
-  bool isConst = false;
-  bool isHidden = false;
-  bool isCommon = false;
-
+  unsigned int firstflags = 0;
   Bvariable *ims1 =
-      be->implicit_variable("first", "v1", bst,
-                            isHidden, isConst, isCommon, 8);
+      be->implicit_variable("first", "v1", bst, firstflags, 8);
   std::vector<Bexpression *> vals1;
   vals1.push_back(mkInt32Const(be, 101));
   vals1.push_back(mkInt32Const(be, 202));
   Bexpression *con1 = be->constructor_expression(bst, vals1, loc);
-  be->implicit_variable_set_init(ims1, "x", bst,
-                                 isHidden, isConst, isCommon, con1);
+  be->implicit_variable_set_init(ims1, "x", bst, firstflags, con1);
 
   DECLARE_EXPECTED_OUTPUT(exp1, R"RAW_RESULT(
     @v1 = global { i32, i32 } { i32 101, i32 202 }, align 8
@@ -392,12 +387,10 @@ TEST_P(BackendVarTests, ImplicitVariableSetInit) {
   EXPECT_TRUE(isOK1 && "Value does not have expected contents");
 
   // Case 2: const, common, no init value.
-  isConst = true;
-  isCommon = true;
-  Bvariable *ims2 = be->implicit_variable("second", "v2", bst,
-                                          isHidden, isConst, isCommon, 8);
-  be->implicit_variable_set_init(ims2, "x", bst,
-                                 isHidden, isConst, isCommon, nullptr);
+  unsigned int secondflags = (Backend::variable_is_constant |
+                              Backend::variable_is_common);
+  Bvariable *ims2 = be->implicit_variable("second", "v2", bst, secondflags, 8);
+  be->implicit_variable_set_init(ims2, "x", bst, secondflags, nullptr);
 
   DECLARE_EXPECTED_OUTPUT(exp2, R"RAW_RESULT(
     @v2 = weak constant { i32, i32 } zeroinitializer, comdat, align 8
@@ -407,11 +400,11 @@ TEST_P(BackendVarTests, ImplicitVariableSetInit) {
   EXPECT_TRUE(isOK2 && "Value does not have expected contents");
 
   // check that these don't crash
+  unsigned int iniflags = secondflags;
   be->implicit_variable_set_init(be->error_variable(), "x", bst,
-                                 isHidden, isConst, isCommon, nullptr);
+                                 iniflags, nullptr);
   be->implicit_variable_set_init(be->error_variable(), "x", bst,
-                                 isHidden, isConst, isCommon,
-                                 be->error_expression());
+                                 iniflags, be->error_expression());
 
   bool broken = h.finish(PreserveDebugInfo);
   EXPECT_FALSE(broken && "Module failed to verify.");
@@ -427,11 +420,9 @@ TEST_P(BackendVarTests, GlobalVarSetInitToComposite) {
   Btype *pbt = be->pointer_type(bt);
   Btype *bi32t = be->integer_type(false, 32);
   Btype *s2t = mkBackendStruct(be.get(), pbt, "f1", bi32t, "f2", nullptr);
+  unsigned int g1flags = 0;
   Bvariable *g1 =
-      be->global_variable("gv", "gv", s2t, false, /* is_external */
-                          false,                  /* is_hidden */
-                          false, /* unique_section */
-                          Location());
+      be->global_variable("gv", "gv", s2t, g1flags, Location());
 
   std::vector<Bexpression *> vals;
   vals.push_back(be->zero_expression(pbt));
@@ -457,19 +448,15 @@ TEST_P(BackendVarTests, GlobalVarsWithSameName) {
   // They should refer to the same underlying global var.
 
   // declare x as external int32
-  bool hidden = false;
-  bool common = false;
-  bool external = true;
+  unsigned int xflags = Backend::variable_is_external;
   Bvariable *gvdecl =
-      be->global_variable("x", "x", bi32t, external,
-                          hidden, common, loc);
+      be->global_variable("x", "x", bi32t, xflags, loc);
   ASSERT_TRUE(gvdecl != nullptr);
 
   // define x as non-external struct
-  external = false;
+  xflags = 0; // no longer external
   Bvariable *gv =
-      be->global_variable("x", "x", bst, external,
-                          hidden, common, loc);
+      be->global_variable("x", "x", bst, xflags, loc);
   ASSERT_TRUE(gv != nullptr);
   EXPECT_TRUE(isa<GlobalVariable>(gv->value()));
   EXPECT_EQ(repr(gv->value()), "@x = global { i32 } zeroinitializer");
@@ -479,17 +466,15 @@ TEST_P(BackendVarTests, GlobalVarsWithSameName) {
   // Create them in the other order: definition first,
   // then external declaration.
   // define y as non-external struct
-  external = false;
+  unsigned int yflags = 0;
   Bvariable *gv2 =
-      be->global_variable("y", "y", bst, external,
-                          hidden, common, loc);
+      be->global_variable("y", "y", bst, yflags, loc);
   ASSERT_TRUE(gv2 != nullptr);
 
   // declare y as external int32
-  external = true;
+  yflags = Backend::variable_is_external;
   Bvariable *gvdecl2 =
-      be->global_variable("y", "y", bi32t, external,
-                          hidden, common, loc);
+      be->global_variable("y", "y", bi32t, yflags, loc);
   ASSERT_TRUE(gvdecl2 != nullptr);
   EXPECT_TRUE(isa<GlobalVariable>(gv2->value()));
   EXPECT_EQ(repr(gv2->value()), "@y = global { i32 } zeroinitializer");
@@ -587,23 +572,16 @@ TEST_P(BackendVarTests, ZeroSizedGlobals) {
   Btype *bi32t = be->integer_type(false, 32);
   Btype *atint0 = be->array_type(bi32t, val0);
 
-  bool isExternal = false;
-  bool isHidden = false;
-  bool uniqueSection = false;
-
   // define globals with the types above
+  unsigned int emptyflags = 0;
   Bvariable *gs1 =
-      be->global_variable("emptystruct", "", best,
-                          isExternal, isHidden, uniqueSection, loc);
+      be->global_variable("emptystruct", "", best, emptyflags, loc);
   Bvariable *gs2 =
-      be->global_variable("emptys2f", "", bef2,
-                          isExternal, isHidden, uniqueSection, loc);
+      be->global_variable("emptys2f", "", bef2, emptyflags, loc);
   Bvariable *ga1 =
-      be->global_variable("emptyar", "", ats1,
-                          isExternal, isHidden, uniqueSection, loc);
+      be->global_variable("emptyar", "", ats1, emptyflags, loc);
   Bvariable *ga2 =
-      be->global_variable("emptyintar", "", atint0,
-                          isExternal, isHidden, uniqueSection, loc);
+      be->global_variable("emptyintar", "", atint0, emptyflags, loc);
 
   // Create initializers for these odd beasties.
 
