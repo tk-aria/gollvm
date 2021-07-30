@@ -503,17 +503,13 @@ TEST_P(BackendArrayStructTests, CreateStructConstructionExprs3) {
   // Construct a struct with a global var field
   // var x int32  // global
   // var t = T{x} // global
-  Bvariable *x = be->global_variable("x", "x", bi32t, false, /* is_external */
-                                     false, /* is_hidden */
-                                     false, /* unique_section */
-                                     loc);
+  unsigned int xflags = 0;
+  Bvariable *x = be->global_variable("x", "x", bi32t, xflags, loc);
   Bexpression *xvex = be->var_expression(x, loc);
   std::vector<Bexpression *> vals1 = {xvex};
   Bexpression *scon1 = be->constructor_expression(s1t, vals1, loc);
-  Bvariable *t = be->global_variable("t", "t", s1t, false, /* is_external */
-                                     false, /* is_hidden */
-                                     false, /* unique_section */
-                                     loc);
+  unsigned int tflags = 0;
+  Bvariable *t = be->global_variable("t", "t", s1t, tflags, loc);
   Bexpression *tvex = be->var_expression(t, loc);
   h.mkAssign(tvex, scon1);
 
@@ -777,10 +773,8 @@ TEST_P(BackendArrayStructTests, TestStructFieldAddressExpr) {
   Bexpression *aex1 = be->address_expression(fex1, loc);
   h.mkLocal("a1", bpi32t, aex1);
 
-  Bvariable *t2 = be->global_variable("t2", "t2", s1t, false, /* is_external */
-                                      false, /* is_hidden */
-                                      false, /* unique_section */
-                                      loc);
+  unsigned int t2flags = 0;
+  Bvariable *t2 = be->global_variable("t2", "t2", s1t, t2flags, loc);
   Bexpression *t2vex = be->var_expression(t2, loc);
   Bexpression *fex2 = be->struct_field_expression(t2vex, 0, loc);
   Bexpression *aex2 = be->address_expression(fex2, loc);
