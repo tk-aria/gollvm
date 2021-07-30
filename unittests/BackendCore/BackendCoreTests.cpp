@@ -429,11 +429,9 @@ TEST_P(BackendCoreTests, TestCompositeInitGvarConvert) {
   Btype *sqt = mkBackendStruct(be, s3t, "f0", phst1, "f1", nullptr);
 
   // Create a global variable using this type
+  unsigned int emptyflags = 0;
   Bvariable *g1 =
-      be->global_variable("gv", "gv", sqt, false, /* is_external */
-                          false,                  /* is_hidden */
-                          false, /* unique_section */
-                          loc);
+      be->global_variable("gv", "gv", sqt, emptyflags, loc);
 
   // Create initializers using the various types.  Note: the initial
   // value for "f0" (non-placeholder type) is created using the
