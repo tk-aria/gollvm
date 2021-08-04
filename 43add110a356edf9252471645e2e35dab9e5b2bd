@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f1af8f72_7e285f2e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14020
+      },
+      "writtenOn": "2021-08-04T19:19:04Z",
+      "side": 1,
+      "message": "This CL somehow seems to have gotten into a bad state -- Gerrit doesn\u0027t seem to think that it is submittable? \n\nI am going to try to abandon it and recreate, hopefully that will help. Sorry for the extra hassle.",
+      "revId": "43add110a356edf9252471645e2e35dab9e5b2bd",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    }
+  ]
+}
