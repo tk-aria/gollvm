@@ -1328,7 +1328,7 @@ void Llvm_backend::genCallAttributes(GenCallState &state, llvm::CallInst *call)
   const CABIParamInfo &returnInfo = state.oracle.returnInfo();
   if (returnInfo.disp() == ParmIndirect) {
     llvm::AttrBuilder ab;
-    ab.addAttribute(llvm::Attribute::StructRet);
+    ab.addStructRetAttr(state.calleeFcnType->resultType()->type());
     ab.addAttribute(llvm::Attribute::get(call->getContext(), "go_sret"));
     argAttrs[0] = llvm::AttributeSet::get(context_, ab);
   }
