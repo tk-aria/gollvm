@@ -102,6 +102,7 @@ set(runtime_matchargs "--tag=libffi")
 # that <pkg>_extra_go_files holds the additional sources for <pkg>.
 set(runtime_extra_go_files "runtime_linknames.go" "runtime_sysinfo.go" "sigtab.go")
 set(cmd_internal_objabi_extra_go_files "objabi.go")
+set(internal_buildcfg_extra_go_files "buildcfg.go")
 set(internal_goroot_extra_go_files "zstdpkglist.go")
 set(internal_cpu_extra_go_files "cpugen.go")
 set(golang_org_x_sys_cpu_extra_go_files "gcpugen.go")
@@ -227,6 +228,12 @@ set(objabidotgo "${libgo_binroot}/objabi.go")
 set(objabitmp "${libgo_binroot}/objabi.go.tmp")
 mkobjabi(${objabitmp} ${libgo_binroot} ${libgo_gosrcroot})
 copy_if_different(${objabitmp} ${objabidotgo})
+
+# Rules for buildcfg.go
+set(buildcfgdotgo "${libgo_binroot}/buildcfg.go")
+set(buildcfgtmp "${libgo_binroot}/buildcfg.go.tmp")
+mkbuildcfg(${buildcfgtmp} ${libgo_binroot} ${libgo_gosrcroot})
+copy_if_different(${buildcfgtmp} ${buildcfgdotgo})
 
 # Rules for zstdpkglist.go
 set(zstdpkglistdotgo "${libgo_binroot}/zstdpkglist.go")
