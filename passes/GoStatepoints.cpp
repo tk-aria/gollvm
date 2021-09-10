@@ -1255,6 +1255,26 @@ normalizeForInvokeSafepoint(BasicBlock *BB, BasicBlock *InvokeParent,
   return Ret;
 }
 
+// List of all function attributes which must be stripped when lowering from
+// abstract machine model to physical machine model.  Essentially, these are
+// all the effects a safepoint might have which we ignored in the abstract
+// machine model for purposes of optimization.  We have to strip these on
+// both function declarations and call sites.
+static constexpr Attribute::AttrKind FnAttrsToStrip[] =
+  {Attribute::ReadNone, Attribute::ReadOnly, Attribute::WriteOnly,
+   Attribute::ArgMemOnly, Attribute::InaccessibleMemOnly,
+   Attribute::InaccessibleMemOrArgMemOnly,
+   Attribute::NoSync, Attribute::NoFree};
+
+// List of all parameter and return attributes which must be stripped when
+// lowering from the abstract machine model.  Note that we list attributes
+// here which aren't valid as return attributes, that is okay.  There are
+// also some additional attributes with arguments which are handled
+// explicitly and are not in this list.
+static constexpr Attribute::AttrKind ParamAttrsToStrip[] =
+  {Attribute::ReadNone, Attribute::ReadOnly, Attribute::WriteOnly,
+   Attribute::NoAlias, Attribute::NoFree};
+
 // Create new attribute set containing only attributes which can be transferred
 // from original call to the safepoint.
 static AttributeList legalizeCallAttributes(LLVMContext &Ctx,
@@ -1262,25 +1282,19 @@ static AttributeList legalizeCallAttributes(LLVMContext &Ctx,
   if (AL.isEmpty())
     return AL;
 
-  // Remove the readonly, readnone, and statepoint function attributes.
-  AttrBuilder FnAttrs = AL.getFnAttributes();
-  FnAttrs.removeAttribute(Attribute::ReadNone);
-  FnAttrs.removeAttribute(Attribute::ReadOnly);
-  for (Attribute A : AL.getFnAttributes()) {
+    // Remove the readonly, readnone, and statepoint function attributes.
+  AttrBuilder FnAttrs = AL.getFnAttrs();
+  for (auto Attr : FnAttrsToStrip)
+    FnAttrs.removeAttribute(Attr);
+
+  for (Attribute A : AL.getFnAttrs()) {
     if (isStatepointDirectiveAttr(A))
       FnAttrs.remove(A);
   }
 
-  AttributeList Ret = AttributeList::get(Ctx, AttributeList::FunctionIndex,
-                                         AttributeSet::get(Ctx, FnAttrs));
-
-  // Add parameter attrs.
-  // TODO: use AttrBuilder?
-  for (unsigned i = AttributeList::FirstArgIndex, e = AL.getNumAttrSets(); i < e; ++i)
-    Ret = Ret.addAttributes(Ctx, i+5,  AL.getAttributes(i));
-
-  // Skip return attributes
-  return Ret;
+    // Just skip parameter and return attributes for now
+  return AttributeList::get(Ctx, AttributeList::FunctionIndex,
+                            AttributeSet::get(Ctx, FnAttrs));
 }
 
 namespace {
@@ -1551,7 +1565,7 @@ makeStatepointExplicitImpl(CallBase *Call, /* to replace */
       CallInst *GCResult = Builder.CreateGCResult(Token, Call->getType(), Name);
       GCResult->setAttributes(
           AttributeList::get(GCResult->getContext(), AttributeList::ReturnIndex,
-                             Call->getAttributes().getRetAttributes()));
+                             Call->getAttributes().getRetAttrs()));
 
       // We cannot RAUW or delete CS.getInstruction() because it could be in the
       // live set of some other safepoint, in which case that safepoint's
@@ -1981,17 +1995,19 @@ template <typename AttrHolder>
 static void RemoveNonValidAttrAtIndex(LLVMContext &Ctx, AttrHolder &AH,
                                       unsigned Index) {
   AttrBuilder R;
-  if (AH.getDereferenceableBytes(Index))
+  AttributeSet AS = AH.getAttributes().getAttributes(Index);
+  if (AS.getDereferenceableBytes())
     R.addAttribute(Attribute::get(Ctx, Attribute::Dereferenceable,
-                                  AH.getDereferenceableBytes(Index)));
-  if (AH.getDereferenceableOrNullBytes(Index))
+                                  AS.getDereferenceableBytes()));
+  if (AS.getDereferenceableOrNullBytes())
     R.addAttribute(Attribute::get(Ctx, Attribute::DereferenceableOrNull,
-                                  AH.getDereferenceableOrNullBytes(Index)));
-  if (AH.getAttributes().hasAttribute(Index, Attribute::NoAlias))
-    R.addAttribute(Attribute::NoAlias);
+                                  AS.getDereferenceableOrNullBytes()));
+  for (auto Attr : ParamAttrsToStrip)
+    if (AS.hasAttribute(Attr))
+      R.addAttribute(Attr);
 
   if (!R.empty())
-    AH.setAttributes(AH.getAttributes().removeAttributes(Ctx, Index, R));
+    AH.setAttributes(AH.getAttributes().removeAttributesAtIndex(Ctx, Index, R));
 }
 
 static void stripNonValidAttributesFromPrototype(Function &F) {
@@ -2004,6 +2020,9 @@ static void stripNonValidAttributesFromPrototype(Function &F) {
 
   if (isa<PointerType>(F.getReturnType()))
     RemoveNonValidAttrAtIndex(Ctx, F, AttributeList::ReturnIndex);
+
+    for (auto Attr : FnAttrsToStrip)
+    F.removeFnAttr(Attr);
 }
 
 /// Certain metadata on instructions are invalid after running this pass.

@@ -264,7 +264,7 @@ bool IntegAssemblerImpl::invokeAssembler()
         /*DWARFMustBeAtTheEnd*/ true));
 
   bool NoExecStack = true;
-  Str.get()->InitSections(NoExecStack);
+  Str.get()->initSections(NoExecStack, *STI);
 
   // Assembly to object compilation should leverage assembly info.
   Str->setUseAssemblerInfoForParsing(true);
