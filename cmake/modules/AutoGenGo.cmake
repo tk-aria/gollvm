@@ -24,15 +24,6 @@ function(mkversion goos goarch outfile bindir srcroot scriptroot)
   # not currently supported -- the install prefix has to be set properly
   # as part of the original build.
 
-  # Compiler version
-  file(STRINGS "${srcroot}/../VERSION" rawver)
-  string(STRIP ${rawver} ver)
-  # Default GOROOT var initialization.
-  file(APPEND ${outfile} "func init() { DefaultGoroot = \"${CMAKE_INSTALL_PREFIX}\" }\n")
-  file(APPEND ${outfile} "const TheVersion = ")
-  emitversionstring(${outfile} ${srcroot})
-  file(APPEND ${outfile} "\n")
-
   # FIXME:
   # GccgoToolDir is set to the gccgo installation directory that contains
   # (among other things) "go1", "cgo", "cc1", and other auxiliary
@@ -40,6 +31,8 @@ function(mkversion goos goarch outfile bindir srcroot scriptroot)
   # out yet, so just pick a spot in the bin directory for now. See also
   # 'DefaultGoRoot' above.
   file(APPEND ${outfile} "const GccgoToolDir = \"${CMAKE_INSTALL_PREFIX}/tools\"\n")
+
+  file(APPEND ${outfile} "const StackGuardMultiplierDefault = 1\n")
 
   # FIXME: add a real switch base on configuration params here.
 
@@ -69,7 +62,6 @@ function(mkversion goos goarch outfile bindir srcroot scriptroot)
   file(APPEND ${outfile} "const GOARCH = \"${goarch}\"\n")
   file(APPEND ${outfile} "const GOOS = \"${goos}\"\n")
   file(APPEND ${outfile} "\n")
-  file(APPEND ${outfile} "type ArchFamilyType int\n\n")
   file(APPEND ${outfile} "const (\n")
   file(APPEND ${outfile} "\tUNKNOWN ArchFamilyType = iota\n")
 
@@ -88,7 +80,7 @@ function(mkversion goos goarch outfile bindir srcroot scriptroot)
   endforeach()
   file(APPEND ${outfile} "\n")
 
-  set(constants "ArchFamily:family" "BigEndian:bigendian" "CacheLineSize:cachelinesize" "PhysPageSize:defaultphyspagesize" "PCQuantum:pcquantum" "Int64Align:int64align" "MinFrameSize:minframesize")
+  set(constants "ArchFamily:family" "BigEndian:bigendian" "DefaultPhysPageSize:defaultphyspagesize" "PCQuantum:pcquantum" "Int64Align:int64align" "MinFrameSize:minframesize" "StackAlign:stackalign")
 
   file(APPEND ${outfile} "const (\n")
   foreach(item ${constants})
@@ -106,7 +98,7 @@ function(mkversion goos goarch outfile bindir srcroot scriptroot)
       ERROR_VARIABLE errmsg
       RESULT_VARIABLE exitstatus)
     if(${exitstatus} MATCHES 0)
-      file(APPEND ${outfile} "\t${constname} = ${result}")
+      file(APPEND ${outfile} "\t_${constname} = ${result}")
     else()
       message(FATAL_ERROR "goarch.sh invocation failed: ${errmsg}")
     endif()
@@ -125,7 +117,6 @@ function(mkversion goos goarch outfile bindir srcroot scriptroot)
   endforeach()
 
   file(APPEND ${outfile} "\n")
-  file(APPEND ${outfile} "type Uintreg uintptr\n")
 endfunction()
 
 #----------------------------------------------------------------------
@@ -258,6 +249,42 @@ function(mkgccgosizes goarch outfile scriptroot)
 endfunction()
 
 #----------------------------------------------------------------------
+# Emit 'buildcfg.go', containing default settings for various GO* vars.
+#
+# Unnamed parameters:
+#
+#   * output file to target
+#   * libgo cmake binary directory
+#   * libgo source code root directory
+#
+function(mkbuildcfg outfile binroot srcroot)
+
+  file(REMOVE ${outfile})
+  file(WRITE ${outfile} "package buildcfg\n\n")
+  file(APPEND ${outfile} "import \"runtime\"\n")
+
+  # Compiler version
+  file(STRINGS "${srcroot}/../VERSION" rawver)
+  string(STRIP ${rawver} ver)
+  file(APPEND ${outfile} "const version = ")
+  emitversionstring(${outfile} ${srcroot})
+  file(APPEND ${outfile} "\n")
+
+  file(APPEND ${outfile} "func defaultGOROOTValue() string { return \"${GOLLVM_INSTALL_DIR}\" }\n")
+  file(APPEND ${outfile} "const defaultGO386 = `sse2`\n")
+  file(APPEND ${outfile} "const defaultGOARM = `5`\n")
+  file(APPEND ${outfile} "const defaultGOMIPS = `hardfloat`\n")
+  file(APPEND ${outfile} "const defaultGOMIPS64 = `hardfloat`\n")
+  file(APPEND ${outfile} "const defaultGOOS = runtime.GOOS\n")
+  file(APPEND ${outfile} "const defaultGOPPC64 = `power8`\n")
+  file(APPEND ${outfile} "const defaultGOARCH = runtime.GOARCH\n")
+  file(APPEND ${outfile} "const defaultGO_EXTLINK_ENABLED = ``\n")
+  file(APPEND ${outfile} "const defaultGO_LDSO = ``\n")
+  file(APPEND ${outfile} "const defaultGOEXPERIMENT = `fieldtrack`\n")
+endfunction()
+
+
+#----------------------------------------------------------------------
 # Emit 'objabi.go', containing default settings for various GO* vars.
 #
 # Unnamed parameters:
@@ -270,24 +297,8 @@ function(mkobjabi outfile binroot srcroot)
 
   file(REMOVE ${outfile})
   file(WRITE ${outfile} "package objabi\n\n")
-  file(APPEND ${outfile} "import \"runtime\"\n")
 
-  file(APPEND ${outfile} "func defaultGOROOTValue() string { return \"${GOLLVM_INSTALL_DIR}\" }\n")
-
-  file(APPEND ${outfile} "const defaultGO386 = `sse2`\n")
-  file(APPEND ${outfile} "const defaultGOARM = `5`\n")
-  file(APPEND ${outfile} "const defaultGOMIPS = `hardfloat`\n")
-  file(APPEND ${outfile} "const defaultGOMIPS64 = `hardfloat`\n")
-  file(APPEND ${outfile} "const defaultGOOS = runtime.GOOS\n")
-  file(APPEND ${outfile} "const defaultGOPPC64 = `power8`\n")
-  file(APPEND ${outfile} "const defaultGOARCH = runtime.GOARCH\n")
-  file(APPEND ${outfile} "const defaultGO_EXTLINK_ENABLED = ``\n")
-  file(APPEND ${outfile} "const defaultGO_LDSO = ``\n")
-  file(APPEND ${outfile} "const version = ")
-  emitversionstring(${outfile} ${srcroot})
-  file(APPEND ${outfile} "\n")
   file(APPEND ${outfile} "const stackGuardMultiplierDefault = 1\n")
-  file(APPEND ${outfile} "const goexperiment = ``\n")
 endfunction()
 
 #----------------------------------------------------------------------
@@ -310,7 +321,6 @@ function(mkzstdpkglist package outfile libpackages)
     endif()
   endforeach()
   file(APPEND ${outfile} "\"unsafe\": true,\n")
-  file(APPEND ${outfile} "\"runtime/cgo\": true,\n")
   file(APPEND ${outfile} "}\n")
 endfunction()
 
