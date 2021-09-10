@@ -1365,7 +1365,7 @@ void Llvm_backend::genCallAttributes(GenCallState &state, llvm::CallInst *call)
 
   call->setAttributes(
       llvm::AttributeList::get(context_,
-                               callAttrList.getFnAttributes(),
+                               callAttrList.getFnAttrs(),
                                llvm::AttributeSet::get(context_, retAttrs),
                                argAttrs));
 }
