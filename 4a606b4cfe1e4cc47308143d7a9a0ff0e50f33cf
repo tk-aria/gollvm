@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c972699a_d01690e1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2021-09-21T22:31:07Z",
+      "side": 1,
+      "message": "LGTM with Ian\u0027s comments addressed.",
+      "revId": "4a606b4cfe1e4cc47308143d7a9a0ff0e50f33cf",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "53263a7b_ed75c2df",
