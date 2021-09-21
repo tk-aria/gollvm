@@ -285,7 +285,7 @@ endfunction()
 
 
 #----------------------------------------------------------------------
-# Emit 'objabi.go', containing default settings for various GO* vars.
+# Emit 'objabi.go', containing the stack guard multiplier constant.
 #
 # Unnamed parameters:
 #
@@ -299,6 +299,23 @@ function(mkobjabi outfile binroot srcroot)
   file(WRITE ${outfile} "package objabi\n\n")
 
   file(APPEND ${outfile} "const stackGuardMultiplierDefault = 1\n")
+endfunction()
+
+#----------------------------------------------------------------------
+# Emit 'goroot.go', containing the default GOROOT setting.
+#
+# Unnamed parameters:
+#
+#   * output file to target
+#   * libgo cmake binary directory
+#   * libgo source code root directory
+#
+function(mkgoroot outfile binroot srcroot)
+
+  file(REMOVE ${outfile})
+  file(WRITE ${outfile} "package runtime\n\n")
+  file(APPEND ${outfile} "var defaultGOROOT = \"${CMAKE_INSTALL_PREFIX}\"\n")
+  
 endfunction()
 
 #----------------------------------------------------------------------
