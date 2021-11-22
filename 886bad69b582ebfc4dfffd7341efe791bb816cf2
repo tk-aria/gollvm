@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cb1ea1db_44a00410",
+        "filename": "driver-main/llvm-goc.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 13315
+      },
+      "writtenOn": "2021-11-22T15:44:21Z",
+      "side": 1,
+      "message": "Delete?",
+      "revId": "886bad69b582ebfc4dfffd7341efe791bb816cf2",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    }
+  ]
+}
