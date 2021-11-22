@@ -2276,7 +2276,7 @@ isTrackedAlloca(Value *V, DefiningValueMapTy &DVCache) {
 static bool
 hasStructRetAttr(CallBase *Call) {
   return Call->hasStructRetAttr() ||
-         (Call->getNumArgOperands() > 0 &&
+         (Call->getNumOperands() > 0 &&
           Call->getParamAttr(0, "go_sret") != Attribute());
 }
 
