@@ -87,6 +87,8 @@ The Gollvm compiler driver defaults to using the gold linker when linking Go pro
 
 Gollvm's cmake rules expect a valid value for the SHELL environment variable; if not set, a default shell of /bin/bash will be used.
 
+If you are using zsh, you may encounter problems. Please switch to bash instead.
+
 ## Installing gollvm <a name="installing"></a>
 
 A gollvm installation will contain 'llvm-goc' (the compiler driver), the libgo standard Go libraries, and the standard Go tools ("go", "vet", "cgo", etc).
