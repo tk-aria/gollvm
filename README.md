@@ -33,7 +33,7 @@ source tree, then within the LLVM tree you check out additional git repos.
   * [Can I use FDO or Thin LTO with gollvm?](#thinltofdo)
   * [Can I use the race detector?](#racedetector)
   * [I am seeing "undefined symbol: `__get_cpuid_count`" from my gollvm install](#getcpuidcount_undefined)
-  
+
 # Building gollvm <a name="building"></a>
 
 Gollvm is currently in development -- releases are not yet available for download.  Instructions for building gollvm follow.
@@ -86,6 +86,8 @@ This will build the various tools and libraries needed for Gollvm. To select a s
 The Gollvm compiler driver defaults to using the gold linker when linking Go programs.  If some other linker is desired, this can be accomplished by passing "-DGOLLVM_DEFAULT_LINKER=<variant>" when running cmake. Note that this default can still be overridden on the command line using the "-fuse-ld" option.
 
 Gollvm's cmake rules expect a valid value for the SHELL environment variable; if not set, a default shell of /bin/bash will be used.
+
+If you are using zsh, you may encounter problems. Please switch to bash instead.
 
 ## Installing gollvm <a name="installing"></a>
 
@@ -346,3 +348,4 @@ Gollvm does not support the Go race detector; please use the main Go compiler fo
 ## I am seeing "undefined symbol: `__get_cpuid_count`" from my gollvm install <a name="getcpuidcount_undefined">
 
 The Gollvm build procedure requires an up-to-date C/C++ compiler; there is code in the gollvm runtime (libgo) that refers to functions defined in `<cpuid.h>`, however some older versions of clang (prior to 5.0) don't provide definitions for all the needed functions. If you encounter this problem, rerun `cmake` to configure your build to use a more recent version of Clang (or use GCC), as described above.
+
