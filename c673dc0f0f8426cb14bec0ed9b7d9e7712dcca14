@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3cd1ff25_ad21d2a8",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 5206
+      },
+      "writtenOn": "2021-11-23T05:52:44Z",
+      "side": 1,
+      "message": "This patch has a lot of seemingly unrelated formatting changes.  Please separate formatting changes from substantive changes.  Thanks.",
+      "revId": "c673dc0f0f8426cb14bec0ed9b7d9e7712dcca14",
+      "serverId": "62eb7196-b449-3ce5-99f1-c037f21e1705"
+    }
+  ]
+}
