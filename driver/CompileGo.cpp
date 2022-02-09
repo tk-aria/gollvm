@@ -51,6 +51,7 @@ namespace gollvm { namespace arch {
 #include "llvm/Option/OptTable.h"
 #include "llvm/Option/Option.h"
 #include "llvm/Passes/PassBuilder.h"
+#include "llvm/Remarks/RemarkStreamer.h"
 #include "llvm/Remarks/YAMLRemarkSerializer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
