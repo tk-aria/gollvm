@@ -3686,7 +3686,7 @@ llvm::BasicBlock *GenBlocks::populateFinallyBlock(llvm::BasicBlock *finBB,
   llvm::BasicBlock *finRetBB =
       llvm::BasicBlock::Create(context_, be_->namegen("finret"), func);
   std::string lname(be_->namegen("fload"));
-  llvm::LoadInst *finvarload = builder.CreateLoad(finvar->value(), lname);
+  llvm::LoadInst *finvarload = builder.CreateLoad(finvar->btype()->type(), finvar->value(), lname);
   llvm::Value *tval = be_->boolean_constant_expression(true)->value();
   llvm::Value *cmp = builder.CreateICmp(llvm::CmpInst::Predicate::ICMP_EQ,
                                         finvarload, tval,
@@ -3705,7 +3705,7 @@ llvm::BasicBlock *GenBlocks::populateFinallyBlock(llvm::BasicBlock *finBB,
   // Populate resume block
   builder.SetInsertPoint(finResBB);
   std::string ename(be_->namegen("excv"));
-  llvm::LoadInst *exload = builder.CreateLoad(extmp, ename);
+  llvm::LoadInst *exload = builder.CreateLoad(extmp->getType()->getPointerElementType(), extmp, ename);
   builder.CreateResume(exload);
 
   return finRetBB;

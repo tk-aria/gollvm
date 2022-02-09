@@ -22,7 +22,7 @@ namespace {
 
 class BackendVarTests : public testing::TestWithParam<llvm::CallingConv::ID> {};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     UnitTest, BackendVarTests,
     goBackendUnitTests::CConvs,
     [](const testing::TestParamInfo<BackendVarTests::ParamType> &info) {
