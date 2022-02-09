@@ -18,7 +18,7 @@ namespace {
 
 class BackendFcnTests : public testing::TestWithParam<llvm::CallingConv::ID> {};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     UnitTest, BackendFcnTests,
     goBackendUnitTests::CConvs,
     [](const testing::TestParamInfo<BackendFcnTests::ParamType> &info) {

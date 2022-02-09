@@ -106,7 +106,7 @@ void Bfunction::lazyAbiSetup()
   if (abiOracle_->returnInfo().disp() == ParmIndirect) {
     std::string sretname(namegen("sret.formal"));
     arguments_[argIdx]->setName(sretname);
-    llvm::AttrBuilder SRETAttrs;
+    llvm::AttrBuilder SRETAttrs(function()->getContext());
     SRETAttrs.addStructRetAttr(fcnType_->resultType()->type());
     arguments_[argIdx]->addAttrs(SRETAttrs);
     rtnValueMem_ = arguments_[argIdx];
@@ -140,7 +140,7 @@ void Bfunction::lazyAbiSetup()
         paramValues_.push_back(arguments_[argIdx]);
         assert(paramInfo.numArgSlots() == 1);
         if (paramInfo.attr() == AttrByVal) {
-          llvm::AttrBuilder BVAttrs;
+          llvm::AttrBuilder BVAttrs(function()->getContext());
           BVAttrs.addByValAttr(paramTypes[idx]->type());
           arguments_[argIdx]->addAttrs(BVAttrs);
         }
@@ -550,7 +550,7 @@ llvm::Value *Bfunction::genReturnSequence(Bexpression *toRet,
   std::string castname(namegen("cast"));
   llvm::Value *bitcast = builder.CreateBitCast(toRet->value(), ptst, castname);
   std::string loadname(namegen("ld"));
-  llvm::Instruction *ldinst = builder.CreateLoad(bitcast, loadname);
+  llvm::Instruction *ldinst = builder.CreateLoad(llrt, bitcast, loadname);
   retInstrs->appendInstructions(builder.instructions());
   return ldinst;
 }

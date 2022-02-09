@@ -20,7 +20,7 @@ namespace {
 class BackendArrayStructTests
     : public testing::TestWithParam<llvm::CallingConv::ID> {};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     UnitTest, BackendArrayStructTests,
     goBackendUnitTests::CConvs,
     [](const testing::TestParamInfo<BackendArrayStructTests::ParamType> &info) {

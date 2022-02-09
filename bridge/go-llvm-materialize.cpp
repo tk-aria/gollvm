@@ -1249,7 +1249,7 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
                                    val->getType()->getPointerAddressSpace());
         llvm::Value *bitcast = builder.CreateBitCast(val, ptv, castname);
         std::string ltag(namegen("ld"));
-        llvm::Value *ld = builder.CreateLoad(bitcast, ltag);
+        llvm::Value *ld = builder.CreateLoad(paramInfo.abiType(), bitcast, ltag);
         state.llargs.push_back(ld);
         continue;
       }
@@ -1310,7 +1310,7 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
       llvm::Value *fieldgep =
           builder.CreateConstInBoundsGEP2_32(llst, bitcast, 0, i, ftag);
       std::string ltag(namegen("ld"));
-      llvm::Value *ld = builder.CreateLoad(fieldgep, ltag);
+      llvm::Value *ld = builder.CreateLoad(paramInfo.abiTypes()[i], fieldgep, ltag);
       state.llargs.push_back(ld);
     }
   }
@@ -1319,7 +1319,7 @@ Llvm_backend::genCallMarshallArgs(const std::vector<Bexpression *> &fn_args,
 void Llvm_backend::genCallAttributes(GenCallState &state, llvm::CallInst *call)
 {
   const llvm::AttributeList &callAttrList = call->getAttributes();
-  llvm::AttrBuilder retAttrs(callAttrList, llvm::AttributeList::ReturnIndex);
+  llvm::AttrBuilder retAttrs(context_, callAttrList.getRetAttrs());
   const std::vector<Btype *> &paramTypes = state.calleeFcnType->paramTypes();
   size_t na = state.oracle.getFunctionTypeForABI()->getNumParams();
   llvm::SmallVector<llvm::AttributeSet, 4> argAttrs(na);
@@ -1327,7 +1327,7 @@ void Llvm_backend::genCallAttributes(GenCallState &state, llvm::CallInst *call)
   // Sret attribute if needed
   const CABIParamInfo &returnInfo = state.oracle.returnInfo();
   if (returnInfo.disp() == ParmIndirect) {
-    llvm::AttrBuilder ab;
+    llvm::AttrBuilder ab(context_);
     ab.addStructRetAttr(state.calleeFcnType->resultType()->type());
     ab.addAttribute(llvm::Attribute::get(call->getContext(), "go_sret"));
     argAttrs[0] = llvm::AttributeSet::get(context_, ab);
@@ -1336,7 +1336,7 @@ void Llvm_backend::genCallAttributes(GenCallState &state, llvm::CallInst *call)
   // Nest attribute if needed
   const CABIParamInfo &chainInfo = state.oracle.chainInfo();
   if (chainInfo.disp() != ParmIgnore) {
-    llvm::AttrBuilder ab;
+    llvm::AttrBuilder ab(context_);
     ab.addAttribute(llvm::Attribute::Nest);
     argAttrs[chainInfo.sigOffset()] =
         llvm::AttributeSet::get(context_, ab);
@@ -1351,7 +1351,7 @@ void Llvm_backend::genCallAttributes(GenCallState &state, llvm::CallInst *call)
     assert(paramInfo.attr() != AttrStructReturn);
     if (paramInfo.attr() != AttrNone) {
       unsigned off = paramInfo.sigOffset();
-      llvm::AttrBuilder ab;
+      llvm::AttrBuilder ab(context_);
       if (paramInfo.attr() == AttrByVal) {
         ab.addByValAttr(paramTypes[idx]->type());
       } else if (paramInfo.attr() == AttrZext) {
@@ -1470,7 +1470,7 @@ static llvm::Value *makeGetg(Btype *resType,
   if (be->triple().getArch() == llvm::Triple::aarch64)
     return makeGetgArm64(resType, builder, be);
   else
-    return builder->CreateLoad(g);
+    return builder->CreateLoad(resType->type(), g);
 }
 
 Bexpression *Llvm_backend::materializeCall(Bexpression *callExpr)

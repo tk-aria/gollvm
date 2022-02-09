@@ -522,7 +522,7 @@ static llvm::Value *atomicCasMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
   assert(args.size() == 6);
   // GCC __atomic_compare_exchange_n takes a pointer to the old value.
   // We need to load it.
-  llvm::Value *old = builder->CreateLoad(args[1]);
+  llvm::Value *old = builder->CreateLoad(args[1]->getType()->getPointerElementType(), args[1]);
   // FIXME: see atomicLoadMaker, but default to SequentiallyConsistent
   // for success order, Monotonic (i.e. relaxed) for failed order,
   // and false for weak.

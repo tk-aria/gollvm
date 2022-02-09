@@ -23,7 +23,7 @@ namespace {
 class BackendDebugEmit : public testing::TestWithParam<llvm::CallingConv::ID> {
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     UnitTest, BackendDebugEmit,
     goBackendUnitTests::CConvs,
     [](const testing::TestParamInfo<BackendDebugEmit::ParamType> &info) {
@@ -46,7 +46,7 @@ TEST_P(BackendDebugEmit, TestSimpleDecl) {
   entry:
     %x = alloca i32, align 4
     store i32 0, i32* %x, align 4
-    call void @llvm.dbg.declare(metadata i32* %x, metadata !5, metadata !DIExpression()), !dbg !12
+    call void @llvm.dbg.declare(metadata i32* %x, metadata !4, metadata !DIExpression()), !dbg !12
     ret void
   }
   )RAW_RESULT");
@@ -78,7 +78,7 @@ TEST(BackendDebugEmit, TestSimpleDecl2Amd64) {
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0, { i64, i64, i64 }* byval({ i64, i64, i64 }) %p0) #0 {
   entry:
-    call void @llvm.dbg.declare(metadata { i64, i64, i64 }* %p0, metadata !5, metadata !DIExpression()), !dbg !18
+    call void @llvm.dbg.declare(metadata { i64, i64, i64 }* %p0, metadata !4, metadata !DIExpression()), !dbg !18
     ret void
   }
   )RAW_RESULT");
@@ -105,7 +105,7 @@ TEST(BackendDebugEmit, TestSimpleDecl2Arm64) {
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
     define void @foo(i8* nest %nest.0, { i64, i64, i64 }* %p0) #0 {
     entry:
-      call void @llvm.dbg.declare(metadata { i64, i64, i64 }* %p0, metadata !5,
+      call void @llvm.dbg.declare(metadata { i64, i64, i64 }* %p0, metadata !4,
                                   metadata !DIExpression()), !dbg !18
       ret void
     }
@@ -210,7 +210,7 @@ TEST_P(BackendDebugEmit, TestDeadLocalVar) {
   h.mkLocal("x", bu32t);
 
   DECLARE_EXPECTED_OUTPUT(exp, R"RAW_RESULT(
-    define void @foo(i8* nest %nest.0) #0 !dbg !5 {
+    define void @foo(i8* nest %nest.0) #0 !dbg !4 {
   entry:
     %x = alloca i32, align 4
     ret void, !dbg !10
