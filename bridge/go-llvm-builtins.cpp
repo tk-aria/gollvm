@@ -410,7 +410,13 @@ static llvm::Value *atomicLoadMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
                                     Llvm_backend *be, int sz)
 {
   assert(args.size() == 2);
-  llvm::Type *t = sz == 8 ? be->llvmInt64Type() : be->llvmInt32Type();
+  llvm::Type *t = nullptr;
+  switch(sz) {
+    case 8: t = be->llvmInt64Type(); break;
+    case 4: t = be->llvmInt32Type(); break;
+    case 1: t = be->llvmInt8Type(); break;
+    default: llvm_unreachable("bad size passed to atomicLoadMaker");
+  }
   llvm::LoadInst *load = builder->CreateLoad(t, args[0]);
   // FIXME: we assume the FE always emits constant memory order.
   // in case it doesn't, conservatively use SequentiallyConsistent.
@@ -421,6 +427,13 @@ static llvm::Value *atomicLoadMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
   load->setAtomic(o);
   load->setAlignment(llvm::Align(sz));
   return load;
+}
+
+static llvm::Value *atomicLoad1Maker(llvm::SmallVectorImpl<llvm::Value*> &args,
+                                     BlockLIRBuilder *builder,
+                                     Llvm_backend *be)
+{
+  return atomicLoadMaker(args, builder, be, 1);
 }
 
 static llvm::Value *atomicLoad4Maker(llvm::SmallVectorImpl<llvm::Value*> &args,
@@ -451,6 +464,13 @@ static llvm::Value *atomicStoreMaker(llvm::SmallVectorImpl<llvm::Value*> &args,
   store->setAtomic(o);
   store->setAlignment(llvm::Align(sz));
   return store;
+}
+
+static llvm::Value *atomicStore1Maker(llvm::SmallVectorImpl<llvm::Value*> &args,
+                                      BlockLIRBuilder *builder,
+                                      Llvm_backend *be)
+{
+  return atomicStoreMaker(args, builder, be, 1);
 }
 
 static llvm::Value *atomicStore4Maker(llvm::SmallVectorImpl<llvm::Value*> &args,
@@ -578,6 +598,11 @@ void BuiltinTable::defineExprBuiltins()
   }
 
   {
+    BuiltinEntryTypeVec typeVec = {uint8Type, uint8PtrType, int32Type};
+    registerExprBuiltin("__atomic_load_1", nullptr,
+                        typeVec, atomicLoad1Maker);
+  }
+  {
     BuiltinEntryTypeVec typeVec = {uint32Type, uint32PtrType, int32Type};
     registerExprBuiltin("__atomic_load_4", nullptr,
                         typeVec, atomicLoad4Maker);
@@ -588,6 +613,11 @@ void BuiltinTable::defineExprBuiltins()
                         typeVec, atomicLoad8Maker);
   }
 
+  {
+    BuiltinEntryTypeVec typeVec = {nullptr, uint8PtrType, uint8Type, int32Type};
+    registerExprBuiltin("__atomic_store_1", nullptr,
+                        typeVec, atomicStore1Maker);
+  }
   {
     BuiltinEntryTypeVec typeVec = {nullptr, uint32PtrType, uint32Type, int32Type};
     registerExprBuiltin("__atomic_store_4", nullptr,
