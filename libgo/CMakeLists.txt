@@ -108,6 +108,8 @@ set(internal_cpu_extra_go_files "cpugen.go")
 set(golang_org_x_sys_cpu_extra_go_files "gcpugen.go")
 set(cmd_go_internal_cfg_extra_go_files "zdefaultcc.go")
 set(runtime_internal_sys_extra_go_files "version.go")
+set(internal_goarch_extra_go_files "zgoarch.go")
+set(internal_goos_extra_go_files "zgoos.go")
 set(go_types_extra_go_files "gccgosizes.go")
 set(syscall_extra_go_files "libcalls.go" "sysinfo.go" "syscall_arch.go" "syscall_linknames.go")
 set(os_extra_go_files "os_linknames.go")
@@ -213,9 +215,20 @@ set(runtime_pprof_check_gocflags "-fno-inline" "-static-libgo")
 # Rules for version.go
 set(versiondotgo "${libgo_binroot}/version.go")
 set(versiontmp "${libgo_binroot}/version.go.tmp")
-mkversion(${goos} ${goarch} ${versiontmp} ${libgo_binroot}
-          ${libgo_gosrcroot} ${libgo_scriptroot})
+mkversion(${versiontmp} ${libgo_binroot} ${libgo_gosrcroot} ${libgo_scriptroot})
 copy_if_different(${versiontmp} ${versiondotgo})
+
+# Rules for zgoos.go
+set(zgoosdotgo "${libgo_binroot}/zgoos.go")
+set(zgoostmp "${libgo_binroot}/zgoos.go.tmp")
+mkzgoos(${goos} ${zgoostmp} ${libgo_scriptroot})
+copy_if_different(${zgoostmp} ${zgoosdotgo})
+
+# Rules for zgoarch.go
+set(zgoarchdotgo "${libgo_binroot}/zgoarch.go")
+set(zgoarchtmp "${libgo_binroot}/zgoarch.go.tmp")
+mkzgoarch(${goarch} ${zgoarchtmp} ${libgo_scriptroot})
+copy_if_different(${zgoarchtmp} ${zgoarchdotgo})
 
 # Rules for gccgosizes.go
 set(gccgosizesdotgo "${libgo_binroot}/gccgosizes.go")

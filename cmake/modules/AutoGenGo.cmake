@@ -1,19 +1,15 @@
 
 #----------------------------------------------------------------------
-# Emit 'version.go'. This file contains a series of Go constants that
-# capture the target configuration (arch, OS, etc), emitted directly
-# to a file (as opposed to generation via script). Based on the
-# libgo Makefile recipe.
+# Emit 'version.go', which contains system-specific constants.
+# Based on the libgo Makefile recipe.
 #
 # Unnamed parameters:
 #
-#   * GOOS setting (target OS)
-#   * GOARCH setting (target architecture)
 #   * output file
 #   * cmake binary directory for libfo
 #   * root of src containing libgo script files
 #
-function(mkversion goos goarch outfile bindir srcroot scriptroot)
+function(mkversion outfile bindir srcroot scriptroot)
 
   file(REMOVE ${outfile})
   file(WRITE ${outfile} "package sys\n")
@@ -34,53 +30,54 @@ function(mkversion goos goarch outfile bindir srcroot scriptroot)
 
   file(APPEND ${outfile} "const StackGuardMultiplierDefault = 1\n")
 
-  # FIXME: add a real switch base on configuration params here.
+endfunction()
 
-  if( ${goarch} STREQUAL "amd64")
-    set(archfamily "AMD64")
-    set(bigendian "false")
-    set(cachelinesize "64")
-    set(physpagesize "4096")
-    set(pcquantum "1")
-    set(int64align "8")
-    set(minframesize 0)
-  elseif( ${goarch} STREQUAL "arm64")
-    # Simply picking up one typical setting
-    # Align with current sets in gofrontend/libgo/goarch.sh
-    set(archfamily "ARM64")
-    set(bigendian "false")
-    set(cachelinesize "32")
-    set(physpagesize "65536")
-    set(pcquantum "4")
-    set(int64align "8")
-    set(minframesize 8)
-  else()
-    message(FATAL_ERROR "unsupported arch ${goarch}: currently only amd64/arm64 support")
-  endif()
+#----------------------------------------------------------------------
+# Emit 'zgoos.go', which contains OS-specific constants. 
+# Based on the libgo Makefile recipe.
+#
+# Unnamed parameters:
+#
+#   * GOOS setting (target OS)
+#   * output file
+#   * root of src containing libgo script files
+#
+function(mkzgoos goos outfile scriptroot)
 
-  file(APPEND ${outfile} "const Goexperiment = ``\n")
-  file(APPEND ${outfile} "const GOARCH = \"${goarch}\"\n")
-  file(APPEND ${outfile} "const GOOS = \"${goos}\"\n")
-  file(APPEND ${outfile} "\n")
-  file(APPEND ${outfile} "const (\n")
-  file(APPEND ${outfile} "\tUNKNOWN ArchFamilyType = iota\n")
+  file(REMOVE ${outfile})
+  file(WRITE ${outfile} "package goos\n\n")
 
-  foreach (af ${allgoarchfamily})
-    file(APPEND ${outfile} "\t${af}\n")
-  endforeach()
-  file(APPEND ${outfile} ")\n\n")
+  file(APPEND ${outfile} "const GOOS = \"${goos}\"\n\n")
 
-  foreach (arch ${allgoarch})
+  foreach (os ${allgoos})
     set(val "0")
-    if( ${arch} STREQUAL ${goarch})
+    if( ${os} STREQUAL ${goos})
       set(val "1")
     endif()
-    upperfirst(${arch} "uparch")
-    file(APPEND ${outfile} "const Goarch${uparch} = ${val}\n")
+    upperfirst(${os} "upos")
+    file(APPEND ${outfile} "const Is${upos} = ${val}\n")
   endforeach()
-  file(APPEND ${outfile} "\n")
 
-  set(constants "ArchFamily:family" "BigEndian:bigendian" "DefaultPhysPageSize:defaultphyspagesize" "PCQuantum:pcquantum" "Int64Align:int64align" "MinFrameSize:minframesize" "StackAlign:stackalign")
+endfunction()
+
+#----------------------------------------------------------------------
+# Emit 'zgoarch.go', which contains ARCH-specific constants. 
+# Based on the libgo Makefile recipe.
+#
+# Unnamed parameters:
+#
+#   * GOARCH setting (target arch)
+#   * output file
+#   * root of src containing libgo script files
+#
+function(mkzgoarch goarch outfile scriptroot)
+
+  file(REMOVE ${outfile})
+  file(WRITE ${outfile} "package goarch\n\n")
+
+  file(APPEND ${outfile} "const GOARCH = \"${goarch}\"\n\n")
+
+  set(constants "ArchFamily:family" "BigEndian:bigendian" "DefaultPhysPageSize:defaultphyspagesize" "Int64Align:int64align" "MinFrameSize:minframesize" "PCQuantum:pcquantum" "StackAlign:stackalign")
 
   file(APPEND ${outfile} "const (\n")
   foreach(item ${constants})
@@ -105,18 +102,26 @@ function(mkversion goos goarch outfile bindir srcroot scriptroot)
 
   endforeach()
 
+  file(APPEND ${outfile} ")\n")
+  file(APPEND ${outfile} "\n")
+  file(APPEND ${outfile} "const (\n")
+  file(APPEND ${outfile} "\tUNKNOWN ArchFamilyType = iota\n")
+
+  foreach (af ${allgoarchfamily})
+    file(APPEND ${outfile} "\t${af}\n")
+  endforeach()
   file(APPEND ${outfile} ")\n\n")
 
-  foreach (os ${allgoos})
+  foreach (arch ${allgoarch})
     set(val "0")
-    if( ${os} STREQUAL ${goos})
+    if( ${arch} STREQUAL ${goarch})
       set(val "1")
     endif()
-    upperfirst(${os} "upos")
-    file(APPEND ${outfile} "const Goos${upos} = ${val}\n")
+    upperfirst(${arch} "uparch")
+    file(APPEND ${outfile} "const Is${uparch} = ${val}\n")
   endforeach()
-
   file(APPEND ${outfile} "\n")
+
 endfunction()
 
 #----------------------------------------------------------------------
@@ -272,6 +277,7 @@ function(mkbuildcfg outfile binroot srcroot)
 
   file(APPEND ${outfile} "func defaultGOROOTValue() string { return \"${GOLLVM_INSTALL_DIR}\" }\n")
   file(APPEND ${outfile} "const defaultGO386 = `sse2`\n")
+  file(APPEND ${outfile} "const defaultGOAMD64 = `v1`\n")
   file(APPEND ${outfile} "const defaultGOARM = `5`\n")
   file(APPEND ${outfile} "const defaultGOMIPS = `hardfloat`\n")
   file(APPEND ${outfile} "const defaultGOMIPS64 = `hardfloat`\n")
